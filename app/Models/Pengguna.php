@@ -2,6 +2,8 @@
 
 // app/Models/Pengguna.php
 
+// app/Models/Pengguna.php
+
 namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
