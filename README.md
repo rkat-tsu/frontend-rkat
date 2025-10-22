@@ -63,7 +63,7 @@ npm install
 npm run dev
 ```
 
-#### 5. Jalankan Aplikasi
+### 5. Jalankan Aplikasi
 
 Aplikasi sekarang siap dijalankan. Anda dapat mengaksesnya di browser Anda, biasanya di http://127.0.0.1:8000.
 
