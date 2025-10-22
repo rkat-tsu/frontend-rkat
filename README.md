@@ -84,9 +84,10 @@ Skema ini adalah inti dari Sistem RKAT dan relasi antar tabelnya:
 ## 🧑‍💻 Tim Kontributor
 
 Proyek *Sistem RKAT Kampus* ini dikembangkan oleh tim berikut:
-* Fauzi Adam Prasetyo - Fullstack Developer + Frontend
+* Fauzi Adam Prasetyo - Frontend Developer
 * Java Dewangga - Backend Developer
 * Alifudin Nurhafidzi - Backend Developer
 * Rhenaldy T.D.P - UI/UX Designer
+
 
 <footer>Copyright @ 2025 - TSU BPUK</footer>
