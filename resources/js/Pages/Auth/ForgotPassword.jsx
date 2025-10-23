@@ -20,9 +20,10 @@ export default function ForgotPassword({ status }) {
             <Head title="Forgot Password" />
 
             <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                Forgot your password? No problem. Just let us know your email
-                address and we will email you a password reset link that will
-                allow you to choose a new one.
+                <b>Lupa Password?</b> Tidak masalah. 
+                Cukup beritahukan alamat email Anda kepada kami dan 
+                kami akan mengirimkan tautan pengaturan ulang Password melalui email.
+                Tautan tersebut akan memungkinkan Anda untuk memilih Password baru.
             </div>
 
             {status && (
