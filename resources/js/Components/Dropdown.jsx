@@ -23,7 +23,30 @@ const Trigger = ({ children }) => {
 
     return (
         <>
-            <div onClick={toggleOpen}>{children}</div>
+            {/* PERUBAHAN: Gunakan flex dan class styling pada div utama trigger */}
+            <div 
+                onClick={toggleOpen} 
+                className="flex items-center cursor-pointer select-none" // Memastikan konten dan ikon sejajar
+            >
+                {/* Konten Trigger (misalnya tombol atau nama pengguna) */}
+                <div>{children}</div>
+                
+                {/* IKON PANAH DENGAN LOGIKA ROTASI */}
+                <svg
+                    className={`ms-2 h-4 w-4 transform transition-transform duration-200 hover:text-gray-700 focus:outline-none dark:bg-gray-800 dark:text-gray-400 dark:hover:text-gray-300 ${
+                        open ? 'rotate-180' : 'rotate-0'
+                    }`}
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                >
+                    <path
+                        fillRule="evenodd"
+                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                    />
+                </svg>
+            </div>
 
             {open && (
                 <div
