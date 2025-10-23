@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\User as UserModel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -19,7 +20,7 @@ class UserResetPasswordMail extends Mailable
      * @param string $token Token reset password
      * @param \App\Models\User $user Model pengguna yang meminta reset
      */
-    public function __construct(string $token, User $user)
+    public function __construct(string $token, UserModel $user)
     {
         $this->token = $token;
         $this->user = $user;
