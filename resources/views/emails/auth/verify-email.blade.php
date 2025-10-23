@@ -1,17 +1,27 @@
 @component('mail::message')
-# Verifikasi Alamat Email
+# ✅ Verifikasi Alamat Email Anda
 
-Halo,
+Halo **{{ $name ?? 'Pengguna Baru' }}**,
 
-Selamat datang di Sistem RKAT Kampus. Sebelum melanjutkan, harap verifikasi alamat email Anda dengan mengklik tombol di bawah ini:
+Selamat datang dan terima kasih telah mendaftar di **Sistem RKAT Kampus**!
 
-@component('mail::button', ['url' => $verificationUrl])
-Verifikasi Alamat Email
+Langkah terakhir untuk mengaktifkan akun Anda adalah dengan memverifikasi alamat email ini. Proses ini penting untuk memastikan keamanan akun dan kelancaran komunikasi.
+
+Silakan klik tombol di bawah ini untuk mengonfirmasi dan memverifikasi alamat email Anda:
+
+@component('mail::button', ['url' => $verificationUrl, 'color' => 'success'])
+**Verifikasi Akun Saya Sekarang** 🚀
 @endcomponent
 
-Jika Anda kesulitan mengklik tombol "Verifikasi Alamat Email", salin dan tempel URL di bawah ini ke *web browser* Anda: [{{ $verificationUrl }}]({{ $verificationUrl }})
+---
 
-Terima kasih.
+### 💡 Mengalami Kendala?
+Jika Anda kesulitan mengklik tombol di atas, Anda juga dapat menyalin dan menempel (copy-paste) tautan di bawah ini ke *browser* Anda:
+[{{ $verificationUrl }}]({{ $verificationUrl }})
+
+Terima kasih atas kerja sama Anda. Setelah verifikasi berhasil, Anda akan dapat masuk ke sistem.
+
 Salam Hormat,
-{{ config('app.name') }}
+
+Tim Administrasi **{{ config('app.name') }}**
 @endcomponent

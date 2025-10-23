@@ -1,23 +1,32 @@
 @component('mail::message')
-# RKAT Anda Telah Disetujui
+# ✅ RKAT Anda Telah Disetujui!
 
-Yth. {{ $rkatHeader->pengaju->nama_lengkap ?? 'Pengaju' }},
+Yth. **{{ $rkatHeader->pengaju->nama_lengkap ?? 'Bapak/Ibu' }}**,
 
-Kami informasikan bahwa pengajuan RKAT Anda, **{{ $judul }}**, telah disetujui pada level manajemen oleh {{ $approver }}.
+Kami dengan senang hati menginformasikan bahwa pengajuan Rencana Kegiatan dan Anggaran Tahunan (RKAT) Anda: **"{{ $judul }}"** telah **DISETUJUI** pada level **{{ $level_persetujuan ?? 'Manajemen' }}** oleh **{{ $approver }}**.
 
-**Detail Pengajuan:**
-| Departemen | Status Saat Ini |
+---
+
+### 📋 Detail Proses Persetujuan
+
+| Informasi | Keterangan |
 | :--- | :--- |
-| {{ $departemen }} | Disetujui (Menunggu Level Berikutnya) |
+| **Nomor/Judul RKAT** | {{ $judul }} |
+| **Unit Kerja** | {{ $departemen }} |
+| **Disetujui Oleh** | {{ $approver }} |
+| **Status Saat Ini** | **DISETUJUI** (Menunggu Proses Selanjutnya) |
 
-Mohon untuk memantau status pengajuan ini di sistem.
+### ➡️ Tindak Lanjut
 
-@component('mail::button', ['url' => url('/rkat/' . $headerId)])
-Lihat Detail RKAT
+Kami mohon agar Anda segera memantau status persetujuan ini di sistem. Dokumen akan diteruskan ke peninjau (reviewer) pada level berikutnya dalam alur kerja (workflow).
+
+@component('mail::button', ['url' => url('/rkat/' . $headerId), 'color' => 'success'])
+**Lihat Detail & Riwayat Persetujuan**
 @endcomponent
 
-Terima kasih atas kontribusi Anda.
+Terima kasih atas kerja keras dan kontribusi Anda dalam perencanaan anggaran ini.
 
 Salam Hormat,
-{{ config('app.name') }}
+
+Tim Administrasi **{{ config('app.name') }}**
 @endcomponent
