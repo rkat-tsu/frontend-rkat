@@ -17,9 +17,9 @@ class UserResetPasswordMail extends Mailable
 
     /**
      * @param string $token Token reset password
-     * @param \App\Models\Pengguna $user Model pengguna yang meminta reset
+     * @param \App\Models\User $user Model pengguna yang meminta reset
      */
-    public function __construct(string $token, $user)
+    public function __construct(string $token, User $user)
     {
         $this->token = $token;
         $this->user = $user;

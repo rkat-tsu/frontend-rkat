@@ -6,21 +6,30 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Auth\Passwords\CanResetPassword; // WAJIB untuk fitur reset password
+
+// Import Notifikasi kustom yang telah Anda buat
+use App\Notifications\ResetPasswordNotification; 
+// Jika model Departemen berada di namespace yang sama atau di App\Models
+use App\Models\Departemen; 
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, CanResetPassword; // Tambahkan CanResetPassword
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    protected $table = 'users'; // Nama tabel sudah sesuai
+    protected $primaryKey = 'id_user'; // Kunci utama sudah sesuai
+    
+    // Kolom yang dapat diisi
     protected $fillable = [
-        'name',
-        'email',
+        'username',
+        'email', 
         'password',
+        'nama_lengkap',
+        'peran',
+        'id_departemen',
+        'is_aktif',
     ];
 
     /**
@@ -44,5 +53,25 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+    
+    /**
+     * Mengganti notifikasi reset password bawaan Laravel.
+     *
+     * @param string $token Token reset password yang dihasilkan Laravel.
+     * @return void
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        // Panggil notifikasi kustom, passing $token dan instance model ($this).
+        $this->notify(new ResetPasswordNotification($token, $this));
+    }
+
+    // --- Relasi Lainnya (Contoh) ---
+    
+    public function departemen()
+    {
+        // Pastikan Anda telah mengimpor model Departemen
+        return $this->belongsTo(Departemen::class, 'id_departemen', 'id_departemen');
     }
 }
