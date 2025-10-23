@@ -29,7 +29,7 @@ class AuthServiceProvider extends ServiceProvider
         // 2. Integrasi Verifikasi Email Kustom
         VerifyEmail::toMailUsing(function ($notifiable, $verificationUrl) {
             return (new VerifyEmailNotification($verificationUrl))
-                ->to($notifiable->email);
+                ->toMail($notifiable);
         });
     }
 }
