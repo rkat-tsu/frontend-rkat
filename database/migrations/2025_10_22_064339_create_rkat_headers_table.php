@@ -17,15 +17,16 @@ return new class extends Migration
             $table->foreign('tahun_anggaran')->references('tahun_anggaran')->on('tahun_anggarans');
 
             $table->foreignId('id_departemen')->constrained('departemens', 'id_departemen');
-            $table->foreignId('diajukan_oleh')->constrained('penggunas', 'id_pengguna');
+            $table->foreignId('diajukan_oleh')->constrained('users', 'id_user');
 
             $table->string('nomor_dokumen', 50)->unique()->nullable();
             $table->text('judul_pengajuan')->nullable(); 
 
             $table->enum('status_persetujuan', [
                 'Draft', 'Diajukan', 'Revisi', 
-                'Disetujui_L1', 'Menunggu_Dekan_BPUK', 
-                'Menunggu_WR1', 'Menunggu_WR3', 'Menunggu_WR2', 
+                'Disetujui_L1', 'Menunggu_Dekan_Kepala', 
+                'Menunggu_WR1', 'Menunggu_WR3', 'Menunggu_WR2',
+                'Disetujui_WR1', 'Disetujui_WR2', 'Disetujui_WR3',
                 'Disetujui_Final', 'Ditolak'
             ])->default('Draft');
             

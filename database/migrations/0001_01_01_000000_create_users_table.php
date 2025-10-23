@@ -12,11 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
+            $table->id('id_user');
+            $table->string('username', 50)->unique()->nullable();
+            $table->string('nama_lengkap', 100);
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
+            $table->enum('peran', [
+                'Inputer_Prodi', 'Inputer_Unit', 
+                'Kaprodi', 'Kepala_Biro', 
+                'Dekan', 'WR_1', 'WR_2', 'WR_3', 
+                'Rektor', 'Admin'
+            ]);
+            $table->unsignedBigInteger('id_departemen')->nullable();
+            $table->boolean('is_aktif')->default(true);
             $table->string('password');
+            $table->string('no_telepon', 15)->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

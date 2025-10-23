@@ -9,10 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('program_kerjas', function (Blueprint $table) {
-            $table->id('id_program');
-            $table->string('kode_program', 10)->unique();
-            $table->string('nama_program', 255);
-            $table->string('iku_terkait', 50)->nullable();
+            $table->id('id_proker');
+            $table->string('kode_proker', 10)->unique();
+            $table->string('nama_proker', 255);
+            $table->foreignId('id_ikk')->constrained('ikks', 'id_ikk')->onDelete('cascade');
             $table->timestamps();
         });
     }

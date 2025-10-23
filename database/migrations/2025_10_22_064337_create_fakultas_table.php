@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('nama_fakultas', 100);
             
             // FK ke Pengguna (Dekan)
-            $table->foreignId('id_dekan')->nullable()->constrained('penggunas', 'id_pengguna'); 
+            $table->foreignId('id_dekan')->nullable()->constrained('users', 'id_user'); 
             $table->timestamps();
         });
     }

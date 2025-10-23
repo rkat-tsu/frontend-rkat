@@ -16,7 +16,7 @@ return new class extends Migration
             
             // Foreign Keys
             $table->foreignId('id_fakultas')->nullable()->constrained('fakultas', 'id_fakultas');
-            $table->foreignId('id_kepala')->nullable()->constrained('penggunas', 'id_pengguna');
+            $table->foreignId('id_kepala')->nullable()->constrained('users', 'id_user');
             $table->timestamps();
         });
     }

@@ -10,7 +10,11 @@ return new class extends Migration
     {
         Schema::create('akun_anggarans', function (Blueprint $table) {
             $table->string('kode_akun', 20)->primary();
-            $table->string('nama_akun', 150);
+            $table->string('nama_akun', 150); // masuk keterangan akun
+            $table->integer('volume')->default(0);
+            $table->string('satuan', 50)->nullable();
+            $table->decimal('harga_satuan', 18, 2)->default(0.00);
+            $table->decimal('total_harga', 18, 2)->default(0.00);
             $table->string('kelompok_akun', 50)->nullable();
             $table->decimal('pagu_limit', 18, 2)->default(0.00);
             $table->timestamps();

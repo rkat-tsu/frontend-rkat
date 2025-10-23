@@ -13,7 +13,7 @@ return new class extends Migration
 
             // FK KRUSIAL: Merujuk ke RKAT_HEADER (Persetujuan per dokumen)
             $table->foreignId('id_header')->constrained('rkat_headers', 'id_header')->onDelete('cascade');
-            $table->foreignId('id_approver')->constrained('penggunas', 'id_pengguna');
+            $table->foreignId('id_approver')->constrained('users', 'id_user');
 
             $table->string('level_persetujuan', 50); 
             $table->enum('aksi', ['Review', 'Setuju', 'Revisi', 'Tolak']);
