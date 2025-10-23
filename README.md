@@ -1,36 +1,39 @@
-# Sistem RKAT Kampus 📊
+# 🌟 Sistem RKAT Kampus 📊
 
-**Sistem RKAT** (Rencana Kegiatan dan Anggaran Tahunan) adalah sebuah aplikasi berbasis Laravel yang dirancang untuk mengelola proses pengajuan, *review*, dan persetujuan anggaran tahunan di lingkungan perguruan tinggi. Sistem ini menjamin akuntabilitas melalui hierarki organisasi kompleks dan alur persetujuan bertingkat (multi-level workflow).
+**Sistem RKAT** (Rencana Kegiatan dan Anggaran Tahunan) adalah sebuah aplikasi manajemen anggaran berbasis **Laravel 10+** yang dirancang khusus untuk lingkungan perguruan tinggi. Sistem ini mengotomatisasi proses pengajuan, peninjauan (*review*), dan persetujuan anggaran, menjamin akuntabilitas melalui implementasi hierarki organisasi yang kompleks dan alur kerja persetujuan bertingkat (*multi-level workflow*).
 
 ---
 
-## 🚀 Fitur dan Kapabilitas Utama
+## 🚀 Fitur Utama & Kapabilitas Sistem
 
-Sistem ini dikembangkan untuk mengoptimalkan proses perencanaan anggaran dengan fitur-fitur kunci:
+Sistem ini dikembangkan untuk mengoptimalkan efisiensi dan transparansi perencanaan anggaran:
 
-* **Header-Detail Budgeting:** Memungkinkan satu dokumen pengajuan RKAT (`rkat_headers`) untuk memuat banyak baris kegiatan dan anggaran (`rkat_details`), mempermudah proses input.
-* **Workflow Approval Bertingkat:** Mendukung alur persetujuan yang ketat: **Kaprodi/Kepala Biro** $\rightarrow$ **Dekan/Kepala BPUK** $\rightarrow$ **WR 1** $\rightarrow$ **WR 3** $\rightarrow$ **WR 2 (Final)**.
-* **Role-Based Access Control (RBAC):** Pemisahan peran yang jelas antara **Inputer** (Staf/Sekretaris) dan **Approver** (Kepala Unit/Biro) untuk menghindari *self-approval*.
-* **Audit Trail:** Pencatatan riwayat persetujuan yang detail di tabel `log_persetujuans`, memastikan setiap aksi terekam.
+| Fitur Kunci | Deskripsi |
+| :--- | :--- |
+| **Header-Detail Budgeting** | Satu dokumen pengajuan RKAT (`rkat_headers`) dapat memuat banyak item kegiatan dan anggaran detail (`rkat_details`), mempermudah agregasi dan input. |
+| **Workflow Approval Bertingkat** | Mendukung alur persetujuan hierarkis dan ketat: **Kaprodi/Kepala Biro** $\rightarrow$ **Dekan/Kepala BPUK** $\rightarrow$ **WR 1** $\rightarrow$ **WR 3** $\rightarrow$ **WR 2 (Final)**. |
+| **Role-Based Access Control (RBAC)** | Pemisahan peran yang tegas (*Inputer* vs *Approver*) untuk menjaga integritas data dan mencegah *self-approval*. |
+| **Audit Trail (Log Persetujuan)** | Pencatatan riwayat persetujuan yang detail di tabel `log_persetujuans`, merekam setiap aksi, catatan peninjau, dan waktu persetujuan. |
 
 ---
 
 ## 🛠️ Prasyarat Instalasi
 
-Pastikan sistem Anda memiliki komponen berikut sebelum instalasi:
+Pastikan lingkungan pengembangan lokal Anda telah memenuhi persyaratan teknis berikut sebelum memulai instalasi:
 
-* **PHP** (v8.1+)
-* **Composer**
-* Database **MySQL/MariaDB**
-* Laravel (v10+)
+* **PHP:** Versi 8.1 atau yang lebih baru.
+* **Composer:** Alat manajemen dependensi PHP.
+* **Node.js & NPM:** Diperlukan untuk instalasi dan kompilasi aset frontend.
+* **Database:** MySQL atau MariaDB.
+* **Framework:** Laravel (v10+).
 
 ---
 
-## ⚙️ Instalasi dan Setup Proyek
+## ⚙️ Panduan Instalasi dan Setup Proyek
 
-Ikuti langkah-langkah berikut untuk menginisialisasi proyek dan *database* lokal Anda.
+Ikuti langkah-langkah berikut secara berurutan untuk menyiapkan proyek dan *database* lokal Anda:
 
-### 1. Kloning Repositori & Instalasi Dependensi
+### 1. Kloning Repositori & Instalasi Dependensi PHP
 
 ```bash
 git clone [URL-REPOSitori-ANDA] sistem-rkat
@@ -90,4 +93,4 @@ Proyek *Sistem RKAT Kampus* ini dikembangkan oleh tim berikut:
 * Rhenaldy T.D.P - UI/UX Designer
 
 
-<footer>Copyright @ 2025 - TSU BPUK</footer>
+Copyright @ 2025 - TSU BPUK
