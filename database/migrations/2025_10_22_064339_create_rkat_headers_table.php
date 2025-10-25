@@ -20,7 +20,7 @@ return new class extends Migration
             $table->foreignId('diajukan_oleh')->constrained('users', 'id_user');
 
             $table->string('nomor_dokumen', 50)->unique()->nullable();
-            $table->text('judul_pengajuan')->nullable(); 
+            $table->text('judul_pengajuan'); 
 
             $table->enum('status_persetujuan', [
                 'Draft', 'Diajukan', 'Revisi', 

@@ -22,18 +22,20 @@ return new class extends Migration
 
             // Detail Program Per Baris
             $table->text('deskripsi_kegiatan');
-            $table->text('latar_belakang')->nullable();
-            $table->text('rasional')->nullable();
-            $table->text('tujuan')->nullable();
-            $table->text('mekanisme')->nullable();
-            $table->text('indikator_keberhasilan')->nullable();
+            $table->text('latar_belakang');
+            $table->text('rasional');
+            $table->text('tujuan');
+            $table->text('mekanisme');
+            $table->foreignId('id_indikator')->constrained('indikator_keberhasilans', 'id_indikator');
+            $table->text('keberlanjutan');
+            $table->text('pjawab');
 
             // RAB
-            $table->text('target')->nullable();
+            $table->text('target');
             $table->enum('kegiatan', ['Rutin', 'Inovasi'])->default('Rutin');
             $table->json('dokumen_pendukung')->nullable(); // PR
 
-            $table->date('waktu_pelaksanaan')->nullable();
+            $table->date('waktu_pelaksanaan');
             $table->decimal('anggaran', 15, 2);
             $table->enum('jenis_pencairan', ['Bank', 'Tunai'])->default('Tunai');
             $table->string('nama_bank')->nullable();
