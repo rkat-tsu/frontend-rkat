@@ -22,7 +22,7 @@ class RkatDetail extends Model
         'rasional',
         'tujuan',
         'mekanisme',
-        'indikator_keberhasilan',
+        'id_indikator',
         'target',
         'kegiatan',
         'dokumen_pendukung',
@@ -56,5 +56,10 @@ class RkatDetail extends Model
     public function programKerja()
     {
         return $this->belongsTo(ProgramKerja::class, 'id_program', 'id_proker');
+    }
+    // Relasi ke IndikatorKeberhasilan
+    public function indikatorKeberhasilan()
+    {
+        return $this->belongsTo(IndikatorKeberhasilan::class, 'id_indikator', 'id_indikator');
     }
 }
