@@ -15,16 +15,17 @@ class RkatApprovedMail extends Mailable
     public $rkatHeader;
     public $approverName;
 
-    public function __construct($header, $approver)
+    public function __construct($header, $approver, $programKerja)
     {
         $this->rkatHeader = $header;
         $this->approverName = $approver;
+        $this->programKerja = $programKerja;
     }
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Persetujuan RKAT: ' . $this->rkatHeader->judul_pengajuan,
+            subject: 'Persetujuan RKAT: ' . $this->programKerja->nama_proker,
         );
     }
 
@@ -33,8 +34,8 @@ class RkatApprovedMail extends Mailable
         return new Content(
             markdown: 'emails.rkat-approved', // Pastikan view ini ada
             with: [
-                'judul' => $this->rkatHeader->judul_pengajuan,
-                'departemen' => $this->rkatHeader->departemen->nama_departemen ?? 'N/A',
+                'judul' => $this->programKerja->nama_proker,
+                'unit' => $this->rkatHeader->unit->nama_unit ?? 'N/A',
                 'approver' => $this->approverName,
                 'headerId' => $this->rkatHeader->id_header,
             ],
