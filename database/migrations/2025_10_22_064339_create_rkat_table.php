@@ -1,203 +1,197 @@
 <?php
 
-namespace App\Http\Controllers;
-
-use App\Models\IndikatorKeberhasilan;
-use App\Models\RkatHeader;
-use App\Models\RkatDetail;
-use App\Models\RkatRabItem;
-use App\Models\TahunAnggaran;
-use App\Models\Unit;
-use App\Models\ProgramKerja;
-use App\Models\RincianAnggaranMaster;
-use App\Models\User; // Asumsi Model User ada
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
-use Inertia\Inertia; // Jika menggunakan Inertia
+use Illuminate\Support\Facades\Schema; // Diperlukan untuk DB::raw()
 
-class RkatController extends Controller
+return new class extends Migration
 {
-    /**
-     * Tampilkan halaman formulir pengajuan RKAT.
-     */
-    public function create()
+    public function up(): void
     {
-        // Data master yang diperlukan untuk frontend
-        $tahunAnggarans = TahunAnggaran::all();
-        $units = Unit::all();
-        $programKerjas = ProgramKerja::all();
-        $akunAnggarans = RincianAnggaranMaster::all();
+        // =======================================================
+        // 1. MASTER DATA UTAMA (Harus dibuat duluan)
+        // =======================================================
 
-        return Inertia::render('Rkat/Create', [
-            'tahunAnggarans' => $tahunAnggarans,
-            'units' => $units,
-            'programKerjas' => $programKerjas,
-            'akunAnggarans' => $akunAnggarans,
-        ]);
+        // Tabel Tahun Anggaran (Parent untuk RKAT Header)
+        Schema::create('tahun_anggarans', function (Blueprint $table) {
+            $table->integer('tahun_anggaran')->primary();
+            $table->date('tanggal_mulai');
+            $table->date('tanggal_akhir');
+            $table->enum('status_rkat', ['Drafting', 'Submission', 'Approved', 'Closed'])->default('Drafting');
+            $table->timestamps();
+        });
+
+        // Tabel Indikator Kinerja Utama (Parent dari Program Kerja)
+        Schema::create('ikus', function (Blueprint $table) {
+            $table->id('id_iku');
+            $table->string('nama_iku', 255);
+            $table->timestamps();
+        });
+
+        Schema::create('ikusubs', function (Blueprint $table) {
+            $table->id('id_ikusub');
+            $table->string('nama_ikusub', 255);
+            $table->foreignId('id_iku')->constrained('ikus', 'id_iku')->onDelete('cascade');
+            $table->timestamps();
+        });
+
+        Schema::create('ikks', function (Blueprint $table) {
+            $table->id('id_ikk');
+            $table->string('nama_ikk', 255);
+            $table->foreignId('id_ikusub')->constrained('ikusubs', 'id_ikusub')->onDelete('cascade');
+            $table->timestamps();
+        });
+
+        Schema::create('program_kerjas', function (Blueprint $table) {
+            $table->id('id_proker');
+            $table->string('kode_proker', 10)->unique();
+            $table->text('nama_proker');
+            $table->foreignId('id_ikk')->constrained('ikks', 'id_ikk')->onDelete('cascade');
+            $table->timestamps();
+        });
+
+        // Tabel Akun Anggaran Master (Parent untuk RKAT Detail)
+        Schema::create('rincian_anggarans', function (Blueprint $table) {
+            // Kolom transaksional (volume, harga) dihapus, karena tidak cocok di master data
+            $table->string('kode_anggaran', 20)->primary();
+            $table->string('nama_anggaran', 150);
+            $table->string('kelompok_anggaran', 50)->nullable();
+            $table->decimal('pagu_limit', 18, 2)->default(0.00);
+            $table->timestamps();
+        });
+
+        // Tabel Indikator Keberhasilan
+        Schema::create('indikator_keberhasilans', function (Blueprint $table) {
+            $table->id('id_indikator');
+            $table->text('nama_indikator')->nullable();
+            // Kolom target tahunan (dipertahankan sesuai permintaan, tapi kaku)
+            $table->text('capai_2024')->nullable();
+            $table->text('capai_2025')->nullable();
+            $table->text('capai_2029')->nullable();
+            $table->text('target_2025')->nullable();
+            $table->text('target_2029')->nullable();
+            $table->timestamps();
+        });
+
+        // =======================================================
+        // 2. TRANSAKSI RKAT HEADER (Setelah Tahun Anggaran)
+        // =======================================================
+
+        Schema::create('rkat_headers', function (Blueprint $table) {
+            $table->id('id_header');
+
+            // FK ke Tahun Anggaran
+            $table->integer('tahun_anggaran');
+            $table->foreign('tahun_anggaran')->references('tahun_anggaran')->on('tahun_anggarans');
+
+            // Asumsi 'unit' dan 'users' sudah ada
+            $table->foreignId('id_unit')->constrained('unit', 'id_unit');
+            $table->foreignId('diajukan_oleh')->constrained('users', 'id_user');
+
+            $table->string('nomor_dokumen', 50)->unique()->nullable();
+
+            $table->enum('status_persetujuan', [
+                'Draft', 'Diajukan', 'Revisi',
+                'Disetujui_L1', 'Menunggu_Dekan_Kepala',
+                'Menunggu_WR1', 'Menunggu_WR3', 'Menunggu_WR2',
+                'Disetujui_WR1', 'Disetujui_WR2', 'Disetujui_WR3',
+                'Disetujui_Final', 'Ditolak',
+            ])->default('Draft');
+
+            $table->dateTime('tanggal_pengajuan')->default(DB::raw('CURRENT_TIMESTAMP'));
+            $table->timestamps();
+        });
+
+        // =======================================================
+        // 3. TRANSAKSI RKAT DETAIL & LOG (Setelah Header & Master)
+        // =======================================================
+
+        Schema::create('rkat_details', function (Blueprint $table) {
+            $table->id('id_rkat_detail');
+
+            // FK KRUSIAL: Menghubungkan ke RKAT_HEADER
+            $table->foreignId('id_header')->constrained('rkat_headers', 'id_header')->onDelete('cascade');
+
+            // Foreign Keys Item (KODE AKUN harus disesuaikan ke 'rincian_anggarans')
+            $table->string('kode_akun', 20);
+            $table->foreign('kode_akun')->references('kode_anggaran')->on('rincian_anggarans'); // <--- PERBAIKAN NAMA TABEL & KOLOM
+            $table->foreignId('id_program')->constrained('program_kerjas', 'id_proker');
+            $table->foreignId('id_indikator')->constrained('indikator_keberhasilans', 'id_indikator');
+
+            // Detail Program Per Baris
+            $table->text('deskripsi_kegiatan');
+            $table->text('latar_belakang');
+            $table->text('rasional');
+            $table->text('tujuan');
+            $table->text('mekanisme');
+            $table->date('jadwal_pelaksanaan');
+            $table->text('lokasi_pelaksanaan');
+            $table->text('keberlanjutan');
+            $table->text('pjawab');
+
+            // RAB
+            $table->text('target');
+            // BARIS DI BAWAH INI DIHAPUS KARENA SALAH/BERLEBIHAN
+            // $table->foreign('kegiatan')->references('judul_pengajuan')->on('rkat_headers');
+            $table->enum('jenis_kegiatan', ['Rutin', 'Inovasi'])->default('Rutin');
+            $table->json('dokumen_pendukung')->nullable();
+
+            $table->decimal('anggaran', 15, 2);
+            $table->enum('jenis_pencairan', ['Bank', 'Tunai'])->default('Tunai');
+            $table->string('nama_bank')->nullable();
+            $table->string('nomor_rekening')->nullable();
+            $table->string('atas_nama')->nullable();
+
+            $table->timestamps();
+        });
+
+        Schema::create('rkat_rab_items', function (Blueprint $table) {
+            $table->id();
+
+            // FK ke baris RKAT Detail (kegiatan/baris anggaran yang dirinci)
+            $table->foreignId('id_rkat_detail')->constrained('rkat_details', 'id_rkat_detail')->onDelete('cascade');
+
+            // FK ke master Akun Anggaran (untuk mendapatkan nama akun dan kelompok)
+            $table->string('kode_anggaran', 20);
+            $table->foreign('kode_anggaran')->references('kode_anggaran')->on('rincian_anggarans');
+
+            // Data RAB Item
+            $table->text('deskripsi_item'); // Contoh: "Tiket pesawat" atau "Kertas HVS"
+            $table->decimal('volume', 8, 2); // Jumlah (misal: 2.5 atau 100)
+            $table->string('satuan', 50);    // Satuan (misal: "Unit", "Kali", "Orang", "Rim")
+            $table->decimal('harga_satuan', 18, 2); // Harga per satuan
+            $table->decimal('sub_total', 18, 2); // Volume * Harga Satuan
+
+            $table->timestamps();
+        });
+
+        Schema::create('log_persetujuans', function (Blueprint $table) {
+            $table->id('id_log');
+
+            // FK KRUSIAL: Merujuk ke RKAT_HEADER (Persetujuan per dokumen)
+            $table->foreignId('id_header')->constrained('rkat_headers', 'id_header')->onDelete('cascade');
+            $table->foreignId('id_approver')->constrained('users', 'id_user');
+
+            $table->string('level_persetujuan', 50);
+            $table->enum('aksi', ['Review', 'Setuju', 'Revisi', 'Tolak']);
+            $table->text('catatan')->nullable();
+            $table->timestamps();
+        });
     }
 
-    /**
-     * Menyimpan pengajuan RKAT baru ke database, memproses Header, Indikator, dan RAB.
-     */
-    public function store(Request $request)
+    public function down(): void
     {
-        // ====================================================================
-        // 1. Validasi Data
-        // ====================================================================
-
-        // Validasi Indikator Kinerja (Disimpan sebagai master dan diacu oleh RkatDetail)
-        $request->validate([
-            'indikator_kinerja' => ['required', 'array', 'min:1'],
-            'indikator_kinerja.*.indikator' => ['required', 'string'],
-            'indikator_kinerja.*.kondisi_akhir_2024_capaian' => ['nullable', 'string'],
-            'indikator_kinerja.*.tahun_2025_target' => ['nullable', 'string'],
-            'indikator_kinerja.*.tahun_2025_capaian' => ['nullable', 'string'],
-            'indikator_kinerja.*.akhir_tahun_2029_target' => ['nullable', 'string'],
-            'indikator_kinerja.*.akhir_tahun_2029_capaian' => ['nullable', 'string'],
-        ]);
-        
-        // Validasi Item RAB (Rincian Anggaran Per Item Biaya)
-        $request->validate([
-            'rincian_anggaran' => ['required', 'array', 'min:1'],
-            'rincian_anggaran.*.kode_anggaran' => ['required', 'string', 'exists:rincian_anggarans,kode_anggaran'],
-            'rincian_anggaran.*.kebutuhan' => ['required', 'string', 'max:255'],
-            'rincian_anggaran.*.vol' => ['required', 'numeric', 'min:1'],
-            'rincian_anggaran.*.satuan' => ['required', 'string', 'max:50'],
-            'rincian_anggaran.*.biaya_satuan' => ['required', 'numeric', 'min:0'],
-            'rincian_anggaran.*.jumlah' => ['required', 'numeric', 'min:0'], // sub_total
-        ]);
-        
-        // Validasi Header dan Detail Kegiatan (digabung dalam formulir)
-        $validatedData = $request->validate([
-            // Header Fields
-            'tahun_anggaran' => ['required', 'exists:tahun_anggarans,tahun_anggaran'], 
-            'id_unit' => ['required', 'exists:unit,id_unit'], 
-            // Detail Fields
-            'id_program' => ['required', 'exists:program_kerjas,id_proker'],
-            'kode_akun' => ['required', 'exists:rincian_anggarans,kode_anggaran'], // Kode Akun Utama Kegiatan
-            'judul_pengajuan' => ['required', 'string'], // Dipakai untuk deskripsi_kegiatan
-            'latar_belakang' => ['required', 'string'],
-            'rasional' => ['required', 'string'],
-            'tujuan' => ['required', 'string'],
-            'mekanisme' => ['required', 'string'],
-            'jadwal_pelaksanaan' => ['required', 'date'],
-            'lokasi_pelaksanaan' => ['required', 'string'],
-            'keberlanjutan' => ['required', 'string'],
-            'pjawab' => ['required', 'string'],
-            'target' => ['required', 'string'],
-            'anggaran' => ['required', 'numeric', 'min:0'], // Total Anggaran Kegiatan
-            // Pencairan
-            'jenis_pencairan' => ['required', 'in:Bank,Tunai'],
-            'nama_bank' => ['nullable', 'required_if:jenis_pencairan,Bank', 'string'],
-            'nomor_rekening' => ['nullable', 'required_if:jenis_pencairan,Bank', 'string'],
-            'atas_nama' => ['nullable', 'required_if:jenis_pencairan,Bank', 'string'],
-        ]);
-
-
-        // ====================================================================
-        // 2. Transaksi Database
-        // ====================================================================
-        
-        try {
-            DB::beginTransaction();
-
-            // --- A. Simpan Indikator Kinerja Keberhasilan ---
-            $indikatorKeberhasilan = collect($request->input('indikator_kinerja'))->map(function ($item) {
-                return [
-                    'nama_indikator' => $item['indikator'],
-                    'capai_2024' => $item['kondisi_akhir_2024_capaian'] ?? null,
-                    'target_2025' => $item['tahun_2025_target'] ?? null,
-                    'capai_2025' => $item['tahun_2025_capaian'] ?? null,
-                    'target_2029' => $item['akhir_tahun_2029_target'] ?? null,
-                    'capai_2029' => $item['akhir_tahun_2029_capaian'] ?? null,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            });
-
-            IndikatorKeberhasilan::insert($indikatorKeberhasilan->toArray());
-            
-            // Dapatkan ID dari indikator pertama yang baru disimpan untuk FK di RkatDetail
-            $lastId = DB::getPdo()->lastInsertId();
-            $firstIndikatorId = $lastId - $indikatorKeberhasilan->count() + 1;
-
-
-            // --- B. Simpan RKAT Header ---
-            $rkatHeader = RkatHeader::create([
-                'tahun_anggaran' => $validatedData['tahun_anggaran'],
-                'id_unit' => $validatedData['id_unit'],
-                'diajukan_oleh' => Auth::id(), // ID user yang sedang login
-                'nomor_dokumen' => RkatHeader::generateNomorDokumen($validatedData['tahun_anggaran'], $validatedData['id_unit']), // Asumsi ada helper method
-                'status_persetujuan' => 'Draft',
-                'tanggal_pengajuan' => now(),
-            ]);
-
-            // --- C. Simpan RKAT Detail (Item Kegiatan Utama) ---
-            $rkatDetail = RkatDetail::create([
-                'id_header' => $rkatHeader->id_header,
-                'kode_akun' => $validatedData['kode_akun'],
-                'id_program' => $validatedData['id_program'],
-                'id_indikator' => $firstIndikatorId, // FK ke Indikator yang baru disimpan
-                
-                // Deskripsi Kegiatan
-                'deskripsi_kegiatan' => $validatedData['judul_pengajuan'],
-                'latar_belakang' => $validatedData['latar_belakang'],
-                'rasional' => $validatedData['rasional'],
-                'tujuan' => $validatedData['tujuan'],
-                'mekanisme' => $validatedData['mekanisme'],
-                'jadwal_pelaksanaan' => $validatedData['jadwal_pelaksanaan'],
-                'lokasi_pelaksanaan' => $validatedData['lokasi_pelaksanaan'],
-                'keberlanjutan' => $validatedData['keberlanjutan'],
-                'pjawab' => $validatedData['pjawab'],
-                'target' => $validatedData['target'],
-
-                'jenis_kegiatan' => $request->input('jenis_kegiatan', 'Rutin'), // Asumsi input atau default
-                'dokumen_pendukung' => null,
-
-                // Anggaran dan Pencairan
-                'anggaran' => $validatedData['anggaran'],
-                'jenis_pencairan' => $validatedData['jenis_pencairan'],
-                'nama_bank' => $validatedData['nama_bank'] ?? null,
-                'nomor_rekening' => $validatedData['nomor_rekening'] ?? null,
-                'atas_nama' => $validatedData['atas_nama'] ?? null,
-            ]);
-
-            // --- D. Simpan Rincian Anggaran (RAB Items) ---
-            $rabItems = [];
-            foreach ($request->input('rincian_anggaran') as $item) {
-                $rabItems[] = [
-                    'id_rkat_detail' => $rkatDetail->id_rkat_detail,
-                    'kode_anggaran' => $item['kode_anggaran'],
-                    'deskripsi_item' => $item['kebutuhan'],
-                    'volume' => $item['vol'],
-                    'satuan' => $item['satuan'],
-                    'harga_satuan' => $item['biaya_satuan'],
-                    'sub_total' => $item['jumlah'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            }
-            RkatRabItem::insert($rabItems); 
-
-            DB::commit();
-
-            return redirect()->route('rkat', $rkatHeader->id_header)->with('success', 'Pengajuan RKAT berhasil disimpan!');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Gagal menyimpan RKAT: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data. Error: ' . $e->getMessage())->withInput();
-        }
+        Schema::dropIfExists('rkat_headers');
+        Schema::dropIfExists('indikator_keberhasilans');
+        Schema::dropIfExists('rkat_details');
+        Schema::dropIfExists('log_persetujuans');
+        Schema::dropIfExists('tahun_anggarans');
+        Schema::dropIfExists('ikus');
+        Schema::dropIfExists('ikusubs');
+        Schema::dropIfExists('ikks');
+        Schema::dropIfExists('program_kerjas');
+        Schema::dropIfExists('rincian_anggarans');
+        Schema::dropIfExists('rkat_rab_items');
     }
-    
-    // Asumsi method statis ini ada di Model RkatHeader
-    /*
-    protected static function generateNomorDokumen($tahun, $unitId)
-    {
-        // Contoh implementasi dummy
-        return 'RKAT/' . $unitId . '/' . $tahun . '/' . DB::table('rkat_headers')->where('tahun_anggaran', $tahun)->count() + 1;
-    }
-    */
-}
+};
