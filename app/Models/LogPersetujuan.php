@@ -12,7 +12,7 @@ class LogPersetujuan extends Model
     use HasFactory;
 
     protected $primaryKey = 'id_log';
-    protected $table = 'log_persetujuans'; // Pastikan nama tabel benar
+    protected $table = 'log_persetujuans';
 
     protected $fillable = [
         'id_header',
@@ -28,10 +28,8 @@ class LogPersetujuan extends Model
         return $this->belongsTo(RkatHeader::class, 'id_header', 'id_header');
     }
     
-    // Relasi ke User (Approver/Penyetuju)
     public function approver()
     {
-        // Asumsi model User Anda ada di App\Models\User dan primary key-nya id_user
         return $this->belongsTo(User::class, 'id_approver', 'id_user');
     }
 }

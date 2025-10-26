@@ -27,8 +27,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'email', 
         'password',
         'nama_lengkap',
-        'peran',
-        'id_departemen',
+        'role',
+        'id_unit',
         'is_aktif',
         'nomor_telepon',
     ];
@@ -70,9 +70,24 @@ class User extends Authenticatable implements MustVerifyEmail
 
     // --- Relasi Lainnya (Contoh) ---
     
-    public function departemen()
+    public function isAdmin(): bool
     {
-        // Pastikan Anda telah mengimpor model Departemen
-        return $this->belongsTo(Departemen::class, 'id_departemen', 'id_departemen');
+        return $this->peran === 'Admin';
+    }
+
+    public function isApprover(): bool
+    {
+        return in_array($this->peran, ['Dekan', 'Kepala_Unit', 'WR_1', 'WR_2', 'WR_3', 'Rektor']);
+    }
+
+    public function isUnitHead(): bool
+    {
+        return in_array($this->peran, ['Dekan', 'Kepala_Unit']);
+    }
+
+    public function unit(): BelongsTo
+    {
+        // id_unit di tabel users merujuk ke id_unit di tabel unit
+        return $this->belongsTo(Unit::class, 'id_unit', 'id_unit');
     }
 }

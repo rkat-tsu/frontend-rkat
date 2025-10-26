@@ -13,7 +13,7 @@ class Ikk extends Model
     
     protected $primaryKey = 'id_ikk';
     protected $fillable = ['nama_ikk', 'id_ikusub'];
-    public $table = 'ikks';
+    protected $table = 'ikks';
 
     // Relasi ke Ikusub (Banyak IKK dimiliki oleh satu Ikusub)
     public function ikusub()

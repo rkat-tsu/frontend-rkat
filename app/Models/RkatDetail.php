@@ -17,16 +17,19 @@ class RkatDetail extends Model
         'id_header',
         'kode_akun',
         'id_program',
+        'id_indikator',
         'deskripsi_kegiatan',
         'latar_belakang',
         'rasional',
         'tujuan',
         'mekanisme',
-        'id_indikator',
+        'jadwal_pelaksanaan',
+        'lokasi_pelaksanaan',
+        'keberlanjutan',
+        'pjawab',
         'target',
-        'kegiatan',
+        'jenis_kegiatan',
         'dokumen_pendukung',
-        'waktu_pelaksanaan',
         'anggaran',
         'jenis_pencairan',
         'nama_bank',
@@ -41,15 +44,15 @@ class RkatDetail extends Model
     ];
 
     // Relasi ke RkatHeader
-    public function header()
+    public function rkatHeader()
     {
         return $this->belongsTo(RkatHeader::class, 'id_header', 'id_header');
     }
-    
-    // Relasi ke AkunAnggaran
-    public function akunAnggaran()
+
+    // Relasi ke RincianAnggaran
+    public function rincianAnggaran()
     {
-        return $this->belongsTo(AkunAnggaran::class, 'kode_akun', 'kode_akun');
+        return $this->belongsTo(RincianAnggaran::class, 'kode_anggaran', 'kode_anggaran');
     }
     
     // Relasi ke ProgramKerja
@@ -61,5 +64,10 @@ class RkatDetail extends Model
     public function indikatorKeberhasilan()
     {
         return $this->belongsTo(IndikatorKeberhasilan::class, 'id_indikator', 'id_indikator');
+    }
+
+    public function rabItems()
+    {
+        return $this->hasMany(RkatRabItem::class, 'id_rkat_detail', 'id_rkat_detail');
     }
 }

@@ -15,24 +15,21 @@ class RkatHeader extends Model
 
     protected $fillable = [
         'tahun_anggaran',
-        'id_departemen',
+        'id_unit',
         'diajukan_oleh',
         'nomor_dokumen',
-        'judul_pengajuan',
         'status_persetujuan',
         'tanggal_pengajuan',
+    ];
+
+    protected $casts = [
+        'tanggal_pengajuan' => 'datetime',
     ];
     
     // Relasi ke TahunAnggaran
     public function tahunAnggaran()
     {
         return $this->belongsTo(TahunAnggaran::class, 'tahun_anggaran', 'tahun_anggaran');
-    }
-    
-    // Relasi ke Departemen
-    public function departemen()
-    {
-        return $this->belongsTo(Departemen::class, 'id_departemen', 'id_departemen');
     }
     
     // Relasi ke User (yang mengajukan)
@@ -42,9 +39,18 @@ class RkatHeader extends Model
         return $this->belongsTo(User::class, 'diajukan_oleh', 'id_user');
     }
 
-    // Relasi ke RkatDetail (satu header punya banyak detail)
-    public function details()
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class, 'id_unit', 'id_unit');
+    }
+
+    public function rkatDetails()
     {
         return $this->hasMany(RkatDetail::class, 'id_header', 'id_header');
+    }
+
+    public function logPersetujuans()
+    {
+        return $this->hasMany(LogPersetujuan::class, 'id_header', 'id_header');
     }
 }

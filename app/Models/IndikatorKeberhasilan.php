@@ -11,9 +11,11 @@ class IndikatorKeberhasilan extends Model
 {
     use HasFactory;
 
+    protected $table = 'indikator_keberhasilans';
     protected $primaryKey = 'id_indikator';
 
     protected $fillable = [
+        'nama_indikator',
         'capai_2024',
         'capai_2025',
         'capai_2029',
