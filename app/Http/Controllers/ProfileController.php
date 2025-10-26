@@ -18,11 +18,14 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        // PERBAIKAN: Menggunakan nama kolom yang benar (peran dan no_telepon).
+        // PENTING: Menghapus 'password' dari data yang dikirim ke frontend.
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
             'auth' => [
-                'user' => $request->user()->only('id', 'username', 'email', 'nama_lengkap', 'no_telp', 'peran', 'password'),
+                'user' => $request->user()->only('id_user', 'username', 'email', 'nama_lengkap', 'no_telepon', 'peran'), 
+                // Catatan: id_user digunakan sebagai PK di skema Anda.
             ],
         ]);
     }
@@ -34,39 +37,34 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        // Data yang telah divalidasi, termasuk: nama_lengkap, username, no_telp, email, dan peran (jika Admin)
+        // Data yang telah divalidasi, termasuk: nama_lengkap, username, no_telepon, email, dan peran (jika Admin)
         $validated = $request->validated();
+        
+        // --- 1. Pembaruan Atribut Dasar ---
 
-        // --- 1. Pembaruan Atribut Dasar (nama_lengkap, username, no_telp, email) ---
-        // Semua field yang ada di $validated akan diisi ke model $user.
-        // Karena validasi sudah memastikan username, no_telp, dan email diizinkan untuk diubah,
-        // kita bisa menggunakan fill() secara langsung.
+        // PERBAIKAN: Menggunakan nama kolom yang benar: 'no_telepon' dan 'peran'.
+        // PENTING: Hapus pembaruan 'password' di sini, karena form ini hanya untuk profil.
         $user->fill([
             'nama_lengkap' => $validated['nama_lengkap'],
             'username' => $validated['username'],
-            'no_telp' => $validated['no_telp'],
+            'no_telepon' => $validated['no_telepon'], // <-- Diperbaiki
             'email' => $validated['email'],
-            'password' => $validated['password'],
+            // 'password' TIDAK diisi di sini
         ]);
+        
+        // --- 2. Logika Khusus Pembaruan Peran (Peran) untuk Admin ---
+        // $request->user()->peran digunakan untuk memeriksa apakah user yang sedang login adalah Admin
+        if ($request->user()->peran === 'Admin' && isset($validated['peran'])) {
+            // Karena validasi sudah menjamin bahwa hanya Admin yang bisa mengirim field 'peran',
+            // kita bisa langsung mengisi nilai peran yang baru jika field tersebut ada.
 
-        // --- 2. Logika Verifikasi Email ---
-        // Hanya atur ulang verifikasi jika email benar-benar diubah.
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
+            // Perhatikan: $user di sini adalah user yang SANGAT SEDANG LOGIN.
+            $user->peran = $validated['peran']; // <-- Diperbaiki
         }
 
-        // --- 3. Logika Khusus Pembaruan Peran (Role) untuk Admin ---
-        // Hanya Admin yang dapat mengubah field 'peran'.
-        if ($user->peran === 'Admin' && isset($validated['peran'])) {
-            // Karena validasi di ProfileUpdateRequest menggunakan 'prohibited' untuk non-Admin,
-            // kita hanya perlu cek apakah field 'peran' ada di data yang divalidasi.
-
-            // Catatan: Dalam konteks ini, $user adalah user yang SANGAT SEDANG LOGIN.
-            // Jika Admin ingin mengubah peran pengguna LAIN, ini harus diubah ke controller lain (misal: UserController@updateRole),
-            // tetapi untuk pembaruan profil pengguna yang sedang login, ini benar.
-
-            // Jika Admin mengubah perannya sendiri:
-            $user->peran = $validated['peran'];
+        // --- 3. Logika Verifikasi Email ---
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
         $user->save();

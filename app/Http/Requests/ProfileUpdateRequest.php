@@ -16,44 +16,49 @@ class ProfileUpdateRequest extends FormRequest
     public function rules(): array
     {
         $user = $this->user();
+        
+        // Daftar Peran yang Konsisten dengan RegisteredUserController (Asumsi ENUM DB Anda)
+        $validRoles = [
+            'Inputer', 'Kaprodi', 'Kepala_Unit', 'Dekan', 
+            'WR_1', 'WR_2', 'WR_3', 'Rektor', 'Admin'
+        ];
+
         return [
-            'nama_lengkap' => ['required', 'string', 'max:255'],
+            // 1. Nama Lengkap
+            'nama_lengkap' => ['required', 'string', 'max:100'], // max:100 sesuai skema
             
-            // Tambahkan validasi untuk username
+            // 2. Username
             'username' => [
-                'required', 
+                'nullable', // Menggunakan 'nullable' karena di DB skema adalah nullable
                 'string', 
-                'max:255', 
-                // Harus unik, kecuali ID user yang sedang diupdate
-                Rule::unique(User::class)->ignore($user->id), 
+                'max:50', // max:50 sesuai skema
+                // PERBAIKAN: Menggunakan id_user sebagai PK dan PK key name di ignore
+                Rule::unique(User::class)->ignore($user->id_user, 'id_user'), 
             ],
             
-            'no_telp' => ['nullable', 'string', 'max:15'], 
-
-            // Validasi email
+            // 3. No. Telepon
+            'no_telepon' => ['nullable', 'string', 'max:15'], // <-- PERBAIKAN: Menggunakan 'no_telepon'
+            
+            // 4. Email
             'email' => [
                 'required',
                 'string',
                 'lowercase',
                 'email',
                 'max:255',
-                // Harus unik, kecuali ID user yang sedang diupdate
-                Rule::unique(User::class)->ignore($user->id),
+                // PERBAIKAN: Menggunakan id_user sebagai PK dan PK key name di ignore
+                Rule::unique(User::class)->ignore($user->id_user, 'id_user'),
             ],
-            'peran' => [
-                // Validasi bahwa nilai 'peran' harus ada di daftar peran yang diizinkan
-                'nullable', // Izinkan null jika admin tidak ingin mengirimnya
-                Rule::in(['Admin', 'User', 'Super Admin']), // Ganti dengan daftar peran yang valid di aplikasi Anda
-                
-                // Aturan bersyarat:
-                // Jika user yang login adalah 'Admin', maka field 'peran' diizinkan.
-                // Jika bukan 'Admin', field 'peran' akan diabaikan (prohibited)
-                // Ini mencegah user biasa mengirimkan nilai 'peran'.
+            
+            // 5. peran (Peran)
+            'peran' => [ // <-- PERBAIKAN: Menggunakan 'peran'
+                // Hanya Admin (user yang sedang login) yang diizinkan untuk mengirim field 'peran'.
+                // User non-Admin akan otomatis di-prohibited.
                 Rule::when($user->peran !== 'Admin', ['prohibited']),
-                
-                // CATATAN: Karena kita menggunakan 'nullable' dan 'prohibited',
-                // Logika required harus ada di controller jika Anda mengharapkan admin 
-                // selalu mengirimkan peran, atau biarkan 'nullable' jika peran bersifat opsional.
+
+                // Jika Admin yang mengirim (atau jika field disertakan), validasi Rule::in diterapkan
+                'nullable', // Izinkan null jika admin tidak ingin mengubahnya
+                Rule::in($validRoles), // <-- PERBAIKAN: Menggunakan daftar peran yang valid
             ]
         ];
     }

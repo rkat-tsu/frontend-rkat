@@ -32,11 +32,23 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'nama_lengkap' => 'required|string|max:255',
+            'nama_lengkap' => 'required|string|max:100', // max:100 sesuai skema
+            'username' => 'nullable|string|max:50|unique:'.User::class, // Opsional, sesuai skema DB
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'no_telepon' => 'nullable|string|max:15', // Opsional, sesuai skema DB
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'peran' => ['required','string', Rule::in(['Inputer_Prodi', 'Inputer_Unit', 'Kaprodi', 'Kepala_Biro', 'Dekan', 'WR_1', 'WR_2', 'WR_3', 'Rektor', 'Admin']),
-            ],
+            
+            'peran' => ['required','string', Rule::in([
+                'Inputer', 
+                'Kaprodi', 
+                'Kepala_Unit', // Diperbarui dari 'Kepala_Biro'
+                'Dekan', 
+                'WR_1', 'WR_2', 'WR_3', 
+                'Rektor', 
+                'Admin'
+            ])],
+            
+            // id_unit tidak divadlidasi di sini, karena biasanya diisi oleh Admin/belakangan
         ]);
 
         $user = User::create([
@@ -44,7 +56,10 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'peran' => $request->peran,
-            'id_departemen' => null,
+            
+            // PERBAIKAN: Menggunakan 'id_unit' (sesuai skema) dan diset null
+            'id_unit' => null, 
+            
             'is_aktif' => true,
         ]);
 
