@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('nama_lengkap', 100);
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
-            $table->enum('role', [
+            $table->enum('peran', [
                 'Inputer', 
                 'Kaprodi', 'Kepala_Unit', 
                 'Dekan', 'WR_1', 'WR_2', 'WR_3', 
