@@ -16,7 +16,7 @@ const DUMMY_RKAT_TERBARU = [
     { unit: 'F. Vokasi', judul: 'Lorem ipsum dolor sit amet, consectetur...', waktu: '5 menit yang lalu', status: 'Menunggu Persetujuan' },
     { unit: 'BEM', judul: 'Lorem ipsum dolor sit amet, consectetur...', waktu: '1 Jam yang lalu', status: 'Approve' },
     { unit: 'CIT', judul: 'Lorem ipsum dolor sit amet, consectetur...', waktu: '2 Jam yang lalu', status: 'Pending' },
-    { unit: 'BAKPU', judul: 'Lorem ipsum dolor sit amet, consectetur...', waktu: '3 Jam yang lalu', status: 'Ditolak' },
+    { unit: 'BPUK', judul: 'Lorem ipsum dolor sit amet, consectetur...', waktu: '3 Jam yang lalu', status: 'Ditolak' },
 ];
 
 export default function Dashboard({ auth }) {
@@ -50,7 +50,7 @@ export default function Dashboard({ auth }) {
             header={
                 <div>
                     <h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Dashboard</h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Selamat datang! {auth.user.peran?.toUpperCase() || auth.user.role?.toUpperCase() || 'PENGGUNA'}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Selamat datang! {auth.user.peran?.toUpperCase() || auth.user.peran?.toUpperCase() || 'PENGGUNA'}</p>
                 </div>
             }
         >
