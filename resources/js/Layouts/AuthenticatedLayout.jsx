@@ -18,7 +18,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     <div className="flex h-16 justify-between">
                         <div className="flex">
                             <div className="flex shrink-0 items-center">
-                                <Link href="/">
+                                <Link href="/dashboard">
                                     <ApplicationLogo className="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
                                 </Link>
                             </div>
@@ -47,6 +47,15 @@ export default function AuthenticatedLayout({ header, children }) {
                                     active={route().current('approver.index')}
                                 >
                                     Persetujuan RKAT
+                                </NavLink>
+                            </div>
+
+                            <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                                <NavLink
+                                    href={route('iku.create')}
+                                    active={route().current('iku.create')}
+                                >
+                                    IKU
                                 </NavLink>
                             </div>
                         </div>
@@ -156,7 +165,16 @@ export default function AuthenticatedLayout({ header, children }) {
                             href={route('approver.index')}
                             active={route().current('approver.index')}
                         >
-                            Persetujuan Persetujuan
+                            Persetujuan RKAT
+                        </ResponsiveNavLink>
+                    </div>
+
+                    <div className="space-y-1 pb-3 pt-2">
+                        <ResponsiveNavLink
+                            href={route('iku.create')}
+                            active={route().current('iku.create')}
+                        >
+                            IKU
                         </ResponsiveNavLink>
                     </div>
 
