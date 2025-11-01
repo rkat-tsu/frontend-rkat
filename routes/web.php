@@ -3,7 +3,6 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RkatController;
 use App\Http\Controllers\ApprovalController;
-// TAMBAHKAN INI
 use App\Http\Controllers\IkuController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
