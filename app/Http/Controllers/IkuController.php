@@ -50,32 +50,57 @@ class IkuController extends Controller
         DB::beginTransaction();
 
         try {
-            // A. Ambil IKU Utama yang dipilih
             $iku = Iku::find($validated['id_iku']); 
 
-            // B. Iterasi dan Simpan IKUSUB baru di bawah IKU yang dipilih
+            // Simpan ID IKUSUB dan IKK yang sedang diproses untuk tujuan penghapusan
+            $processedIkusubIds = [];
+            $processedIkkIds = [];
+
+            // B. Iterasi dan Simpan/Update IKUSUB
             foreach ($validated['ikusubs'] as $ikusubData) {
                 
-                // $iku->ikusubs()->create() akan otomatis mengisi foreign key 'id_iku'
-                $ikusub = $iku->ikusubs()->create([
-                    'nama_ikusub' => $ikusubData['nama_ikusub'],
-                ]);
-                
-                // C. Iterasi dan Simpan IKK baru di dalam IKUSUB baru
-                foreach ($ikusubData['ikks'] as $ikkData) {
-                    
-                    // $ikusub->ikks()->create() akan otomatis mengisi foreign key 'id_ikusub'
-                    $ikusub->ikks()->create([
-                        'nama_ikk' => $ikkData['nama_ikk'],
-                    ]);
+                if (isset($ikusubData['id_ikusub']) && $ikusubData['id_ikusub']) {
+                    // Update IKUSUB yang sudah ada
+                    $ikusub = Ikusub::find($ikusubData['id_ikusub']);
+                    $ikusub->update(['nama_ikusub' => $ikusubData['nama_ikusub']]);
+                    $processedIkusubIds[] = $ikusub->id_ikusub;
+                } else {
+                    // Buat IKUSUB baru
+                    $ikusub = $iku->ikusubs()->create(['nama_ikusub' => $ikusubData['nama_ikusub']]);
+                    $processedIkusubIds[] = $ikusub->id_ikusub;
                 }
+                
+                // C. Iterasi dan Simpan/Update IKK
+                foreach ($ikusubData['ikks'] as $ikkData) {
+                    if (isset($ikkData['id_ikk']) && $ikkData['id_ikk']) {
+                        // Update IKK yang sudah ada
+                        $ikk = Ikk::find($ikkData['id_ikk']);
+                        $ikk->update(['nama_ikk' => $ikkData['nama_ikk']]);
+                        $processedIkkIds[] = $ikk->id_ikk;
+                    } else {
+                        // Buat IKK baru
+                        $ikk = $ikusub->ikks()->create(['nama_ikk' => $ikkData['nama_ikk']]);
+                        $processedIkkIds[] = $ikk->id_ikk;
+                    }
+                }
+                
+                // Hapus IKK yang TIDAK ADA dalam request tapi terhubung ke IKUSUB ini
+                $ikusub->ikks()
+                       ->whereNotIn('id_ikk', $processedIkkIds)
+                       ->delete();
             }
+
+            // Hapus IKUSUB yang TIDAK ADA dalam request tapi terhubung ke IKU ini
+            $iku->ikusubs()
+                ->whereNotIn('id_ikusub', $processedIkusubIds)
+                ->delete();
 
             DB::commit();
 
             return redirect()
-                ->route('dashboard') 
-                ->with('success', 'IKUSUB dan IKK baru berhasil ditambahkan ke IKU ' . $iku->nama_iku . '!');
+                ->route('iku.create')
+                ->with('success', 'IKUSUB dan IKK baru berhasil ditambahkan ke IKU ' . $iku->nama_iku . '!')
+                ->withInput();
 
         } catch (\Exception $e) {
             DB::rollBack();
