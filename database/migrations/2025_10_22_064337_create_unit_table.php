@@ -15,9 +15,8 @@ return new class extends Migration
 
             // Tipe unit: Fakultas, Prodi, Unit, atau Lainnya
             $table->enum('tipe_unit', ['Fakultas', 'Prodi', 'Unit', 'Lainnya']);
+            $table->enum('jalur_persetujuan',['akademik', 'non-akademik']);
             
-            // Relasi Kepemimpinan: FK ke users.id_user (PK)
-            // Ini akan berisi ID user yang perannya adalah Dekan atau Kepala Unit
             $table->unsignedBigInteger('id_kepala')->nullable();
             $table->foreign('id_kepala')->references('id_user')->on('users')->onDelete('set null'); 
 

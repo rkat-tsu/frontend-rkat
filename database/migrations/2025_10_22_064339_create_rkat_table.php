@@ -125,7 +125,8 @@ return new class extends Migration
             $table->text('rasional');
             $table->text('tujuan');
             $table->text('mekanisme');
-            $table->date('jadwal_pelaksanaan');
+            $table->date('jadwal_pelaksanaan_mulai');
+            $table->date('jadwal_pelaksanaan_akhir');
             $table->text('lokasi_pelaksanaan');
             $table->text('keberlanjutan');
             $table->text('pjawab');
