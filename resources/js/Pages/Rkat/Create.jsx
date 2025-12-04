@@ -4,136 +4,191 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm } from '@inertiajs/react';
 import React, { useState, useEffect } from 'react';
 import InputLabel from '@/Components/InputLabel';
-import SelectInput from '@/Components/SelectInput';
 import TextInput from '@/Components/TextInput';
 import PrimaryButton from '@/Components/PrimaryButton';
-import TextArea from '@/Components/TextArea'; 
+import TextArea from '@/Components/TextArea';
 import InputError from '@/Components/InputError';
 import DangerButton from '@/Components/DangerButton';
-import RupiahInput from '@/Components/RupiahInput'; // Mengimpor komponen RupiahInput
+import RupiahInput from '@/Components/RupiahInput';
+import DateInput from '@/Components/DateInput';
+import { Trash2, ChevronDown, Check } from 'lucide-react';
+import { cn } from "@/lib/utils";
+
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+} from "@/Components/ui/dropdown-menu";
 
 // ====================================================================
-// UTILITY FUNCTIONS
+// UTILITY COMPONENTS & FUNCTIONS
 // ====================================================================
 const formatRupiah = (angka) => {
-    return `Rp. ${Number(angka).toLocaleString('id-ID', { minimumFractionDigits: 2 })}`;
+    const number = Number(angka) || 0;
+    return `Rp. ${number.toLocaleString('id-ID', { minimumFractionDigits: 2 })}`;
 };
+
+/**
+ * CustomSelect Component
+ * Wrapper untuk Radix Dropdown agar mudah digunakan menggantikan Select HTML biasa.
+ */
+const CustomSelect = ({ value, onChange, options = [], placeholder = "Pilih...", className, disabled }) => {
+    const selectedOption = options.find(opt => String(opt.value) === String(value));
+    const displayLabel = selectedOption ? selectedOption.label : placeholder;
+
+    return (
+        <DropdownMenu>
+            {/* Height h-11 (44px) sudah diterapkan di sini */}
+            <DropdownMenuTrigger disabled={disabled} className={cn(
+                "flex h-11 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300 dark:focus:ring-teal-600 dark:focus:border-teal-600",
+                className
+            )}>
+                <span className="truncate">{displayLabel}</span>
+                <ChevronDown className="h-4 w-4 opacity-50 ml-2" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                {options.length === 0 ? (
+                    <div className=" text-sm text-gray-500 text-center">Tidak ada data</div>
+                ) : (
+                    options.map((opt) => (
+                        <DropdownMenuItem
+                            key={opt.value}
+                            onSelect={() => {
+                                onChange({ target: { value: opt.value } });
+                            }}
+                            className="cursor-pointer"
+                        >
+                            {opt.label}
+                            {String(opt.value) === String(value) && <Check className="ml-auto h-4 w-4" />}
+                        </DropdownMenuItem>
+                    ))
+                )}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+};
+
+/**
+ * TableContainer Component
+ * Wrapper untuk menambahkan border radius dan overflow-x-auto.
+ */
+const TableContainer = ({ children, className = "" }) => (
+    // Outer div untuk margin bottom
+    <div className={cn("mb-6", className)}>
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+                {children}
+            </div>
+        </div>
+    </div>
+);
+
 
 // ====================================================================
 // Komponen Utama Form RKAT
 // ====================================================================
-// Mengganti 'departemens' menjadi 'units'
-export default function Create({ auth, tahunAnggarans, units, programKerjas, akunAnggarans }) { 
-    
-    // Inisialisasi data awal untuk Indikator Kinerja
+export default function Create({ auth, tahunAnggarans, units, programKerjas, akunAnggarans, ikus, ikuSubs }) {
+
+    // ... (Logika State dan Hooks tetap sama) ...
     const initialIndikator = {
-        id: Date.now(), 
-        indikator: '', // Mapping ke nama_indikator
+        id: Date.now(),
+        indikator: '',
         kondisi_akhir_2024_capaian: '',
         tahun_2025_target: '',
         tahun_2025_capaian: '',
         akhir_tahun_2029_target: '',
         akhir_tahun_2029_capaian: '',
     };
-    
-    // Inisialisasi data awal untuk Rincian Anggaran (RAB)
+
     const initialRAB = {
-        id: Date.now() + 1, 
-        kode_anggaran: akunAnggarans[0]?.kode_anggaran || '', // Akun untuk item RAB
-        kebutuhan: '', 
-        keterangan: '', 
-        vol: 1, 
-        satuan: 'unit', 
-        biaya_satuan: 0, 
-        jumlah: 0 // sub_total
+        id: Date.now() + 1,
+        kode_anggaran: akunAnggarans[0]?.kode_anggaran || '',
+        kebutuhan: '',
+        keterangan: '',
+        vol: 1,
+        satuan: 'unit',
+        biaya_satuan: 0,
+        jumlah: 0
     };
-    
-    // Menginisiasi form dengan data awal
+
     const { data, setData, post, processing, errors } = useForm({
-        // Data Header (untuk RkatHeader)
         tahun_anggaran: tahunAnggarans[0]?.tahun_anggaran || '',
-        id_unit: auth.user.id_unit || units[0]?.id_unit || '', // Update: id_departemen -> id_unit
-        kode_kegiatan: '', // I.A.1.1 (Sesuai Form Image)
+        id_unit: auth.user.id_unit || units[0]?.id_unit || '',
+        kode_kegiatan: '',
         judul_pengajuan: '',
-        
-        // Data Detail (untuk RkatDetail)
+        iku_id: '',
+        ikusub_id: '',
+        program_kerja_id: '',
         id_program: programKerjas[0]?.id_proker || '',
-        kode_akun: akunAnggarans[0]?.kode_anggaran || '', // Update: kode_akun -> kode_anggaran (Master Akun Utama Kegiatan)
-        jadwal_pelaksanaan: new Date().toISOString().slice(0, 10), 
+        kode_akun: akunAnggarans[0]?.kode_anggaran || '',
+        jadwal_pelaksanaan_mulai: new Date().toISOString().slice(0, 10),
+        jadwal_pelaksanaan_akhir: new Date().toISOString().slice(0, 10),
         lokasi_pelaksanaan: '',
         latar_belakang: '',
         rasional: '',
         tujuan: '',
         mekanisme: '',
-        
-        // Tambahan wajib untuk RkatDetail (sesuai Controller validation)
-        target: '', 
+        target: '',
         keberlanjutan: '',
         pjawab: '',
         jenis_kegiatan: 'Rutin',
-        
-        // Info Pencairan (sesuai Controller validation)
         jenis_pencairan: 'Tunai',
         nama_bank: '',
         nomor_rekening: '',
         atas_nama: '',
-        
-        // REPEATING FORM FIELD (Indikator Kinerja & RAB)
-        indikator_kinerja: [initialIndikator], // Array untuk Indikator Kinerja
-        rincian_anggaran: [initialRAB], // Array untuk Rincian Anggaran
-        
-        // Total Anggaran
-        anggaran: 0, 
+        indikator_kinerja: [initialIndikator],
+        rincian_anggaran: [initialRAB],
+        anggaran: 0,
     });
-    
-    // State untuk Dropdown IKU/IKK (Hierarki)
-    const [selectedIKU, setSelectedIKU] = useState('');
-    const [selectedIKUSub, setSelectedIKUSub] = useState('');
 
-    // State untuk filter program kerja
+    const [selectedIKUId, setSelectedIKUId] = useState('');
+    const [selectedIKUSubId, setSelectedIKUSubId] = useState('');
     const [filteredProgramKerjas, setFilteredProgramKerjas] = useState(programKerjas);
-    
-    
-    // --- EFECTS DAN HANDLER ---
 
-    // 1. Total Anggaran Effect: Menghitung total anggaran dari rincian RAB
+    // --- EFECTS DAN HANDLER ---
     useEffect(() => {
         const total = data.rincian_anggaran.reduce((sum, item) => sum + (item.jumlah || 0), 0);
         setData('anggaran', total);
     }, [data.rincian_anggaran]);
 
-    // 2. Program Kerja Filter Effect: Mengelola hierarki IKU/IKK
     useEffect(() => {
-        // Mengambil semua nama IKU unik
-        const uniqueIKUs = [...new Set(programKerjas.map(p => p.ikk?.ikusub?.iku?.nama_iku).filter(Boolean))];
-        
-        // Reset pilihan Sub IKU jika IKU berubah
-        if (selectedIKU && !uniqueIKUs.includes(selectedIKU)) {
-            setSelectedIKUSub('');
-        }
-        
         let filtered = programKerjas;
-        
-        if (selectedIKU) {
-            filtered = filtered.filter(proker => proker.ikk?.ikusub?.iku?.nama_iku === selectedIKU);
+        if (selectedIKUSubId) {
+            filtered = programKerjas.filter(proker => proker.ikk?.ikusub?.id_ikusub == selectedIKUSubId);
+        } else if (selectedIKUId) {
+            filtered = programKerjas.filter(proker => proker.ikk?.ikusub?.iku?.id_iku == selectedIKUId);
         }
 
-        if (selectedIKUSub) {
-            filtered = filtered.filter(proker => proker.ikk?.ikusub?.nama_ikusub === selectedIKUSub);
-        }
-        
         setFilteredProgramKerjas(filtered);
-        
-        // Reset id_program jika program yang dipilih tidak ada di filter baru
+
+        let newProgramId = data.id_program;
         if (!filtered.some(p => p.id_proker == data.id_program) && filtered.length > 0) {
-             setData('id_program', filtered[0].id_proker);
+            newProgramId = filtered[0].id_proker;
         } else if (filtered.length === 0) {
-             setData('id_program', '');
+            newProgramId = '';
         }
-        
-    }, [selectedIKU, selectedIKUSub, programKerjas]);
-    
-    // 3. Indikator Kinerja Handler
+
+        const finalSelectedProgram = programKerjas.find(p => p.id_proker == newProgramId);
+
+        setData(prevData => ({
+            ...prevData,
+            id_program: newProgramId,
+            program_kerja_id: newProgramId,
+            iku_id: finalSelectedProgram?.ikk?.ikusub?.iku?.id_iku || selectedIKUId,
+            ikusub_id: finalSelectedProgram?.ikk?.ikusub?.id_ikusub || selectedIKUSubId,
+        }));
+
+    }, [selectedIKUId, selectedIKUSubId, programKerjas]);
+
+    useEffect(() => {
+        const currentProgram = programKerjas.find(p => p.id_proker == data.id_program);
+        if (currentProgram) {
+            setSelectedIKUId(currentProgram.ikk?.ikusub?.iku?.id_iku || '');
+            setSelectedIKUSubId(currentProgram.ikk?.ikusub?.id_ikusub || '');
+        }
+    }, [data.id_program, programKerjas]);
+
     const handleIndikatorChange = (index, field, value) => {
         const newIndikator = [...data.indikator_kinerja];
         newIndikator[index][field] = value;
@@ -142,7 +197,7 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
 
     const addIndikatorRow = () => {
         setData('indikator_kinerja', [
-            ...data.indikator_kinerja, 
+            ...data.indikator_kinerja,
             { ...initialIndikator, id: Date.now() }
         ]);
     };
@@ -151,12 +206,10 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
         setData('indikator_kinerja', data.indikator_kinerja.filter(item => item.id !== id));
     };
 
-    // 4. RAB Handler: Mengupdate baris rincian RAB
     const handleRincianChange = (index, field, value) => {
         const newRincian = [...data.rincian_anggaran];
         newRincian[index][field] = value;
-        
-        // Hitung ulang Jumlah
+
         if (field === 'vol' || field === 'biaya_satuan') {
             const vol = newRincian[index].vol || 0;
             const biayaSatuan = newRincian[index].biaya_satuan || 0;
@@ -165,50 +218,39 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
 
         setData('rincian_anggaran', newRincian);
     };
-    
-    // 5. RAB Handler: Menambah baris
+
     const addRincianRow = () => {
         setData('rincian_anggaran', [
-            ...data.rincian_anggaran, 
+            ...data.rincian_anggaran,
             { ...initialRAB, id: Date.now() }
         ]);
     };
-    
-    // 6. RAB Handler: Menghapus baris
+
     const removeRincianRow = (id) => {
         setData('rincian_anggaran', data.rincian_anggaran.filter(item => item.id !== id));
     };
 
-    // 7. Submit Handler
     const submit = (e) => {
         e.preventDefault();
-        // data.indikator_kinerja dikirim sebagai array
-        // data.rincian_anggaran dikirim sebagai array
         post(route('rkat.store'));
     };
-    
-    
-    // --- DATA OPTION UNTUK DROPDOWN ---
 
-    // Mengambil IKU unik
-    const uniqueIKUs = [...new Set(programKerjas.map(p => p.ikk?.ikusub?.iku?.nama_iku).filter(Boolean))];
-    
-    // Mengambil IKUSub unik berdasarkan IKU yang dipilih
-    const uniqueIKUSubs = selectedIKU 
-        ? [...new Set(programKerjas
-            .filter(p => p.ikk?.ikusub?.iku?.nama_iku === selectedIKU)
-            .map(p => p.ikk?.ikusub?.nama_ikusub)
-            .filter(Boolean)
-          )]
-        : [];
-        
-    // Mendapatkan nama unit berdasarkan ID
+    // --- DATA OPTION PREPARATION FOR CUSTOM SELECT ---
+    const ikuSubsBySelectedIKU = ikuSubs.filter(sub => sub.id_iku == selectedIKUId);
     const currentUnit = units.find(u => u.id_unit == data.id_unit)?.nama_unit || 'N/A';
-    
-    // Mendapatkan IKK unik berdasarkan program yang dipilih
     const selectedProgram = programKerjas.find(p => p.id_proker == data.id_program);
     const ikkName = selectedProgram?.ikk?.nama_ikk || 'Pilih Program Kerja';
 
+    // Helper: Map data arrays to {value, label} objects
+    const optionsTahun = tahunAnggarans.map(ta => ({ value: ta.tahun_anggaran, label: ta.tahun_anggaran }));
+    const optionsIku = ikus.map(iku => ({ value: iku.id_iku, label: iku.nama_iku }));
+    const optionsIkuSub = ikuSubsBySelectedIKU.map(sub => ({ value: sub.id_ikusub, label: sub.nama_ikusub }));
+    const optionsProgram = filteredProgramKerjas.map(proker => ({ value: proker.id_proker, label: proker.nama_proker }));
+    const optionsAkunAnggaran = akunAnggarans.map(akun => ({ value: akun.kode_anggaran, label: `${akun.kode_anggaran} - ${akun.nama_akun || 'Nama Akun'}` })); 
+    const optionsPencairan = [
+        { value: 'Tunai', label: 'Tunai' },
+        { value: 'Bank', label: 'Transfer Bank' }
+    ];
 
     return (
         <AuthenticatedLayout
@@ -220,302 +262,208 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
             <div className="py-4">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <form onSubmit={submit} className="bg-white dark:bg-gray-800 p-8 shadow-xl sm:rounded-lg">
-                        
-                        {/* ==================================================================== */}
-                        {/* BAGIAN HEADER (2 KOLOM) */}
-                        {/* ==================================================================== */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 border-b pb-6 dark:border-gray-700">
-                            
-                            {/* KOLOM KIRI */}
+                        {/* ... (Bagian Header Form) ... */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2 border-b pb-6 dark:border-gray-700">
                             <div>
-                                {/* Kode Kegiatan */}
                                 <InputLabel htmlFor="kode_kegiatan" value="Kode Kegiatan" />
                                 <TextInput
                                     id="kode_kegiatan"
                                     name="kode_kegiatan"
                                     value={data.kode_kegiatan}
                                     onChange={(e) => setData('kode_kegiatan', e.target.value)}
-                                    className="mt-1 block w-full bg-gray-100 dark:bg-gray-700"
+                                    className="mt-1 block w-full bg-gray-100 dark:bg-gray-700 h-11" // <--- Disesuaikan: h-11
                                     isFocused
                                     placeholder="Diisi otomatis atau manual (cth: I.A.1.1)"
                                 />
                                 <InputError message={errors.kode_kegiatan} className="mt-2" />
-                                
-                                {/* Unit Kerja / Sub Unit (Otomatis) */}
+
                                 <div className="mt-4">
                                     <InputLabel value="Unit Kerja / Sub Unit" />
-                                    {/* Jika user login memiliki id_unit, gunakan itu, jika tidak gunakan dropdown */}
                                     {auth.user.id_unit ? (
                                         <TextInput
                                             value={currentUnit}
-                                            className="mt-1 block w-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed"
+                                            className="mt-1 block w-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed h-11" // <--- Disesuaikan: h-11
                                             readOnly
                                         />
                                     ) : (
-                                        <SelectInput
+                                        <TextInput
                                             id="id_unit"
                                             name="id_unit"
                                             value={data.id_unit}
                                             onChange={(e) => setData('id_unit', e.target.value)}
-                                            className="mt-1 block w-full"
-                                        >
-                                            <option value="">Pilih Unit</option>
-                                            {units.map((unit) => (
-                                                <option key={unit.id_unit} value={unit.id_unit}>
-                                                    {unit.nama_unit}
-                                                </option>
-                                            ))}
-                                        </SelectInput>
+                                            className="mt-1 block w-full h-11" // <--- Disesuaikan: h-11
+                                        />
                                     )}
                                     <InputError message={errors.id_unit} className="mt-2" />
                                 </div>
-                                
-                                {/* Judul Kegiatan */}
-                                <div className="mt-4">
-                                    <InputLabel htmlFor="judul_pengajuan" value="Judul Kegiatan" />
-                                    <TextInput
-                                        id="judul_pengajuan"
-                                        name="judul_pengajuan"
-                                        value={data.judul_pengajuan}
-                                        onChange={(e) => setData('judul_pengajuan', e.target.value)}
-                                        className="mt-1 block w-full"
-                                    />
-                                    <InputError message={errors.judul_pengajuan} className="mt-2" />
-                                </div>
-                                
-                                {/* IKK (Display dari Program Kerja yang dipilih) */}
+
                                 <div className="mt-4">
                                     <InputLabel value="IKK" />
                                     <TextInput
                                         value={ikkName}
-                                        className="mt-1 block w-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed"
+                                        className="mt-1 block w-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed h-11" // <--- Disesuaikan: h-11
                                         readOnly
                                     />
                                 </div>
-                                
                             </div>
-                            
-                            {/* KOLOM KANAN */}
+
                             <div>
-                                {/* Tahun Anggaran */}
                                 <InputLabel htmlFor="tahun_anggaran" value="Tahun Anggaran" />
-                                <SelectInput
-                                    id="tahun_anggaran"
-                                    name="tahun_anggaran"
+                                <CustomSelect
                                     value={data.tahun_anggaran}
                                     onChange={(e) => setData('tahun_anggaran', e.target.value)}
-                                    className="mt-1 block w-full"
-                                >
-                                    {tahunAnggarans.map(ta => (
-                                        <option key={ta.tahun_anggaran} value={ta.tahun_anggaran}>{ta.tahun_anggaran}</option>
-                                    ))}
-                                </SelectInput>
+                                    options={optionsTahun}
+                                    placeholder="Pilih Tahun"
+                                    className="mt-1"
+                                />
                                 <InputError message={errors.tahun_anggaran} className="mt-2" />
-                                
-                                {/* Jadwal Pelaksanaan */}
-                                <div className="mt-4">
-                                    <InputLabel htmlFor="jadwal_pelaksanaan" value="Jadwal Pelaksanaan" />
-                                    <TextInput
-                                        id="jadwal_pelaksanaan"
-                                        type="date"
-                                        name="jadwal_pelaksanaan"
-                                        value={data.jadwal_pelaksanaan}
-                                        onChange={(e) => setData('jadwal_pelaksanaan', e.target.value)}
-                                        className="mt-1 block w-full"
-                                    />
-                                    <InputError message={errors.jadwal_pelaksanaan} className="mt-2" />
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4">
+                                    <div>
+                                        <InputLabel htmlFor="jadwal_pelaksanaan_mulai" value="Jadwal Mulai" />
+                                        <DateInput
+                                            id="jadwal_pelaksanaan_mulai"
+                                            name="jadwal_pelaksanaan_mulai"
+                                            value={data.jadwal_pelaksanaan_mulai}
+                                            onChange={(value) => setData('jadwal_pelaksanaan_mulai', value)}
+                                            className="mt-1 block w-full"
+                                        />
+                                        <InputError message={errors.jadwal_pelaksanaan_mulai} className="mt-2" />
+                                    </div>
+                                    <div>
+                                        <InputLabel htmlFor="jadwal_pelaksanaan_akhir" value="Jadwal Akhir" />
+                                        <DateInput
+                                            id="jadwal_pelaksanaan_akhir"
+                                            name="jadwal_pelaksanaan_akhir"
+                                            value={data.jadwal_pelaksanaan_akhir}
+                                            onChange={(value) => setData('jadwal_pelaksanaan_akhir', value)}
+                                            className="mt-1 block w-full"
+                                        />
+                                        <InputError message={errors.jadwal_pelaksanaan_akhir} className="mt-2" />
+                                    </div>
                                 </div>
-                                
-                                {/* Akun Anggaran (Akun Belanja Utama Kegiatan) */}
-                                <div className="mt-4">
-                                    <InputLabel htmlFor="kode_akun" value="Akun Anggaran (Akun Belanja Utama)" />
-                                    <SelectInput
-                                        id="kode_akun"
-                                        name="kode_akun"
-                                        value={data.kode_akun}
-                                        onChange={(e) => setData('kode_akun', e.target.value)}
-                                        className="mt-1 block w-full"
-                                    >
-                                        {akunAnggarans.map(akun => (
-                                            <option key={akun.kode_anggaran} value={akun.kode_anggaran}>{akun.kode_anggaran} - {akun.nama_anggaran}</option>
-                                        ))}
-                                    </SelectInput>
-                                    <InputError message={errors.kode_akun} className="mt-2" />
-                                </div>
-                                
-                                {/* Lokasi Pelaksanaan */}
+
                                 <div className="mt-4">
                                     <InputLabel htmlFor="lokasi_pelaksanaan" value="Lokasi Pelaksanaan" />
                                     <TextInput
                                         id="lokasi_pelaksanaan"
                                         name="lokasi_pelaksanaan"
-                                        value={data.lokasi_pelaksanaan || ''} 
+                                        value={data.lokasi_pelaksanaan || ''}
                                         onChange={(e) => setData('lokasi_pelaksanaan', e.target.value)}
-                                        className="mt-1 block w-full"
-                                        placeholder="Cth: Lab 5 & 6"
+                                        className="mt-1 block w-full h-11" // <--- Disesuaikan: h-11
+                                        placeholder="Contoh: Lab 5 & 6"
                                     />
                                     <InputError message={errors.lokasi_pelaksanaan} className="mt-2" />
                                 </div>
-
                             </div>
                         </div>
 
-                        {/* ==================================================================== */}
-                        {/* BAGIAN PROGRAM / KEGIATAN (3 KOLOM HIERARKI) */}
-                        {/* ==================================================================== */}
+                        <div className="mt-4">
+                            <InputLabel htmlFor="judul_pengajuan" value="Judul Kegiatan" />
+                            <TextArea
+                                id="judul_pengajuan"
+                                name="judul_pengajuan"
+                                value={data.judul_pengajuan}
+                                onChange={(e) => setData('judul_pengajuan', e.target.value)}
+                                className="mt-1 mb-3 block w-full"
+                            />
+                            <InputError message={errors.judul_pengajuan} className="mt-2" />
+                        </div>
+
                         <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Keterkaitan Program/IKU</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 border-b pb-6 dark:border-gray-700">
-                            
-                            {/* IKU */}
                             <div>
                                 <InputLabel htmlFor="iku" value="IKU (Indikator Kinerja Utama)" />
-                                <SelectInput
-                                    id="iku"
-                                    value={selectedIKU}
+                                <CustomSelect
+                                    value={selectedIKUId}
                                     onChange={(e) => {
-                                        setSelectedIKU(e.target.value);
-                                        setSelectedIKUSub(''); // Reset Sub IKU ketika IKU berubah
+                                        setSelectedIKUId(e.target.value);
+                                        setSelectedIKUSubId('');
                                     }}
-                                    className="mt-1 block w-full"
-                                >
-                                    <option value="">Pilih IKU</option>
-                                    {uniqueIKUs.map(iku => (
-                                        <option key={iku} value={iku}>{iku}</option>
-                                    ))}
-                                </SelectInput>
+                                    options={optionsIku}
+                                    placeholder="Pilih IKU"
+                                    className="mt-1"
+                                />
+                                <InputError message={errors.iku_id} className="mt-2" />
                             </div>
-                            
-                            {/* SUB IKU */}
+
                             <div>
                                 <InputLabel htmlFor="ikusub" value="Sub IKU" />
-                                <SelectInput
-                                    id="ikusub"
-                                    value={selectedIKUSub}
-                                    onChange={(e) => setSelectedIKUSub(e.target.value)}
-                                    className="mt-1 block w-full"
-                                    disabled={!selectedIKU}
-                                >
-                                    <option value="">Pilih Sub IKU</option>
-                                    {uniqueIKUSubs.map(sub => (
-                                        <option key={sub} value={sub}>{sub}</option>
-                                    ))}
-                                </SelectInput>
+                                <CustomSelect
+                                    value={selectedIKUSubId}
+                                    onChange={(e) => setSelectedIKUSubId(e.target.value)}
+                                    options={optionsIkuSub}
+                                    disabled={!selectedIKUId}
+                                    placeholder="Pilih Sub IKU"
+                                    className="mt-1"
+                                />
+                                <InputError message={errors.ikusub_id} className="mt-2" />
                             </div>
-                            
-                            {/* PROGRAM KERJA / KEGIATAN (Filter berdasarkan IKU & Sub IKU) */}
+
                             <div>
                                 <InputLabel htmlFor="id_program" value="Program / Kegiatan" />
-                                <SelectInput
-                                    id="id_program"
-                                    name="id_program"
+                                <CustomSelect
                                     value={data.id_program}
                                     onChange={(e) => setData('id_program', e.target.value)}
-                                    className="mt-1 block w-full"
+                                    options={optionsProgram}
                                     disabled={filteredProgramKerjas.length === 0}
-                                >
-                                    {filteredProgramKerjas.length === 0 ? (
-                                        <option value="">Tidak ada Program yang tersedia</option>
-                                    ) : (
-                                        filteredProgramKerjas.map(proker => (
-                                            <option key={proker.id_proker} value={proker.id_proker}>{proker.nama_proker}</option>
-                                        ))
-                                    )}
-                                </SelectInput>
+                                    placeholder={filteredProgramKerjas.length === 0 ? "Tidak ada Program" : "Pilih Program"}
+                                    className="mt-1"
+                                />
                                 <InputError message={errors.id_program} className="mt-2" />
                             </div>
                         </div>
 
-                        {/* ==================================================================== */}
-                        {/* BAGIAN DESKRIPSI (TEXTAREA) */}
-                        {/* ==================================================================== */}
                         <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Deskripsi Kegiatan</h3>
                         <div className="space-y-6 mb-8 border-b pb-6 dark:border-gray-700">
-                            
-                            {/* Latar Belakang */}
+                            {/* ... (Bagian TextArea Deskripsi tetap sama) ... */}
                             <div>
                                 <InputLabel htmlFor="latar_belakang" value="Latar Belakang" />
-                                <TextArea
-                                    id="latar_belakang"
-                                    name="latar_belakang"
-                                    value={data.latar_belakang}
-                                    onChange={(e) => setData('latar_belakang', e.target.value)}
-                                    className="mt-1 block w-full resize-y"
-                                    rows="3"
-                                />
+                                <TextArea id="latar_belakang" name="latar_belakang" value={data.latar_belakang} onChange={(e) => setData('latar_belakang', e.target.value)} className="mt-1 block w-full resize-y" rows="3" />
                                 <InputError message={errors.latar_belakang} className="mt-2" />
                             </div>
-                            
-                            {/* Rasionalisasi */}
                             <div>
                                 <InputLabel htmlFor="rasional" value="Rasionalisasi" />
-                                <TextArea
-                                    id="rasional"
-                                    name="rasional"
-                                    value={data.rasional}
-                                    onChange={(e) => setData('rasional', e.target.value)}
-                                    className="mt-1 block w-full resize-y"
-                                    rows="3"
-                                />
+                                <TextArea id="rasional" name="rasional" value={data.rasional} onChange={(e) => setData('rasional', e.target.value)} className="mt-1 block w-full resize-y" rows="3" />
                                 <InputError message={errors.rasional} className="mt-2" />
                             </div>
-                            
-                            {/* Tujuan */}
                             <div>
                                 <InputLabel htmlFor="tujuan" value="Tujuan" />
-                                <TextArea
-                                    id="tujuan"
-                                    name="tujuan"
-                                    value={data.tujuan}
-                                    onChange={(e) => setData('tujuan', e.target.value)}
-                                    className="mt-1 block w-full resize-y"
-                                    rows="3"
-                                />
+                                <TextArea id="tujuan" name="tujuan" value={data.tujuan} onChange={(e) => setData('tujuan', e.target.value)} className="mt-1 block w-full resize-y" rows="3" />
                                 <InputError message={errors.tujuan} className="mt-2" />
                             </div>
-                            
-                            {/* Mekanisme & Rancangan */}
                             <div>
                                 <InputLabel htmlFor="mekanisme" value="Mekanisme & Rancangan" />
-                                <TextArea
-                                    id="mekanisme"
-                                    name="mekanisme"
-                                    value={data.mekanisme}
-                                    onChange={(e) => setData('mekanisme', e.target.value)}
-                                    className="mt-1 block w-full resize-y"
-                                    rows="3"
-                                />
+                                <TextArea id="mekanisme" name="mekanisme" value={data.mekanisme} onChange={(e) => setData('mekanisme', e.target.value)} className="mt-1 block w-full resize-y" rows="3" />
                                 <InputError message={errors.mekanisme} className="mt-2" />
                             </div>
 
-                            {/* Target, PJawab, Keberlanjutan */}
                             <div className="grid grid-cols-3 gap-4">
                                 <div>
                                     <InputLabel htmlFor="target" value="Target Kegiatan" />
-                                    <TextInput id="target" name="target" value={data.target} onChange={(e) => setData('target', e.target.value)} className="mt-1 block w-full" placeholder="Cth: 100 Peserta"/>
+                                    <TextInput id="target" name="target" value={data.target} onChange={(e) => setData('target', e.target.value)} className="mt-1 block w-full h-11" placeholder="Cth: 100 Peserta" /> {/* <--- Disesuaikan: h-11 */}
                                     <InputError message={errors.target} className="mt-2" />
                                 </div>
                                 <div>
                                     <InputLabel htmlFor="pjawab" value="Penanggung Jawab" />
-                                    <TextInput id="pjawab" name="pjawab" value={data.pjawab} onChange={(e) => setData('pjawab', e.target.value)} className="mt-1 block w-full" placeholder="Nama PJ"/>
+                                    <TextInput id="pjawab" name="pjawab" value={data.pjawab} onChange={(e) => setData('pjawab', e.target.value)} className="mt-1 block w-full h-11" placeholder="Nama PJ" /> {/* <--- Disesuaikan: h-11 */}
                                     <InputError message={errors.pjawab} className="mt-2" />
                                 </div>
                                 <div>
                                     <InputLabel htmlFor="keberlanjutan" value="Keberlanjutan" />
-                                    <TextInput id="keberlanjutan" name="keberlanjutan" value={data.keberlanjutan} onChange={(e) => setData('keberlanjutan', e.target.value)} className="mt-1 block w-full" placeholder="Rencana keberlanjutan"/>
+                                    <TextInput id="keberlanjutan" name="keberlanjutan" value={data.keberlanjutan} onChange={(e) => setData('keberlanjutan', e.target.value)} className="mt-1 block w-full h-11" placeholder="Rencana keberlanjutan" /> {/* <--- Disesuaikan: h-11 */}
                                     <InputError message={errors.keberlanjutan} className="mt-2" />
                                 </div>
                             </div>
-                            
                         </div>
-                        
-                        {/* ==================================================================== */}
-                        {/* BAGIAN INDIKATOR KINERJA (REPEATING FORM) */}
-                        {/* ==================================================================== */}
+
                         <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Indikator Kinerja</h3>
                         
-                        <div className="overflow-x-auto mb-6">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 border dark:border-gray-700">
+                        {/* PENGGUNAAN KOMPONEN TableContainer */}
+                        <TableContainer>
+                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700"> {/* Hapus border dari table */}
                                 <thead className="bg-gray-50 dark:bg-gray-700">
+                                    {/* Header Tabel Indikator */}
                                     <tr>
                                         <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-10">No.</th>
                                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider min-w-52">Indikator</th>
@@ -539,95 +487,33 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
                                     {data.indikator_kinerja.map((item, index) => (
                                         <tr key={item.id}>
                                             <td className="px-2 py-2 text-sm text-gray-500 dark:text-gray-400 text-center align-top">{index + 1}</td>
-                                            
-                                            {/* Indikator */}
-                                            <td className="p-1 align-top">
-                                                <TextArea
-                                                    value={item.indikator}
-                                                    onChange={(e) => handleIndikatorChange(index, 'indikator', e.target.value)}
-                                                    className="w-full text-sm resize-none"
-                                                    rows="2"
-                                                    placeholder="Nama Indikator Kinerja"
-                                                />
-                                            </td>
-                                            
-                                            {/* Kondisi Akhir 2024 Capaian */}
-                                            <td className="p-1 align-top">
-                                                <TextArea
-                                                    value={item.kondisi_akhir_2024_capaian}
-                                                    onChange={(e) => handleIndikatorChange(index, 'kondisi_akhir_2024_capaian', e.target.value)}
-                                                    className="w-full text-sm resize-none"
-                                                    rows="2"
-                                                />
-                                            </td>
-                                            
-                                            {/* Tahun 2025 Target */}
-                                            <td className="p-1 align-top">
-                                                <TextArea
-                                                    value={item.tahun_2025_target}
-                                                    onChange={(e) => handleIndikatorChange(index, 'tahun_2025_target', e.target.value)}
-                                                    className="w-full text-sm resize-none"
-                                                    rows="2"
-                                                />
-                                            </td>
-                                            
-                                            {/* Tahun 2025 Capaian */}
-                                            <td className="p-1 align-top">
-                                                <TextArea
-                                                    value={item.tahun_2025_capaian}
-                                                    onChange={(e) => handleIndikatorChange(index, 'tahun_2025_capaian', e.target.value)}
-                                                    className="w-full text-sm resize-none"
-                                                    rows="2"
-                                                />
-                                            </td>
-                                            
-                                            {/* Akhir Tahun 2029 Target */}
-                                            <td className="p-1 align-top">
-                                                <TextArea
-                                                    value={item.akhir_tahun_2029_target}
-                                                    onChange={(e) => handleIndikatorChange(index, 'akhir_tahun_2029_target', e.target.value)}
-                                                    className="w-full text-sm resize-none"
-                                                    rows="2"
-                                                />
-                                            </td>
-                                            
-                                            {/* Akhir Tahun 2029 Capaian */}
-                                            <td className="p-1 align-top">
-                                                <TextArea
-                                                    value={item.akhir_tahun_2029_capaian}
-                                                    onChange={(e) => handleIndikatorChange(index, 'akhir_tahun_2029_capaian', e.target.value)}
-                                                    className="w-full text-sm resize-none"
-                                                    rows="2"
-                                                />
-                                            </td>
-                                            
-                                            {/* Tombol Hapus */}
+                                            <td className="p-1 align-top"><TextArea value={item.indikator} onChange={(e) => handleIndikatorChange(index, 'indikator', e.target.value)} className="w-full text-sm resize-none" rows="2" placeholder="Nama Indikator Kinerja" /></td>
+                                            <td className="p-1 align-top"><TextArea value={item.kondisi_akhir_2024_capaian} onChange={(e) => handleIndikatorChange(index, 'kondisi_akhir_2024_capaian', e.target.value)} className="w-full text-sm resize-none" rows="2" /></td>
+                                            <td className="p-1 align-top"><TextArea value={item.tahun_2025_target} onChange={(e) => handleIndikatorChange(index, 'tahun_2025_target', e.target.value)} className="w-full text-sm resize-none" rows="2" /></td>
+                                            <td className="p-1 align-top"><TextArea value={item.tahun_2025_capaian} onChange={(e) => handleIndikatorChange(index, 'tahun_2025_capaian', e.target.value)} className="w-full text-sm resize-none" rows="2" /></td>
+                                            <td className="p-1 align-top"><TextArea value={item.akhir_tahun_2029_target} onChange={(e) => handleIndikatorChange(index, 'akhir_tahun_2029_target', e.target.value)} className="w-full text-sm resize-none" rows="2" /></td>
+                                            <td className="p-1 align-top"><TextArea value={item.akhir_tahun_2029_capaian} onChange={(e) => handleIndikatorChange(index, 'akhir_tahun_2029_capaian', e.target.value)} className="w-full text-sm resize-none" rows="2" /></td>
                                             <td className="px-2 py-2 text-sm text-center align-top">
                                                 <DangerButton type="button" onClick={() => removeIndikatorRow(item.id)} className="p-1 h-8 w-8 flex items-center justify-center">
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    <Trash2 className="w-4 h-4" />
                                                 </DangerButton>
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
-                            {errors.indikator_kinerja && <InputError message="Indikator Kinerja harus diisi minimal satu baris." className="mt-2" />}
-                        </div>
+                        </TableContainer>
+                        {errors.indikator_kinerja && <InputError message="Indikator Kinerja harus diisi minimal satu baris." className="mt-2" />}
                         
                         <div className="flex justify-start mb-8">
-                            <PrimaryButton type="button" onClick={addIndikatorRow}>
-                                + Tambah Indikator Kinerja
-                            </PrimaryButton>
+                            <PrimaryButton type="button" onClick={addIndikatorRow}>+ Tambah Indikator Kinerja</PrimaryButton>
                         </div>
 
-
-                        {/* ==================================================================== */}
-                        {/* BAGIAN RINCIAN ANGGARAN (RAB) - REPEATING FORM */}
-                        {/* ==================================================================== */}
                         <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Rincian Anggaran (RAB)</h3>
                         
-                        <div className="overflow-x-auto mb-6">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 border dark:border-gray-700">
+                        {/* PENGGUNAAN KOMPONEN TableContainer */}
+                        <TableContainer>
+                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700"> {/* Hapus border dari table */}
                                 <thead className="bg-gray-50 dark:bg-gray-700">
                                     <tr>
                                         <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-10">No.</th>
@@ -644,177 +530,117 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
                                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                     {data.rincian_anggaran.map((item, index) => (
                                         <tr key={item.id}>
-                                            <td className="px-2 py-2 text-sm text-gray-500 dark:text-gray-400 text-center">{index + 1}</td>
-                                            
-                                            {/* Kode Anggaran (RAB Item) */}
-                                            <td className="p-1">
-                                                <SelectInput
-                                                    value={item.kode_anggaran}
-                                                    onChange={(e) => handleRincianChange(index, 'kode_anggaran', e.target.value)}
-                                                    className="w-full text-sm"
-                                                >
-                                                    {akunAnggarans.map(akun => (
-                                                        <option key={akun.kode_anggaran} value={akun.kode_anggaran}>{akun.kode_anggaran}</option>
-                                                    ))}
-                                                </SelectInput>
+                                            <td className="px-2 py-2 text-sm text-gray-500 dark:text-gray-400 text-center">
+                                                {index + 1}
                                             </td>
 
-                                            {/* Nama Kebutuhan */}
                                             <td className="p-1">
+                                                {/* Kolom Kode Anggaran - TextInput */}
                                                 <TextInput
-                                                    value={item.kebutuhan}
-                                                    onChange={(e) => handleRincianChange(index, 'kebutuhan', e.target.value)}
-                                                    className="w-full text-sm"
-                                                    placeholder="Nama item"
+                                                    value={item.kode_anggaran}
+                                                    onChange={(e) => handleRincianChange(index, 'kode_anggaran', e.target.value)}
+                                                    className="w-full text-sm h-11" // <--- Disesuaikan: h-11
+                                                    placeholder="Kode Anggaran"
                                                 />
                                             </td>
-                                            
-                                            {/* Keterangan */}
+
+                                            <td className="p-1">
+                                                {/* Kolom Nama Kebutuhan - CustomSelect (sudah h-11) */}
+                                                <CustomSelect
+                                                    value={item.kebutuhan}
+                                                    onChange={(e) => handleRincianChange(index, 'kebutuhan', e.target.value)}
+                                                    options={optionsAkunAnggaran}
+                                                    placeholder="Pilih Item/Akun"
+                                                    className="w-full text-sm min-w-[150px]"
+                                                />
+                                            </td>
+
                                             <td className="p-1">
                                                 <TextInput
                                                     value={item.keterangan}
                                                     onChange={(e) => handleRincianChange(index, 'keterangan', e.target.value)}
-                                                    className="w-full text-sm"
-                                                    placeholder="Deskripsi singkat"
+                                                    className="w-full text-sm h-11" // <--- Disesuaikan: h-11
+                                                    placeholder="Deskripsi"
                                                 />
                                             </td>
-                                            
-                                            {/* Vol */}
                                             <td className="p-1">
                                                 <TextInput
                                                     value={item.vol}
                                                     onChange={(e) => handleRincianChange(index, 'vol', parseInt(e.target.value) || 0)}
-                                                    className="w-full text-sm text-center"
+                                                    className="w-full text-sm text-center h-11" // <--- Disesuaikan: h-11
                                                     type="number"
                                                     min="1"
                                                 />
                                             </td>
-                                            
-                                            {/* Satuan */}
                                             <td className="p-1">
                                                 <TextInput
                                                     value={item.satuan}
                                                     onChange={(e) => handleRincianChange(index, 'satuan', e.target.value)}
-                                                    className="w-full text-sm"
+                                                    className="w-full text-sm h-11" // <--- Disesuaikan: h-11
                                                 />
                                             </td>
-                                            
-                                            {/* Biaya Satuan */}
                                             <td className="p-1">
                                                 <RupiahInput
                                                     value={item.biaya_satuan}
                                                     onChange={(e) => handleRincianChange(index, 'biaya_satuan', e.target.value)}
-                                                    className="w-full text-sm text-right"
+                                                    className="w-full text-sm text-right h-11" // <--- Disesuaikan: h-11
                                                 />
                                             </td>
-                                            
-                                            {/* Jumlah (Otomatis) */}
                                             <td className="px-4 py-2 text-sm text-gray-900 dark:text-gray-100 font-medium text-right bg-gray-50 dark:bg-gray-700">
                                                 {formatRupiah(item.jumlah)}
                                             </td>
-                                            
-                                            {/* Tombol Hapus */}
                                             <td className="px-2 py-2 text-sm text-center">
                                                 <DangerButton type="button" onClick={() => removeRincianRow(item.id)} className="p-1 h-8 w-8 flex items-center justify-center">
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    <Trash2 className="w-4 h-4" />
                                                 </DangerButton>
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
-                            {errors.rincian_anggaran && <InputError message="Rincian Anggaran harus diisi minimal satu baris." className="mt-2" />}
-                            {errors['rincian_anggaran.0.kode_anggaran'] && <InputError message="Pastikan setiap baris rincian memiliki Kode Anggaran yang valid." className="mt-2" />}
-                        </div>
-                        
-                        {/* Tombol Tambah dan Total */}
+                        </TableContainer>
+                        {errors.rincian_anggaran && <InputError message="Rincian Anggaran harus diisi minimal satu baris." className="mt-2" />}
+
                         <div className="flex justify-between items-center mb-8">
-                            <PrimaryButton type="button" onClick={addRincianRow}>
-                                + Tambah Baris RAB
-                            </PrimaryButton>
+                            <PrimaryButton type="button" onClick={addRincianRow}>+ Tambah Baris RAB</PrimaryButton>
                             <div className="text-xl font-bold text-gray-800 dark:text-gray-200">
-                                Total Anggaran: <span className="text-indigo-600 dark:text-indigo-400">{formatRupiah(data.anggaran)}</span>
+                                Total Anggaran: <span className="text-teal-600 dark:text-teal-400">{formatRupiah(data.anggaran)}</span>
                             </div>
                         </div>
-                        
-                        {/* ==================================================================== */}
-                        {/* BAGIAN PENCARIAN & KEPUTUSAN */}
-                        {/* ==================================================================== */}
+
+                        {/* ... (Bagian Informasi Pencairan dan Footer) ... */}
                         <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Informasi Pencairan</h3>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 border-b pb-6 dark:border-gray-700">
-                            
-                            {/* Jenis Pencairan */}
                             <div>
                                 <InputLabel htmlFor="jenis_pencairan" value="Jenis Pencairan" />
-                                <SelectInput
-                                    id="jenis_pencairan"
-                                    name="jenis_pencairan"
+                                <CustomSelect
                                     value={data.jenis_pencairan}
                                     onChange={(e) => setData('jenis_pencairan', e.target.value)}
-                                    className="mt-1 block w-full"
-                                >
-                                    <option value="Tunai">Tunai</option>
-                                    <option value="Bank">Transfer Bank</option>
-                                </SelectInput>
+                                    options={optionsPencairan}
+                                    className="mt-1"
+                                />
                                 <InputError message={errors.jenis_pencairan} className="mt-2" />
                             </div>
-
-                            {/* Nama Bank */}
                             <div className={data.jenis_pencairan !== 'Bank' ? 'opacity-50' : ''}>
                                 <InputLabel htmlFor="nama_bank" value="Nama Bank" />
-                                <TextInput
-                                    id="nama_bank"
-                                    name="nama_bank"
-                                    value={data.nama_bank}
-                                    onChange={(e) => setData('nama_bank', e.target.value)}
-                                    className="mt-1 block w-full"
-                                    disabled={data.jenis_pencairan !== 'Bank'}
-                                />
+                                <TextInput id="nama_bank" name="nama_bank" value={data.nama_bank} onChange={(e) => setData('nama_bank', e.target.value)} className="mt-1 block w-full h-11" disabled={data.jenis_pencairan !== 'Bank'} /> {/* <--- Disesuaikan: h-11 */}
                                 <InputError message={errors.nama_bank} className="mt-2" />
                             </div>
-
-                            {/* Nomor Rekening */}
                             <div className={data.jenis_pencairan !== 'Bank' ? 'opacity-50' : ''}>
                                 <InputLabel htmlFor="nomor_rekening" value="Nomor Rekening" />
-                                <TextInput
-                                    id="nomor_rekening"
-                                    name="nomor_rekening"
-                                    value={data.nomor_rekening}
-                                    onChange={(e) => setData('nomor_rekening', e.target.value)}
-                                    className="mt-1 block w-full"
-                                    disabled={data.jenis_pencairan !== 'Bank'}
-                                />
+                                <TextInput id="nomor_rekening" name="nomor_rekening" value={data.nomor_rekening} onChange={(e) => setData('nomor_rekening', e.target.value)} className="mt-1 block w-full h-11" disabled={data.jenis_pencairan !== 'Bank'} /> {/* <--- Disesuaikan: h-11 */}
                                 <InputError message={errors.nomor_rekening} className="mt-2" />
                             </div>
-
-                            {/* Atas Nama */}
                             <div className={data.jenis_pencairan !== 'Bank' ? 'opacity-50' : ''}>
                                 <InputLabel htmlFor="atas_nama" value="Atas Nama" />
-                                <TextInput
-                                    id="atas_nama"
-                                    name="atas_nama"
-                                    value={data.atas_nama}
-                                    onChange={(e) => setData('atas_nama', e.target.value)}
-                                    className="mt-1 block w-full"
-                                    disabled={data.jenis_pencairan !== 'Bank'}
-                                />
+                                <TextInput id="atas_nama" name="atas_nama" value={data.atas_nama} onChange={(e) => setData('atas_nama', e.target.value)} className="mt-1 block w-full h-11" disabled={data.jenis_pencairan !== 'Bank'} /> {/* <--- Disesuaikan: h-11 */}
                                 <InputError message={errors.atas_nama} className="mt-2" />
                             </div>
-
                         </div>
-                        
 
-
-                        {/* ==================================================================== */}
-                        {/* BAGIAN FOOTER (TOMBOL SIMPAN/KIRIM) */}
-                        {/* ==================================================================== */}
-                        <div className="flex justify-end space-x-4 pt-4 border-t dark:border-gray-700">
-                            <PrimaryButton type="submit" disabled={processing} className="bg-green-500 hover:bg-green-600">
-                                Simpan Draft
-                            </PrimaryButton>
-                            <PrimaryButton type="submit" disabled={processing} className="bg-blue-600 hover:bg-blue-700">
-                                Kirim
-                            </PrimaryButton>
+                        <div className="flex justify-end space-x-4 pt-4 dark:border-gray-700">
+                            <PrimaryButton type="submit" disabled={processing} className="bg-green-500 hover:bg-green-600">Simpan Draft</PrimaryButton>
+                            <PrimaryButton type="submit" disabled={processing} className="bg-blue-600 hover:bg-blue-700">Kirim</PrimaryButton>
                         </div>
                     </form>
                 </div>

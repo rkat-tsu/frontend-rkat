@@ -3,33 +3,24 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import React from 'react';
+// ICON IMPORTS
+import { File, FileCheck, FileClock, FileX } from 'lucide-react';
 
-// Data statis sebagai placeholder, Anda harus mengambil ini dari controller
-const DUMMY_STATS = {
-    total: 20,
-    pending: 10,
-    approved: 7,
-    rejected: 3,
-};
 
-const DUMMY_RKAT_TERBARU = [
-    { unit: 'F. Vokasi', judul: 'Lorem ipsum dolor sit amet, consectetur...', waktu: '5 menit yang lalu', status: 'Menunggu Persetujuan' },
-    { unit: 'BEM', judul: 'Lorem ipsum dolor sit amet, consectetur...', waktu: '1 Jam yang lalu', status: 'Approve' },
-    { unit: 'CIT', judul: 'Lorem ipsum dolor sit amet, consectetur...', waktu: '2 Jam yang lalu', status: 'Pending' },
-    { unit: 'BPUK', judul: 'Lorem ipsum dolor sit amet, consectetur...', waktu: '3 Jam yang lalu', status: 'Ditolak' },
-];
+// Komponen Helper untuk menampilkan Ikon Lucide
+const StatisticIcon = ({ Icon, colorClass }) => (
+    <Icon size={48} className={`text-opacity-70 ${colorClass}`} />
+);
 
-export default function Dashboard({ auth }) {
+export default function Dashboard({ auth, stats, rkatTerbaru }) {
     
-    // Fungsi bantuan untuk mendapatkan style dan emoji status
     const getStatusInfo = (status) => {
         switch (status) {
             case 'Menunggu Persetujuan':
-                return { text: 'Menunggu Persetujuan', color: 'text-yellow-600 dark:text-yellow-400', style: 'border-yellow-300' };
+            case 'Pending': // Pending dan Menunggu Persetujuan dianggap sama
+                return { text: status, color: 'text-yellow-600 dark:text-yellow-400', style: 'border-yellow-300' };
             case 'Approve':
                 return { text: 'Approve', color: 'text-green-600 dark:text-green-400', style: 'border-green-300' };
-            case 'Pending':
-                return { text: 'Pending', color: 'text-yellow-600 dark:text-yellow-400', style: 'border-yellow-300' };
             case 'Ditolak':
                 return { text: 'Ditolak', color: 'text-red-600 dark:text-red-400', style: 'border-red-300' };
             default:
@@ -37,12 +28,38 @@ export default function Dashboard({ auth }) {
         }
     };
 
+    // ▼▼▼ PERUBAHAN UTAMA: Menggunakan komponen Ikon Lucide (StatisticIcon) ▼▼▼
     const statisticCards = [
-        { label: 'Total RKAT', value: DUMMY_STATS.total, icon: '📝', color: 'bg-blue-100 text-blue-800' },
-        { label: 'Pending', value: DUMMY_STATS.pending, icon: '⏳', color: 'bg-yellow-100 text-yellow-800' },
-        { label: 'Approve', value: DUMMY_STATS.approved, icon: '✅', color: 'bg-green-100 text-green-800' },
-        { label: 'Ditolak', value: DUMMY_STATS.rejected, icon: '❌', color: 'bg-red-100 text-red-800' },
+        // Menggunakan File (Berkas) sebagai representasi Total RKAT
+        { 
+            label: 'Total RKAT', 
+            value: stats.total, 
+            icon: <StatisticIcon Icon={File} colorClass="text-blue-800" />, 
+            color: 'bg-blue-100 text-blue-800' 
+        },
+        // Menggunakan FileClock (Berkas dengan Jam/Waktu) sebagai representasi Pending
+        { 
+            label: 'Pending', 
+            value: stats.pending, 
+            icon: <StatisticIcon Icon={FileClock} colorClass="text-yellow-800" />, 
+            color: 'bg-yellow-100 text-yellow-800' 
+        },
+        // Menggunakan FileCheck (Berkas dengan Tanda Cek) sebagai representasi Approve
+        { 
+            label: 'Approve', 
+            value: stats.approved, 
+            icon: <StatisticIcon Icon={FileCheck} colorClass="text-green-800" />, 
+            color: 'bg-green-100 text-green-800' 
+        },
+        // Menggunakan FileX (Berkas dengan Tanda Silang) sebagai representasi Ditolak
+        { 
+            label: 'Ditolak', 
+            value: stats.rejected, 
+            icon: <StatisticIcon Icon={FileX} colorClass="text-red-800" />, 
+            color: 'bg-red-100 text-red-800' 
+        },
     ];
+    // ▲▲▲ AKHIR PERUBAHAN UTAMA ▲▲▲
     
     return (
         <AuthenticatedLayout
@@ -60,7 +77,7 @@ export default function Dashboard({ auth }) {
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
                         
-                        {/* STATISTIK RKAT CARDS (Sesuai Gambar Anda) */}
+                        {/* STATISTIK RKAT CARDS */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                             {statisticCards.map((card, index) => (
                                 <div key={index} className={`p-6 rounded-lg shadow-md ${card.color} dark:bg-opacity-20 flex items-center justify-between`}>
@@ -68,7 +85,10 @@ export default function Dashboard({ auth }) {
                                         <div className="text-sm font-medium">{card.label}</div>
                                         <div className="text-5xl font-extrabold">{card.value}</div>
                                     </div>
-                                    <span className="text-5xl">{card.icon}</span>
+                                    {/* MENGGANTI EMOJI DENGAN KOMPONEN ICON */}
+                                    <div className="text-5xl opacity-80"> 
+                                        {card.icon}
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -77,7 +97,7 @@ export default function Dashboard({ auth }) {
                         <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">RKAT Terbaru</h3>
                         <div className="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
                             
-                            {DUMMY_RKAT_TERBARU.map((rkat, index) => {
+                            {rkatTerbaru.map((rkat, index) => {
                                 const info = getStatusInfo(rkat.status);
                                 return (
                                     <div 
@@ -91,13 +111,15 @@ export default function Dashboard({ auth }) {
                                         
                                         <div className="text-sm text-gray-500 dark:text-gray-400 me-4 hidden sm:block">{rkat.waktu}</div>
                                         
-                                        <div className="text-sm font-semibold">
+                                        <div className="text-sm font-semibold flex items-center">
                                             <span className={`px-3 py-1 text-xs rounded-full ${info.color} border ${info.style} bg-opacity-20`}>
                                                 {info.text}
                                             </span>
                                             
                                             {/* Icon Panah atau Check */}
                                             {rkat.status === 'Menunggu Persetujuan' && (
+                                                // Gunakan ikon Lucide ArrowRight atau sejenisnya jika mau konsisten, 
+                                                // tapi di sini saya pertahankan SVG panah kecil Anda.
                                                 <svg className="w-4 h-4 ms-2 inline-block align-middle" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10l-3.293-3.293a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path></svg>
                                             )}
                                         </div>
@@ -107,7 +129,6 @@ export default function Dashboard({ auth }) {
                             
                             {/* Tombol Tampilkan Lebih Banyak */}
                             <div className="p-4 text-center border-t border-gray-200 dark:border-gray-700">
-                                {/* Ganti dengan Link Inertia jika Anda memiliki route monitoring */}
                                 <button className="text-indigo-600 dark:text-indigo-400 text-sm hover:underline flex items-center justify-center mx-auto">
                                     Tampilkan lebih banyak
                                     <svg className="w-4 h-4 ms-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>

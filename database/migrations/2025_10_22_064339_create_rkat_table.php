@@ -110,16 +110,12 @@ return new class extends Migration
         Schema::create('rkat_details', function (Blueprint $table) {
             $table->id('id_rkat_detail');
 
-            // FK KRUSIAL: Menghubungkan ke RKAT_HEADER
             $table->foreignId('id_header')->constrained('rkat_headers', 'id_header')->onDelete('cascade');
-
-            // Foreign Keys Item (KODE AKUN harus disesuaikan ke 'rincian_anggarans')
             $table->string('kode_akun', 20);
-            $table->foreign('kode_akun')->references('kode_anggaran')->on('rincian_anggarans'); // <--- PERBAIKAN NAMA TABEL & KOLOM
+            $table->foreign('kode_akun')->references('kode_anggaran')->on('rincian_anggarans');
             $table->foreignId('id_program')->constrained('program_kerjas', 'id_proker');
             $table->foreignId('id_indikator')->constrained('indikator_keberhasilans', 'id_indikator');
 
-            // Detail Program Per Baris
             $table->text('deskripsi_kegiatan');
             $table->text('latar_belakang');
             $table->text('rasional');
@@ -128,6 +124,7 @@ return new class extends Migration
             $table->date('jadwal_pelaksanaan_mulai');
             $table->date('jadwal_pelaksanaan_akhir');
             $table->text('lokasi_pelaksanaan');
+            $table->text('targetkegiatan');
             $table->text('keberlanjutan');
             $table->text('pjawab');
 

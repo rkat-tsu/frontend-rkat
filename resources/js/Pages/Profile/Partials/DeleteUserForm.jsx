@@ -6,6 +6,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import PasswordInput from '@/Components/PasswordInput';
 import { useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 
 export default function DeleteUserForm({ className = '' }) {
     const [confirmingUserDeletion, setConfirmingUserDeletion] = useState(false);
@@ -59,7 +60,7 @@ export default function DeleteUserForm({ className = '' }) {
             </header>
 
             <DangerButton onClick={confirmUserDeletion}>
-                Hapus Akun
+                <Trash2 className='color:"white"'/>
             </DangerButton>
 
             <Modal show={confirmingUserDeletion} onClose={closeModal}>
@@ -103,7 +104,7 @@ export default function DeleteUserForm({ className = '' }) {
                         </SecondaryButton>
 
                         <DangerButton className="ms-3" disabled={processing}>
-                            Hapus Akun
+                            <Trash2 className='color:"white"'/>
                         </DangerButton>
                     </div>
                 </form>

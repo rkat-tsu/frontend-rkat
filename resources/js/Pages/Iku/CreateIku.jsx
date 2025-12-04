@@ -8,7 +8,8 @@ import TextInput from '@/Components/TextInput';
 import PrimaryButton from '@/Components/PrimaryButton';
 import InputError from '@/Components/InputError';
 import DangerButton from '@/Components/DangerButton';
-import Dropdown from '@/Components/Dropdown'; 
+import Dropdown from '@/Components/Dropdown';
+import { ChartPie, FileChartColumn, ListPlus  } from 'lucide-react';
 
 // --- Blueprints untuk Struktur Data ---
 const initialIkk = (data = {}) => ({
@@ -150,16 +151,12 @@ export default function Create({ auth, ikus }) {
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        
-                        {/* ==================================================================== */}
-                        {/* KOLOM KIRI: FORM INPUT/EDIT */}
-                        {/* ==================================================================== */}
                         <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 shadow sm:rounded-lg">
                             <form onSubmit={submit} className="space-y-8">
                                 
                                 {/* 1. PEMILIHAN IKU UTAMA - DROPDOOWN */}
-                                <h3 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 border-b pb-2 mb-4">
-                                    🔑 Pilih Indikator Kinerja Utama (IKU)
+                                <h3 className="text-xl font-bold text-teal-600 dark:text-teal-400 border-b pb-2 mb-2">
+                                    <FileChartColumn className="inline-block mb-2 mr-2" />Pilih Indikator Kinerja Utama (IKU)
                                 </h3>
                                 
                                 <div className="relative">
@@ -194,7 +191,7 @@ export default function Create({ auth, ikus }) {
                                                     key={iku.id_iku}
                                                     type="button"
                                                     onClick={() => handleIkuSelect(iku.id_iku)}
-                                                    className={`block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out ${String(iku.id_iku) === String(data.id_iku) ? 'bg-indigo-50 dark:bg-indigo-800 font-bold' : ''}`}
+                                                    className={`block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out ${String(iku.id_iku) === String(data.id_iku) ? 'bg-teal-50 dark:bg-teal-800 font-bold' : ''}`}
                                                 >
                                                     {iku.nama_iku}
                                                 </button>
@@ -208,8 +205,8 @@ export default function Create({ auth, ikus }) {
                                 {/* 2. INPUT/EDIT IKUSUB */}
                                 {data.id_iku && (
                                     <>
-                                        <h3 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 border-b pb-2 pt-4">
-                                            📝 IKUSUB & IKK ({selectedIku.nama_iku})
+                                        <h3 className="text-xl font-bold text-teal-600 dark:text-teal-400 border-b pb-2 pt-4">
+                                            <ListPlus className="inline-block mb-1 mr-2" />IKUSUB & IKK ({selectedIku.nama_iku})
                                         </h3>
                                         
                                         {data.ikusubs.map((ikusub, ikusubIndex) => (
@@ -298,13 +295,12 @@ export default function Create({ auth, ikus }) {
 
                                         {/* Tombol Tambah IKUSUB */}
                                         <div className="mt-6 pt-4 border-t dark:border-gray-700">
-                                            <PrimaryButton type="button" onClick={addIkusub} className="bg-indigo-700 hover:bg-indigo-800">
+                                            <PrimaryButton type="button" onClick={addIkusub} className="bg-teal-700 hover:bg-teal-800">
                                                 + Tambah IKUSUB Baru
                                             </PrimaryButton>
                                         </div>
                                     </>
                                 )}
-
 
                                 {/* Tombol Submit Form */}
                                 <div className="flex justify-end pt-4 border-t dark:border-gray-700">
@@ -316,19 +312,16 @@ export default function Create({ auth, ikus }) {
                             </form>
                         </div>
                         
-                        {/* ==================================================================== */}
-                        {/* KOLOM KANAN: PREVIEW DATA IKU YANG DIPILIH */}
-                        {/* ==================================================================== */}
                         <div className="lg:col-span-1 bg-gray-100 dark:bg-gray-900 p-6 shadow sm:rounded-lg">
                             <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 border-b pb-2">
-                                📊 Struktur IKU
+                                <ChartPie className="inline-block mb-1 mr-2" />Struktur IKU
                             </h3>
 
                             {!selectedIku ? (
                                 <p className="text-gray-500 dark:text-gray-400">Silakan pilih IKU Induk di sebelah kiri untuk melihat dan mengedit datanya.</p>
                             ) : (
                                 <div className="space-y-4">
-                                    <div className="font-bold text-lg text-indigo-600 dark:text-indigo-400">
+                                    <div className="font-bold text-lg text-teal-600 dark:text-teal-400">
                                         {selectedIku.nama_iku}
                                     </div>
 

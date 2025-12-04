@@ -16,9 +16,9 @@ class Ikk extends Model
     protected $table = 'ikks';
 
     // Relasi ke Ikusub (Banyak IKK dimiliki oleh satu Ikusub)
-    public function ikusub()
+    public function ikuSub()
     {
-        return $this->belongsTo(Ikusub::class, 'id_ikusub', 'id_ikusub');
+        return $this->belongsTo(IkuSub::class, 'id_ikusub', 'id_ikusub');
     }
     
     // Relasi ke ProgramKerja (Satu IKK memiliki banyak Program Kerja)

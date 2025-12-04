@@ -25,7 +25,6 @@ class ProfileController extends Controller
             'status' => session('status'),
             'auth' => [
                 'user' => $request->user()->only('id_user', 'username', 'email', 'nama_lengkap', 'no_telepon', 'peran'), 
-                // Catatan: id_user digunakan sebagai PK di skema Anda.
             ],
         ]);
     }
