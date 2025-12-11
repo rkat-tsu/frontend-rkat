@@ -640,7 +640,7 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
 
                         <div className="flex justify-end space-x-4 pt-4 dark:border-gray-700">
                             <PrimaryButton type="submit" disabled={processing} className="bg-green-500 hover:bg-green-600">Simpan Draft</PrimaryButton>
-                            <PrimaryButton type="submit" disabled={processing} className="bg-blue-600 hover:bg-blue-700">Kirim</PrimaryButton>
+                            <PrimaryButton type="submit" disabled={processing} className="bg-teal-600 hover:bg-teal-700">Kirim</PrimaryButton>
                         </div>
                     </form>
                 </div>

@@ -16,6 +16,12 @@ import {
     Save, 
     Edit, 
 } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+} from '@/Components/ui/dropdown-menu';
 
 // ▼▼▼ DAFTAR PERAN SUDAH DIPERBARUI (TERMASUK DIREKTUR) ▼▼▼
 const ALLOWED_ROLES = [
@@ -136,21 +142,20 @@ export default function UpdateProfileInformation({
                             
                             {isAdmin ? (
                                 <div className="relative">
-                                    <select
-                                        id="peran"
-                                        name="peran"
-                                        // appearance-none menyembunyikan panah default browser agar bisa diganti icon sendiri
-                                        className="appearance-none mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-teal-500 dark:focus:border-teal-600 focus:ring-teal-500 dark:focus:ring-teal-600 rounded-md shadow-sm pr-10"
-                                        value={data.peran} 
-                                        onChange={(e) => setData('peran', e.target.value)} 
-                                    >
-                                        {ALLOWED_ROLES.map((peran) => (
-                                            <option key={peran} value={peran}>{peran}</option>
-                                        ))}
-                                    </select>
-                                    
-                                    {/* Icon Chevron sebagai indikator dropdown kustom */}
-                                    <ChevronUp className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none transition-transform duration-200 rotate-180"/>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <div className="appearance-none mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-teal-500 dark:focus:border-teal-600 focus:ring-teal-500 dark:focus:ring-teal-600 rounded-md shadow-sm pr-10 cursor-pointer">
+                                                {data.peran}
+                                            </div>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent sideOffset={6} className="w-56">
+                                            {ALLOWED_ROLES.map((peran) => (
+                                                <DropdownMenuItem key={peran} onSelect={() => setData('peran', peran)} className={data.peran === peran ? 'bg-teal-100 dark:bg-teal-800 font-semibold' : ''}>
+                                                    {peran}
+                                                </DropdownMenuItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
                             ) : (
                                 // Tampilan Read-only untuk non-Admin

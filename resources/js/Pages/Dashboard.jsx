@@ -4,12 +4,13 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import React from 'react';
 // ICON IMPORTS
-import { File, FileCheck, FileClock, FileX } from 'lucide-react';
+import { File, FileCheck, FileClock, FileX, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 
 // Komponen Helper untuk menampilkan Ikon Lucide
 const StatisticIcon = ({ Icon, colorClass }) => (
-    <Icon size={48} className={`text-opacity-70 ${colorClass}`} />
+    <Icon size={48} className={`${colorClass} dark:text-opacity-90`} />
 );
 
 export default function Dashboard({ auth, stats, rkatTerbaru }) {
@@ -35,28 +36,28 @@ export default function Dashboard({ auth, stats, rkatTerbaru }) {
             label: 'Total RKAT', 
             value: stats.total, 
             icon: <StatisticIcon Icon={File} colorClass="text-blue-800" />, 
-            color: 'bg-blue-100 text-blue-800' 
+            color: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100' 
         },
         // Menggunakan FileClock (Berkas dengan Jam/Waktu) sebagai representasi Pending
         { 
             label: 'Pending', 
             value: stats.pending, 
             icon: <StatisticIcon Icon={FileClock} colorClass="text-yellow-800" />, 
-            color: 'bg-yellow-100 text-yellow-800' 
+            color: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100' 
         },
         // Menggunakan FileCheck (Berkas dengan Tanda Cek) sebagai representasi Approve
         { 
             label: 'Approve', 
             value: stats.approved, 
             icon: <StatisticIcon Icon={FileCheck} colorClass="text-green-800" />, 
-            color: 'bg-green-100 text-green-800' 
+            color: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100' 
         },
         // Menggunakan FileX (Berkas dengan Tanda Silang) sebagai representasi Ditolak
         { 
             label: 'Ditolak', 
             value: stats.rejected, 
             icon: <StatisticIcon Icon={FileX} colorClass="text-red-800" />, 
-            color: 'bg-red-100 text-red-800' 
+            color: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100' 
         },
     ];
     // ▲▲▲ AKHIR PERUBAHAN UTAMA ▲▲▲
@@ -80,13 +81,13 @@ export default function Dashboard({ auth, stats, rkatTerbaru }) {
                         {/* STATISTIK RKAT CARDS */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                             {statisticCards.map((card, index) => (
-                                <div key={index} className={`p-6 rounded-lg shadow-md ${card.color} dark:bg-opacity-20 flex items-center justify-between`}>
+                                <div key={index} className={`p-6 rounded-lg shadow-md ${card.color} flex items-center justify-between`}>
                                     <div className="text-left">
                                         <div className="text-sm font-medium">{card.label}</div>
                                         <div className="text-5xl font-extrabold">{card.value}</div>
                                     </div>
                                     {/* MENGGANTI EMOJI DENGAN KOMPONEN ICON */}
-                                    <div className="text-5xl opacity-80"> 
+                                    <div className="text-5xl opacity-100"> 
                                         {card.icon}
                                     </div>
                                 </div>
@@ -118,9 +119,7 @@ export default function Dashboard({ auth, stats, rkatTerbaru }) {
                                             
                                             {/* Icon Panah atau Check */}
                                             {rkat.status === 'Menunggu Persetujuan' && (
-                                                // Gunakan ikon Lucide ArrowRight atau sejenisnya jika mau konsisten, 
-                                                // tapi di sini saya pertahankan SVG panah kecil Anda.
-                                                <svg className="w-4 h-4 ms-2 inline-block align-middle" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10l-3.293-3.293a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path></svg>
+                                                <ChevronDown size={16} className="ms-2 inline-block align-middle" />
                                             )}
                                         </div>
                                     </div>
@@ -128,11 +127,14 @@ export default function Dashboard({ auth, stats, rkatTerbaru }) {
                             })}
                             
                             {/* Tombol Tampilkan Lebih Banyak */}
-                            <div className="p-4 text-center border-t border-gray-200 dark:border-gray-700">
-                                <button className="text-indigo-600 dark:text-indigo-400 text-sm hover:underline flex items-center justify-center mx-auto">
+                            <div className="p-2 text-center border-t border-gray-200 dark:border-gray-700">
+                                <Button 
+                                    variant="ghost" 
+                                    className="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 text-sm"
+                                >
                                     Tampilkan lebih banyak
-                                    <svg className="w-4 h-4 ms-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </button>
+                                    <ChevronDown size={16} className="ms-1" />
+                                </Button>
                             </div>
 
                         </div>

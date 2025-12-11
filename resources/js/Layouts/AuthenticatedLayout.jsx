@@ -109,7 +109,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
                     
                     {/* 4. AREA BREADCRUMBS */}
-                    <div className="px-4 sm:px-6 lg:px-8 py-2 bg-white border-b border-gray-100">
+                    <div className="px-4 sm:px-6 lg:px-8 py-2 ">
                         <AutomaticBreadcrumbs />
                     </div>
 

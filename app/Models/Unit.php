@@ -17,9 +17,15 @@ class Unit extends Model
         'kode_unit',
         'nama_unit',
         'tipe_unit',
+        'jalur_persetujuan',
         'id_kepala',
         'parent_id',
+        'no_telepon',
+        'email',
     ];
+
+    // Enum values for tipe_unit: 'Fakultas', 'Prodi', 'Unit', 'Lainnya', 'Atasan', 'Admin'
+    // Enum values for jalur_persetujuan: 'akademik', 'non-akademik'
     
     // Relasi ke RkatHeader
     public function parent()

@@ -12,6 +12,7 @@ use Illuminate\Auth\Passwords\CanResetPassword; // WAJIB untuk fitur reset passw
 use App\Notifications\ResetPasswordNotification; 
 // Jika model Departemen berada di namespace yang sama atau di App\Models
 use App\Models\Departemen; 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable implements MustVerifyEmail
 {

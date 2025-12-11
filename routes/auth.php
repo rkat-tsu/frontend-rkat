@@ -12,10 +12,8 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])
-        ->name('register');
-
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    // Registration is intentionally disabled for public guests.
+    // Admin users will create accounts via admin-protected routes below.
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
@@ -56,4 +54,10 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+});
+
+// Admin-only account creation routes (only accessible by authenticated admins)
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
+    Route::post('register', [RegisteredUserController::class, 'store']);
 });
