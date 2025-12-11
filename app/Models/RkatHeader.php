@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo; 
 
 class RkatHeader extends Model
 {
@@ -39,6 +40,7 @@ class RkatHeader extends Model
         return $this->belongsTo(User::class, 'diajukan_oleh', 'id_user');
     }
 
+    // Fungsi ini sekarang sudah benar karena 'use' statement di atas
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class, 'id_unit', 'id_unit');
