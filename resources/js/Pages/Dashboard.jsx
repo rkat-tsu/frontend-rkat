@@ -7,7 +7,6 @@ import React from 'react';
 import { File, FileCheck, FileClock, FileX, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-<<<<<<< HEAD
 
 // Komponen Helper untuk menampilkan Ikon Lucide
 const StatisticIcon = ({ Icon, colorClass }) => (
@@ -16,17 +15,6 @@ const StatisticIcon = ({ Icon, colorClass }) => (
 
 export default function Dashboard({ auth, stats, rkatTerbaru }) {
     
-=======
-// HAPUS DUMMY_STATS dan DUMMY_RKAT_TERBARU
-// const DUMMY_STATS = { ... };
-// const DUMMY_RKAT_TERBARU = [ ... ];
-
-// ▼▼▼ [DIUBAH] Terima props 'stats' dan 'rkatTerbaru' dari controller ▼▼▼
-export default function Dashboard({ auth, stats, rkatTerbaru }) {
-    
-    // Fungsi bantuan untuk mendapatkan style dan emoji status
-    // (Tidak perlu diubah)
->>>>>>> 4ba6e9977d92b54baeb13d4cf9f896290ee190e8
     const getStatusInfo = (status) => {
         switch (status) {
             case 'Menunggu Persetujuan':
@@ -41,7 +29,6 @@ export default function Dashboard({ auth, stats, rkatTerbaru }) {
         }
     };
 
-<<<<<<< HEAD
     // ▼▼▼ PERUBAHAN UTAMA: Menggunakan komponen Ikon Lucide (StatisticIcon) ▼▼▼
     const statisticCards = [
         // Menggunakan File (Berkas) sebagai representasi Total RKAT
@@ -72,14 +59,6 @@ export default function Dashboard({ auth, stats, rkatTerbaru }) {
             icon: <StatisticIcon Icon={FileX} colorClass="text-red-800" />, 
             color: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100' 
         },
-=======
-    // ▼▼▼ [DIUBAH] Gunakan prop 'stats' (sebelumnya DUMMY_STATS) ▼▼▼
-    const statisticCards = [
-        { label: 'Total RKAT', value: stats.total, icon: '📝', color: 'bg-blue-100 text-blue-800' },
-        { label: 'Pending', value: stats.pending, icon: '⏳', color: 'bg-yellow-100 text-yellow-800' },
-        { label: 'Approve', value: stats.approved, icon: '✅', color: 'bg-green-100 text-green-800' },
-        { label: 'Ditolak', value: stats.rejected, icon: '❌', color: 'bg-red-100 text-red-800' },
->>>>>>> 4ba6e9977d92b54baeb13d4cf9f896290ee190e8
     ];
     // ▲▲▲ AKHIR PERUBAHAN UTAMA ▲▲▲
     
@@ -99,11 +78,7 @@ export default function Dashboard({ auth, stats, rkatTerbaru }) {
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
                         
-<<<<<<< HEAD
                         {/* STATISTIK RKAT CARDS */}
-=======
-                        {/* STATISTIK RKAT CARDS (Sudah dinamis) */}
->>>>>>> 4ba6e9977d92b54baeb13d4cf9f896290ee190e8
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                             {statisticCards.map((card, index) => (
                                 <div key={index} className={`p-6 rounded-lg shadow-md ${card.color} flex items-center justify-between`}>
@@ -123,10 +98,6 @@ export default function Dashboard({ auth, stats, rkatTerbaru }) {
                         <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">RKAT Terbaru</h3>
                         <div className="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
                             
-<<<<<<< HEAD
-=======
-                            {/* ▼▼▼ [DIUBAH] Gunakan prop 'rkatTerbaru' (sebelumnya DUMMY_RKAT_TERBARU) ▼▼▼ */}
->>>>>>> 4ba6e9977d92b54baeb13d4cf9f896290ee190e8
                             {rkatTerbaru.map((rkat, index) => {
                                 const info = getStatusInfo(rkat.status);
                                 return (

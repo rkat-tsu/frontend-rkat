@@ -2,15 +2,11 @@
 
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\IkuController;
-<<<<<<< HEAD
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RkatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TahunAnggaranController;
 use App\Http\Controllers\UnitController;
-=======
-use App\Http\Controllers\DashboardController; 
->>>>>>> 4ba6e9977d92b54baeb13d4cf9f896290ee190e8
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -24,15 +20,10 @@ Route::get('/', function () {
     ]);
 });
 
-<<<<<<< HEAD
 //Route::middleware(['auth', 'verified'])->group(function () {
 //    Route::get('/dashboard', Inertia::render('Dashboard'))->name('dashboard');
 //});
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
-=======
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])->name('dashboard');
->>>>>>> 4ba6e9977d92b54baeb13d4cf9f896290ee190e8
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // === ROUTE RKAT (Sudah Ada) ===
