@@ -13,7 +13,9 @@ const BreadcrumbList = React.forwardRef(({ className, ...props }, ref) => (
   <ol
     ref={ref}
     className={cn(
-      "flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground dark:text-muted-foreground sm:gap-2.5",
+      "flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5",
+      // In dark mode make breadcrumb text brighter for readability
+      "dark:text-gray-200",
       className
     )}
     {...props} />
@@ -34,7 +36,12 @@ const BreadcrumbLink = React.forwardRef(({ asChild, className, ...props }, ref) 
   return (
     <Comp
       ref={ref}
-      className={cn("transition-colors hover:text-foreground dark:hover:text-foreground", className)}
+      // default text muted on light, brighter on dark; hover becomes bright (foreground/white)
+      className={cn(
+        "transition-colors text-gray-700 hover:text-foreground",
+        "dark:text-gray-200 dark:hover:text-white",
+        className
+      )}
       {...props} />
   );
 })
@@ -46,7 +53,8 @@ const BreadcrumbPage = React.forwardRef(({ className, ...props }, ref) => (
     role="link"
     aria-disabled="true"
     aria-current="page"
-    className={cn("font-normal text-foreground dark:text-foreground", className)}
+    // Active page: emphasize with accent color and slightly bolder weight
+    className={cn("font-semibold text-teal-600 dark:text-teal-400", className)}
     {...props} />
 ))
 BreadcrumbPage.displayName = "BreadcrumbPage"
@@ -59,7 +67,8 @@ const BreadcrumbSeparator = ({
   <li
     role="presentation"
     aria-hidden="true"
-    className={cn("[&>svg]:w-3.5 [&>svg]:h-3.5", className)}
+    // ensure separator icon scales and has muted color in light, slightly brighter in dark
+    className={cn("[&>svg]:w-3.5 [&>svg]:h-3.5 text-muted-foreground dark:text-gray-400", className)}
     {...props}>
     {children ?? <ChevronRight />}
   </li>
@@ -73,7 +82,7 @@ const BreadcrumbEllipsis = ({
   <span
     role="presentation"
     aria-hidden="true"
-    className={cn("flex h-9 w-9 items-center justify-center", className)}
+    className={cn("flex h-9 w-9 items-center justify-center text-muted-foreground dark:text-gray-300", className)}
     {...props}>
     <MoreHorizontal className="h-4 w-4" />
     <span className="sr-only">More</span>

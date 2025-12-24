@@ -55,4 +55,30 @@ class RkatHeader extends Model
     {
         return $this->hasMany(LogPersetujuan::class, 'id_header', 'id_header');
     }
+
+    /**
+     * Generate a sequential document number for RKAT per year and unit.
+     * Format: RKAT-{tahun}-{unit}-{sequence:04}
+     */
+    public static function generateNomorDokumen(int $tahunAnggaran, int $idUnit): string
+    {
+        $prefix = sprintf('RKAT-%d-%d', $tahunAnggaran, $idUnit);
+
+        // Find last nomor_dokumen for same year and unit and increment sequence
+        $last = self::where('tahun_anggaran', $tahunAnggaran)
+            ->where('id_unit', $idUnit)
+            ->where('nomor_dokumen', 'like', $prefix . '%')
+            ->orderBy('id_header', 'desc')
+            ->value('nomor_dokumen');
+
+        $nextSeq = 1;
+        if ($last) {
+            // extract trailing sequence (assumes suffix like -0001)
+            $parts = explode('-', $last);
+            $lastSeq = intval(end($parts));
+            $nextSeq = $lastSeq + 1;
+        }
+
+        return sprintf('%s-%04d', $prefix, $nextSeq);
+    }
 }

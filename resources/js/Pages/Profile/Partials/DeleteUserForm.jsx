@@ -60,7 +60,8 @@ export default function DeleteUserForm({ className = '' }) {
             </header>
 
             <DangerButton onClick={confirmUserDeletion}>
-                <Trash2 className='color:"white"'/>
+                <Trash2 className="w-4 h-4" />
+                <span className="ms-2">Hapus</span>
             </DangerButton>
 
             <Modal show={confirmingUserDeletion} onClose={closeModal}>
@@ -104,7 +105,8 @@ export default function DeleteUserForm({ className = '' }) {
                         </SecondaryButton>
 
                         <DangerButton className="ms-3" disabled={processing}>
-                            <Trash2 className='color:"white"'/>
+                            <Trash2 className="w-4 h-4" />
+                            <span className="ms-2">Hapus</span>
                         </DangerButton>
                     </div>
                 </form>

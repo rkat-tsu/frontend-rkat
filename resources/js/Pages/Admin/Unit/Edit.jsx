@@ -12,7 +12,8 @@ import {
     DropdownMenuItem,
 } from '@/Components/ui/dropdown-menu';
 
-export default function Edit({ unit, users = [] }) {
+// 1. Tambahkan "units = []" ke dalam props
+export default function Edit({ unit, users = [], units = [] }) {
     const { data, setData, patch, processing, errors } = useForm({
         kode_unit: unit.kode_unit || '',
         nama_unit: unit.nama_unit || '',
@@ -24,12 +25,15 @@ export default function Edit({ unit, users = [] }) {
         email: unit.email || '',
     });
 
+    // 2. Filter units agar unit yang sedang diedit tidak muncul di pilihan Parent
+    // Ini untuk mencegah circular reference (unit menjadi parent dirinya sendiri)
+    const availableUnits = units.filter(u => u.id_unit !== unit.id_unit);
+
     const submit = (e) => {
         e.preventDefault();
         patch(route('unit.update', unit.id_unit));
     };
 
-    // Format nomor telepon otomatis
     const handlePhoneInput = (value) => {
         const cleaned = value.replace(/\D/g, '');
         setData('no_telepon', cleaned);
@@ -45,27 +49,23 @@ export default function Edit({ unit, users = [] }) {
             <div className="py-4">
                 <div className="max-w-2xl mx-auto sm:px-6 lg:px-8">
                     <form onSubmit={submit} className="bg-white dark:bg-gray-800 p-8 shadow-sm sm:rounded-lg">
+                        
                         {/* Row 1: Nama & Unit */}
                         <div className="grid grid-cols-2 gap-6 mb-6">
                             <div>
                                 <InputLabel htmlFor="nama_unit" value="Nama" />
                                 <TextInput
                                     id="nama_unit"
-                                    name="nama_unit"
-                                    placeholder="Nama Lengkap Unit"
                                     value={data.nama_unit}
                                     onChange={(e) => setData('nama_unit', e.target.value)}
                                     className="mt-1 block w-full"
                                 />
                                 <InputError message={errors.nama_unit} className="mt-2" />
                             </div>
-
                             <div>
                                 <InputLabel htmlFor="kode_unit" value="Unit" />
                                 <TextInput
                                     id="kode_unit"
-                                    name="kode_unit"
-                                    placeholder="Singkatan Unit"
                                     value={data.kode_unit}
                                     onChange={(e) => setData('kode_unit', e.target.value)}
                                     className="mt-1 block w-full"
@@ -74,8 +74,9 @@ export default function Edit({ unit, users = [] }) {
                             </div>
                         </div>
 
-                        {/* Row 2: Tipe Unit & Jalur Persetujuan */}
+                        {/* Row 2: Tipe & Jalur */}
                         <div className="grid grid-cols-2 gap-6 mb-6">
+                            {/* ... (Konten Tipe Unit sama seperti sebelumnya) */}
                             <div>
                                 <InputLabel htmlFor="tipe_unit" value="Tipe Unit" />
                                 <DropdownMenu>
@@ -85,24 +86,13 @@ export default function Edit({ unit, users = [] }) {
                                         </div>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent sideOffset={6} className="w-56">
-                                        <DropdownMenuItem onSelect={() => setData('tipe_unit', '')} className={data.tipe_unit === '' ? 'bg-teal-100 dark:bg-teal-800 font-semibold' : ''}>
-                                            -- Pilih Tipe Unit --
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => setData('tipe_unit', 'Fakultas')} className={data.tipe_unit === 'Fakultas' ? 'bg-teal-100 dark:bg-teal-800 font-semibold' : ''}>
-                                            Fakultas
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => setData('tipe_unit', 'Prodi')} className={data.tipe_unit === 'Prodi' ? 'bg-teal-100 dark:bg-teal-800 font-semibold' : ''}>
-                                            Prodi
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => setData('tipe_unit', 'Unit')} className={data.tipe_unit === 'Unit' ? 'bg-teal-100 dark:bg-teal-800 font-semibold' : ''}>
-                                            Unit
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => setData('tipe_unit', 'Lainnya')} className={data.tipe_unit === 'Lainnya' ? 'bg-teal-100 dark:bg-teal-800 font-semibold' : ''}>
-                                            Lainnya
-                                        </DropdownMenuItem>
+                                        {['Fakultas', 'Prodi', 'Unit', 'Lainnya'].map((tipe) => (
+                                            <DropdownMenuItem key={tipe} onSelect={() => setData('tipe_unit', tipe)}>
+                                                {tipe}
+                                            </DropdownMenuItem>
+                                        ))}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-                                <InputError message={errors.tipe_unit} className="mt-2" />
                             </div>
 
                             <div>
@@ -110,55 +100,41 @@ export default function Edit({ unit, users = [] }) {
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <div className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-900 dark:text-gray-100 text-left cursor-pointer">
-                                            {data.jalur_persetujuan || '-- Pilih Jalur Persetujuan --'}
+                                            {data.jalur_persetujuan || '-- Pilih Jalur --'}
                                         </div>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent sideOffset={6} className="w-56">
-                                        <DropdownMenuItem onSelect={() => setData('jalur_persetujuan', '')} className={data.jalur_persetujuan === '' ? 'bg-teal-100 dark:bg-teal-800 font-semibold' : ''}>
-                                            -- Pilih Jalur Persetujuan --
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => setData('jalur_persetujuan', 'akademik')} className={data.jalur_persetujuan === 'akademik' ? 'bg-teal-100 dark:bg-teal-800 font-semibold' : ''}>
-                                            Akademik
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => setData('jalur_persetujuan', 'non-akademik')} className={data.jalur_persetujuan === 'non-akademik' ? 'bg-teal-100 dark:bg-teal-800 font-semibold' : ''}>
-                                            Non-Akademik
-                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => setData('jalur_persetujuan', 'akademik')}>Akademik</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => setData('jalur_persetujuan', 'non-akademik')}>Non-Akademik</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-                                <InputError message={errors.jalur_persetujuan} className="mt-2" />
                             </div>
                         </div>
 
-                        {/* Row 3: No. Telp & Email */}
+                        {/* Row 3: No Telp & Email */}
                         <div className="grid grid-cols-2 gap-6 mb-6">
                             <div>
                                 <InputLabel htmlFor="no_telepon" value="No. Telp" />
                                 <TextInput
                                     id="no_telepon"
-                                    name="no_telepon"
-                                    placeholder="+62"
                                     value={data.no_telepon}
                                     onChange={(e) => handlePhoneInput(e.target.value)}
                                     className="mt-1 block w-full"
                                 />
-                                <InputError message={errors.no_telepon} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="email" value="Email" />
                                 <TextInput
                                     id="email"
-                                    name="email"
                                     type="email"
-                                    placeholder="admin@tsu.ac.id"
                                     value={data.email}
                                     onChange={(e) => setData('email', e.target.value)}
                                     className="mt-1 block w-full"
                                 />
-                                <InputError message={errors.email} className="mt-2" />
                             </div>
                         </div>
 
-                        {/* Optional: id_kepala */}
+                        {/* Dropdown Kepala Unit */}
                         {users.length > 0 && (
                             <div className="mb-6">
                                 <InputLabel htmlFor="id_kepala" value="Kepala Unit (Opsional)" />
@@ -168,28 +144,45 @@ export default function Edit({ unit, users = [] }) {
                                             {data.id_kepala ? (users.find(u => u.id_user == data.id_kepala)?.nama_lengkap) : '-- Pilih Kepala Unit --'}
                                         </div>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent sideOffset={6} className="w-56">
-                                        <DropdownMenuItem onSelect={() => setData('id_kepala', '')} className={data.id_kepala === '' ? 'bg-teal-100 dark:bg-teal-800 font-semibold' : ''}>
-                                            -- Pilih Kepala Unit --
-                                        </DropdownMenuItem>
+                                    <DropdownMenuContent sideOffset={6} className="w-56 max-h-60 overflow-y-auto">
+                                        <DropdownMenuItem onSelect={() => setData('id_kepala', '')}>-- Kosongkan --</DropdownMenuItem>
                                         {users.map((user) => (
-                                            <DropdownMenuItem key={user.id_user} onSelect={() => setData('id_kepala', user.id_user)} className={data.id_kepala == user.id_user ? 'bg-teal-100 dark:bg-teal-800 font-semibold' : ''}>
+                                            <DropdownMenuItem key={user.id_user} onSelect={() => setData('id_kepala', user.id_user)}>
                                                 {user.nama_lengkap}
                                             </DropdownMenuItem>
                                         ))}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-                                <InputError message={errors.id_kepala} className="mt-2" />
                             </div>
                         )}
 
-                        {/* Submit Button */}
+                        {/* Dropdown Parent Unit (SUDAH DIPERBAIKI) */}
+                        {availableUnits.length > 0 && (
+                            <div className="mb-6">
+                                <InputLabel htmlFor="parent_id" value="Parent Unit (Opsional)" />
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <div className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-900 dark:text-gray-100 text-left cursor-pointer">
+                                            {data.parent_id ? (availableUnits.find(u => u.id_unit == data.parent_id)?.nama_unit) : '-- Pilih Parent Unit --'}
+                                        </div>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent sideOffset={6} className="w-56 max-h-60 overflow-y-auto">
+                                        <DropdownMenuItem onSelect={() => setData('parent_id', '')}>
+                                            -- Tanpa Parent Unit --
+                                        </DropdownMenuItem>
+                                        {availableUnits.map((u) => (
+                                            <DropdownMenuItem key={u.id_unit} onSelect={() => setData('parent_id', u.id_unit)}>
+                                                {u.kode_unit ? `${u.kode_unit} - ${u.nama_unit}` : u.nama_unit}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <InputError message={errors.parent_id} className="mt-2" />
+                            </div>
+                        )}
+
                         <div className="flex justify-end pt-4">
-                            <PrimaryButton
-                                type="submit"
-                                disabled={processing}
-                                className="bg-teal-600 hover:bg-teal-700"
-                            >
+                            <PrimaryButton disabled={processing} className="bg-teal-600 hover:bg-teal-700">
                                 Simpan Perubahan
                             </PrimaryButton>
                         </div>

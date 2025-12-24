@@ -16,9 +16,12 @@ class RkatDetail extends Model
     protected $fillable = [
         'id_header',
         'kode_akun',
-        'id_program',
         'id_indikator',
         'deskripsi_kegiatan',
+        'judul_kegiatan',
+        'id_iku',
+        'id_ikusub',
+        'id_ikk',
         'latar_belakang',
         'rasional',
         'tujuan',
@@ -56,10 +59,20 @@ class RkatDetail extends Model
         return $this->belongsTo(RincianAnggaran::class, 'kode_anggaran', 'kode_anggaran');
     }
     
-    // Relasi ke ProgramKerja
-    public function programKerja()
+    // Relasi ke IKU / IKUSUB / IKK
+    public function iku()
     {
-        return $this->belongsTo(ProgramKerja::class, 'id_program', 'id_proker');
+        return $this->belongsTo(Iku::class, 'id_iku', 'id_iku');
+    }
+
+    public function ikuSub()
+    {
+        return $this->belongsTo(IkuSub::class, 'id_ikusub', 'id_ikusub');
+    }
+
+    public function ikk()
+    {
+        return $this->belongsTo(Ikk::class, 'id_ikk', 'id_ikk');
     }
     // Relasi ke IndikatorKeberhasilan
     public function indikatorKeberhasilan()

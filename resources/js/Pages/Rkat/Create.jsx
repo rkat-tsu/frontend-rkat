@@ -88,7 +88,7 @@ const TableContainer = ({ children, className = "" }) => (
 // ====================================================================
 // Komponen Utama Form RKAT
 // ====================================================================
-export default function Create({ auth, tahunAnggarans, units, programKerjas, akunAnggarans, ikus, ikuSubs }) {
+export default function Create({ auth, tahunAnggarans, units, akunAnggarans, ikus, ikuSubs, ikks }) {
 
     // ... (Logika State dan Hooks tetap sama) ...
     const initialIndikator = {
@@ -112,15 +112,14 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
         jumlah: 0
     };
 
-    const { data, setData, post, processing, errors } = useForm({
+    const initialData = {
         tahun_anggaran: tahunAnggarans[0]?.tahun_anggaran || '',
         id_unit: auth.user.id_unit || units[0]?.id_unit || '',
         kode_kegiatan: '',
         judul_pengajuan: '',
         iku_id: '',
         ikusub_id: '',
-        program_kerja_id: '',
-        id_program: programKerjas[0]?.id_proker || '',
+        ikk_id: '',
         kode_akun: akunAnggarans[0]?.kode_anggaran || '',
         jadwal_pelaksanaan_mulai: new Date().toISOString().slice(0, 10),
         jadwal_pelaksanaan_akhir: new Date().toISOString().slice(0, 10),
@@ -140,11 +139,15 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
         indikator_kinerja: [initialIndikator],
         rincian_anggaran: [initialRAB],
         anggaran: 0,
-    });
+    };
+
+    const { data, setData, post, processing, errors, reset } = useForm(initialData);
+    const [serverError, setServerError] = useState(null);
 
     const [selectedIKUId, setSelectedIKUId] = useState('');
     const [selectedIKUSubId, setSelectedIKUSubId] = useState('');
-    const [filteredProgramKerjas, setFilteredProgramKerjas] = useState(programKerjas);
+    const [selectedIKKId, setSelectedIKKId] = useState('');
+    const [manualDeskripsi, setManualDeskripsi] = useState(false);
 
     // --- EFECTS DAN HANDLER ---
     useEffect(() => {
@@ -152,42 +155,15 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
         setData('anggaran', total);
     }, [data.rincian_anggaran]);
 
+    // Auto-fill `deskripsi_kegiatan` from `judul_pengajuan` unless user manually edited it
     useEffect(() => {
-        let filtered = programKerjas;
-        if (selectedIKUSubId) {
-            filtered = programKerjas.filter(proker => proker.ikk?.ikusub?.id_ikusub == selectedIKUSubId);
-        } else if (selectedIKUId) {
-            filtered = programKerjas.filter(proker => proker.ikk?.ikusub?.iku?.id_iku == selectedIKUId);
+        const title = data.judul_pengajuan || '';
+        if (!manualDeskripsi && (data.deskripsi_kegiatan !== title)) {
+            setData('deskripsi_kegiatan', title);
         }
+    }, [data.judul_pengajuan]);
 
-        setFilteredProgramKerjas(filtered);
-
-        let newProgramId = data.id_program;
-        if (!filtered.some(p => p.id_proker == data.id_program) && filtered.length > 0) {
-            newProgramId = filtered[0].id_proker;
-        } else if (filtered.length === 0) {
-            newProgramId = '';
-        }
-
-        const finalSelectedProgram = programKerjas.find(p => p.id_proker == newProgramId);
-
-        setData(prevData => ({
-            ...prevData,
-            id_program: newProgramId,
-            program_kerja_id: newProgramId,
-            iku_id: finalSelectedProgram?.ikk?.ikusub?.iku?.id_iku || selectedIKUId,
-            ikusub_id: finalSelectedProgram?.ikk?.ikusub?.id_ikusub || selectedIKUSubId,
-        }));
-
-    }, [selectedIKUId, selectedIKUSubId, programKerjas]);
-
-    useEffect(() => {
-        const currentProgram = programKerjas.find(p => p.id_proker == data.id_program);
-        if (currentProgram) {
-            setSelectedIKUId(currentProgram.ikk?.ikusub?.iku?.id_iku || '');
-            setSelectedIKUSubId(currentProgram.ikk?.ikusub?.id_ikusub || '');
-        }
-    }, [data.id_program, programKerjas]);
+    
 
     const handleIndikatorChange = (index, field, value) => {
         const newIndikator = [...data.indikator_kinerja];
@@ -208,11 +184,28 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
 
     const handleRincianChange = (index, field, value) => {
         const newRincian = [...data.rincian_anggaran];
-        newRincian[index][field] = value;
 
-        if (field === 'vol' || field === 'biaya_satuan') {
-            const vol = newRincian[index].vol || 0;
-            const biayaSatuan = newRincian[index].biaya_satuan || 0;
+        // When user selects a "kebutuhan" (from CustomSelect) the value is kode_anggaran.
+        // Sync both `kode_anggaran` and `kebutuhan` (label) so UI and data stay consistent.
+        if (field === 'kebutuhan') {
+            const kode = value;
+            const akun = akunAnggarans.find(a => String(a.kode_anggaran) === String(kode));
+            newRincian[index].kode_anggaran = kode;
+            newRincian[index].kebutuhan = akun ? `${akun.kode_anggaran} - ${akun.nama_anggaran}` : kode;
+        } else if (field === 'kode_anggaran') {
+            // If user types/changes kode_anggaran manually, try to resolve the label
+            const kode = value;
+            const akun = akunAnggarans.find(a => String(a.kode_anggaran) === String(kode));
+            newRincian[index].kode_anggaran = kode;
+            newRincian[index].kebutuhan = akun ? `${akun.kode_anggaran} - ${akun.nama_anggaran}` : '';
+        } else {
+            newRincian[index][field] = value;
+        }
+
+        // Recompute jumlah when volume or harga/biaya satuan change
+        if (field === 'vol' || field === 'biaya_satuan' || field === 'kode_anggaran' || field === 'kebutuhan') {
+            const vol = Number(newRincian[index].vol) || 0;
+            const biayaSatuan = Number(newRincian[index].biaya_satuan) || 0;
             newRincian[index].jumlah = vol * biayaSatuan;
         }
 
@@ -220,33 +213,90 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
     };
 
     const addRincianRow = () => {
+        const createEmptyRAB = () => ({
+            id: Date.now(),
+            kode_anggaran: akunAnggarans[0]?.kode_anggaran || '',
+            kebutuhan: '',
+            keterangan: '',
+            vol: 1,
+            satuan: 'unit',
+            biaya_satuan: 0,
+            jumlah: 0,
+        });
+
         setData('rincian_anggaran', [
             ...data.rincian_anggaran,
-            { ...initialRAB, id: Date.now() }
+            createEmptyRAB()
         ]);
     };
 
     const removeRincianRow = (id) => {
-        setData('rincian_anggaran', data.rincian_anggaran.filter(item => item.id !== id));
+        const filtered = data.rincian_anggaran.filter(item => item.id !== id);
+        if (filtered.length === 0) {
+            // ensure at least one empty row remains
+            const createEmptyRAB = () => ({
+                id: Date.now(),
+                kode_anggaran: akunAnggarans[0]?.kode_anggaran || '',
+                kebutuhan: '',
+                keterangan: '',
+                vol: 1,
+                satuan: 'unit',
+                biaya_satuan: 0,
+                jumlah: 0,
+            });
+            setData('rincian_anggaran', [createEmptyRAB()]);
+        } else {
+            setData('rincian_anggaran', filtered);
+        }
     };
 
     const submit = (e) => {
         e.preventDefault();
-        post(route('rkat.store'));
+        setServerError(null);
+
+        post(route('rkat.store'), {
+            onSuccess: () => {
+                // clear form and UI state after successful save
+                reset();
+                setManualDeskripsi(false);
+                setServerError(null);
+                // optional: scroll to top to show success message or cleared form
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
+            onError: (validationErrors) => {
+                // validationErrors is an object of field errors; show a general message
+                setServerError('Validasi gagal — periksa isian yang berwarna merah.');
+            },
+            onFinish: (page) => {
+                // if server returned exception payload (debug), it may be in page.props; try to surface it
+                const debugPayload = page?.props?.errors || page?.props?.flash?.error || null;
+                if (!Object.keys(errors).length && debugPayload) {
+                    setServerError(debugPayload);
+                }
+            }
+        });
     };
 
     // --- DATA OPTION PREPARATION FOR CUSTOM SELECT ---
     const ikuSubsBySelectedIKU = ikuSubs.filter(sub => sub.id_iku == selectedIKUId);
     const currentUnit = units.find(u => u.id_unit == data.id_unit)?.nama_unit || 'N/A';
-    const selectedProgram = programKerjas.find(p => p.id_proker == data.id_program);
-    const ikkName = selectedProgram?.ikk?.nama_ikk || 'Pilih Program Kerja';
 
     // Helper: Map data arrays to {value, label} objects
     const optionsTahun = tahunAnggarans.map(ta => ({ value: ta.tahun_anggaran, label: ta.tahun_anggaran }));
     const optionsIku = ikus.map(iku => ({ value: iku.id_iku, label: iku.nama_iku }));
     const optionsIkuSub = ikuSubsBySelectedIKU.map(sub => ({ value: sub.id_ikusub, label: sub.nama_ikusub }));
-    const optionsProgram = filteredProgramKerjas.map(proker => ({ value: proker.id_proker, label: proker.nama_proker }));
-    const optionsAkunAnggaran = akunAnggarans.map(akun => ({ value: akun.kode_anggaran, label: `${akun.kode_anggaran} - ${akun.nama_akun || 'Nama Akun'}` })); 
+    // Build IKK options scoped to selected IKUSUB or IKU. Fallback to all IKKs from `ikuSubs`.
+    const optionsIkk = (() => {
+        // Only expose IKKs when an IKUSUB is selected (sequential flow)
+        if (selectedIKUSubId) {
+            const sub = ikuSubs.find(s => String(s.id_ikusub) === String(selectedIKUSubId));
+            return (sub?.ikks || []).map(i => ({ value: i.id_ikk, label: i.nama_ikk }));
+        }
+
+        return [];
+    })();
+    
+    const optionsAkunAnggaran = akunAnggarans.map(akun => ({ value: akun.kode_anggaran, label: `${akun.kode_anggaran} - ${akun.nama_anggaran}` })); 
     const optionsPencairan = [
         { value: 'Tunai', label: 'Tunai' },
         { value: 'Bank', label: 'Transfer Bank' }
@@ -262,6 +312,11 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
             <div className="py-4">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <form onSubmit={submit} className="bg-white dark:bg-gray-800 p-8 shadow-xl sm:rounded-lg">
+                        {serverError && (
+                            <div className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-red-700">
+                                {typeof serverError === 'string' ? serverError : JSON.stringify(serverError)}
+                            </div>
+                        )}
                         {/* ... (Bagian Header Form) ... */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2 border-b pb-6 dark:border-gray-700">
                             <div>
@@ -297,14 +352,7 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
                                     <InputError message={errors.id_unit} className="mt-2" />
                                 </div>
 
-                                <div className="mt-4">
-                                    <InputLabel value="IKK" />
-                                    <TextInput
-                                        value={ikkName}
-                                        className="mt-1 block w-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed h-11" // <--- Disesuaikan: h-11
-                                        readOnly
-                                    />
-                                </div>
+                                {/* IKK moved into Keterkaitan Program/IKU section (selectable) */}
                             </div>
 
                             <div>
@@ -370,15 +418,36 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
                             <InputError message={errors.judul_pengajuan} className="mt-2" />
                         </div>
 
+                        <div className="mb-4 w-1/3">
+                            <InputLabel htmlFor="jenis_kegiatan" value="Jenis Kegiatan" />
+                            <CustomSelect
+                                value={data.jenis_kegiatan}
+                                onChange={(e) => setData('jenis_kegiatan', e.target.value)}
+                                options={[
+                                    { value: 'Rutin', label: 'Rutin' },
+                                    { value: 'Khusus', label: 'Khusus' },
+                                    { value: 'Program', label: 'Program' },
+                                ]}
+                                placeholder="Pilih Jenis Kegiatan"
+                                className="mt-1"
+                            />
+                            <InputError message={errors.jenis_kegiatan} className="mt-2" />
+                        </div>
+
                         <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Keterkaitan Program/IKU</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 border-b pb-6 dark:border-gray-700">
+                        <div className="grid grid-cols-1 gap-6 mb-8 border-b pb-6 dark:border-gray-700">
                             <div>
                                 <InputLabel htmlFor="iku" value="IKU (Indikator Kinerja Utama)" />
                                 <CustomSelect
                                     value={selectedIKUId}
                                     onChange={(e) => {
-                                        setSelectedIKUId(e.target.value);
+                                        const val = e.target.value;
+                                        setSelectedIKUId(val);
+                                        setData('iku_id', val);
+                                        // reset downstream selections when IKU changes
                                         setSelectedIKUSubId('');
+                                        setSelectedIKKId('');
+                                        setData('ikk_id', '');
                                     }}
                                     options={optionsIku}
                                     placeholder="Pilih IKU"
@@ -391,7 +460,20 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
                                 <InputLabel htmlFor="ikusub" value="Sub IKU" />
                                 <CustomSelect
                                     value={selectedIKUSubId}
-                                    onChange={(e) => setSelectedIKUSubId(e.target.value)}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setSelectedIKUSubId(val);
+                                        setData('ikusub_id', val);
+                                        // reset IKK when IKUSUB changes
+                                        setSelectedIKKId('');
+                                        setData('ikk_id', '');
+                                        // ensure parent IKU is set from selected IKUSUB
+                                        const found = ikuSubs.find(s => String(s.id_ikusub) === String(val));
+                                        if (found) {
+                                            setSelectedIKUId(found.id_iku);
+                                            setData('iku_id', found.id_iku);
+                                        }
+                                    }}
                                     options={optionsIkuSub}
                                     disabled={!selectedIKUId}
                                     placeholder="Pilih Sub IKU"
@@ -401,22 +483,54 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="id_program" value="Program / Kegiatan" />
+                                <InputLabel htmlFor="ikk" value="IKK (Indikator Kinerja Kegiatan)" />
                                 <CustomSelect
-                                    value={data.id_program}
-                                    onChange={(e) => setData('id_program', e.target.value)}
-                                    options={optionsProgram}
-                                    disabled={filteredProgramKerjas.length === 0}
-                                    placeholder={filteredProgramKerjas.length === 0 ? "Tidak ada Program" : "Pilih Program"}
+                                    value={selectedIKKId}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setSelectedIKKId(val);
+                                        // sync selected IKK into form data so it will be stored
+                                        setData('ikk_id', val);
+                                        // set parent IKUSUB and IKU based on selected IKK
+                                        const foundSub = ikuSubs.find(sub => (sub.ikks || []).some(i => String(i.id_ikk) === String(val)));
+                                        if (foundSub) {
+                                            setSelectedIKUSubId(foundSub.id_ikusub);
+                                            setData('ikusub_id', foundSub.id_ikusub);
+                                            setSelectedIKUId(foundSub.id_iku);
+                                            setData('iku_id', foundSub.id_iku);
+                                        }
+                                    }}
+                                    options={optionsIkk}
+                                    disabled={!selectedIKUSubId}
+                                    placeholder="Pilih IKK"
                                     className="mt-1"
                                 />
-                                <InputError message={errors.id_program} className="mt-2" />
+                                <InputError message={errors.ikk_id} className="mt-2" />
                             </div>
+
+                            {/* Program selection removed: storing IKU/IKUSUB/IKK and judul_kegiatan per detail instead */}
                         </div>
 
                         <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Deskripsi Kegiatan</h3>
                         <div className="space-y-6 mb-8 border-b pb-6 dark:border-gray-700">
                             {/* ... (Bagian TextArea Deskripsi tetap sama) ... */}
+                            <div>
+                                <InputLabel htmlFor="deskripsi_kegiatan" value="Deskripsi Kegiatan" />
+                                <TextArea
+                                    id="deskripsi_kegiatan"
+                                    name="deskripsi_kegiatan"
+                                    value={data.deskripsi_kegiatan}
+                                    onChange={(e) => {
+                                        setData('deskripsi_kegiatan', e.target.value);
+                                        // mark as manually edited when user types different from title
+                                        if (e.target.value !== data.judul_pengajuan) setManualDeskripsi(true);
+                                    }}
+                                    className="mt-1 block w-full resize-y"
+                                    rows="3"
+                                />
+                                <InputError message={errors.deskripsi_kegiatan} className="mt-2" />
+                            </div>
+
                             <div>
                                 <InputLabel htmlFor="latar_belakang" value="Latar Belakang" />
                                 <TextArea id="latar_belakang" name="latar_belakang" value={data.latar_belakang} onChange={(e) => setData('latar_belakang', e.target.value)} className="mt-1 block w-full resize-y" rows="3" />
@@ -451,7 +565,17 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
                                 </div>
                                 <div>
                                     <InputLabel htmlFor="keberlanjutan" value="Keberlanjutan" />
-                                    <TextInput id="keberlanjutan" name="keberlanjutan" value={data.keberlanjutan} onChange={(e) => setData('keberlanjutan', e.target.value)} className="mt-1 block w-full h-11" placeholder="Rencana keberlanjutan" /> {/* <--- Disesuaikan: h-11 */}
+                                    <CustomSelect
+                                        value={data.keberlanjutan}
+                                        onChange={(e) => setData('keberlanjutan', e.target.value)}
+                                        options={[
+                                            { value: 'Tidak', label: 'Tidak' },
+                                            { value: 'Sementara', label: 'Sementara' },
+                                            { value: 'Berlanjut', label: 'Berlanjut' },
+                                        ]}
+                                        placeholder="Pilih Keberlanjutan"
+                                        className="mt-1"
+                                    />
                                     <InputError message={errors.keberlanjutan} className="mt-2" />
                                 </div>
                             </div>
@@ -509,7 +633,13 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
                             <PrimaryButton type="button" onClick={addIndikatorRow}>+ Tambah Indikator Kinerja</PrimaryButton>
                         </div>
 
-                        <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Rincian Anggaran (RAB)</h3>
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Rincian Anggaran (RAB)</h3>
+                            <div className="space-x-2">
+                                <a href={route('rkat-rab-items.index')} className="text-sm px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-md">Daftar RAB Item</a>
+                                {/* Tombol 'Tambah RAB Item' dihapus karena halaman create telah dihapus */}
+                            </div>
+                        </div>
                         
                         {/* PENGGUNAAN KOMPONEN TableContainer */}
                         <TableContainer>
@@ -547,8 +677,8 @@ export default function Create({ auth, tahunAnggarans, units, programKerjas, aku
                                             <td className="p-1">
                                                 {/* Kolom Nama Kebutuhan - CustomSelect (sudah h-11) */}
                                                 <CustomSelect
-                                                    value={item.kebutuhan}
-                                                    onChange={(e) => handleRincianChange(index, 'kebutuhan', e.target.value)}
+                                                    value={item.kode_anggaran}
+                                                    onChange={(e) => handleRincianChange(index, 'kode_anggaran', e.target.value)}
                                                     options={optionsAkunAnggaran}
                                                     placeholder="Pilih Item/Akun"
                                                     className="w-full text-sm min-w-[150px]"

@@ -14,6 +14,8 @@ import {
 const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, activePath: '/dashboard' },
     { name: 'Input Rkat', href: '/rkat/input', icon: FileText, activePath: '/rkat/input' },
+    { name: 'RAB Items', href: '/rkat-rab-items', icon: ListChecks, activePath: '/rkat-rab-items' },
+    { name: 'Rincian Anggaran', href: '/rincian-anggaran', icon: BookPlus, activePath: '/rincian-anggaran' },
     { name: 'Input IKU', href: '/iku/input', icon: BookPlus, activePath: '/iku/input' },
     { name: 'Persetujuan', href: '/approval', icon: ListChecks, activePath: '/approval' },
     { name: 'Monitoring', href: '/monitoring', icon: Monitor, activePath: '/monitoring' },

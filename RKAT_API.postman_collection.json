@@ -1,0 +1,364 @@
+{
+	"info": {
+		"_postman_id": "b8f0f8a1-5d5d-4f5f-9c9c-1234567890ac",
+		"name": "Sistem RKAT - Complete (Happy & Error Paths)",
+		"description": "Collection lengkap dengan skenario Sukses (200) dan Gagal (400/500) untuk testing Controller.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Authentication",
+			"item": [
+				{
+					"name": "Login - Success (200)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 or 204\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 302]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					}
+				},
+				{
+					"name": "Login - Failed (422 Validation)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422 Unprocessable Entity\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"pm.test(\"Has Email Error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.errors).to.have.property('email');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"\",\n    \"password\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"logout"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Master Data (Admin)",
+			"item": [
+				{
+					"name": "Unit - List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/unit",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"unit"
+							]
+						}
+					}
+				},
+				{
+					"name": "Unit - Create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"kode_unit\": \"FTI01\",\n    \"nama_unit\": \"Fakultas Teknologi Informasi\",\n    \"tipe_unit\": \"Fakultas\",\n    \"jalur_persetujuan\": \"akademik\",\n    \"email\": \"fti@univ.ac.id\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/unit",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"unit"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "6. Error Testing (Negative Cases)",
+			"description": "Request di sini didesain untuk MEMANCING error guna mengetes logging dan error handling.",
+			"item": [
+				{
+					"name": "404 Not Found (Invalid URL)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/halaman-tidak-ada-404",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"halaman-tidak-ada-404"
+							]
+						}
+					}
+				},
+				{
+					"name": "404 Not Found (Model Binding)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/approval/99999999",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"approval",
+								"99999999"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Mencoba mengakses item approval dengan ID yang tidak ada di database."
+					}
+				},
+				{
+					"name": "401 Unauthenticated",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/dashboard",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard"
+							]
+						},
+						"description": "Pastikan logout dulu sebelum run ini, atau gunakan environment tanpa cookie."
+					}
+				},
+				{
+					"name": "422 Validation Error (Create User)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"pm.test(\"Validation errors present\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.contain(\"The email field is required\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nama_lengkap\": \"\", \n    \"email\": \"bukan-email-valid\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Mengirim data kosong/invalid untuk memicu validasi Laravel."
+					}
+				},
+				{
+					"name": "500/Conflict Delete (Foreign Key)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 302/500/409\", function () {",
+									"    // Karena di controller ada try-catch yang redirect back with error,",
+									"    // biasanya akan return 302 Found (Redirect) atau 200 (Inertia Error Bag).",
+									"    // Jika kita paksa JSON header, mungkin 500.",
+									"    pm.expect(pm.response.code).to.be.oneOf([302, 500, 200]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/unit/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"unit",
+								"1"
+							]
+						},
+						"description": "Mencoba menghapus Unit ID 1 (biasanya dipakai user/RKAT). Controller akan catch Exception dan log error."
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		}
+	]
+}

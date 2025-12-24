@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log; // Added Log
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\Rule;
@@ -16,14 +18,15 @@ class UserController extends Controller
 {
     public function create()
     {
-        $units = \App\Models\Unit::orderBy('nama_unit')->get();
         return inertia('Admin/User/Create', [
-            'units' => $units,
+            'units' => \App\Models\Unit::orderBy('nama_unit')->get(),
         ]);
     }
 
     public function index(Request $request)
     {
+        Log::debug('[User Admin] Viewing Index', ['search' => $request->get('q')]);
+
         $query = User::with('unit')->orderBy('nama_lengkap');
 
         if ($request->filled('q')) {
@@ -45,6 +48,12 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        Log::info('[User Admin] Admin creating new user', [
+            'admin_id' => Auth::id(),
+            'target_email' => $request->email,
+            'target_role' => $request->peran
+        ]);
+
         $request->validate([
             'nama_lengkap' => 'required|string|max:100',
             'username' => ['nullable','string','max:50', Rule::unique(User::class)],
@@ -67,8 +76,9 @@ class UserController extends Controller
             'is_aktif' => true,
         ]);
 
-        // Fire registered event so verification mail can be sent if configured
         event(new Registered($user));
+        
+        Log::info('[User Admin] User created successfully', ['new_user_id' => $user->id_user]);
 
         return Redirect::route('dashboard')->with('success', 'User berhasil dibuat.');
     }

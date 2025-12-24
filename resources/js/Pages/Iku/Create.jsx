@@ -1,4 +1,4 @@
-// resources/js/Pages/Iku/CreateIku.jsx
+// resources/js/Pages/Iku/Create.jsx
 
 import React, { useState, useMemo } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -63,7 +63,9 @@ export default function Create({ auth, ikus }) {
 
     const submit = (e) => {
         e.preventDefault();
-        post(route('iku.store')); 
+        // Include a debug flag so controller can echo back the payload for inspection
+        // This is non-destructive and only used to debug payload structure.
+        post(route('iku.store'), { debug_payload: true }); 
     };
     
     // --- FUNGSI IKUSUB ---

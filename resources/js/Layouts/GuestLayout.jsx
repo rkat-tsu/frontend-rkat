@@ -14,14 +14,13 @@ export default function GuestLayout({ children }) {
                 backgroundBlendMode: 'overlay',
             }}
         >
-
-            <div>
-                <Link href="/">
-                    <ApplicationLogo className="h-20 w-20 fill-current text-gray-500" />
-                </Link>
-            </div>
-
             <div className="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg dark:bg-gray-800">
+                <div className="flex justify-center mb-4">
+                    <Link href="/">
+                        <ApplicationLogo className="h-20 w-20 fill-current text-gray-500" />
+                    </Link>
+                </div>
+
                 {children}
             </div>
         </div>

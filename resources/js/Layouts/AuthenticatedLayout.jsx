@@ -11,6 +11,7 @@ const SIDEBAR_STATE_KEY = 'sidebar_minimized_state';
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
     const authProps = usePage().props.auth;
+    const flash = usePage().props.flash || {};
 
     // 1. STATE PERSISTEN UNTUK MINIMIZE/MAXIMIZE (Hanya satu state)
     const [isMinimized, setIsMinimized] = useState(() => {
@@ -117,6 +118,18 @@ export default function AuthenticatedLayout({ header, children }) {
 
                 {/* Page Content */}
                 <main className="flex-1 p-6 bg-gray-50 dark:bg-gray-900">
+                    {/* Flash messages from server (Inertia) */}
+                    {flash.success && (
+                        <div className="mb-4 rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800">
+                            {flash.success}
+                        </div>
+                    )}
+                    {flash.error && (
+                        <div className="mb-4 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-800">
+                            {flash.error}
+                        </div>
+                    )}
+
                     {children}
                 </main>
             </div>

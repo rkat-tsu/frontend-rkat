@@ -60,7 +60,6 @@ export default function Dashboard({ auth, stats, rkatTerbaru }) {
             color: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100' 
         },
     ];
-    // ▲▲▲ AKHIR PERUBAHAN UTAMA ▲▲▲
     
     return (
         <AuthenticatedLayout
@@ -68,7 +67,7 @@ export default function Dashboard({ auth, stats, rkatTerbaru }) {
             header={
                 <div>
                     <h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Dashboard</h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Selamat datang! {auth.user.peran?.toUpperCase() || auth.user.peran?.toUpperCase() || 'PENGGUNA'}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Selamat datang! {auth.user.unit?.toUpperCase() || auth.user.peran?.toUpperCase() || 'PENGGUNA'}</p>
                 </div>
             }
         >

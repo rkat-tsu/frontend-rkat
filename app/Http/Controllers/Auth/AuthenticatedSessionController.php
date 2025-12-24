@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log; // Added Log
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -29,7 +30,16 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
+        Log::info('[Auth] Login Attempt', ['email' => $request->email, 'ip' => $request->ip()]);
+
+        // authenticate() akan throw ValidationException jika gagal
+        try {
+            $request->authenticate();
+            Log::info('[Auth] Login Success', ['email' => $request->email]);
+        } catch (\Exception $e) {
+            Log::warning('[Auth] Login Failed', ['email' => $request->email, 'error' => $e->getMessage()]);
+            throw $e;
+        }
 
         $request->session()->regenerate();
 
@@ -41,6 +51,9 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = Auth::user();
+        Log::info('[Auth] Logout', ['user_id' => $user ? $user->id_user : 'unknown', 'email' => $user ? $user->email : 'unknown']);
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

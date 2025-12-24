@@ -24,6 +24,7 @@ class Ikk extends Model
     // Relasi ke ProgramKerja (Satu IKK memiliki banyak Program Kerja)
     public function programKerjas()
     {
-        return $this->hasMany(ProgramKerja::class, 'id_ikk', 'id_ikk');
+        // ProgramKerja removed from schema; relation deprecated
+        return null;
     }
 }
