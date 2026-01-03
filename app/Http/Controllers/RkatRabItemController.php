@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\RkatRabItem;
 use App\Models\RkatDetail;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log; // Added Log
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class RkatRabItemController extends Controller
@@ -28,7 +28,7 @@ class RkatRabItemController extends Controller
 
     public function store(Request $request)
     {
-        Log::debug('[RAB Item] Store Request', $request->all());
+        Log::debug('[RAB Item] Permintaan Simpan', $request->all());
 
         $validated = $request->validate([
             'id_rkat_detail' => 'required|integer|exists:rkat_details,id_rkat_detail',
@@ -43,7 +43,7 @@ class RkatRabItemController extends Controller
         $harga = $validated['harga_satuan'] ?? 0;
         $sub_total = ($volume * $harga);
         
-        Log::debug('[RAB Item] Calculation', [
+        Log::debug('[RAB Item] Perhitungan', [
             'vol' => $volume,
             'price' => $harga,
             'total' => $sub_total

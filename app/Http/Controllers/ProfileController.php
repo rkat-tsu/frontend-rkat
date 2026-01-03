@@ -8,7 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Log; // Added Log
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -28,7 +28,7 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $user = $request->user();
-        Log::debug('[Profile] Update Request by ' . $user->username, $request->validated());
+        Log::debug('[Profile] Permintaan Pembaruan oleh ' . $user->username, $request->validated());
 
         $validated = $request->validated();
         
@@ -40,7 +40,7 @@ class ProfileController extends Controller
         ]);
         
         if ($request->user()->peran === 'Admin' && isset($validated['peran'])) {
-            Log::info('[Profile] Admin changing role to: ' . $validated['peran']);
+            Log::info('[Profile] Admin mengubah peran menjadi: ' . $validated['peran']);
             $user->peran = $validated['peran']; 
         }
 
@@ -49,14 +49,14 @@ class ProfileController extends Controller
         }
 
         $user->save();
-        Log::info('[Profile] Profile Updated.');
+        Log::info('[Profile] Profil Diperbarui.');
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
     public function destroy(Request $request): RedirectResponse
     {
-        Log::warning('[Profile] Account Deletion Requested by ' . $request->user()->username);
+        Log::warning('[Profile] Permintaan Penghapusan Akun oleh ' . $request->user()->username);
         
         $request->validate([
             'password' => ['required', 'current_password'],
@@ -67,7 +67,7 @@ class ProfileController extends Controller
         Auth::logout();
 
         $user->delete();
-        Log::info('[Profile] Account Deleted.');
+        Log::info('[Profile] Akun Dihapus.');
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Log; // Added Log
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,7 +22,7 @@ class PasswordResetLinkController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        Log::info('[Forgot Password] Request Link for: ' . $request->email);
+        Log::info('[Lupa Password] Permintaan Tautan untuk: ' . $request->email);
 
         $request->validate([
             'email' => 'required|email',
@@ -33,11 +33,11 @@ class PasswordResetLinkController extends Controller
         );
 
         if ($status == Password::RESET_LINK_SENT) {
-            Log::info('[Forgot Password] Link sent to: ' . $request->email);
+            Log::info('[Lupa Password] Tautan dikirim ke: ' . $request->email);
             return back()->with('status', __($status));
         }
 
-        Log::warning('[Forgot Password] Failed to send link: ' . $status);
+        Log::warning('[Lupa Password] Gagal mengirim tautan: ' . $status);
 
         throw ValidationException::withMessages([
             'email' => [trans($status)],

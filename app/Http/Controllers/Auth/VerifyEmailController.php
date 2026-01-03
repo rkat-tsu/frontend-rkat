@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Log; // Added Log Facade
+use Illuminate\Support\Facades\Log;
 
 class VerifyEmailController extends Controller
 {
@@ -16,18 +16,18 @@ class VerifyEmailController extends Controller
     public function __invoke(EmailVerificationRequest $request): RedirectResponse
     {
         $user = $request->user();
-        Log::debug('[Email Verification] Processing verification for User ID: ' . $user->id_user . ' (' . $user->email . ')');
+        Log::debug('[Verifikasi Email] Memproses verifikasi untuk User ID: ' . $user->id_user . ' (' . $user->email . ')');
 
         if ($user->hasVerifiedEmail()) {
-            Log::info('[Email Verification] User already verified. Redirecting to dashboard.');
+            Log::info('[Verifikasi Email] User sudah terverifikasi. Mengalihkan ke dashboard.');
             return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
         }
 
         if ($user->markEmailAsVerified()) {
-            Log::info('[Email Verification] Success! Marked as verified in DB.');
+            Log::info('[Verifikasi Email] Berhasil! Ditandai sebagai terverifikasi di DB.');
             event(new Verified($user));
         } else {
-            Log::warning('[Email Verification] Failed to mark as verified for some reason.');
+            Log::warning('[Verifikasi Email] Gagal menandai sebagai terverifikasi karena alasan tertentu.');
         }
 
         return redirect()->intended(route('dashboard', absolute: false).'?verified=1');

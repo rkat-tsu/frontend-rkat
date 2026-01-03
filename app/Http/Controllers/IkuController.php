@@ -7,14 +7,14 @@ use App\Models\Iku;
 use App\Models\Ikusub; 
 use App\Models\Ikk; 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log; // Added Log Facade
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class IkuController extends Controller
 {
     public function create()
     {
-        Log::debug('[IKU] Create page accessed.');
+        Log::debug('[IKU] Halaman buat diakses.');
         $ikus = Iku::with('ikusubs.ikks')->get(['id_iku', 'nama_iku']);
         return Inertia::render('Iku/Create', [
             'ikus' => $ikus, 
@@ -23,7 +23,7 @@ class IkuController extends Controller
 
     public function store(Request $request)
     {
-        Log::debug('[IKU] Store process started.', ['payload' => $request->all()]);
+        Log::debug('[IKU] Proses simpan dimulai.', ['payload' => $request->all()]);
 
         if ($request->boolean('debug_payload')) {
             return response()->json($request->all());
@@ -45,7 +45,7 @@ class IkuController extends Controller
 
         try {
             $iku = Iku::find($validated['id_iku']); 
-            Log::debug('[IKU] Processing IKU ID: ' . $iku->id_iku);
+            Log::debug('[IKU] Memproses IKU ID: ' . $iku->id_iku);
 
             $processedIkusubIds = [];
 
@@ -55,17 +55,17 @@ class IkuController extends Controller
                 if (isset($ikusubData['id_ikusub']) && $ikusubData['id_ikusub']) {
                     $ikusub = Ikusub::find($ikusubData['id_ikusub']);
                     $ikusub->update(['nama_ikusub' => $ikusubData['nama_ikusub']]);
-                    Log::debug('[IKU] Updated Existing IKUSUB ID: ' . $ikusub->id_ikusub);
+                    Log::debug('[IKU] Memperbarui IKUSUB ID yang ada: ' . $ikusub->id_ikusub);
                     $processedIkusubIds[] = $ikusub->id_ikusub;
                 } else {
                     $existingIkusub = $iku->ikusubs()->where('nama_ikusub', $ikusubData['nama_ikusub'])->first();
                     if ($existingIkusub) {
                         $existingIkusub->update(['nama_ikusub' => $ikusubData['nama_ikusub']]);
                         $ikusub = $existingIkusub;
-                        Log::debug('[IKU] Updated Duplicate Name IKUSUB ID: ' . $ikusub->id_ikusub);
+                        Log::debug('[IKU] Memperbarui Nama Duplikat IKUSUB ID: ' . $ikusub->id_ikusub);
                     } else {
                         $ikusub = $iku->ikusubs()->create(['nama_ikusub' => $ikusubData['nama_ikusub']]);
-                        Log::debug('[IKU] Created New IKUSUB ID: ' . $ikusub->id_ikusub);
+                        Log::debug('[IKU] Membuat IKUSUB ID Baru: ' . $ikusub->id_ikusub);
                     }
                     $processedIkusubIds[] = $ikusub->id_ikusub;
                 }
@@ -92,16 +92,16 @@ class IkuController extends Controller
                 $deletedIkks = $ikusub->ikks()
                        ->whereNotIn('id_ikk', $processedIkkIdsForThisIkusub ?: [0])
                        ->delete();
-                Log::debug("[IKU] Deleted $deletedIkks IKKs for IKUSUB " . $ikusub->id_ikusub);
+                Log::debug("[IKU] Menghapus $deletedIkks IKK untuk IKUSUB " . $ikusub->id_ikusub);
             }
 
             $deletedIkusubs = $iku->ikusubs()
                 ->whereNotIn('id_ikusub', $processedIkusubIds)
                 ->delete();
-            Log::debug("[IKU] Deleted $deletedIkusubs IKUSUBs for IKU " . $iku->id_iku);
+            Log::debug("[IKU] Menghapus $deletedIkusubs IKUSUB untuk IKU " . $iku->id_iku);
 
             DB::commit();
-            Log::debug('[IKU] Transaction Committed.');
+            Log::debug('[IKU] Transaksi Disimpan (Committed).');
 
             return redirect()
                 ->route('iku.create')
@@ -110,7 +110,7 @@ class IkuController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('[IKU] Transaction Failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            Log::error('[IKU] Transaksi Gagal: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
 
             return redirect()
                 ->back()

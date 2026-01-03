@@ -8,7 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Log; // Added Log
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
@@ -27,7 +27,7 @@ class NewPasswordController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        Log::info('[Reset Password] Attempting reset for: ' . $request->email);
+        Log::info('[Reset Password] Mencoba reset untuk: ' . $request->email);
 
         $request->validate([
             'token' => 'required',
@@ -48,11 +48,11 @@ class NewPasswordController extends Controller
         );
 
         if ($status == Password::PASSWORD_RESET) {
-            Log::info('[Reset Password] Success for: ' . $request->email);
+            Log::info('[Reset Password] Berhasil untuk: ' . $request->email);
             return redirect()->route('login')->with('status', __($status));
         }
 
-        Log::error('[Reset Password] Failed for: ' . $request->email . '. Reason: ' . $status);
+        Log::error('[Reset Password] Gagal untuk: ' . $request->email . '. Alasan: ' . $status);
 
         throw ValidationException::withMessages([
             'email' => [trans($status)],

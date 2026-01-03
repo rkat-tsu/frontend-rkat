@@ -8,7 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Log; // Added Log
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -28,11 +28,11 @@ class ApprovalController extends Controller
         $user = $request->user();
         $peran = $user->peran;
         
-        Log::debug('[Approval] Index Access by: ' . $user->username . ' Role: ' . $peran);
+        Log::debug('[Approval] Akses Index oleh: ' . $user->username . ' Peran: ' . $peran);
 
         // Otorisasi
         if (! $user->isApprover() && ! $user->isAdmin()) {
-            Log::warning('[Approval] Access Denied for: ' . $user->username);
+            Log::warning('[Approval] Akses Ditolak untuk: ' . $user->username);
             return Inertia::render('Error', [
                 'status' => 403,
                 'message' => 'Anda tidak memiliki hak akses untuk halaman ini.',
@@ -44,7 +44,7 @@ class ApprovalController extends Controller
         ]);
 
         $targetStatus = $this->roleStatusMap[$peran] ?? null;
-        Log::debug('[Approval] Target Status for role: ' . ($targetStatus ?? 'None/Admin'));
+        Log::debug('[Approval] Status Target untuk peran: ' . ($targetStatus ?? 'Tidak Ada/Admin'));
 
         if ($targetStatus) {
             $query->where('status_persetujuan', $targetStatus);
@@ -66,7 +66,7 @@ class ApprovalController extends Controller
         }
 
         $rkatList = $query->latest('updated_at')->get();
-        Log::debug('[Approval] Loaded ' . $rkatList->count() . ' items for approval.');
+        Log::debug('[Approval] Memuat ' . $rkatList->count() . ' item untuk persetujuan.');
 
         return Inertia::render('Approval/Index', [
             'rkatMenunggu' => $rkatList,
@@ -77,7 +77,7 @@ class ApprovalController extends Controller
     public function approve(Request $request, RkatHeader $rkatHeader): RedirectResponse
     {
         $user = $request->user();
-        Log::info('[Approval] Action Request', [
+        Log::info('[Approval] Permintaan Aksi', [
             'user' => $user->username,
             'rkat_id' => $rkatHeader->id_header,
             'action' => $request->aksi
@@ -97,14 +97,11 @@ class ApprovalController extends Controller
         $expectedStatus = $this->roleStatusMap[$user->peran] ?? null;
 
         if ($currentStatus !== $expectedStatus) {
-            Log::error('[Approval] Status Mismatch', ['current' => $currentStatus, 'expected' => $expectedStatus]);
+            Log::error('[Approval] Ketidakcocokan Status', ['saat_ini' => $currentStatus, 'diharapkan' => $expectedStatus]);
             return Redirect::back()->withErrors([
                 'error' => 'RKAT ini tidak berada pada status persetujuan Anda atau statusnya telah berubah.',
             ]);
         }
-        
-        // Note: $canApprove undefined in original code, assumed true if passed checks above or via policy
-        // If you have a policy check: if ($user->cannot('approve', $rkatHeader)) ...
         
         $aksi = $request->aksi;
 
@@ -120,7 +117,7 @@ class ApprovalController extends Controller
 
             $rkatHeader->update(['status_persetujuan' => $newStatus]);
             
-            Log::info("[Approval] Status Changed: $oldStatus -> $newStatus");
+            Log::info("[Approval] Status Berubah: $oldStatus -> $newStatus");
 
             LogPersetujuan::create([
                 'id_header' => $rkatHeader->id_header,
@@ -140,12 +137,12 @@ class ApprovalController extends Controller
         $rkat->loadMissing('unit');
 
         if (! $rkat->unit) {
-            Log::warning('[Approval] Unit missing for RKAT ID: ' . $rkat->id_header);
+            Log::warning('[Approval] Unit hilang untuk RKAT ID: ' . $rkat->id_header);
             return $currentStatus;
         }
 
         $jalur = $rkat->unit->jalur_persetujuan ?? 'akademik';
-        Log::debug('[Approval] Calculating next status via path: ' . $jalur);
+        Log::debug('[Approval] Menghitung status berikutnya melalui jalur: ' . $jalur);
 
         $flows = [
             'akademik' => [

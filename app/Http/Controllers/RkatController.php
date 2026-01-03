@@ -15,14 +15,14 @@ use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log; // Ensure Log is imported
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class RkatController extends Controller
 {
     public function create()
     {
-        Log::debug('[RKAT] Create Form Request by User: '.Auth::id());
+        Log::debug('[RKAT] Permintaan Halaman Buat oleh User: '.Auth::id());
 
         $tahunAnggarans = TahunAnggaran::all();
         $units = Unit::all();
@@ -31,7 +31,7 @@ class RkatController extends Controller
         $ikuSubs = IkuSub::with('iku', 'ikks')->get();
         $ikks = Ikk::all();
 
-        Log::debug('[RKAT] Master Data Loaded', [
+        Log::debug('[RKAT] Data Master Dimuat', [
             'tahun_count' => $tahunAnggarans->count(),
             'unit_count' => $units->count(),
             'akun_count' => $akunAnggarans->count(),
@@ -50,7 +50,7 @@ class RkatController extends Controller
 
     public function store(Request $request)
     {
-        Log::debug('[RKAT] Store Payload Received', $request->all());
+        Log::debug('[RKAT] Payload Simpan Diterima', $request->all());
 
         // 1. VALIDASI IKU & INDIKATOR
         $request->validate([
@@ -59,14 +59,13 @@ class RkatController extends Controller
             'ikk_id' => ['required', 'integer', 'exists:ikks,id_ikk'],
             'indikator_kinerja' => ['required', 'array', 'min:1'],
             'indikator_kinerja.*.indikator' => ['required', 'string'],
-            // ... (sisanya sudah oke)
         ]);
 
-        // 2. VALIDASI RAB (Perbaikan pada 'kebutuhan' dan 'kode_anggaran')
+        // 2. VALIDASI RAB
         $request->validate([
             'rincian_anggaran' => ['required', 'array', 'min:1'],
             'rincian_anggaran.*.kode_anggaran' => ['required', 'string'],
-            'rincian_anggaran.*.kebutuhan' => ['nullable', 'string', 'max:255'], // Diubah ke nullable
+            'rincian_anggaran.*.kebutuhan' => ['nullable', 'string', 'max:255'],
             'rincian_anggaran.*.vol' => ['required', 'numeric', 'min:1'],
             'rincian_anggaran.*.satuan' => ['required', 'string', 'max:50'],
             'rincian_anggaran.*.biaya_satuan' => ['required', 'numeric', 'min:0'],
@@ -100,9 +99,6 @@ class RkatController extends Controller
         try {
             DB::beginTransaction();
 
-            // Simpan Indikator Keberhasilan
-            // Catatan: Jika ada banyak indikator, biasanya butuh tabel pivot.
-            // Saat ini kode Anda hanya mengambil ID terakhir/pertama untuk rkat_detail.
             $lastIndicatorId = null;
             foreach ($request->input('indikator_kinerja') as $item) {
                 $ik = IndikatorKeberhasilan::create([
@@ -128,7 +124,6 @@ class RkatController extends Controller
             $rkatDetail = RkatDetail::create([
                 'id_header' => $rkatHeader->id_header,
                 'kode_akun' => $validatedData['kode_akun'],
-                'id_indikator' => $lastIndicatorId, // Menggunakan ID indikator yang baru dibuat
                 'judul_kegiatan' => $validatedData['judul_pengajuan'],
                 'deskripsi_kegiatan' => $request->input('deskripsi_kegiatan') ?? $validatedData['judul_pengajuan'],
                 'id_iku' => $request->input('iku_id'),
@@ -152,12 +147,25 @@ class RkatController extends Controller
                 'atas_nama' => $validatedData['atas_nama'] ?? null,
             ]);
 
+            // Simpan Indikator Keberhasilan terkait dengan RkatDetail
+            foreach ($request->input('indikator_kinerja') as $item) {
+                IndikatorKeberhasilan::create([
+                    'id_rkat_detail' => $rkatDetail->id_rkat_detail,
+                    'nama_indikator' => $item['indikator'],
+                    'capai_2024' => $item['kondisi_akhir_2024_capaian'] ?? null,
+                    'target_2025' => $item['tahun_2025_target'] ?? null,
+                    'capai_2025' => $item['tahun_2025_capaian'] ?? null,
+                    'target_2029' => $item['akhir_tahun_2029_target'] ?? null,
+                    'capai_2029' => $item['akhir_tahun_2029_capaian'] ?? null,
+                ]);
+            }
+
             // Simpan RAB
             foreach ($request->input('rincian_anggaran') as $item) {
                 RkatRabItem::create([
                     'id_rkat_detail' => $rkatDetail->id_rkat_detail,
                     'kode_anggaran' => $item['kode_anggaran'],
-                    'deskripsi_item' => $item['kebutuhan'] ?? '-', // Fallback jika null
+                    'deskripsi_item' => $item['kebutuhan'] ?? '-',
                     'volume' => $item['vol'],
                     'satuan' => $item['satuan'],
                     'harga_satuan' => $item['biaya_satuan'],
@@ -171,9 +179,27 @@ class RkatController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('[RKAT] Error: '.$e->getMessage());
+            Log::error('[RKAT] Kesalahan: '.$e->getMessage());
 
             return redirect()->back()->with('error', 'Terjadi kesalahan saat memproses data RKAT: '.$e->getMessage())->withInput();
         }
+    }
+
+    public function show($id)
+    {
+        // Load RKAT beserta semua relasinya
+        $rkat = RkatHeader::with([
+            'unit',
+            'user',
+            'detail.iku',
+            'detail.ikuSub',
+            'detail.ikk',
+            'detail.rabItems',
+            'detail.indikators',
+        ])->findOrFail($id);
+
+        return Inertia::render('Rkat/Show', [
+            'rkat' => $rkat,
+        ]);
     }
 }

@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log; // Added Log Facade
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use App\Models\RkatHeader;
 use Carbon\Carbon;
 
-class DashboardController extends Controller
+class DashboardController extends Controller 
 {
     public function index()
     {
@@ -22,7 +22,7 @@ class DashboardController extends Controller
 
         if (!in_array($user->peran, $superAdminRoles)) {
             $baseQuery->where('id_unit', $user->id_unit);
-            Log::debug('[Dashboard] Filter unit applied: ' . $user->id_unit);
+            Log::debug('[Dashboard] Filter unit diterapkan: ' . $user->id_unit);
         }
 
         $pendingStatuses = [
@@ -40,7 +40,7 @@ class DashboardController extends Controller
             'rejected' => (clone $baseQuery)->whereIn('status_persetujuan', $rejectedStatuses)->count(),
         ];
         
-        Log::debug('[Dashboard] Stats calculated.', $stats);
+        Log::debug('[Dashboard] Statistik dihitung.', $stats);
 
         $recentRkats = (clone $baseQuery)
             ->with('unit') 

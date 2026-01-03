@@ -6,7 +6,7 @@ use App\Models\TahunAnggaran;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Log; // Added Log
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class TahunAnggaranController extends Controller
@@ -37,7 +37,7 @@ class TahunAnggaranController extends Controller
         ]);
 
         TahunAnggaran::create($validated);
-        Log::info('[TahunAnggaran] Created: ' . $validated['tahun_anggaran']);
+        Log::info('[TahunAnggaran] Dibuat: ' . $validated['tahun_anggaran']);
 
         return Redirect::route('tahun.index')->with('success', 'Tahun Anggaran berhasil ditambahkan.');
     }
@@ -51,7 +51,7 @@ class TahunAnggaranController extends Controller
 
     public function update(Request $request, TahunAnggaran $tahun)
     {
-        Log::debug('[TahunAnggaran] Update Request for: ' . $tahun->tahun_anggaran, $request->all());
+        Log::debug('[TahunAnggaran] Permintaan Pembaruan untuk: ' . $tahun->tahun_anggaran, $request->all());
         
         $validated = $request->validate([
             'tanggal_mulai' => 'required|date',
@@ -60,20 +60,20 @@ class TahunAnggaranController extends Controller
         ]);
 
         $tahun->update($validated);
-        Log::info('[TahunAnggaran] Updated Successfully.');
+        Log::info('[TahunAnggaran] Berhasil Diperbarui.');
 
         return Redirect::route('tahun.index')->with('success', 'Tahun Anggaran berhasil diperbarui.');
     }
 
     public function destroy(TahunAnggaran $tahun)
     {
-        Log::warning('[TahunAnggaran] Attempting to delete: ' . $tahun->tahun_anggaran);
+        Log::warning('[TahunAnggaran] Mencoba menghapus: ' . $tahun->tahun_anggaran);
         try {
             $tahun->delete();
-            Log::info('[TahunAnggaran] Deleted Successfully.');
+            Log::info('[TahunAnggaran] Berhasil Dihapus.');
             return Redirect::route('tahun.index')->with('success', 'Tahun Anggaran berhasil dihapus.');
         } catch (\Exception $e) {
-            Log::error('[TahunAnggaran] Delete Failed: ' . $e->getMessage());
+            Log::error('[TahunAnggaran] Gagal Menghapus: ' . $e->getMessage());
             return Redirect::route('tahun.index')->with('error', 'Gagal menghapus tahun anggaran. Pastikan tidak ada data RKAT yang menggunakannya.');
         }
     }

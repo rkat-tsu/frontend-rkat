@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log; // Added Log Facade
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use App\Models\RkatHeader; 
 use App\Models\Unit; 
