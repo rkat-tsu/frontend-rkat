@@ -52,7 +52,7 @@ class RkatController extends Controller
     {
         Log::debug('[RKAT] Payload Simpan Diterima', $request->all());
 
-        // 1. VALIDASI IKU & INDIKATOR
+        // 1. VALIDASI DATA
         $request->validate([
             'iku_id' => ['required', 'integer', 'exists:ikus,id_iku'],
             'ikusub_id' => ['required', 'integer', 'exists:ikusubs,id_ikusub'],
@@ -61,7 +61,6 @@ class RkatController extends Controller
             'indikator_kinerja.*.indikator' => ['required', 'string'],
         ]);
 
-        // 2. VALIDASI RAB
         $request->validate([
             'rincian_anggaran' => ['required', 'array', 'min:1'],
             'rincian_anggaran.*.kode_anggaran' => ['required', 'string'],
@@ -72,7 +71,6 @@ class RkatController extends Controller
             'rincian_anggaran.*.jumlah' => ['required', 'numeric', 'min:0'],
         ]);
 
-        // 3. VALIDASI HEADER & DETAIL
         $validatedData = $request->validate([
             'tahun_anggaran' => ['required', 'exists:tahun_anggarans,tahun_anggaran'],
             'id_unit' => ['required', 'exists:unit,id_unit'],
@@ -99,9 +97,13 @@ class RkatController extends Controller
         try {
             DB::beginTransaction();
 
-            $lastIndicatorId = null;
-            foreach ($request->input('indikator_kinerja') as $item) {
+            // A. Simpan Indikator
+            $savedIndicators = [];
+            $primaryIndicatorId = null;
+
+            foreach ($request->input('indikator_kinerja') as $index => $item) {
                 $ik = IndikatorKeberhasilan::create([
+                    'id_rkat_detail' => null,
                     'nama_indikator' => $item['indikator'],
                     'capai_2024' => $item['kondisi_akhir_2024_capaian'] ?? null,
                     'target_2025' => $item['tahun_2025_target'] ?? null,
@@ -109,9 +111,16 @@ class RkatController extends Controller
                     'target_2029' => $item['akhir_tahun_2029_target'] ?? null,
                     'capai_2029' => $item['akhir_tahun_2029_capaian'] ?? null,
                 ]);
-                $lastIndicatorId = $ik->id_indikator;
+                
+                $savedIndicators[] = $ik;
+                
+                // Ambil ID indikator pertama sebagai referensi foreign key di tabel rkat_details
+                if ($index === 0) {
+                    $primaryIndicatorId = $ik->id_indikator;
+                }
             }
 
+            // B. Simpan Header
             $rkatHeader = RkatHeader::create([
                 'tahun_anggaran' => $validatedData['tahun_anggaran'],
                 'id_unit' => $validatedData['id_unit'],
@@ -121,6 +130,7 @@ class RkatController extends Controller
                 'tanggal_pengajuan' => now(),
             ]);
 
+            // C. Simpan Detail
             $rkatDetail = RkatDetail::create([
                 'id_header' => $rkatHeader->id_header,
                 'kode_akun' => $validatedData['kode_akun'],
@@ -129,6 +139,9 @@ class RkatController extends Controller
                 'id_iku' => $request->input('iku_id'),
                 'id_ikusub' => $request->input('ikusub_id'),
                 'id_ikk' => $request->input('ikk_id'),
+
+                'id_indikator' => $primaryIndicatorId, 
+
                 'latar_belakang' => $validatedData['latar_belakang'],
                 'rasional' => $validatedData['rasional'],
                 'tujuan' => $validatedData['tujuan'],
@@ -147,20 +160,12 @@ class RkatController extends Controller
                 'atas_nama' => $validatedData['atas_nama'] ?? null,
             ]);
 
-            // Simpan Indikator Keberhasilan terkait dengan RkatDetail
-            foreach ($request->input('indikator_kinerja') as $item) {
-                IndikatorKeberhasilan::create([
-                    'id_rkat_detail' => $rkatDetail->id_rkat_detail,
-                    'nama_indikator' => $item['indikator'],
-                    'capai_2024' => $item['kondisi_akhir_2024_capaian'] ?? null,
-                    'target_2025' => $item['tahun_2025_target'] ?? null,
-                    'capai_2025' => $item['tahun_2025_capaian'] ?? null,
-                    'target_2029' => $item['akhir_tahun_2029_target'] ?? null,
-                    'capai_2029' => $item['akhir_tahun_2029_capaian'] ?? null,
-                ]);
+            // D. Update relasi balik (Indikator -> Detail)
+            foreach ($savedIndicators as $ik) {
+                $ik->update(['id_rkat_detail' => $rkatDetail->id_rkat_detail]);
             }
 
-            // Simpan RAB
+            // E. Simpan RAB
             foreach ($request->input('rincian_anggaran') as $item) {
                 RkatRabItem::create([
                     'id_rkat_detail' => $rkatDetail->id_rkat_detail,
