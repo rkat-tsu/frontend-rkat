@@ -13,7 +13,7 @@ class TahunAnggaran extends Model
 
     // Primary key non-standar (bukan 'id')
     protected $table = 'tahun_anggarans';
-    protected $primaryKey = 'tahun_anggaran';
+    protected $primaryKey = 'id_tahun';
     public $incrementing = false;
     protected $keyType = 'integer';
 

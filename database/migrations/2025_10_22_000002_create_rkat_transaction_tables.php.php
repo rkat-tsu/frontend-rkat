@@ -6,73 +6,155 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
+        // 1. Tabel RKAT Header (Dokumen Utama)
         Schema::create('rkat_headers', function (Blueprint $table) {
             $table->id('id_header');
-            $table->integer('tahun_anggaran');
-            $table->foreignId('id_unit')->constrained('unit', 'id_unit');
-            $table->foreignId('diajukan_oleh')->constrained('users', 'id_user');
-            $table->string('nomor_dokumen', 50)->unique()->nullable();
-            $table->enum('status_persetujuan', [
-                'Draft', 'Diajukan', 'Revisi', 'Disetujui_L1', 'Menunggu_Dekan_Kepala',
-                'Menunggu_WR1', 'Menunggu_WR3', 'Menunggu_WR2', 'Disetujui_WR1',
-                'Disetujui_WR2', 'Disetujui_WR3', 'Disetujui_Final', 'Ditolak',
-            ])->default('Draft')->index('idx_rkat_status'); // Indeks ditambahkan
-            $table->dateTime('tanggal_pengajuan')->default(DB::raw('CURRENT_TIMESTAMP'))->index('idx_rkat_tgl');
-            $table->timestamps();
+            
+            // Relasi logis ke tahun_anggarans
+            $table->year('tahun_anggaran'); 
+            
+            $table->unsignedBigInteger('id_unit');
+            $table->foreign('id_unit')->references('id_unit')->on('unit')->onDelete('cascade');
+            
+            $table->unsignedBigInteger('diajukan_oleh'); 
+            // Asumsi tabel users id-nya 'id_user', sesuaikan jika default Laravel 'id'
+            $table->foreign('diajukan_oleh')->references('id_user')->on('users'); 
 
-            $table->foreign('tahun_anggaran')->references('tahun_anggaran')->on('tahun_anggarans');
+            $table->string('nomor_dokumen', 50)->unique(); 
+            
+            $table->enum('status_persetujuan', [
+                'Draft', 
+                'Diajukan', 
+                'Menunggu_Dekan_Kepala',
+                'Revisi', 
+                'Ditolak', 
+                'Disetujui_L1', // Dekan/Kepala Unit
+                'Menunggu_WR1', 'Menunggu_WR2', 'Menunggu_WR3',
+                'Disetujui_WR1', 'Disetujui_WR2', 'Disetujui_WR3',
+                'Disetujui_Final' // Rektor/Yayasan
+            ])->default('Draft');
+            
+            $table->datetime('tanggal_pengajuan')->nullable();
+            $table->text('catatan_revisi')->nullable();
+            $table->decimal('total_anggaran', 15, 2)->default(0);
+            
+            $table->timestamps();
         });
 
+        // 2. Tabel RKAT Detail (Kegiatan)
         Schema::create('rkat_details', function (Blueprint $table) {
             $table->id('id_rkat_detail');
-            $table->foreignId('id_header')->constrained('rkat_headers', 'id_header')->onDelete('cascade');
-
-            $table->string('judul_kegiatan', 500);
-            $table->foreignId('id_iku')->nullable()->constrained('ikus', 'id_iku')->onDelete('set null');
-            $table->foreignId('id_ikusub')->nullable()->constrained('ikusubs', 'id_ikusub')->onDelete('set null');
-            $table->foreignId('id_ikk')->nullable()->constrained('ikks', 'id_ikk')->onDelete('set null');
-
-            $table->string('kode_akun', 20);
-            $table->foreign('kode_akun')->references('kode_anggaran')->on('rincian_anggarans');
-            $table->foreignId('id_indikator')->constrained('indikator_keberhasilans', 'id_indikator');
-
+            
+            $table->unsignedBigInteger('id_header');
+            $table->foreign('id_header')->references('id_header')->on('rkat_headers')->onDelete('cascade');
+            
+            $table->string('kode_akun', 50);
+            $table->string('judul_kegiatan');
             $table->text('deskripsi_kegiatan');
-            $table->text('latar_belakang');
-            $table->date('jadwal_pelaksanaan_mulai');
-            $table->date('jadwal_pelaksanaan_akhir');
-            $table->decimal('anggaran', 15, 2);
+            
+            // Relasi Kinerja (IKU & IKK Saja)
+            $table->unsignedBigInteger('id_iku')->nullable();
+            $table->foreign('id_iku')->references('id_iku')->on('ikus');
+            
+            $table->unsignedBigInteger('id_ikk')->nullable();
+            $table->foreign('id_ikk')->references('id_ikk')->on('ikks');
+
+            // Data Isian Lengkap
+            $table->text('latar_belakang')->nullable();
+            $table->text('rasional')->nullable();
+            $table->text('tujuan')->nullable();
+            $table->text('mekanisme')->nullable();
+            
+            $table->date('jadwal_pelaksanaan_mulai')->nullable();
+            $table->date('jadwal_pelaksanaan_akhir')->nullable();
+            $table->string('lokasi_pelaksanaan')->nullable();
+            
+            // Output Sederhana
+            $table->string('target')->nullable(); 
+            $table->string('pjawab')->nullable(); 
+            
+            $table->enum('keberlanjutan', ['Berlanjut', 'Tidak Berlanjut'])->default('Tidak Berlanjut');
+            $table->enum('jenis_kegiatan', ['Rutin', 'Pengembangan', 'Insidental'])->default('Rutin');
+            
+            $table->decimal('anggaran', 15, 2)->default(0);
+
+            // Metode Pencairan
+            $table->enum('jenis_pencairan', ['Tunai', 'Bank'])->default('Tunai');
+            $table->string('nama_bank')->nullable();
+            $table->string('nomor_rekening')->nullable();
+            $table->string('atas_nama')->nullable();
+
             $table->timestamps();
         });
 
+        // 3. Tabel Indikator Keberhasilan (Multi-row per Kegiatan)
+        Schema::create('indikator_keberhasilans', function (Blueprint $table) {
+            $table->id('id_indikator');
+            
+            $table->unsignedBigInteger('id_rkat_detail');
+            $table->foreign('id_rkat_detail')->references('id_rkat_detail')->on('rkat_details')->onDelete('cascade');
+            
+            $table->string('nama_indikator');
+            
+            // Kolom Target & Capaian
+            $table->string('capai_2024')->nullable();
+            $table->string('target_2025')->nullable();
+            $table->string('capai_2025')->nullable();
+            $table->string('target_2029')->nullable();
+            $table->string('capai_2029')->nullable(); 
+
+            $table->timestamps();
+        });
+
+        // 4. Tabel RAB Item (Rincian Biaya)
         Schema::create('rkat_rab_items', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('id_rkat_detail')->constrained('rkat_details', 'id_rkat_detail')->onDelete('cascade');
-            $table->string('kode_anggaran', 20)->index('idx_rab_kode'); // Indeks ditambahkan
-            $table->text('deskripsi_item');
-            $table->decimal('volume', 8, 2);
-            $table->string('satuan', 50);
-            $table->decimal('harga_satuan', 18, 2);
-            $table->decimal('sub_total', 18, 2);
+            $table->id('id');
+            
+            $table->unsignedBigInteger('id_rkat_detail');
+            $table->foreign('id_rkat_detail')->references('id_rkat_detail')->on('rkat_details')->onDelete('cascade');
+            
+            $table->string('kode_anggaran')->nullable(); 
+            $table->string('deskripsi_item'); 
+            
+            $table->decimal('volume', 10, 2);
+            $table->string('satuan', 50); 
+            $table->decimal('harga_satuan', 15, 2);
+            $table->decimal('sub_total', 15, 2);
+            
             $table->timestamps();
         });
 
+        // 5. Tabel Log Persetujuan
         Schema::create('log_persetujuans', function (Blueprint $table) {
             $table->id('id_log');
-            $table->foreignId('id_header')->constrained('rkat_headers', 'id_header')->onDelete('cascade');
-            $table->foreignId('id_approver')->constrained('users', 'id_user')->index('idx_log_approver'); // Indeks ditambahkan
-            $table->string('level_persetujuan', 50)->index('idx_log_level'); // Indeks ditambahkan
-            $table->enum('aksi', ['Review', 'Setuju', 'Revisi', 'Tolak']);
+            
+            $table->unsignedBigInteger('id_header');
+            $table->foreign('id_header')->references('id_header')->on('rkat_headers')->onDelete('cascade');
+            
+            $table->unsignedBigInteger('id_approver');
+            $table->foreign('id_approver')->references('id_user')->on('users');
+            
+            $table->string('level_persetujuan'); 
+            $table->enum('aksi', ['Setuju', 'Tolak', 'Revisi']);
             $table->text('catatan')->nullable();
+            
             $table->timestamps();
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('log_persetujuans');
         Schema::dropIfExists('rkat_rab_items');
+        Schema::dropIfExists('indikator_keberhasilans');
         Schema::dropIfExists('rkat_details');
         Schema::dropIfExists('rkat_headers');
     }

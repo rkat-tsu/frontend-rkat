@@ -13,11 +13,10 @@ class Iku extends Model
     
     protected $primaryKey = 'id_iku';
     protected $fillable = ['nama_iku'];
-    protected $table = 'ikus'; // Secara eksplisit, karena nama tabel jamak tidak standar
+    protected $table = 'ikus';
 
-    // Relasi ke Ikusub (Satu IKU memiliki banyak Ikusub)
-    public function ikusubs()
+    public function ikks()
     {
-        return $this->hasMany(Ikusub::class, 'id_iku', 'id_iku');
+        return $this->hasMany(Ikk::class, 'id_iku', 'id_iku');
     }
 }

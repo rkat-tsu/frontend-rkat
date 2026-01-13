@@ -4,19 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Models\TahunAnggaran;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class TahunAnggaranController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        Log::debug('[TahunAnggaran] Mengambil daftar tahun anggaran.');
-        $tahunAnggarans = TahunAnggaran::orderBy('tahun_anggaran', 'desc')->paginate(10);
+        $query = TahunAnggaran::query();
+
+        if ($request->search) {
+            $query->where('tahun_anggaran', 'like', "%{$request->search}%");
+        }
+
+        // Urutkan berdasarkan tahun terbaru
+        $tahunAnggarans = $query->orderBy('tahun_anggaran', 'desc')->paginate(10);
+
         return Inertia::render('Admin/TahunAnggaran/Index', [
             'tahunAnggarans' => $tahunAnggarans,
+            'filters' => $request->only(['search']),
         ]);
     }
 
@@ -27,54 +35,65 @@ class TahunAnggaranController extends Controller
 
     public function store(Request $request)
     {
-        Log::debug('[TahunAnggaran] Menyimpan Tahun Anggaran Baru.', $request->all());
-        
+        Log::info('[TahunAnggaran] Membuat data baru.');
+
         $validated = $request->validate([
-            'tahun_anggaran' => 'required|integer|unique:tahun_anggarans,tahun_anggaran|min:' . (date('Y') - 1),
+            'tahun_anggaran' => 'required|integer|unique:tahun_anggaran,tahun_anggaran',
             'tanggal_mulai' => 'required|date',
-            'tanggal_akhir' => 'required|date|after:tanggal_mulai',
+            'tanggal_akhir' => 'required|date|after_or_equal:tanggal_mulai',
             'status_rkat' => ['required', Rule::in(['Drafting', 'Submission', 'Approved', 'Closed'])],
         ]);
 
         TahunAnggaran::create($validated);
-        Log::info('[TahunAnggaran] Dibuat: ' . $validated['tahun_anggaran']);
 
         return Redirect::route('tahun.index')->with('success', 'Tahun Anggaran berhasil ditambahkan.');
     }
 
-    public function edit(TahunAnggaran $tahun)
+    public function edit($id)
     {
+        $tahun = TahunAnggaran::where('id_tahun', $id)->firstOrFail();
+
         return Inertia::render('Admin/TahunAnggaran/Edit', [
             'tahun' => $tahun,
         ]);
     }
 
-    public function update(Request $request, TahunAnggaran $tahun)
+    public function update(Request $request, $id)
     {
-        Log::debug('[TahunAnggaran] Permintaan Pembaruan untuk: ' . $tahun->tahun_anggaran, $request->all());
-        
+        Log::info('[TahunAnggaran] Request Update ID: '.$id);
+
+        $tahun = TahunAnggaran::where('id_tahun', $id)->first();
+
+        if (! $tahun) {
+            Log::error('[TahunAnggaran] Data tidak ditemukan untuk ID: '.$id);
+
+            return Redirect::back()->with('error', 'Gagal update: Data tahun anggaran tidak ditemukan.');
+        }
+
         $validated = $request->validate([
             'tanggal_mulai' => 'required|date',
-            'tanggal_akhir' => 'required|date|after:tanggal_mulai',
+            'tanggal_akhir' => 'required|date|after_or_equal:tanggal_mulai',
             'status_rkat' => ['required', Rule::in(['Drafting', 'Submission', 'Approved', 'Closed'])],
         ]);
 
         $tahun->update($validated);
-        Log::info('[TahunAnggaran] Berhasil Diperbarui.');
+
+        Log::info('[TahunAnggaran] Berhasil update data.');
 
         return Redirect::route('tahun.index')->with('success', 'Tahun Anggaran berhasil diperbarui.');
     }
 
-    public function destroy(TahunAnggaran $tahun)
+    public function destroy($id)
     {
-        Log::warning('[TahunAnggaran] Mencoba menghapus: ' . $tahun->tahun_anggaran);
-        try {
+        // Cari manual juga untuk delete
+        $tahun = TahunAnggaran::where('id_tahun', $id)->first();
+
+        if ($tahun) {
             $tahun->delete();
-            Log::info('[TahunAnggaran] Berhasil Dihapus.');
-            return Redirect::route('tahun.index')->with('success', 'Tahun Anggaran berhasil dihapus.');
-        } catch (\Exception $e) {
-            Log::error('[TahunAnggaran] Gagal Menghapus: ' . $e->getMessage());
-            return Redirect::route('tahun.index')->with('error', 'Gagal menghapus tahun anggaran. Pastikan tidak ada data RKAT yang menggunakannya.');
+
+            return Redirect::route('tahun.index')->with('success', 'Data berhasil dihapus.');
         }
+
+        return Redirect::back()->with('error', 'Gagal menghapus: Data tidak ditemukan.');
     }
 }

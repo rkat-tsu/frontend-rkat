@@ -3,62 +3,44 @@
 namespace App\Http\Controllers;
 
 use App\Models\RkatRabItem;
-use App\Models\RkatDetail;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class RkatRabItemController extends Controller
 {
+    /**
+     * Menampilkan daftar semua item RAB dari seluruh unit.
+     * Berguna untuk monitoring standar harga dan total belanja per item.
+     */
     public function index(Request $request)
     {
-        $items = RkatRabItem::with('rkatDetail')->orderBy('id', 'desc')->paginate(20);
+        $search = $request->input('search');
+        
+        $query = RkatRabItem::query()
+            // Load relasi ke atas: Detail -> Header -> Unit
+            ->with(['rkatDetail.header.unit', 'rkatDetail.header.user']);
+
+        // Fitur Pencarian Global
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('deskripsi_item', 'like', "%{$search}%")
+                  ->orWhere('kode_anggaran', 'like', "%{$search}%")
+                  // Cari berdasarkan Unit Kerja
+                  ->orWhereHas('rkatDetail.header.unit', function($qUnit) use ($search) {
+                      $qUnit->where('nama_unit', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Urutkan dari yang terbaru
+        $items = $query->latest()
+            ->paginate(15)
+            ->withQueryString(); // Agar parameter search tidak hilang saat ganti halaman
+
         return Inertia::render('RkatRabItem/Index', [
             'items' => $items,
+            'filters' => $request->only(['search']),
         ]);
-    }
-
-    public function create()
-    {
-        $details = RkatDetail::select('id_rkat_detail', 'judul_kegiatan')->orderBy('id_rkat_detail', 'desc')->get();
-        return Inertia::render('RkatRabItem/Create', [
-            'rkatDetails' => $details,
-        ]);
-    }
-
-    public function store(Request $request)
-    {
-        Log::debug('[RAB Item] Permintaan Simpan', $request->all());
-
-        $validated = $request->validate([
-            'id_rkat_detail' => 'required|integer|exists:rkat_details,id_rkat_detail',
-            'kode_anggaran' => 'required|string',
-            'deskripsi_item' => 'nullable|string',
-            'volume' => 'nullable|numeric',
-            'satuan' => 'required|string',
-            'harga_satuan' => 'required|numeric',
-        ]);
-
-        $volume = $validated['volume'] ?? 0;
-        $harga = $validated['harga_satuan'] ?? 0;
-        $sub_total = ($volume * $harga);
-        
-        Log::debug('[RAB Item] Perhitungan', [
-            'vol' => $volume,
-            'price' => $harga,
-            'total' => $sub_total
-        ]);
-
-        RkatRabItem::create([
-            'id_rkat_detail' => $validated['id_rkat_detail'] ?? null,
-            'kode_anggaran' => $validated['kode_anggaran'],
-            'deskripsi_item' => $validated['deskripsi_item'] ?? null,
-            'volume' => $volume,
-            'satuan' => $validated['satuan'],
-            'harga_satuan' => $harga,
-            'sub_total' => $sub_total,
-        ]);
-
-        return redirect()->route('rkat-rab-items.index')->with('success', 'RAB item berhasil dibuat.');
     }
 }

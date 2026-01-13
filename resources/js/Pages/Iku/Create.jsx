@@ -1,362 +1,184 @@
-// resources/js/Pages/Iku/Create.jsx
-
-import React, { useState, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import PrimaryButton from '@/Components/PrimaryButton';
 import InputError from '@/Components/InputError';
-import DangerButton from '@/Components/DangerButton';
-import Dropdown from '@/Components/Dropdown';
-import { ChartPie, FileChartColumn, ListPlus  } from 'lucide-react';
-
-// --- Blueprints untuk Struktur Data ---
-const initialIkk = (data = {}) => ({
-    // Tambahkan id_ikk, null jika baru
-    id_ikk: data.id_ikk ?? null, 
-    temp_id: data.id_ikk || Date.now() + Math.random(), 
-    nama_ikk: data.nama_ikk ?? '',
-});
-
-const initialIkusub = (data = {}) => ({
-    // Tambahkan id_ikusub, null jika baru
-    id_ikusub: data.id_ikusub ?? null,
-    temp_id: data.id_ikusub || Date.now() + Math.random(), 
-    nama_ikusub: data.nama_ikusub ?? '',
-    // Jika ada data lama, isi ikks dengan data lama
-    ikks: data.ikks?.map(ikk => initialIkk(ikk)) ?? [initialIkk()],
-});
-
-// ====================================================================
-// Komponen Utama Form Manajemen IKU (Edit & Tambah Turunan)
-// ====================================================================
+import CustomSelect from '@/Components/CustomSelect';
+import { Plus, Trash2, Save, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 export default function Create({ auth, ikus }) {
-    
-    const { data, setData, post, processing, errors } = useForm({
-        id_iku: '',          // ID IKU yang dipilih
-        ikusubs: [initialIkusub()], // IKUSUB dan IKK yang akan disimpan/diupdate
+    // Setup Form
+    const { data, setData, post, processing, errors, reset } = useForm({
+        id_iku: '',
+        ikks: [{ nama_ikk: '' }] // Default satu baris kosong
     });
 
-    const selectedIku = useMemo(() => {
-        return ikus.find(iku => String(iku.id_iku) === String(data.id_iku));
-    }, [data.id_iku, ikus]);
-    
-    const triggerText = selectedIku ? selectedIku.nama_iku : '-- Pilih IKU Induk --';
-
-    // Mengelola perubahan IKU
-    const handleIkuSelect = (ikuId) => {
-        setData('id_iku', ikuId);
-        
-        const ikuToEdit = ikus.find(iku => String(iku.id_iku) === String(ikuId));
-        
-        if (ikuToEdit && ikuToEdit.ikusubs.length > 0) {
-            // MODE EDIT: Isi form dengan data IKUSUB yang sudah ada
-            const existingIkusubs = ikuToEdit.ikusubs.map(ikusub => initialIkusub(ikusub));
-            setData('ikusubs', existingIkusubs);
-        } else {
-            // MODE BARU: Reset form jika tidak ada data turunan atau IKU tidak dipilih
-            setData('ikusubs', [initialIkusub()]);
+    // --- EFFECT: LOAD DATA SAAT IKU DIPILIH ---
+    useEffect(() => {
+        if (data.id_iku) {
+            // Cari data IKU lengkap (termasuk IKK-nya) dari props 'ikus'
+            const selectedIku = ikus.find(item => String(item.id_iku) === String(data.id_iku));
+            
+            if (selectedIku && selectedIku.ikks && selectedIku.ikks.length > 0) {
+                // Jika sudah ada IKK, tampilkan ke form
+                setData('ikks', selectedIku.ikks.map(ikk => ({
+                    id_ikk: ikk.id_ikk, // Penting untuk update
+                    nama_ikk: ikk.nama_ikk
+                })));
+            } else {
+                // Jika belum ada IKK, reset ke satu baris kosong
+                setData('ikks', [{ nama_ikk: '' }]);
+            }
         }
+    }, [data.id_iku]); // Jalankan setiap kali id_iku berubah
+
+    // --- HANDLERS ---
+    const addRow = () => {
+        setData('ikks', [...data.ikks, { nama_ikk: '' }]);
+    };
+
+    const removeRow = (index) => {
+        const list = [...data.ikks];
+        list.splice(index, 1);
+        setData('ikks', list);
+    };
+
+    const updateRow = (index, value) => {
+        const list = [...data.ikks];
+        list[index]['nama_ikk'] = value;
+        setData('ikks', list);
     };
 
     const submit = (e) => {
         e.preventDefault();
-        // Include a debug flag so controller can echo back the payload for inspection
-        // This is non-destructive and only used to debug payload structure.
-        post(route('iku.store'), { debug_payload: true }); 
-    };
-    
-    // --- FUNGSI IKUSUB ---
-    
-    const addIkusub = () => {
-        setData('ikusubs', [...data.ikusubs, initialIkusub()]);
-    };
-
-    const removeIkusub = (temp_id) => {
-        // Tampilkan konfirmasi, terutama jika item memiliki ID database (sudah tersimpan)
-        const ikusubToRemove = data.ikusubs.find(i => i.temp_id === temp_id);
-        if (ikusubToRemove.id_ikusub && !window.confirm(`Anda yakin ingin menghapus IKUSUB "${ikusubToRemove.nama_ikusub}"? Aksi ini akan menghapus data di database.`)) {
-            return;
-        }
-
-        setData('ikusubs', data.ikusubs.filter(ikusub => ikusub.temp_id !== temp_id));
-    };
-
-    const handleIkusubChange = (temp_id, field, value) => {
-        const updatedIkusubs = data.ikusubs.map(ikusub => {
-            if (ikusub.temp_id === temp_id) {
-                return { ...ikusub, [field]: value };
+        post(route('iku.store'), {
+            onSuccess: () => {
+                // Opsional: Beri notifikasi atau tetap di halaman
             }
-            return ikusub;
         });
-        setData('ikusubs', updatedIkusubs);
     };
 
-    // --- FUNGSI IKK ---
-    
-    const addIkk = (ikusub_temp_id) => {
-        const updatedIkusubs = data.ikusubs.map(ikusub => {
-            if (ikusub.temp_id === ikusub_temp_id) {
-                return { ...ikusub, ikks: [...ikusub.ikks, initialIkk()] };
-            }
-            return ikusub;
-        });
-        setData('ikusubs', updatedIkusubs);
-    };
-
-    const removeIkk = (ikusub_temp_id, ikk_temp_id) => {
-        const ikusubIndex = data.ikusubs.findIndex(i => i.temp_id === ikusub_temp_id);
-        if (ikusubIndex === -1) return;
-        
-        const ikkToRemove = data.ikusubs[ikusubIndex].ikks.find(i => i.temp_id === ikk_temp_id);
-        if (ikkToRemove.id_ikk && !window.confirm(`Anda yakin ingin menghapus IKK "${ikkToRemove.nama_ikk}"? Aksi ini akan menghapus data di database.`)) {
-            return;
-        }
-
-        const updatedIkusubs = data.ikusubs.map(ikusub => {
-            if (ikusub.temp_id === ikusub_temp_id) {
-                const updatedIkks = ikusub.ikks.filter(ikk => ikk.temp_id !== ikk_temp_id);
-                return { ...ikusub, ikks: updatedIkks };
-            }
-            return ikusub;
-        });
-        setData('ikusubs', updatedIkusubs);
-    };
-    
-    const handleIkkChange = (ikusub_temp_id, ikk_temp_id, field, value) => {
-        const updatedIkusubs = data.ikusubs.map(ikusub => {
-            if (ikusub.temp_id === ikusub_temp_id) {
-                const updatedIkks = ikusub.ikks.map(ikk => {
-                    if (ikk.temp_id === ikk_temp_id) {
-                        return { ...ikk, [field]: value };
-                    }
-                    return ikk;
-                });
-                return { ...ikusub, ikks: updatedIkks };
-            }
-            return ikusub;
-        });
-        setData('ikusubs', updatedIkusubs);
-    };
-
+    // Opsi Dropdown IKU
+    const ikuOptions = ikus.map(i => ({ 
+        value: i.id_iku, 
+        label: i.nama_iku 
+    }));
 
     return (
         <AuthenticatedLayout
             user={auth.user}
-            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Edit & Tambah Turunan IKU</h2>}
+            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Kelola Indikator Kegiatan (IKK)</h2>}
         >
-            <Head title="Input IKU" />
+            <Head title="Input IKU & IKK" />
 
-            <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 shadow sm:rounded-lg">
-                            <form onSubmit={submit} className="space-y-8">
-                                
-                                {/* 1. PEMILIHAN IKU UTAMA - DROPDOOWN */}
-                                <h3 className="text-xl font-bold text-teal-600 dark:text-teal-400 border-b pb-2 mb-2">
-                                    <FileChartColumn className="inline-block mb-2 mr-2" />Pilih Indikator Kinerja Utama (IKU)
-                                </h3>
-                                
-                                <div className="relative">
-                                    <InputLabel htmlFor="id_iku" value="Pilih IKU Induk" />
-                                    
-                                    <Dropdown>
-                                        <Dropdown.Trigger>
-                                            {/* Tombol Trigger: Menggunakan styling TextInput */}
-                                            <button 
-                                                type="button" 
-                                                className={`w-full text-left bg-white dark:bg-gray-900 px-3 py-2 text-sm leading-5 transition duration-150 ease-in-out ${data.id_iku ? 'font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
-                                            >
-                                                {triggerText}
-                                            </button>
-                                        </Dropdown.Trigger>
+            <div className="py-6 pb-24">
+                <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                    <form onSubmit={submit} className="space-y-6">
+                        
+                        {/* --- KONTAINER 1: PILIH IKU --- */}
+                        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-teal-500">
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">
+                                1. Pilih Indikator Utama
+                            </h3>
+                            <div className="max-w-xl">
+                                <InputLabel value="Indikator Kinerja Utama (IKU)" required />
+                                <div className="mt-1">
+                                    <CustomSelect
+                                        value={data.id_iku}
+                                        onChange={(e) => setData('id_iku', e.target.value)}
+                                        options={ikuOptions}
+                                        placeholder="-- Pilih IKU untuk mengedit kegiatannya --"
+                                        className="w-full"
+                                    />
+                                </div>
+                                <InputError message={errors.id_iku} className="mt-2" />
+                                <p className="text-sm text-gray-500 mt-2">
+                                    Pilih salah satu IKU di atas untuk melihat atau mengubah daftar kegiatan (IKK) yang terkait.
+                                </p>
+                            </div>
+                        </div>
 
-                                        {/* Content: Options List menggunakan button HTML murni */}
-                                        <Dropdown.Content align="left" width="w-full">
+                        {/* --- KONTAINER 2: DAFTAR KEGIATAN (IKK) --- */}
+                        {data.id_iku && (
+                            <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-indigo-500 animate-in slide-in-from-bottom-2 duration-300">
+                                <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                        2. Daftar Kegiatan (IKK)
+                                    </h3>
+                                    <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs rounded-full font-medium">
+                                        Total: {data.ikks.length} Kegiatan
+                                    </span>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {data.ikks.map((item, index) => (
+                                        <div key={index} className="flex items-start gap-3 group">
+                                            <div className="flex-shrink-0 mt-2.5">
+                                                <div className="w-6 h-6 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-bold border border-gray-200">
+                                                    {index + 1}
+                                                </div>
+                                            </div>
                                             
-                                            {/* Opsi default/kosong */}
+                                            <div className="flex-grow">
+                                                <InputLabel value={`Nama Kegiatan / Indikator ${index + 1}`} className="sr-only" />
+                                                <TextInput
+                                                    value={item.nama_ikk}
+                                                    onChange={(e) => updateRow(index, e.target.value)}
+                                                    className="w-full"
+                                                    placeholder={`Contoh: Penyelenggaraan Seminar Internasional...`}
+                                                    isFocused={index === data.ikks.length - 1 && index > 0} // Auto focus baris baru
+                                                />
+                                                {errors[`ikks.${index}.nama_ikk`] && (
+                                                    <p className="text-sm text-red-600 mt-1">Nama kegiatan tidak boleh kosong.</p>
+                                                )}
+                                            </div>
+
                                             <button
                                                 type="button"
-                                                onClick={() => handleIkuSelect('')}
-                                                className={`block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out ${!data.id_iku ? 'bg-gray-100 dark:bg-gray-800 font-bold' : ''}`}
+                                                onClick={() => removeRow(index)}
+                                                className="mt-2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="Hapus baris ini"
+                                                disabled={data.ikks.length === 1} // Jangan hapus jika sisa 1
                                             >
-                                                -- Pilih IKU Induk --
+                                                <Trash2 size={18} />
                                             </button>
-                                            
-                                            {/* Opsi IKU dari Database */}
-                                            {ikus.map(iku => (
-                                                <button
-                                                    key={iku.id_iku}
-                                                    type="button"
-                                                    onClick={() => handleIkuSelect(iku.id_iku)}
-                                                    className={`block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out ${String(iku.id_iku) === String(data.id_iku) ? 'bg-teal-50 dark:bg-teal-800 font-bold' : ''}`}
-                                                >
-                                                    {iku.nama_iku}
-                                                </button>
-                                            ))}
-                                        </Dropdown.Content>
-                                    </Dropdown>
-                                    
-                                    <InputError message={errors.id_iku} className="mt-2" />
-                                </div>
-                                
-                                {/* 2. INPUT/EDIT IKUSUB */}
-                                {data.id_iku && (
-                                    <>
-                                        <h3 className="text-xl font-bold text-teal-600 dark:text-teal-400 border-b pb-2 pt-4">
-                                            <ListPlus className="inline-block mb-1 mr-2" />IKUSUB & IKK ({selectedIku.nama_iku})
-                                        </h3>
-                                        
-                                        {data.ikusubs.map((ikusub, ikusubIndex) => (
-                                            <div key={ikusub.temp_id} className="p-4 border-2 border-green-200 dark:border-green-700 rounded-lg space-y-4 relative mt-4">
-                                                
-                                                <h4 className="font-semibold text-lg text-green-700 dark:text-green-300">
-                                                    {ikusub.id_ikusub ? 'EDIT IKUSUB ' : 'IKUSUB BARU '}#{ikusubIndex + 1}
-                                                </h4>
-                                                
-                                                {/* Hidden input untuk ID database IKUSUB */}
-                                                <input type="hidden" name={`ikusubs.${ikusubIndex}.id_ikusub`} value={ikusub.id_ikusub || ''} />
-
-                                                {/* Tombol Hapus IKUSUB */}
-                                                {(data.ikusubs.length > 1 || ikusub.id_ikusub) && ( // Boleh hapus jika lebih dari 1 atau jika sudah ada di DB
-                                                    <DangerButton 
-                                                        type="button" 
-                                                        onClick={() => removeIkusub(ikusub.temp_id)}
-                                                        className="absolute top-2 right-2 p-2"
-                                                    >
-                                                        {ikusub.id_ikusub ? 'Hapus' : 'Batal'}
-                                                    </DangerButton>
-                                                )}
-
-                                                {/* Form Nama IKUSUB */}
-                                                <div>
-                                                    <InputLabel htmlFor={`ikusub_nama_${ikusub.temp_id}`} value="Nama IKUSUB" />
-                                                    <TextInput
-                                                        id={`ikusub_nama_${ikusub.temp_id}`}
-                                                        type="text"
-                                                        value={ikusub.nama_ikusub}
-                                                        className="mt-1 block w-full"
-                                                        onChange={(e) => handleIkusubChange(ikusub.temp_id, 'nama_ikusub', e.target.value)}
-                                                        required
-                                                    />
-                                                    <InputError message={errors[`ikusubs.${ikusubIndex}.nama_ikusub`]} className="mt-2" />
-                                                </div>
-                                                
-                                                {/* 3. INPUT/EDIT IKK (Loop di dalam IKUSUB) */}
-                                                <div className="mt-6 pt-4 border-t border-green-300 dark:border-green-600">
-                                                    <h5 className="font-semibold text-md text-gray-600 dark:text-gray-400 mb-3">
-                                                        Kegiatan Kinerja (IKK)
-                                                    </h5>
-                                                    
-                                                    {ikusub.ikks.map((ikk, ikkIndex) => (
-                                                        <div key={ikk.temp_id} className="flex space-x-4 mb-4 p-3 border border-dashed border-gray-400 dark:border-gray-600 rounded-md">
-                                                            
-                                                            {/* Hidden input untuk ID database IKK */}
-                                                            <input type="hidden" name={`ikusubs.${ikusubIndex}.ikks.${ikkIndex}.id_ikk`} value={ikk.id_ikk || ''} />
-                                                            
-                                                            {/* Nama IKK */}
-                                                            <div className="flex-1">
-                                                                <InputLabel htmlFor={`ikk_nama_${ikk.temp_id}`} value={`Nama IKK #${ikkIndex + 1} (${ikk.id_ikk ? 'Edit' : 'Baru'})`} />
-                                                                <TextInput
-                                                                    id={`ikk_nama_${ikk.temp_id}`}
-                                                                    type="text"
-                                                                    value={ikk.nama_ikk}
-                                                                    className="mt-1 block w-full"
-                                                                    onChange={(e) => handleIkkChange(ikusub.temp_id, ikk.temp_id, 'nama_ikk', e.target.value)}
-                                                                    required
-                                                                />
-                                                                <InputError message={errors[`ikusubs.${ikusubIndex}.ikks.${ikkIndex}.nama_ikk`]} className="mt-2" />
-                                                            </div>
-
-                                                            {/* Tombol Hapus IKK */}
-                                                            <div className="flex items-end pt-5">
-                                                                {/* Boleh dihapus jika ada ID database, atau jika lebih dari 1 IKK dalam IKUSUB ini */}
-                                                                {(ikusub.ikks.length > 1 || ikk.id_ikk) && (
-                                                                    <DangerButton 
-                                                                        type="button" 
-                                                                        onClick={() => removeIkk(ikusub.temp_id, ikk.temp_id)}
-                                                                    >
-                                                                        {ikk.id_ikk ? 'Hapus' : 'Batal'}
-                                                                    </DangerButton>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-
-                                                    {/* Tombol Tambah IKK */}
-                                                    <PrimaryButton type="button" onClick={() => addIkk(ikusub.temp_id)} className="mt-2 bg-gray-500 hover:bg-gray-600">
-                                                        + Tambah IKK Baru
-                                                    </PrimaryButton>
-                                                </div>
-                                            </div>
-                                        ))}
-
-                                        {/* Tombol Tambah IKUSUB */}
-                                        <div className="mt-6 pt-4 border-t dark:border-gray-700">
-                                            <PrimaryButton type="button" onClick={addIkusub} className="bg-teal-700 hover:bg-teal-800">
-                                                + Tambah IKUSUB Baru
-                                            </PrimaryButton>
                                         </div>
-                                    </>
-                                )}
+                                    ))}
+                                </div>
 
-                                {/* Tombol Submit Form */}
-                                <div className="flex justify-end pt-4 border-t dark:border-gray-700">
-                                    <PrimaryButton disabled={processing || !data.id_iku}>
-                                        Simpan Perubahan
+                                <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                                    <button
+                                        type="button"
+                                        onClick={addRow}
+                                        className="inline-flex items-center px-4 py-2 bg-white border border-indigo-200 rounded-md font-semibold text-xs text-indigo-600 uppercase tracking-widest shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150"
+                                    >
+                                        <Plus size={16} className="mr-2" /> Tambah Kegiatan Baru
+                                    </button>
+                                    <InputError message={errors.ikks} className="mt-2" />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* --- TOMBOL AKSI STICKY --- */}
+                        <div className="sticky bottom-4 z-10 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                            <Link href={route('dashboard')} className="text-gray-600 hover:text-gray-900 font-medium text-sm flex items-center px-4 py-2 hover:bg-gray-100 rounded-md transition-colors">
+                                <ArrowLeft size={16} className="mr-2" /> Dashboard
+                            </Link>
+                            
+                            <div className="flex items-center gap-3">
+                                {data.id_iku ? (
+                                    <PrimaryButton disabled={processing} className="shadow-teal-200 hover:shadow-teal-400">
+                                        <Save size={16} className="mr-2" /> Simpan Perubahan
                                     </PrimaryButton>
-                                </div>
-
-                            </form>
+                                ) : (
+                                    <span className="text-sm text-gray-400 italic px-4">Pilih IKU terlebih dahulu</span>
+                                )}
+                            </div>
                         </div>
-                        
-                        <div className="lg:col-span-1 bg-gray-100 dark:bg-gray-900 p-6 shadow sm:rounded-lg">
-                            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 border-b pb-2">
-                                <ChartPie className="inline-block mb-1 mr-2" />Struktur IKU
-                            </h3>
 
-                            {!selectedIku ? (
-                                <p className="text-gray-500 dark:text-gray-400">Silakan pilih IKU Induk di sebelah kiri untuk melihat dan mengedit datanya.</p>
-                            ) : (
-                                <div className="space-y-4">
-                                    <div className="font-bold text-lg text-teal-600 dark:text-teal-400">
-                                        {selectedIku.nama_iku}
-                                    </div>
-
-                                    {/* Daftar IKUSUB */}
-                                    {selectedIku.ikusubs && selectedIku.ikusubs.length > 0 ? (
-                                        selectedIku.ikusubs.map((ikusub, index) => (
-                                            <div key={ikusub.id_ikusub} className="pl-3 border-l-4 border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-700 p-3 rounded-md shadow-sm">
-                                                <p className="font-semibold text-blue-700 dark:text-blue-300">
-                                                    {index + 1}. {ikusub.nama_ikusub} (ID: {ikusub.id_ikusub})
-                                                </p>
-
-                                                {/* Daftar IKK */}
-                                                {ikusub.ikks && ikusub.ikks.length > 0 ? (
-                                                    <ul className="list-disc list-inside mt-2 text-sm text-gray-600 dark:text-gray-300">
-                                                        {ikusub.ikks.map((ikk, ikkIndex) => (
-                                                            <li key={ikk.id_ikk} className="ml-2">
-                                                                IKK #{ikkIndex + 1}: {ikk.nama_ikk} (ID: {ikk.id_ikk})
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                ) : (
-                                                    <p className="text-xs text-red-500 mt-1">Belum ada IKK di IKUSUB ini.</p>
-                                                )}
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-gray-500 dark:text-gray-400 text-sm">Belum ada IKUSUB yang ditautkan ke IKU ini.</p>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
+                    </form>
                 </div>
             </div>
         </AuthenticatedLayout>
