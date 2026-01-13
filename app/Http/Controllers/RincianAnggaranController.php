@@ -6,14 +6,14 @@ use App\Models\RincianAnggaran;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Log; // Added Log
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class RincianAnggaranController extends Controller
 {
     public function index()
     {
-        Log::debug('[RincianAnggaran] Index page.');
+        Log::debug('[RincianAnggaran] Halaman Index.');
         $items = RincianAnggaran::orderBy('kode_anggaran')->paginate(20);
         return Inertia::render('Admin/RincianAnggaran/Index', [
             'items' => $items,
@@ -27,7 +27,7 @@ class RincianAnggaranController extends Controller
 
     public function store(Request $request)
     {
-        Log::debug('[RincianAnggaran] Store Payload', $request->all());
+        Log::debug('[RincianAnggaran] Payload Simpan', $request->all());
         
         $validated = $request->validate([
             'kode_anggaran' => 'required|string|max:20|unique:rincian_anggarans,kode_anggaran',
@@ -37,7 +37,7 @@ class RincianAnggaranController extends Controller
         ]);
 
         RincianAnggaran::create($validated);
-        Log::info('[RincianAnggaran] Created: ' . $validated['kode_anggaran']);
+        Log::info('[RincianAnggaran] Dibuat: ' . $validated['kode_anggaran']);
 
         return Redirect::route('rincian.index')->with('success', 'Rincian Anggaran berhasil ditambahkan.');
     }
@@ -51,7 +51,7 @@ class RincianAnggaranController extends Controller
 
     public function update(Request $request, RincianAnggaran $rincian)
     {
-        Log::debug('[RincianAnggaran] Update Payload', $request->all());
+        Log::debug('[RincianAnggaran] Payload Pembaruan', $request->all());
         
         $validated = $request->validate([
             'nama_anggaran' => 'required|string|max:150',
@@ -60,19 +60,19 @@ class RincianAnggaranController extends Controller
         ]);
 
         $rincian->update($validated);
-        Log::info('[RincianAnggaran] Updated: ' . $rincian->kode_anggaran);
+        Log::info('[RincianAnggaran] Diperbarui: ' . $rincian->kode_anggaran);
 
         return Redirect::route('rincian.index')->with('success', 'Rincian Anggaran berhasil diperbarui.');
     }
 
     public function destroy(RincianAnggaran $rincian)
     {
-        Log::warning('[RincianAnggaran] Deleting: ' . $rincian->kode_anggaran);
+        Log::warning('[RincianAnggaran] Menghapus: ' . $rincian->kode_anggaran);
         try {
             $rincian->delete();
             return Redirect::route('rincian.index')->with('success', 'Rincian Anggaran berhasil dihapus.');
         } catch (\Exception $e) {
-            Log::error('[RincianAnggaran] Delete Error: ' . $e->getMessage());
+            Log::error('[RincianAnggaran] Kesalahan Hapus: ' . $e->getMessage());
             return Redirect::route('rincian.index')->with('error', 'Gagal menghapus Rincian Anggaran.');
         }
     }

@@ -9,7 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log; // Added Log
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,7 +24,7 @@ class RegisteredUserController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        Log::debug('[Register] New Registration Request', $request->except(['password', 'password_confirmation']));
+        Log::debug('[Register] Permintaan Pendaftaran Baru', $request->except(['password', 'password_confirmation']));
 
         $request->validate([
             'nama_lengkap' => 'required|string|max:100',
@@ -46,7 +46,7 @@ class RegisteredUserController extends Controller
             'is_aktif' => true,
         ]);
 
-        Log::info('[Register] User Created Successfully', ['id_user' => $user->id_user, 'email' => $user->email]);
+        Log::info('[Register] User Berhasil Dibuat', ['id_user' => $user->id_user, 'email' => $user->email]);
 
         event(new Registered($user));
 

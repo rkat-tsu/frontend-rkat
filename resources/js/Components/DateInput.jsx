@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Calendar from "./Calendar";
 import TextInput from "./TextInput";
-import { CalendarDays } from "lucide-react"; // Ganti SVG manual dengan ikon lucide-react
+import { CalendarDays } from "lucide-react"; 
 
 export default function DateInput({ id, value, onChange, className = "" }) {
   const [isOpen, setIsOpen] = useState(false);

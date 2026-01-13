@@ -12,17 +12,20 @@ class IndikatorKeberhasilan extends Model
     use HasFactory;
 
     protected $table = 'indikator_keberhasilans';
+
     protected $primaryKey = 'id_indikator';
 
     protected $fillable = [
+        'id_rkat_detail',
         'nama_indikator',
         'capai_2024',
         'capai_2025',
         'capai_2029',
         'target_2025',
         'target_2029',
+        'capai_2029',
     ];
-    
+
     // Relasi ke RkatDetail
     public function rkatDetails()
     {

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log; // Added Log
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,20 +20,20 @@ class ConfirmablePasswordController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        Log::debug('[Auth] Confirming Password for sensitive action.');
+        Log::debug('[Auth] Mengonfirmasi Password untuk tindakan sensitif.');
 
         if (! Auth::guard('web')->validate([
             'email' => $request->user()->email,
             'password' => $request->password,
         ])) {
-            Log::warning('[Auth] Password Confirmation Failed.');
+            Log::warning('[Auth] Konfirmasi Password Gagal.');
             throw ValidationException::withMessages([
                 'password' => __('auth.password'),
             ]);
         }
 
         $request->session()->put('auth.password_confirmed_at', time());
-        Log::info('[Auth] Password Confirmed.');
+        Log::info('[Auth] Password Dikonfirmasi.');
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

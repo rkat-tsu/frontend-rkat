@@ -11,50 +11,71 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tahun_anggarans', function (Blueprint $table) {
-            $table->integer('tahun_anggaran')->primary();
-            $table->date('tanggal_mulai');
-            $table->date('tanggal_akhir');
-            $table->enum('status_rkat', ['Drafting', 'Submission', 'Approved', 'Closed'])->default('Drafting');
-            $table->timestamps();
-        });
+        // 1. Tabel Tahun Anggaran
+        if (!Schema::hasTable('tahun_anggarans')) {
+            Schema::create('tahun_anggarans', function (Blueprint $table) {
+                $table->id('id_tahun'); 
+                $table->year('tahun_anggaran')->unique();
+                $table->date('tanggal_mulai');
+                $table->date('tanggal_akhir');
+                $table->enum('status_rkat', ['Drafting', 'Submission', 'Approved', 'Closed'])->default('Drafting');
+                $table->timestamps();
+            });
+        }
 
-        Schema::create('ikus', function (Blueprint $table) {
-            $table->id('id_iku');
-            $table->string('nama_iku', 255);
-            $table->timestamps();
-        });
+        // 2. Tabel Unit (Cek dulu apakah sudah ada)
+        if (!Schema::hasTable('unit')) {
+            Schema::create('unit', function (Blueprint $table) {
+                $table->id('id_unit');
+                $table->string('kode_unit', 20)->unique(); 
+                $table->string('nama_unit', 100);
+                $table->enum('tipe_unit', ['Fakultas', 'Prodi', 'Unit', 'Lainnya', 'Atasan', 'Admin']);
+                $table->enum('jalur_persetujuan', ['akademik', 'non-akademik'])->default('akademik');
+                
+                $table->unsignedBigInteger('parent_id')->nullable();
+                $table->foreign('parent_id')->references('id_unit')->on('unit')->onDelete('set null');
 
-        Schema::create('ikusubs', function (Blueprint $table) {
-            $table->id('id_ikusub');
-            $table->string('nama_ikusub', 255);
-            $table->foreignId('id_iku')->constrained('ikus', 'id_iku')->onDelete('cascade');
-            $table->timestamps();
-        });
+                $table->unsignedBigInteger('id_kepala')->nullable();
+                
+                $table->string('no_telepon', 20)->nullable();
+                $table->string('email', 100)->nullable();
+                $table->timestamps();
+            });
+        }
 
-        Schema::create('ikks', function (Blueprint $table) {
-            $table->id('id_ikk');
-            $table->string('nama_ikk', 255);
-            $table->foreignId('id_ikusub')->constrained('ikusubs', 'id_ikusub')->onDelete('cascade');
-            $table->timestamps();
-        });
+        // 3. Tabel Rincian Anggaran
+        if (!Schema::hasTable('rincian_anggarans')) {
+            Schema::create('rincian_anggarans', function (Blueprint $table) {
+                $table->id('id_rincian_anggaran');
+                $table->string('kode_anggaran', 20)->unique(); 
+                $table->string('nama_anggaran', 150);
+                $table->string('kelompok_anggaran', 50)->nullable(); 
+                $table->decimal('pagu_limit', 15, 2)->nullable();
+                $table->timestamps();
+            });
+        }
 
-        Schema::create('rincian_anggarans', function (Blueprint $table) {
-            $table->string('kode_anggaran', 20)->primary();
-            $table->string('nama_anggaran', 150);
-            $table->string('kelompok_anggaran', 50)->nullable();
-            $table->decimal('pagu_limit', 18, 2)->default(0.00);
-            $table->timestamps();
-        });
+        // 4. Tabel IKU
+        if (!Schema::hasTable('ikus')) {
+            Schema::create('ikus', function (Blueprint $table) {
+                $table->id('id_iku');
+                $table->string('nama_iku'); 
+                $table->timestamps();
+            });
+        }
 
-        Schema::create('indikator_keberhasilans', function (Blueprint $table) {
-            $table->id('id_indikator');
-            $table->text('nama_indikator')->nullable();
-            $table->text('capai_2024')->nullable();
-            $table->text('capai_2025')->nullable();
-            $table->text('target_2025')->nullable();
-            $table->timestamps();
-        });
+        // 5. Tabel IKK
+        if (!Schema::hasTable('ikks')) {
+            Schema::create('ikks', function (Blueprint $table) {
+                $table->id('id_ikk');
+                
+                $table->unsignedBigInteger('id_iku');
+                $table->foreign('id_iku')->references('id_iku')->on('ikus')->onDelete('cascade');
+                
+                $table->string('nama_ikk'); 
+                $table->timestamps();
+            });
+        }
     }
 
     /**
@@ -62,11 +83,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tahun_anggarans');
-        Schema::dropIfExists('ikus');
-        Schema::dropIfExists('ikusubs');
         Schema::dropIfExists('ikks');
+        Schema::dropIfExists('ikus');
         Schema::dropIfExists('rincian_anggarans');
-        Schema::dropIfExists('indikator_keberhasilans');
+        Schema::dropIfExists('unit');
+        Schema::dropIfExists('tahun_anggarans');
     }
 };

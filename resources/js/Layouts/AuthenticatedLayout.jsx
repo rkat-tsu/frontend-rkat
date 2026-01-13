@@ -1,135 +1,169 @@
 import React, { useState, useEffect } from 'react';
-import { Link, usePage } from '@inertiajs/react';
-import Dropdown from '@/Components/Dropdown';
+import { Link, usePage, router } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
-import { Menu } from 'lucide-react';
-// Asumsikan Anda telah membuat AutomaticBreadcrumbs di '@/Components' atau '@/Utils'
-import { AutomaticBreadcrumbs } from '@/Components/AutomaticBreadcrumbs'; 
+import { Menu, ChevronDown, User, LogOut, Loader2 } from 'lucide-react';
+import AutomaticBreadcrumbs from '@/Components/AutomaticBreadcrumbs'; // Pastikan path import benar
 
-const SIDEBAR_STATE_KEY = 'sidebar_minimized_state'; 
+const SIDEBAR_STATE_KEY = 'sidebar_minimized_state';
+
+// Komponen Loading dengan Animasi Fade
+const PageLoader = ({ visible }) => (
+    <div 
+        className={`fixed inset-0 z-[200] flex items-center justify-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+    >
+        <div className="flex flex-col items-center">
+            <Loader2 className="h-10 w-10 text-teal-600 animate-spin mb-3" />
+            <span className="text-teal-700 font-medium text-sm tracking-wider animate-pulse">MEMUAT...</span>
+        </div>
+    </div>
+);
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
     const authProps = usePage().props.auth;
     const flash = usePage().props.flash || {};
 
-    // 1. STATE PERSISTEN UNTUK MINIMIZE/MAXIMIZE (Hanya satu state)
+    // State Loading
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Sidebar State
     const [isMinimized, setIsMinimized] = useState(() => {
         if (typeof window !== 'undefined') {
             const savedState = localStorage.getItem(SIDEBAR_STATE_KEY);
-            // Default: false (maximize) jika belum ada di localStorage
-            return savedState === 'true'; 
+            return savedState === 'true';
         }
-        return false; 
+        return false;
     });
 
-    // Simpan state ke localStorage setiap kali berubah
     useEffect(() => {
         if (typeof window !== 'undefined') {
             localStorage.setItem(SIDEBAR_STATE_KEY, isMinimized.toString());
         }
     }, [isMinimized]);
 
+    // Listener Router untuk Trigger Loading
+    useEffect(() => {
+        const start = () => setIsLoading(true);
+        const finish = () => setIsLoading(false);
+
+        const removeStart = router.on('start', start);
+        const removeFinish = router.on('finish', finish);
+
+        return () => {
+            removeStart();
+            removeFinish();
+        };
+    }, []);
+
     const toggleMinimize = () => setIsMinimized(prev => !prev);
 
-    // Tentukan class lebar/margin berdasarkan state isMinimized
     const sidebarWidthClass = isMinimized ? 'sm:w-20' : 'sm:w-64';
     const mainContentMarginClass = isMinimized ? 'sm:ml-20' : 'sm:ml-64';
 
     return (
-        <div className="min-h-screen flex bg-gray-100 dark:bg-gray-900">
+        <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900 font-sans text-gray-800">
             
-            {/* 1. SIDEBAR: Teruskan state persisten */}
+            {/* GLOBAL LOADER */}
+            <PageLoader visible={isLoading} />
+
+            {/* SIDEBAR (Props diteruskan) */}
             <Sidebar 
                 auth={authProps} 
                 isMinimized={isMinimized} 
                 toggleMinimize={toggleMinimize} 
             />
 
-            {/* 2. OVERLAY MOBILE: Muncul jika sidebar TERBUKA (!isMinimized) di mobile */}
-            {/* Dipindahkan ke Layout untuk konsistensi di mobile */}
+            {/* MOBILE OVERLAY */}
             <div 
-                className={`fixed inset-0 bg-gray-600 bg-opacity-75 z-40 transition-opacity duration-300 sm:hidden ${
-                    isMinimized ? 'opacity-0 pointer-events-none' : 'opacity-100'
+                className={`fixed inset-0 bg-gray-900/60 z-[90] transition-opacity duration-300 sm:hidden ${
+                    isMinimized ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
                 }`}
-                onClick={toggleMinimize} // Klik overlay akan menutup sidebar
+                onClick={toggleMinimize}
             ></div>
 
-            {/* MAIN CONTENT CONTAINER */}
+            {/* MAIN CONTENT WRAPPER */}
             <div 
-                className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out w-full min-w-0 
-                            ${mainContentMarginClass} 
-                            ml-0`} // ml-0 di mobile
+                className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out w-full min-w-0 ${mainContentMarginClass} ml-0`}
             >
-                {/* 3. TOP BAR / HEADER */}
-                <header className="flex flex-col bg-white dark:bg-gray-800 shadow z-20">
+                {/* STICKY HEADER DENGAN EFEK GLASS/GRADASI TRANSPARAN */}
+                <header 
+                    className="sticky top-0 z-40 w-full border-b border-gray-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm transition-all duration-300"
+                >
                     <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
                         
-                        {/* KIRI: Tombol Menu Mobile & Header Title */}
-                        <div className="flex items-center">
-                            {/* Tombol Menu Mobile: Muncul HANYA saat mobile & sidebar TERTUTUP (isMinimized=true) */}
+                        {/* Kiri: Toggle Mobile & Judul */}
+                        <div className="flex items-center gap-4">
                             {typeof window !== 'undefined' && window.innerWidth < 640 && isMinimized && (
                                 <button 
                                     onClick={toggleMinimize} 
-                                    className="sm:hidden mr-3 text-gray-500 dark:text-gray-400 p-1 rounded-full hover:bg-gray-100"
-                                    title="Buka Menu"
+                                    className="sm:hidden text-gray-500 hover:text-teal-600 transition-colors p-1"
                                 >
-                                    <Menu size={20} />
+                                    <Menu size={24} />
                                 </button>
                             )}
-
+                            
                             {header && (
-                                <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                                <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100 tracking-tight leading-tight">
                                     {header}
                                 </h1>
                             )}
                         </div>
 
-                        {/* KANAN: DROPDOWN PROFILE (DIJAGA) */}
+                        {/* Kanan: Profil Dropdown (Hover) */}
                         <div className="flex items-center">
-                            <Dropdown>
-                                <Dropdown.Trigger>
-                                    <span className="inline-flex rounded-md">
-                                        <button
-                                            type="button"
-                                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150"
-                                        >
-                                            {user.nama_lengkap}
-                                        </button>
-                                    </span>
-                                </Dropdown.Trigger>
+                            <div className="relative group h-16 flex items-center">
+                                <button className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors focus:outline-none">
+                                    <span className="mr-2 hidden sm:inline-block">{user.nama_lengkap}</span>
+                                    <span className="sm:hidden inline-block">{user.username}</span>
+                                    <ChevronDown className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />
+                                </button>
 
-                                <Dropdown.Content>
-                                    <Dropdown.Link href="/profile">Profil</Dropdown.Link>
-                                    <Dropdown.Link href="/logout" method="post" as="button">
-                                        Keluar
-                                    </Dropdown.Link>
-                                </Dropdown.Content>
-                            </Dropdown>
+                                {/* Dropdown Content */}
+                                <div className="absolute top-[3.5rem] right-0 w-56 origin-top-right bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg shadow-xl ring-1 ring-black ring-opacity-5 
+                                                invisible opacity-0 translate-y-2 scale-95
+                                                group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 
+                                                transition-all duration-200 ease-out z-50 overflow-hidden">
+                                    
+                                    <div className="px-4 py-3 bg-gray-50/50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-600">
+                                        <p className="text-xs text-gray-500 uppercase font-semibold">Login Sebagai</p>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user.email}</p>
+                                    </div>
+                                    
+                                    <div className="py-1">
+                                        <Link href={route('profile.edit')} className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-teal-900/30 hover:text-teal-700 transition-colors">
+                                            <User className="mr-3 h-4 w-4" /> Profil Saya
+                                        </Link>
+                                        <Link href={route('logout')} method="post" as="button" className="flex w-full items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                            <LogOut className="mr-3 h-4 w-4" /> Keluar
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    
-                    {/* 4. AREA BREADCRUMBS */}
-                    <div className="px-4 sm:px-6 lg:px-8 py-2 ">
+
+                    {/* BREADCRUMBS AREA */}
+                    {/* Warna diseragamkan lewat class text-gray-500 di parent div */}
+                    <div className="px-4 sm:px-6 lg:px-8 pb-3 pt-1 text-sm">
                         <AutomaticBreadcrumbs />
                     </div>
-
                 </header>
 
-                {/* Page Content */}
-                <main className="flex-1 p-6 bg-gray-50 dark:bg-gray-900">
-                    {/* Flash messages from server (Inertia) */}
-                    {flash.success && (
-                        <div className="mb-4 rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800">
-                            {flash.success}
+                {/* PAGE CONTENT */}
+                <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                    {/* Flash Messages */}
+                    {(flash.success || flash.error) && (
+                        <div className={`mb-6 rounded-lg p-4 border shadow-sm flex items-start animate-in fade-in slide-in-from-top-4 duration-300 ${
+                            flash.success 
+                                ? 'bg-teal-50 border-teal-200 text-teal-800 dark:bg-teal-900/30 dark:border-teal-800 dark:text-teal-200' 
+                                : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/30 dark:border-red-800 dark:text-red-200'
+                        }`}>
+                            <div className="flex-1 text-sm font-medium">
+                                {flash.success || flash.error}
+                            </div>
                         </div>
                     )}
-                    {flash.error && (
-                        <div className="mb-4 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-800">
-                            {flash.error}
-                        </div>
-                    )}
-
+                    
                     {children}
                 </main>
             </div>

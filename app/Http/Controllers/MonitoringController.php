@@ -2,86 +2,65 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\TahunAnggaran;
+use App\Models\Unit;
+use App\Models\RkatHeader;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log; // Added Log Facade
 use Inertia\Inertia;
-use App\Models\RkatHeader; 
-use App\Models\Unit; 
-use Illuminate\Database\Eloquent\Builder;
 
 class MonitoringController extends Controller
 {
+    /**
+     * Menampilkan Dashboard Monitoring Status RKAT Seluruh Unit
+     */
     public function index(Request $request)
     {
-        $user = Auth::user();
-        
-        Log::debug('[Monitoring] User mengakses halaman monitoring.', [
-            'user_id' => $user->id_user,
-            'role' => $user->peran,
-            'unit_id' => $user->id_unit
-        ]);
-        
-        $query = RkatHeader::with(['unit', 'diajukanOleh']);
+        // 1. Tentukan Tahun Anggaran (Default: Tahun aktif atau tahun ini)
+        $activeYear = TahunAnggaran::where('status_rkat', '!=', 'Closed')->value('tahun_anggaran') ?? date('Y');
+        $selectedYear = $request->input('tahun', $activeYear);
 
-        // --- 1. Tentukan Scope Akses Berdasarkan Peran ---
-        $globalAccessRoles = ['Admin', 'Rektor', 'WR_1', 'WR_2', 'WR_3'];
-        
-        if (in_array($user->peran, $globalAccessRoles)) {
-            $accessScope = 'Global';
-            Log::debug('[Monitoring] Akses Global diberikan.');
-        } 
-        else {
-            $userUnit = $user->unit; 
-            
-            if (!$userUnit) {
-                $query->whereRaw('1 = 0');
-                $accessScope = 'No Unit Access';
-                Log::warning('[Monitoring] User tidak memiliki unit. Akses diblokir.');
-            } 
-            else {
-                $unitIds = [$userUnit->id_unit];
-                $accessScope = 'Self Unit: ' . $userUnit->nama_unit;
+        // 2. Ambil Daftar Tahun untuk Filter
+        $tahunOptions = TahunAnggaran::orderBy('tahun_anggaran', 'desc')->get();
 
-                if (in_array($user->peran, ['Kaprodi', 'Kepala_Unit', 'Dekan'])) {
-                    $childrenUnitIds = Unit::where('parent_id', $userUnit->id_unit)
-                        ->pluck('id_unit')
-                        ->toArray();
+        // 3. Ambil Data Unit beserta RKAT Header-nya pada tahun terpilih
+        // Kita gunakan 'leftJoin' atau relasi 'with' agar unit yang BELUM mengisi tetap muncul
+        $monitoringData = Unit::orderBy('kode_unit', 'asc')
+            ->with(['kepala']) // Load data kepala unit jika perlu nama
+            ->get()
+            ->map(function ($unit) use ($selectedYear) {
+                // Cari RKAT Header unit ini di tahun terpilih
+                $rkat = RkatHeader::where('id_unit', $unit->id_unit)
+                    ->where('tahun_anggaran', $selectedYear)
+                    ->first();
 
-                    $unitIds = array_merge($unitIds, $childrenUnitIds);
+                return [
+                    'id_unit' => $unit->id_unit,
+                    'kode_unit' => $unit->kode_unit,
+                    'nama_unit' => $unit->nama_unit,
+                    'kepala_unit' => $unit->kepala ? $unit->kepala->nama_lengkap : '-',
                     
-                    // Logic penamaan scope untuk debugging log
-                    if ($user->peran === 'Dekan') {
-                        $accessScope = 'Fakultas + Prodi';
-                    } elseif ($user->peran === 'Kepala_Unit') {
-                        $accessScope = 'Kepala Unit + Unit Bawahan';
-                    } else {
-                        $accessScope = 'Kaprodi + Unit Bawahan';
-                    }
-                }
-                
-                Log::debug('[Monitoring] Filter unit diterapkan.', [
-                    'scope' => $accessScope,
-                    'unit_ids_allowed' => $unitIds
-                ]);
+                    // Data RKAT (Bisa null jika belum buat)
+                    'id_header' => $rkat ? $rkat->id_header : null,
+                    'status' => $rkat ? $rkat->status_persetujuan : 'Belum Mengisi',
+                    'total_anggaran' => $rkat ? $rkat->total_anggaran : 0,
+                    'tanggal_pengajuan' => $rkat ? $rkat->tanggal_pengajuan : null,
+                    'last_update' => $rkat ? $rkat->updated_at : null,
+                ];
+            });
 
-                $query->whereIn('id_unit', array_unique($unitIds));
-            }
-        }
-        
-        $rkatHeaders = $query
-            ->orderBy('id_header', 'desc')
-            ->paginate(15);
-            
-        Log::debug('[Monitoring] Data berhasil diambil.', [
-            'count' => $rkatHeaders->count(),
-            'total' => $rkatHeaders->total()
-        ]);
+        // 4. Hitung Statistik Ringkas
+        $stats = [
+            'total_unit' => $monitoringData->count(),
+            'sudah_submit' => $monitoringData->whereIn('status', ['Diajukan', 'Disetujui_L1', 'Disetujui_Final', 'Menunggu_Dekan_Kepala'])->count(),
+            'approved' => $monitoringData->where('status', 'Disetujui_Final')->count(),
+            'total_anggaran_diajukan' => $monitoringData->sum('total_anggaran'),
+        ];
 
         return Inertia::render('Monitoring/Index', [
-            'rkatHeaders' => $rkatHeaders,
-            'accessScope' => $accessScope, 
-            'userRole' => $user->peran,
+            'data' => $monitoringData,
+            'tahunOptions' => $tahunOptions,
+            'selectedYear' => $selectedYear,
+            'stats' => $stats
         ]);
     }
 }

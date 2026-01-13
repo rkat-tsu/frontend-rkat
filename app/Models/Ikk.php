@@ -1,7 +1,5 @@
 <?php
 
-// app/Models/Ikk.php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,21 +8,28 @@ use Illuminate\Database\Eloquent\Model;
 class Ikk extends Model
 {
     use HasFactory;
-    
-    protected $primaryKey = 'id_ikk';
-    protected $fillable = ['nama_ikk', 'id_ikusub'];
-    protected $table = 'ikks';
 
-    // Relasi ke Ikusub (Banyak IKK dimiliki oleh satu Ikusub)
-    public function ikuSub()
+    protected $table = 'ikks';
+    protected $primaryKey = 'id_ikk';
+
+    protected $fillable = [
+        'id_iku',
+        'nama_ikk',
+    ];
+
+    /**
+     * Relasi Balik ke IKU
+     */
+    public function iku()
     {
-        return $this->belongsTo(IkuSub::class, 'id_ikusub', 'id_ikusub');
+        return $this->belongsTo(Iku::class, 'id_iku', 'id_iku');
     }
     
-    // Relasi ke ProgramKerja (Satu IKK memiliki banyak Program Kerja)
-    public function programKerjas()
+    /**
+     * Relasi ke Detail RKAT
+     */
+    public function rkatDetails()
     {
-        // ProgramKerja removed from schema; relation deprecated
-        return null;
+        return $this->hasMany(RkatDetail::class, 'id_ikk', 'id_ikk');
     }
 }

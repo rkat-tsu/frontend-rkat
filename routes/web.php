@@ -1,14 +1,16 @@
 <?php
 
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ApprovalController;
-use App\Http\Controllers\IkuController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\RkatController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\IkuController;
 use App\Http\Controllers\MonitoringController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RincianAnggaranController;
+use App\Http\Controllers\RkatController;
+use App\Http\Controllers\RkatRabItemController;
 use App\Http\Controllers\TahunAnggaranController;
 use App\Http\Controllers\UnitController;
-use App\Http\Controllers\RkatRabItemController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -22,9 +24,9 @@ Route::get('/', function () {
     ]);
 });
 
-//Route::middleware(['auth', 'verified'])->group(function () {
+// Route::middleware(['auth', 'verified'])->group(function () {
 //    Route::get('/dashboard', Inertia::render('Dashboard'))->name('dashboard');
-//});
+// });
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -56,19 +58,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/tahun/{tahun}', [TahunAnggaranController::class, 'destroy'])->name('tahun.destroy');
 
         // Rincian Anggaran (master akun anggaran)
-        Route::get('/rincian-anggaran', [\App\Http\Controllers\RincianAnggaranController::class, 'index'])->name('rincian.index');
-        Route::get('/rincian-anggaran/create', [\App\Http\Controllers\RincianAnggaranController::class, 'create'])->name('rincian.create');
-        Route::post('/rincian-anggaran', [\App\Http\Controllers\RincianAnggaranController::class, 'store'])->name('rincian.store');
-        Route::get('/rincian-anggaran/{rincian}/edit', [\App\Http\Controllers\RincianAnggaranController::class, 'edit'])->name('rincian.edit');
-        Route::patch('/rincian-anggaran/{rincian}', [\App\Http\Controllers\RincianAnggaranController::class, 'update'])->name('rincian.update');
-        Route::delete('/rincian-anggaran/{rincian}', [\App\Http\Controllers\RincianAnggaranController::class, 'destroy'])->name('rincian.destroy');
+        Route::get('/rincian-anggaran', [RincianAnggaranController::class, 'index'])->name('rincian.index');
+        Route::get('/rincian-anggaran/create', [RincianAnggaranController::class, 'create'])->name('rincian.create');
+        Route::post('/rincian-anggaran', [RincianAnggaranController::class, 'store'])->name('rincian.store');
+        Route::get('/rincian-anggaran/{rincian}/edit', [RincianAnggaranController::class, 'edit'])->name('rincian.edit');
+        Route::patch('/rincian-anggaran/{rincian}', [RincianAnggaranController::class, 'update'])->name('rincian.update');
+        Route::delete('/rincian-anggaran/{rincian}', [RincianAnggaranController::class, 'destroy'])->name('rincian.destroy');
 
         // Note: registration routes have been moved to admin-only in routes/auth.php
-    // Admin-only user creation
-    Route::get('/user/create', [\App\Http\Controllers\Admin\UserController::class, 'create'])->name('user.create');
-    Route::post('/user', [\App\Http\Controllers\Admin\UserController::class, 'store'])->name('user.store');
-    // Admin-only user listing
-    Route::get('/user', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('user.index');
+        // Admin-only user creation
+        Route::get('/user/create', [UserController::class, 'create'])->name('user.create');
+        Route::post('/user', [UserController::class, 'store'])->name('user.store');
+        // Admin-only user listing
+        Route::get('/user', [UserController::class, 'index'])->name('user.index');
     });
 });
 

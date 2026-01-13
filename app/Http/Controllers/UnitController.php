@@ -7,7 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Log; // Added Log
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
@@ -15,7 +15,7 @@ class UnitController extends Controller
 {
     public function index()
     {
-        Log::debug('[Unit] Viewing Index');
+        Log::debug('[Unit] Melihat Index');
         $units = Unit::with(['kepala'])->orderBy('nama_unit')->get();
 
         return Inertia::render('Admin/Unit/Index', [
@@ -36,7 +36,7 @@ class UnitController extends Controller
 
     public function store(Request $request)
     {
-        Log::info('[Unit] Creating Unit', ['by_user' => Auth::id(), 'data' => $request->all()]);
+        Log::info('[Unit] Membuat Unit', ['by_user' => Auth::id(), 'data' => $request->all()]);
 
         $validated = $request->validate([
             'kode_unit' => 'required|string|unique:unit,kode_unit',
@@ -50,7 +50,7 @@ class UnitController extends Controller
         ]);
 
         Unit::create($validated);
-        Log::info('[Unit] Unit created successfully: ' . $validated['nama_unit']);
+        Log::info('[Unit] Unit berhasil dibuat: ' . $validated['nama_unit']);
 
         return Redirect::route('unit.index')->with('success', 'Unit berhasil ditambahkan.');
     }
@@ -66,7 +66,7 @@ class UnitController extends Controller
 
     public function update(Request $request, Unit $unit)
     {
-        Log::info('[Unit] Updating Unit: ' . $unit->kode_unit, $request->all());
+        Log::info('[Unit] Memperbarui Unit: ' . $unit->kode_unit, $request->all());
 
         $validated = $request->validate([
             'kode_unit' => ['required', 'string', Rule::unique('unit', 'kode_unit')->ignore($unit->id_unit, 'id_unit')],
@@ -86,13 +86,13 @@ class UnitController extends Controller
 
     public function destroy(Unit $unit)
     {
-        Log::warning('[Unit] Attempting delete: ' . $unit->nama_unit);
+        Log::warning('[Unit] Mencoba menghapus: ' . $unit->nama_unit);
         try {
             $unit->delete();
-            Log::info('[Unit] Deleted successfully.');
+            Log::info('[Unit] Berhasil dihapus.');
             return Redirect::route('unit.index')->with('success', 'Unit berhasil dihapus.');
         } catch (\Exception $e) {
-            Log::error('[Unit] Delete Failed: ' . $e->getMessage());
+            Log::error('[Unit] Gagal Menghapus: ' . $e->getMessage());
             return Redirect::route('unit.index')->with('error', 'Gagal menghapus unit. Pastikan tidak ada relasi yang mengunci.');
         }
     }

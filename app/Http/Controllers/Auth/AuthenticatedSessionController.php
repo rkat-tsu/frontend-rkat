@@ -7,7 +7,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log; // Added Log
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -30,14 +30,14 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        Log::info('[Auth] Login Attempt', ['email' => $request->email, 'ip' => $request->ip()]);
+        Log::info('[Auth] Percobaan Login', ['email' => $request->email, 'ip' => $request->ip()]);
 
         // authenticate() akan throw ValidationException jika gagal
         try {
             $request->authenticate();
-            Log::info('[Auth] Login Success', ['email' => $request->email]);
+            Log::info('[Auth] Login Berhasil', ['email' => $request->email]);
         } catch (\Exception $e) {
-            Log::warning('[Auth] Login Failed', ['email' => $request->email, 'error' => $e->getMessage()]);
+            Log::warning('[Auth] Login Gagal', ['email' => $request->email, 'error' => $e->getMessage()]);
             throw $e;
         }
 
