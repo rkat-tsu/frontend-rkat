@@ -27,11 +27,8 @@ class RkatController extends Controller
         $units = Unit::orderBy('kode_unit')->get();
         $akunAnggarans = RincianAnggaran::orderBy('kode_anggaran')->get();
         
-        // PERUBAHAN: Load IKU langsung dengan IKK (Tanpa IkuSub)
         $ikus = Iku::with(['ikks'])->get();
-        
-        // PERUBAHAN: IkkSub tidak lagi dimuat/dipakai
-        
+                
         Log::debug('[RKAT] Data Master Dimuat', [
             'tahun_count' => $tahunAnggarans->count(),
             'unit_count' => $units->count(),
@@ -85,7 +82,7 @@ class RkatController extends Controller
             'jadwal_pelaksanaan_mulai' => ['required', 'date', 'after_or_equal:today'],
             'jadwal_pelaksanaan_akhir' => ['required', 'date', 'after_or_equal:jadwal_pelaksanaan_mulai'],
             'lokasi_pelaksanaan' => ['required', 'string'],
-            'keberlanjutan' => ['required', 'string'],
+            'jenis_kegiatan' => ['required', 'string'],
             'pjawab' => ['required', 'string'],
             'target' => ['required', 'string'],
             'anggaran' => ['required', 'numeric', 'min:0'],
@@ -99,8 +96,6 @@ class RkatController extends Controller
             DB::beginTransaction();
 
             // A. SIMPAN HEADER RKAT
-            // Cek apakah sudah ada Header untuk Unit & Tahun ini? Jika belum, buat baru.
-            // (Opsional: Jika kebijakan 1 Header banyak Detail. Tapi di sini kita buat 1 Header per Pengajuan agar simpel sesuai logic awal)
             $rkatHeader = RkatHeader::create([
                 'tahun_anggaran' => $validatedData['tahun_anggaran'],
                 'id_unit' => $validatedData['id_unit'],
@@ -114,11 +109,9 @@ class RkatController extends Controller
             // B. SIMPAN DETAIL RKAT
             $rkatDetail = RkatDetail::create([
                 'id_header' => $rkatHeader->id_header,
-                'kode_akun' => $validatedData['kode_akun'],
                 'judul_kegiatan' => $validatedData['judul_pengajuan'],
                 'deskripsi_kegiatan' => $request->input('deskripsi_kegiatan') ?? $validatedData['judul_pengajuan'],
                 'id_iku' => $request->input('iku_id'),
-                // 'id_ikusub' HAPUS
                 'id_ikk' => $request->input('ikk_id'),
                 
                 // Form Isian Lengkap
@@ -129,10 +122,9 @@ class RkatController extends Controller
                 'jadwal_pelaksanaan_mulai' => $validatedData['jadwal_pelaksanaan_mulai'],
                 'jadwal_pelaksanaan_akhir' => $validatedData['jadwal_pelaksanaan_akhir'],
                 'lokasi_pelaksanaan' => $validatedData['lokasi_pelaksanaan'],
-                'keberlanjutan' => $validatedData['keberlanjutan'],
+                'jenis_kegiatan' => $validatedData['jenis_kegiatan'],
                 'pjawab' => $validatedData['pjawab'],
-                'target' => $validatedData['target'], // Target output sederhana
-                'jenis_kegiatan' => $request->input('jenis_kegiatan', 'Rutin'),
+                'target' => $validatedData['target'],
                 'anggaran' => $validatedData['anggaran'],
                 
                 // Pencairan

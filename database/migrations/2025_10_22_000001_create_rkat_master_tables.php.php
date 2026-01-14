@@ -49,8 +49,9 @@ return new class extends Migration
                 $table->id('id_rincian_anggaran');
                 $table->string('kode_anggaran', 20)->unique(); 
                 $table->string('nama_anggaran', 150);
-                $table->string('kelompok_anggaran', 50)->nullable(); 
-                $table->decimal('pagu_limit', 15, 2)->nullable();
+                $table->string('satuan', 50)->nullable();
+                $table->decimal('nominal', 15, 2)->default(0);
+                $table->string('kelompok_anggaran', 50)->nullable();
                 $table->timestamps();
             });
         }

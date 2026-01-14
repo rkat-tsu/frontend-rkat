@@ -26,14 +26,12 @@ export default function Edit({ auth, tahun, tahunAnggaran, data: propData }) {
     const { data, setData, patch, processing, errors } = useForm({
         tahun_anggaran: sourceData.tahun_anggaran || '',
         status_rkat: sourceData.status_rkat || 'Drafting',
-        // Bersihkan format tanggal agar terbaca oleh input
         tanggal_mulai: formatDate(sourceData.tanggal_mulai),
         tanggal_akhir: formatDate(sourceData.tanggal_akhir),
     });
 
     const submit = (e) => {
         e.preventDefault();
-        // PERBAIKAN: Gunakan 'patch' (bukan put) sesuai error MethodNotAllowed
         patch(route('tahun.update', id));
     };
 

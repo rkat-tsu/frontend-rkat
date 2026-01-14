@@ -8,83 +8,110 @@ import InputError from '@/Components/InputError';
 import TextArea from '@/Components/TextArea';
 import RupiahInput from '@/Components/RupiahInput';
 import DateInput from '@/Components/DateInput';
-import CustomSelect from '@/Components/CustomSelect';
-import { Plus, Trash2, Save, ArrowLeft, Calculator } from 'lucide-react';
+import DangerButton from '@/Components/DangerButton';
+import { Plus, Trash2, Save, ArrowLeft, Calculator, ChevronDown, Check } from 'lucide-react';
+import { cn } from "@/lib/utils";
 
+// --- IMPORT COMPONENT CUSTOM SELECT ---
+import CustomSelect from '@/Components/CustomSelect'; 
+
+// --- UTILITY ---
+const formatRupiah = (angka) => {
+    const number = Number(angka) || 0;
+    return `Rp. ${number.toLocaleString('id-ID', { minimumFractionDigits: 0 })}`;
+};
+
+// --- MAIN COMPONENT ---
 export default function Create({ auth, tahunAnggarans, units, akunAnggarans, ikus }) {
-    // --- 1. SETUP STATE FORM ---
+        
+    // Initial States
+    const initialIndikator = {
+        id: Date.now(),
+        indikator: '',
+        kondisi_akhir_2024_capaian: '',
+        tahun_2025_target: '',
+        tahun_2025_capaian: '',
+        akhir_tahun_2029_target: '',
+        akhir_tahun_2029_capaian: ''
+    };
+
+    const initialRAB = {
+        id: Date.now() + 1,
+        kode_anggaran: '',
+        kebutuhan: '',
+        vol: 1, 
+        satuan: 'Paket',
+        biaya_satuan: 0,
+        jumlah: 0
+    };
+
+    // Setup Form
     const { data, setData, post, processing, errors } = useForm({
-        // Header
+        // 1. Header
         tahun_anggaran: '',
         id_unit: auth.user.id_unit || '',
+        kode_akun: '',
         judul_pengajuan: '',
-        
-        // Kinerja
+
+        // 2. Kinerja
         iku_id: '',
         ikk_id: '',
-        
-        // Detail Isian
-        kode_akun: '', // Disembunyikan dari UI tapi tetap ada di data
-        deskripsi_kegiatan: '', 
+
+        // 3. Detail
+        deskripsi_kegiatan: '',
         latar_belakang: '',
         rasional: '',
         tujuan: '',
         mekanisme: '',
         
-        // Pelaksanaan
+        // 4. Pelaksanaan
         jadwal_pelaksanaan_mulai: '',
         jadwal_pelaksanaan_akhir: '',
         lokasi_pelaksanaan: '',
-        
-        // Output & Penanggung Jawab
-        target: '', 
-        pjawab: '', 
-        keberlanjutan: 'Tidak Berlanjut',
+
+        // 5. Output, PJ & Jenis
+        target: '',
+        pjawab: '',
         jenis_kegiatan: 'Rutin',
-        
-        // Keuangan
+
+        // 6. Keuangan
         anggaran: 0,
         jenis_pencairan: 'Tunai',
         nama_bank: '',
         nomor_rekening: '',
         atas_nama: '',
 
-        // Array Dinamis
-        indikator_kinerja: [
-            { 
-                indikator: '', 
-                kondisi_akhir_2024_capaian: '', 
-                tahun_2025_target: '', 
-                tahun_2025_capaian: '',
-                akhir_tahun_2029_target: '', 
-                akhir_tahun_2029_capaian: ''
-            }
-        ],
-        
-        rincian_anggaran: [
-            { 
-                kode_anggaran: '', 
-                kebutuhan: '', 
-                vol: 1, 
-                satuan: 'Paket', 
-                biaya_satuan: 0, 
-                jumlah: 0 
-            }
-        ]
+        // 7. Array
+        indikator_kinerja: [initialIndikator],
+        rincian_anggaran: [initialRAB]
     });
 
     const [filteredIkks, setFilteredIkks] = useState([]);
+    const [isManualDeskripsi, setIsManualDeskripsi] = useState(false);
 
-    // --- EFFECT: FILTER IKK SAAT IKU DIPILIH ---
+    // --- LOGIC 1: AUTO GENERATE KODE AKUN ---
+    useEffect(() => {
+        if (data.id_unit && data.tahun_anggaran) {
+            const selectedUnit = units.find(u => String(u.id_unit) === String(data.id_unit));
+            const kodeUnit = selectedUnit ? selectedUnit.kode_unit : 'UNIT';
+            const autoKode = `${kodeUnit}.${data.tahun_anggaran}.001`; 
+            setData(prev => ({ ...prev, kode_akun: autoKode }));
+        }
+    }, [data.id_unit, data.tahun_anggaran, units]);
+
+    // --- LOGIC 2: AUTO FILL DESKRIPSI ---
+    useEffect(() => {
+        if (!isManualDeskripsi) {
+            setData(prev => ({ ...prev, deskripsi_kegiatan: data.judul_pengajuan }));
+        }
+    }, [data.judul_pengajuan]);
+
+    // --- LOGIC 3: FILTER IKK ---
     useEffect(() => {
         if (data.iku_id) {
             const selectedIkuObj = ikus.find(item => String(item.id_iku) === String(data.iku_id));
             if (selectedIkuObj && selectedIkuObj.ikks) {
-                const options = selectedIkuObj.ikks.map(ikk => ({
-                    value: ikk.id_ikk,
-                    label: ikk.nama_ikk
-                }));
-                setFilteredIkks(options);
+                setFilteredIkks(selectedIkuObj.ikks.map(ikk => ({ value: ikk.id_ikk, label: ikk.nama_ikk })));
             } else {
                 setFilteredIkks([]);
             }
@@ -93,69 +120,93 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
         }
     }, [data.iku_id, ikus]);
 
-    // --- EFFECT: HITUNG TOTAL ANGGARAN OTOMATIS ---
-    useEffect(() => {
-        // Pastikan konversi ke Number aman agar tidak NaN
-        const total = data.rincian_anggaran.reduce((acc, item) => {
-            return acc + (parseFloat(item.jumlah) || 0);
-        }, 0);
-        setData(prev => ({ ...prev, anggaran: total }));
-    }, [data.rincian_anggaran]);
-
-    // --- HANDLERS INDIKATOR ---
-    const addIndikator = () => {
-        setData('indikator_kinerja', [
-            ...data.indikator_kinerja,
-            { indikator: '', kondisi_akhir_2024_capaian: '', tahun_2025_target: '', tahun_2025_capaian: '', akhir_tahun_2029_target: '', akhir_tahun_2029_capaian: '' }
-        ]);
+    // --- HANDLERS ---
+    const addIndikatorRow = () => setData('indikator_kinerja', [...data.indikator_kinerja, { ...initialIndikator, id: Date.now() }]);
+    
+    const removeIndikatorRow = (id) => {
+        const list = data.indikator_kinerja.filter(item => item.id !== id);
+        setData('indikator_kinerja', list.length ? list : [{ ...initialIndikator, id: Date.now() }]);
     };
 
-    const removeIndikator = (index) => {
-        const list = [...data.indikator_kinerja];
-        list.splice(index, 1);
-        setData('indikator_kinerja', list);
-    };
-
-    const updateIndikator = (index, field, value) => {
+    const handleIndikatorChange = (index, field, value) => {
         const list = [...data.indikator_kinerja];
         list[index][field] = value;
         setData('indikator_kinerja', list);
     };
 
-    // --- HANDLERS RAB ---
-    const addRabItem = () => {
-        setData('rincian_anggaran', [
-            ...data.rincian_anggaran,
-            { kode_anggaran: '', kebutuhan: '', vol: 1, satuan: 'Paket', biaya_satuan: 0, jumlah: 0 }
-        ]);
+    const addRabItem = () => setData('rincian_anggaran', [...data.rincian_anggaran, { ...initialRAB, id: Date.now() }]);
+
+    const removeRabItem = (id) => {
+        const list = data.rincian_anggaran.filter(item => item.id !== id);
+        if (list.length === 0) {
+            setData('rincian_anggaran', [{ ...initialRAB, id: Date.now() }]);
+        } else {
+            const totalBaru = list.reduce((acc, curr) => acc + (parseFloat(curr.jumlah) || 0), 0);
+            setData(prev => ({ ...prev, rincian_anggaran: list, anggaran: totalBaru }));
+        }
     };
 
-    const removeRabItem = (index) => {
+    const handleRincianChange = (index, field, value) => {
         const list = [...data.rincian_anggaran];
-        list.splice(index, 1);
-        setData('rincian_anggaran', list);
-    };
+        const item = { ...list[index] };
 
-    const updateRabItem = (index, field, value) => {
-        const list = [...data.rincian_anggaran];
-        list[index][field] = value;
+        const getReferenceAccount = (kode) => {
+            return akunAnggarans.find(a => String(a.kode_anggaran) === String(kode));
+        };
 
-        // Logic Hitung Subtotal per Baris
-        if (field === 'vol' || field === 'biaya_satuan') {
-            const vol = field === 'vol' ? (parseFloat(value) || 0) : (parseFloat(list[index].vol) || 0);
-            const price = field === 'biaya_satuan' ? (parseFloat(value) || 0) : (parseFloat(list[index].biaya_satuan) || 0);
-            list[index].jumlah = vol * price;
+        if (field === 'kode_anggaran') {
+            const kode = value;
+            const akun = getReferenceAccount(kode);
+            item.kode_anggaran = kode;
+            
+            if (akun) {
+                item.kebutuhan = akun.nama_anggaran;
+                item.satuan = akun.satuan || item.satuan;
+                item.biaya_satuan = parseFloat(akun.nominal) || 0;
+            }
+        } 
+        else if (field === 'biaya_satuan') {
+            const akun = getReferenceAccount(item.kode_anggaran);
+            let inputHarga = parseFloat(value);
+            if (isNaN(inputHarga)) inputHarga = 0;
+
+            const maxHarga = akun ? parseFloat(akun.nominal) : Infinity;
+
+            if (inputHarga > maxHarga) {
+                inputHarga = maxHarga; 
+            }
+            item.biaya_satuan = inputHarga;
+        } 
+        else {
+            item[field] = value;
         }
 
-        setData('rincian_anggaran', list);
+        const vol = parseFloat(item.vol) || 0;
+        const harga = parseFloat(item.biaya_satuan) || 0;
+        item.jumlah = vol * harga;
+
+        list[index] = item;
+        const totalAnggaranBaru = list.reduce((acc, curr) => acc + (parseFloat(curr.jumlah) || 0), 0);
+        
+        setData(prev => ({ ...prev, rincian_anggaran: list, anggaran: totalAnggaranBaru }));
     };
 
     const submit = (e) => {
         e.preventDefault();
-        post(route('rkat.store'));
+        console.log("🚀 SUBMITTING DATA:", data);
+
+        post(route('rkat.store'), {
+            onSuccess: () => { console.log("Data berhasil dikirim!"); },
+            onError: (err) => {
+                console.error("Validation Error:", err);
+                if(err.kode_akun) alert("Error: Kode Akun otomatis belum terisi.");
+                else if(err.jenis_kegiatan) alert("Error: Jenis Kegiatan wajib dipilih.");
+                else alert("Terdapat kesalahan input. Periksa form yang berwarna merah.");
+            }
+        });
     };
 
-    // Options for Selects
+    // Options
     const tahunOptions = tahunAnggarans.map(t => ({ value: t.tahun_anggaran, label: t.tahun_anggaran }));
     const unitOptions = units.map(u => ({ value: u.id_unit, label: `${u.kode_unit} - ${u.nama_unit}` }));
     const ikuOptions = ikus.map(i => ({ value: i.id_iku, label: i.nama_iku }));
@@ -171,448 +222,203 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
             <div className="py-6">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <form onSubmit={submit} className="space-y-6">
-                        
-                        {/* --- KONTAINER 1: HEADER & DATA DASAR --- */}
+
+                        {/* --- 1. DATA DASAR --- */}
                         <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-teal-500">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">
-                                1. Data Dasar Pengajuan
-                            </h3>
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">1. Data Dasar Pengajuan</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <InputLabel value="Tahun Anggaran" required />
-                                    <CustomSelect
-                                        value={data.tahun_anggaran}
-                                        onChange={(e) => setData('tahun_anggaran', e.target.value)}
-                                        options={tahunOptions}
-                                        placeholder="Pilih Tahun"
-                                        className="mt-1"
-                                    />
+                                    <CustomSelect value={data.tahun_anggaran} onChange={(e) => setData('tahun_anggaran', e.target.value)} options={tahunOptions} placeholder="Pilih Tahun" className="mt-1" />
                                     <InputError message={errors.tahun_anggaran} className="mt-2" />
                                 </div>
                                 <div>
-                                    {/* LABEL DIGANTI JADI UNIT KERJA */}
                                     <InputLabel value="Unit Kerja" required />
-                                    <CustomSelect
-                                        value={data.id_unit}
-                                        onChange={(e) => setData('id_unit', e.target.value)}
-                                        options={unitOptions}
-                                        placeholder="Pilih Unit"
-                                        disabled={auth.user.peran !== 'Admin'}
-                                        className="mt-1"
-                                    />
+                                    <CustomSelect value={data.id_unit} onChange={(e) => setData('id_unit', e.target.value)} options={unitOptions} placeholder="Pilih Unit" disabled={auth.user.peran !== 'Admin'} className="mt-1" />
                                     <InputError message={errors.id_unit} className="mt-2" />
                                 </div>
                                 
                                 <div className="md:col-span-2">
+                                    <InputLabel value="Kode Akun Kegiatan (Auto)" required />
+                                    <TextInput value={data.kode_akun} readOnly className="mt-1 block w-full bg-gray-100 text-gray-600 cursor-not-allowed border-gray-200" placeholder="Otomatis..." />
+                                    <InputError message={errors.kode_akun} className="mt-2" />
+                                </div>
+
+                                <div className="md:col-span-2">
                                     <InputLabel value="Judul Kegiatan" required />
-                                    <TextArea
-                                        value={data.judul_pengajuan}
-                                        onChange={(e) => setData('judul_pengajuan', e.target.value)}
-                                        className="mt-1 block w-full"
-                                        rows={2}
-                                        placeholder="Tuliskan judul kegiatan secara lengkap..."
-                                    />
+                                    <TextArea value={data.judul_pengajuan} onChange={(e) => setData('judul_pengajuan', e.target.value)} className="mt-1 block w-full" rows={2} placeholder="Tuliskan judul kegiatan..." />
                                     <InputError message={errors.judul_pengajuan} className="mt-2" />
                                 </div>
                             </div>
                         </div>
 
-                        {/* --- KONTAINER 2 (DULU 3): DETAIL PELAKSANAAN --- */}
-                        {/* INPUT MENURUN KE BAWAH, KODE AKUN DIHAPUS */}
+                        {/* --- 2. DETAIL PELAKSANAAN --- */}
                         <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-indigo-500">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">
-                                2. Detail Pelaksanaan
-                            </h3>
-
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">2. Detail Pelaksanaan</h3>
                             <div className="space-y-6">
-                                {/* TEXT AREA DISUSUN VERTIKAL (TURUN KE BAWAH) */}
-                                <div className="space-y-6">
+                                <div className="space-y-4">
                                     <div>
-                                        <InputLabel value="Latar Belakang" required />
-                                        <TextArea 
-                                            value={data.latar_belakang} 
-                                            onChange={(e) => setData('latar_belakang', e.target.value)} 
-                                            rows={4} 
-                                            className="mt-1 w-full"
-                                            placeholder="Jelaskan latar belakang kegiatan..."
-                                        />
-                                        <InputError message={errors.latar_belakang} className="mt-2" />
+                                        <InputLabel value="Deskripsi Kegiatan" required />
+                                        <TextArea value={data.deskripsi_kegiatan} onChange={(e) => { setData('deskripsi_kegiatan', e.target.value); setIsManualDeskripsi(true); }} rows={3} className="mt-1 w-full" placeholder="Deskripsi..." />
+                                        <InputError message={errors.deskripsi_kegiatan} className="mt-2" />
                                     </div>
-                                    <div>
-                                        <InputLabel value="Tujuan Kegiatan" required />
-                                        <TextArea 
-                                            value={data.tujuan} 
-                                            onChange={(e) => setData('tujuan', e.target.value)} 
-                                            rows={4} 
-                                            className="mt-1 w-full"
-                                            placeholder="Apa tujuan yang ingin dicapai?"
-                                        />
-                                        <InputError message={errors.tujuan} className="mt-2" />
-                                    </div>
-                                    <div>
-                                        <InputLabel value="Rasional / Alasan" required />
-                                        <TextArea 
-                                            value={data.rasional} 
-                                            onChange={(e) => setData('rasional', e.target.value)} 
-                                            rows={4} 
-                                            className="mt-1 w-full"
-                                            placeholder="Mengapa kegiatan ini penting?"
-                                        />
-                                        <InputError message={errors.rasional} className="mt-2" />
-                                    </div>
-                                    <div>
-                                        <InputLabel value="Mekanisme Pelaksanaan" required />
-                                        <TextArea 
-                                            value={data.mekanisme} 
-                                            onChange={(e) => setData('mekanisme', e.target.value)} 
-                                            rows={4} 
-                                            className="mt-1 w-full"
-                                            placeholder="Bagaimana kegiatan akan dilaksanakan?"
-                                        />
-                                        <InputError message={errors.mekanisme} className="mt-2" />
-                                    </div>
+                                    <div><InputLabel value="Latar Belakang" required /><TextArea value={data.latar_belakang} onChange={(e) => setData('latar_belakang', e.target.value)} rows={4} className="mt-1 w-full" /><InputError message={errors.latar_belakang} className="mt-2" /></div>
+                                    <div><InputLabel value="Tujuan" required /><TextArea value={data.tujuan} onChange={(e) => setData('tujuan', e.target.value)} rows={4} className="mt-1 w-full" /><InputError message={errors.tujuan} className="mt-2" /></div>
+                                    <div><InputLabel value="Rasional" required /><TextArea value={data.rasional} onChange={(e) => setData('rasional', e.target.value)} rows={4} className="mt-1 w-full" /><InputError message={errors.rasional} className="mt-2" /></div>
+                                    <div><InputLabel value="Mekanisme" required /><TextArea value={data.mekanisme} onChange={(e) => setData('mekanisme', e.target.value)} rows={4} className="mt-1 w-full" /><InputError message={errors.mekanisme} className="mt-2" /></div>
                                 </div>
-
-                                {/* Jadwal & Lokasi */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-100 dark:border-gray-700">
-                                    <div>
-                                        <InputLabel value="Tanggal Mulai" required />
-                                        <DateInput 
-                                            value={data.jadwal_pelaksanaan_mulai} 
-                                            onChange={(val) => setData('jadwal_pelaksanaan_mulai', val)} 
-                                            className="mt-1 w-full" 
-                                        />
-                                        <InputError message={errors.jadwal_pelaksanaan_mulai} className="mt-2" />
-                                    </div>
-                                    <div>
-                                        <InputLabel value="Tanggal Selesai" required />
-                                        <DateInput 
-                                            value={data.jadwal_pelaksanaan_akhir} 
-                                            onChange={(val) => setData('jadwal_pelaksanaan_akhir', val)} 
-                                            className="mt-1 w-full" 
-                                        />
-                                        <InputError message={errors.jadwal_pelaksanaan_akhir} className="mt-2" />
-                                    </div>
-                                    <div>
-                                        <InputLabel value="Lokasi Kegiatan" required />
-                                        <TextInput 
-                                            value={data.lokasi_pelaksanaan} 
-                                            onChange={(e) => setData('lokasi_pelaksanaan', e.target.value)} 
-                                            className="mt-1 w-full h-11" 
-                                            placeholder="Tempat pelaksanaan..."
-                                        />
-                                        <InputError message={errors.lokasi_pelaksanaan} className="mt-2" />
-                                    </div>
-                                </div>
-
-                                {/* Info Tambahan */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div>
-                                        <InputLabel value="Penanggung Jawab (PIC)" required />
-                                        <TextInput 
-                                            value={data.pjawab} 
-                                            onChange={(e) => setData('pjawab', e.target.value)} 
-                                            className="mt-1 w-full" 
-                                        />
-                                        <InputError message={errors.pjawab} className="mt-2" />
-                                    </div>
-                                    <div>
-                                        <InputLabel value="Target Peserta / Output" required />
-                                        <TextInput 
-                                            value={data.target} 
-                                            onChange={(e) => setData('target', e.target.value)} 
-                                            className="mt-1 w-full" 
-                                            placeholder="Cth: 100 Peserta"
-                                        />
-                                        <InputError message={errors.target} className="mt-2" />
-                                    </div>
-                                    <div>
-                                        <InputLabel value="Status Keberlanjutan" required />
-                                        <CustomSelect 
-                                            value={data.keberlanjutan}
-                                            onChange={(e) => setData('keberlanjutan', e.target.value)}
-                                            options={[{value:'Berlanjut', label:'Berlanjut'}, {value:'Tidak Berlanjut', label:'Tidak Berlanjut'}]}
-                                            className="mt-1"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* --- KONTAINER 3 (DULU 2): INDIKATOR KINERJA --- */}
-                        {/* LAYOUT MENYAMPING (HORIZONTAL) */}
-                        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-blue-500">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">
-                                3. Indikator Kinerja
-                            </h3>
-                            
-                            {/* IKU & IKK Selection */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                <div>
-                                    <InputLabel value="Indikator Kinerja Utama (IKU)" required />
-                                    <CustomSelect
-                                        value={data.iku_id}
-                                        onChange={(e) => setData(prev => ({ ...prev, iku_id: e.target.value, ikk_id: '' }))}
-                                        options={ikuOptions}
-                                        placeholder="Pilih IKU"
-                                        className="mt-1"
-                                    />
-                                    <InputError message={errors.iku_id} className="mt-2" />
-                                </div>
-                                <div>
-                                    <InputLabel value="Indikator Kinerja Kegiatan (IKK)" required />
-                                    <CustomSelect
-                                        value={data.ikk_id}
-                                        onChange={(e) => setData('ikk_id', e.target.value)}
-                                        options={filteredIkks}
-                                        placeholder={data.iku_id ? "Pilih Kegiatan (IKK)" : "Pilih IKU Terlebih Dahulu"}
-                                        disabled={!data.iku_id}
-                                        className="mt-1"
-                                    />
-                                    <InputError message={errors.ikk_id} className="mt-2" />
-                                </div>
-                            </div>
-
-                            {/* TABEL TARGET DINAMIS - LAYOUT MENYAMPING */}
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <InputLabel value="Target Kinerja (Kuantitatif)" />
-                                    <button type="button" onClick={addIndikator} className="text-sm flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors">
-                                        <Plus size={16} className="mr-1" /> Tambah Baris
-                                    </button>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t pt-4">
+                                    <div><InputLabel value="Tanggal Mulai" required /><DateInput value={data.jadwal_pelaksanaan_mulai} onChange={(val) => setData('jadwal_pelaksanaan_mulai', val)} className="mt-1 w-full" /><InputError message={errors.jadwal_pelaksanaan_mulai} className="mt-2" /></div>
+                                    <div><InputLabel value="Tanggal Selesai" required /><DateInput value={data.jadwal_pelaksanaan_akhir} onChange={(val) => setData('jadwal_pelaksanaan_akhir', val)} className="mt-1 w-full" /><InputError message={errors.jadwal_pelaksanaan_akhir} className="mt-2" /></div>
+                                    <div><InputLabel value="Lokasi" required /><TextInput value={data.lokasi_pelaksanaan} onChange={(e) => setData('lokasi_pelaksanaan', e.target.value)} className="mt-1 w-full h-11" /><InputError message={errors.lokasi_pelaksanaan} className="mt-2" /></div>
                                 </div>
                                 
-                                <div className="space-y-2">
-                                    {/* Header Kecil untuk Tabel Custom */}
-                                    <div className="hidden md:grid grid-cols-12 gap-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                        <div className="col-span-4">Nama Indikator</div>
-                                        <div className="col-span-2">Baseline 2024</div>
-                                        <div className="col-span-3 text-teal-600">Target 2025</div>
-                                        <div className="col-span-3">Target 2029</div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div><InputLabel value="PIC" required /><TextInput value={data.pjawab} onChange={(e) => setData('pjawab', e.target.value)} className="mt-1 w-full h-11" /><InputError message={errors.pjawab} className="mt-2" /></div>
+                                    <div><InputLabel value="Target Peserta" required /><TextInput value={data.target} onChange={(e) => setData('target', e.target.value)} className="mt-1 w-full h-11" /><InputError message={errors.target} className="mt-2" /></div>
+                                    
+                                    {/* Input Jenis Kegiatan (Hanya Rutin & Inovasi) */}
+                                    <div>
+                                        <InputLabel value="Jenis Kegiatan" required />
+                                        <CustomSelect 
+                                            value={data.jenis_kegiatan} 
+                                            onChange={(e) => setData('jenis_kegiatan', e.target.value)} 
+                                            options={[
+                                                { value: 'Rutin', label: 'Rutin' }, 
+                                                { value: 'Inovasi', label: 'Inovasi' }
+                                            ]} 
+                                            className="mt-1" 
+                                        />
+                                        <InputError message={errors.jenis_kegiatan} className="mt-2" />
                                     </div>
-
-                                    {data.indikator_kinerja.map((item, index) => (
-                                        <div key={index} className="p-3 border rounded-lg bg-gray-50 dark:bg-gray-700/30 relative grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
-                                            {/* Baris Indikator dibuat Horizontal Menyamping */}
-                                            
-                                            <div className="md:col-span-4">
-                                                <span className="md:hidden text-xs text-gray-500 block mb-1">Nama Indikator</span>
-                                                <TextInput 
-                                                    value={item.indikator} 
-                                                    onChange={(e) => updateIndikator(index, 'indikator', e.target.value)}
-                                                    placeholder="Deskripsi Indikator..." 
-                                                    className="w-full h-10 text-sm" 
-                                                />
-                                            </div>
-
-                                            <div className="md:col-span-2">
-                                                <span className="md:hidden text-xs text-gray-500 block mb-1">Baseline 2024</span>
-                                                <TextInput 
-                                                    value={item.kondisi_akhir_2024_capaian} 
-                                                    onChange={(e) => updateIndikator(index, 'kondisi_akhir_2024_capaian', e.target.value)}
-                                                    className="w-full h-10 text-sm"
-                                                    placeholder="Cth: 10%"
-                                                />
-                                            </div>
-                                            
-                                            <div className="md:col-span-3">
-                                                <span className="md:hidden text-xs text-teal-600 font-bold block mb-1">Target 2025</span>
-                                                <TextInput 
-                                                    value={item.tahun_2025_target} 
-                                                    onChange={(e) => updateIndikator(index, 'tahun_2025_target', e.target.value)}
-                                                    className="w-full h-10 text-sm border-teal-200 focus:border-teal-500 focus:ring-teal-500 bg-white" 
-                                                    placeholder="Target Tahun Ini"
-                                                />
-                                            </div>
-                                            
-                                            <div className="md:col-span-3 pr-6">
-                                                <span className="md:hidden text-xs text-gray-500 block mb-1">Target 2029</span>
-                                                <TextInput 
-                                                    value={item.akhir_tahun_2029_target} 
-                                                    onChange={(e) => updateIndikator(index, 'akhir_tahun_2029_target', e.target.value)}
-                                                    className="w-full h-10 text-sm" 
-                                                    placeholder="Jangka Panjang"
-                                                />
-                                            </div>
-
-                                            {data.indikator_kinerja.length > 1 && (
-                                                <button 
-                                                    type="button" 
-                                                    onClick={() => removeIndikator(index)} 
-                                                    className="absolute top-3 right-2 text-gray-400 hover:text-red-500 transition-colors"
-                                                    title="Hapus Baris"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
                                 </div>
-                                <InputError message={errors.indikator_kinerja} className="mt-2" />
                             </div>
                         </div>
 
-                        {/* --- KONTAINER 4: RAB (ANGGARAN) --- */}
-                        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-yellow-500">
-                            <div className="mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">
-                                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                                    4. Rincian Anggaran Belanja (RAB)
-                                </h3>
+                        {/* --- 3. INDIKATOR KINERJA --- */}
+                        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-blue-500">
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">3. Indikator Kinerja</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div><InputLabel value="IKU" required /><CustomSelect value={data.iku_id} onChange={(e) => setData(prev => ({ ...prev, iku_id: e.target.value, ikk_id: '' }))} options={ikuOptions} placeholder="Pilih IKU" className="mt-1" /><InputError message={errors.iku_id} className="mt-2" /></div>
+                                <div><InputLabel value="IKK" required /><CustomSelect value={data.ikk_id} onChange={(e) => setData('ikk_id', e.target.value)} options={filteredIkks} placeholder="Pilih IKK" disabled={!data.iku_id} className="mt-1" /><InputError message={errors.ikk_id} className="mt-2" /></div>
                             </div>
-
-                            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 mb-4">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
+                            <div className="overflow-x-auto border rounded-lg mb-4">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-4 py-3 w-12 text-center">No</th>
-                                            <th className="px-4 py-3 w-1/4">Akun Belanja</th>
-                                            <th className="px-4 py-3">Uraian / Kebutuhan</th>
-                                            <th className="px-4 py-3 w-20 text-center">Vol</th>
-                                            <th className="px-4 py-3 w-24">Satuan</th>
-                                            <th className="px-4 py-3 w-36">Harga (@)</th>
-                                            <th className="px-4 py-3 w-36 text-right">Subtotal</th>
-                                            <th className="px-4 py-3 w-12"></th>
+                                            <th className="px-2 py-3 text-xs text-center">No</th>
+                                            <th className="px-4 py-3 text-xs text-left min-w-[200px]">Indikator</th>
+                                            <th className="px-4 py-3 text-xs text-center min-w-[100px]">Kondisi 2024</th>
+                                            <th className="px-4 py-3 text-xs text-center">Target 2025</th>
+                                            <th className="px-4 py-3 text-xs text-center">Capaian 2025</th>
+                                            <th className="px-4 py-3 text-xs text-center">Target 2029</th>
+                                            <th className="px-4 py-3 text-xs text-center">Capaian 2029</th>
+                                            <th></th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                    <tbody className="bg-white divide-y">
+                                        {data.indikator_kinerja.map((item, index) => (
+                                            <tr key={item.id}>
+                                                <td className="px-2 py-3 text-sm text-center align-top pt-4">{index + 1}</td>
+                                                <td className="p-2 align-top"><TextArea value={item.indikator} onChange={(e) => handleIndikatorChange(index, 'indikator', e.target.value)} className="w-full text-sm min-h-[80px]" rows="3" placeholder="Indikator..." /></td>
+                                                <td className="p-2 align-top"><TextArea value={item.kondisi_akhir_2024_capaian} onChange={(e) => handleIndikatorChange(index, 'kondisi_akhir_2024_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                <td className="p-2 align-top"><TextArea value={item.tahun_2025_target} onChange={(e) => handleIndikatorChange(index, 'tahun_2025_target', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                <td className="p-2 align-top"><TextArea value={item.tahun_2025_capaian} onChange={(e) => handleIndikatorChange(index, 'tahun_2025_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                <td className="p-2 align-top"><TextArea value={item.akhir_tahun_2029_target} onChange={(e) => handleIndikatorChange(index, 'akhir_tahun_2029_target', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                <td className="p-2 align-top"><TextArea value={item.akhir_tahun_2029_capaian} onChange={(e) => handleIndikatorChange(index, 'akhir_tahun_2029_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                <td className="p-2 pt-4 align-top"><DangerButton type="button" onClick={() => removeIndikatorRow(item.id)} className="p-1 h-8 w-8 flex justify-center items-center rounded-full"><Trash2 className="w-4 h-4" /></DangerButton></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button type="button" onClick={addIndikatorRow} className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"><Plus size={16} className="mr-1" /> Tambah Indikator</button>
+                        </div>
+
+                        {/* --- 4. RAB --- */}
+                        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-yellow-500">
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b">4. Rincian Anggaran Belanja (RAB)</h3>
+                            <div className="overflow-x-auto rounded-lg border border-gray-200 mb-4">
+                                <table className="w-full text-xs text-left">
+                                    <thead className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-400 font-bold uppercase">
+                                        <tr>
+                                            <th className="px-2 py-2 w-8 text-center">No</th>
+                                            <th className="px-2 py-2 w-[30%] min-w-[250px]">Akun Belanja</th>
+                                            <th className="px-2 py-2 min-w-[150px]">Uraian / Kebutuhan</th>
+                                            <th className="px-2 py-2 w-16 text-center">Vol</th>
+                                            <th className="px-2 py-2 w-20 text-center">Satuan</th>
+                                            <th className="px-2 py-2 w-32 text-right">Harga (@)</th>
+                                            <th className="px-2 py-2 w-32 text-right">Subtotal</th>
+                                            <th className="px-2 py-2 w-8"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
                                         {data.rincian_anggaran.map((item, index) => (
-                                            <tr key={index} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                                <td className="px-4 py-2 text-center font-medium text-gray-500">{index + 1}</td>
-                                                <td className="px-4 py-2">
-                                                    <select 
-                                                        value={item.kode_anggaran}
-                                                        onChange={(e) => updateRabItem(index, 'kode_anggaran', e.target.value)}
-                                                        className="block w-full text-xs rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
-                                                    >
-                                                        <option value="">- Pilih Akun -</option>
-                                                        {akunAnggarans.map(a => (
-                                                            <option key={a.id_rincian_anggaran} value={a.kode_anggaran}>
-                                                                {a.kode_anggaran} - {a.nama_anggaran}
-                                                            </option>
-                                                        ))}
-                                                    </select>
+                                            <tr key={item.id} className="bg-white hover:bg-gray-50 transition-colors">
+                                                <td className="px-2 py-1 text-center font-medium text-gray-500 align-middle">{index + 1}</td>
+                                                <td className="px-2 py-1 align-middle">
+                                                    <CustomSelect value={item.kode_anggaran} onChange={(e) => handleRincianChange(index, 'kode_anggaran', e.target.value)} options={akunOptions} placeholder="- Pilih Akun -" className="w-full h-9 text-xs" />
                                                 </td>
-                                                <td className="px-4 py-2">
-                                                    <TextInput 
-                                                        value={item.kebutuhan} 
-                                                        onChange={(e) => updateRabItem(index, 'kebutuhan', e.target.value)} 
-                                                        className="w-full h-9 text-sm" 
-                                                        placeholder="Deskripsi item..."
-                                                    />
+                                                <td className="px-2 py-1 align-middle"><TextInput value={item.kebutuhan} onChange={(e) => handleRincianChange(index, 'kebutuhan', e.target.value)} className="w-full h-9 text-xs px-2" placeholder="Deskripsi..." /></td>
+                                                <td className="px-2 py-1 align-middle"><TextInput type="number" value={item.vol} onChange={(e) => handleRincianChange(index, 'vol', e.target.value)} className="w-full h-9 text-xs text-center px-1" min="1" placeholder="0" /></td>
+                                                <td className="px-2 py-1 align-middle"><TextInput value={item.satuan} onChange={(e) => handleRincianChange(index, 'satuan', e.target.value)} className="w-full h-9 text-xs text-center px-1" placeholder="Pkt" /></td>
+                                                <td className="px-2 py-1 align-middle">
+                                                    <div className="flex flex-col">
+                                                        <RupiahInput value={item.biaya_satuan} onValueChange={(val) => handleRincianChange(index, 'biaya_satuan', val)} className="w-full h-9 text-xs text-right px-2" />
+                                                        {item.kode_anggaran && (() => {
+                                                            const akun = akunAnggarans.find(a => String(a.kode_anggaran) === String(item.kode_anggaran));
+                                                            return akun ? <span className="text-[10px] text-gray-400 text-right mt-0.5">Max: {formatRupiah(akun.nominal)}</span> : null;
+                                                        })()}
+                                                    </div>
                                                 </td>
-                                                <td className="px-4 py-2">
-                                                    <TextInput 
-                                                        type="number" 
-                                                        value={item.vol} 
-                                                        onChange={(e) => updateRabItem(index, 'vol', e.target.value)} 
-                                                        className="w-full h-9 text-sm text-center" 
-                                                    />
-                                                </td>
-                                                <td className="px-4 py-2">
-                                                    <TextInput 
-                                                        value={item.satuan} 
-                                                        onChange={(e) => updateRabItem(index, 'satuan', e.target.value)} 
-                                                        className="w-full h-9 text-sm" 
-                                                    />
-                                                </td>
-                                                <td className="px-4 py-2">
-                                                    <RupiahInput 
-                                                        value={item.biaya_satuan} 
-                                                        onValueChange={(val) => updateRabItem(index, 'biaya_satuan', val)} 
-                                                        className="w-full h-9 text-sm text-right" 
-                                                    />
-                                                </td>
-                                                <td className="px-4 py-2 text-right font-semibold">
-                                                    {new Intl.NumberFormat('id-ID').format(item.jumlah)}
-                                                </td>
-                                                <td className="px-4 py-2 text-center">
-                                                    {data.rincian_anggaran.length > 1 && (
-                                                        <button type="button" onClick={() => removeRabItem(index)} className="text-gray-400 hover:text-red-600 transition-colors">
-                                                            <Trash2 size={18} />
-                                                        </button>
-                                                    )}
+                                                <td className="px-2 py-1 text-right font-semibold text-gray-700 align-middle">{formatRupiah(item.jumlah)}</td>
+                                                <td className="px-2 py-1 text-center align-middle">
+                                                    <button type="button" onClick={() => removeRabItem(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"><Trash2 size={16} /></button>
                                                 </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </div>
-                            
                             <div className="flex justify-between items-end">
-                                <button type="button" onClick={addRabItem} className="inline-flex items-center text-sm font-medium text-yellow-600 hover:text-yellow-700">
-                                    <Plus size={16} className="mr-1" /> Tambah Item Anggaran
-                                </button>
-
-                                {/* TOTAL ANGGARAN DIPINDAH KE BAWAH */}
+                                <button type="button" onClick={addRabItem} className="flex items-center text-sm font-medium text-yellow-600 hover:text-yellow-700"><Plus size={16} className="mr-1" /> Tambah Item</button>
                                 <div className="flex flex-col items-end">
-                                    <span className="text-xs text-gray-500 uppercase tracking-wide">Total Estimasi Anggaran</span>
-                                    <div className="text-2xl font-bold text-gray-900 flex items-center mt-1">
-                                        <Calculator className="w-5 h-5 mr-2 text-gray-400" />
-                                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(data.anggaran)}
-                                    </div>
+                                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Total Estimasi</span>
+                                    <div className="text-xl font-bold text-gray-900 flex items-center"><Calculator className="w-4 h-4 mr-2 text-gray-400" />{formatRupiah(data.anggaran)}</div>
                                 </div>
                             </div>
                             <InputError message={errors.rincian_anggaran} className="mt-2" />
                         </div>
 
-                        {/* --- KONTAINER 5: METODE PENCAIRAN (OPTIMALIZED UI) --- */}
+                        {/* --- 5. PENCAIRAN --- */}
                         <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-green-500">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">
-                                5. Metode Pencairan Dana
-                            </h3>
-                            
-                            <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-5 border border-gray-100 dark:border-gray-700">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                                    <div>
-                                        <InputLabel value="Pilih Metode Pencairan" />
-                                        <CustomSelect
-                                            value={data.jenis_pencairan}
-                                            onChange={(e) => setData('jenis_pencairan', e.target.value)}
-                                            options={[{value:'Tunai', label:'Tunai (Cash)'}, {value:'Bank', label:'Transfer Bank'}]}
-                                            className="mt-1 w-full"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-2">
-                                            Pilih "Transfer Bank" jika dana ingin dikirim langsung ke rekening penerima/vendor.
-                                        </p>
-                                    </div>
-
-                                    {/* Form Bank Conditional dengan Animasi Halus */}
-                                    {data.jenis_pencairan === 'Bank' && (
-                                        <div className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-300 border-l-2 border-green-200 pl-4">
-                                            <div>
-                                                <InputLabel value="Nama Bank" />
-                                                <TextInput value={data.nama_bank} onChange={(e) => setData('nama_bank', e.target.value)} className="mt-1 w-full h-10" placeholder="Cth: Bank BNI" />
-                                            </div>
-                                            <div>
-                                                <InputLabel value="Nomor Rekening" />
-                                                <TextInput value={data.nomor_rekening} onChange={(e) => setData('nomor_rekening', e.target.value)} className="mt-1 w-full h-10" placeholder="Cth: 1234567890" />
-                                            </div>
-                                            <div>
-                                                <InputLabel value="Atas Nama" />
-                                                <TextInput value={data.atas_nama} onChange={(e) => setData('atas_nama', e.target.value)} className="mt-1 w-full h-10" placeholder="Nama Pemilik Rekening" />
-                                            </div>
-                                        </div>
-                                    )}
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b">5. Metode Pencairan Dana</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-5 rounded-xl border">
+                                <div>
+                                    <InputLabel value="Metode" />
+                                    <CustomSelect value={data.jenis_pencairan} onChange={(e) => setData('jenis_pencairan', e.target.value)} options={[{ value: 'Tunai', label: 'Tunai' }, { value: 'Bank', label: 'Transfer Bank' }]} className="mt-1 w-full" />
                                 </div>
+                                {data.jenis_pencairan === 'Bank' && (
+                                    <div className="space-y-4 border-l-2 border-green-200 pl-4 animate-in fade-in slide-in-from-left-4">
+                                        <div><InputLabel value="Nama Bank" /><TextInput value={data.nama_bank} onChange={(e) => setData('nama_bank', e.target.value)} className="mt-1 w-full h-11" placeholder="Cth: BNI" /><InputError message={errors.nama_bank} className="mt-2" /></div>
+                                        <div><InputLabel value="No. Rekening" /><TextInput value={data.nomor_rekening} onChange={(e) => setData('nomor_rekening', e.target.value)} className="mt-1 w-full h-11" placeholder="123xxx" /><InputError message={errors.nomor_rekening} className="mt-2" /></div>
+                                        <div><InputLabel value="Atas Nama" /><TextInput value={data.atas_nama} onChange={(e) => setData('atas_nama', e.target.value)} className="mt-1 w-full h-11" placeholder="Nama Pemilik" /><InputError message={errors.atas_nama} className="mt-2" /></div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* --- TOMBOL AKSI STICKY --- */}
-                        <div className="sticky bottom-4 z-10 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-4 rounded-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] border border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                            <Link href={route('dashboard')} className="text-gray-600 hover:text-gray-900 font-medium text-sm flex items-center px-4 py-2 hover:bg-gray-100 rounded-md transition-colors">
-                                <ArrowLeft size={16} className="mr-2" /> Kembali ke Dashboard
-                            </Link>
+                        {/* --- STICKY FOOTER --- */}
+                        <div className="sticky bottom-4 z-10 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border flex justify-between items-center">
+                            <Link href={route('dashboard')} className="text-gray-600 hover:text-gray-900 text-sm flex items-center px-4 py-2 hover:bg-gray-100 rounded-md"><ArrowLeft size={16} className="mr-2" /> Kembali</Link>
                             <div className="flex items-center gap-4">
                                 <div className="text-right hidden sm:block mr-4">
                                     <p className="text-xs text-gray-500">Total Pengajuan</p>
-                                    <p className="text-sm font-bold text-teal-600">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(data.anggaran)}</p>
+                                    <p className="text-sm font-bold text-teal-600">{formatRupiah(data.anggaran)}</p>
                                 </div>
-                                <PrimaryButton disabled={processing} className="px-6 py-3 text-base shadow-teal-200 hover:shadow-teal-400">
-                                    <Save size={18} className="mr-2" /> Simpan Pengajuan RKAT
-                                </PrimaryButton>
+                                <PrimaryButton disabled={processing} className="px-6 py-3 shadow-teal-200"><Save size={18} className="mr-2" /> Simpan Pengajuan</PrimaryButton>
                             </div>
                         </div>
-
                     </form>
                 </div>
             </div>

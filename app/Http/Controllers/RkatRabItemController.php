@@ -18,8 +18,8 @@ class RkatRabItemController extends Controller
         $search = $request->input('search');
         
         $query = RkatRabItem::query()
-            // Load relasi ke atas: Detail -> Header -> Unit
-            ->with(['rkatDetail.header.unit', 'rkatDetail.header.user']);
+            // PERBAIKAN: Ubah 'header' menjadi 'rkatHeader' sesuai nama fungsi di model RkatDetail
+            ->with(['rkatDetail.rkatHeader.unit', 'rkatDetail.rkatHeader.user']);
 
         // Fitur Pencarian Global
         if ($search) {
@@ -27,7 +27,8 @@ class RkatRabItemController extends Controller
                 $q->where('deskripsi_item', 'like', "%{$search}%")
                   ->orWhere('kode_anggaran', 'like', "%{$search}%")
                   // Cari berdasarkan Unit Kerja
-                  ->orWhereHas('rkatDetail.header.unit', function($qUnit) use ($search) {
+                  // PERBAIKAN: Ubah 'header' menjadi 'rkatHeader'
+                  ->orWhereHas('rkatDetail.rkatHeader.unit', function($qUnit) use ($search) {
                       $qUnit->where('nama_unit', 'like', "%{$search}%");
                   });
             });

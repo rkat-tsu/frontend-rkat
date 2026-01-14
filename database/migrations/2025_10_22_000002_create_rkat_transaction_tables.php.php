@@ -22,7 +22,6 @@ return new class extends Migration
             $table->foreign('id_unit')->references('id_unit')->on('unit')->onDelete('cascade');
             
             $table->unsignedBigInteger('diajukan_oleh'); 
-            // Asumsi tabel users id-nya 'id_user', sesuaikan jika default Laravel 'id'
             $table->foreign('diajukan_oleh')->references('id_user')->on('users'); 
 
             $table->string('nomor_dokumen', 50)->unique(); 
@@ -33,10 +32,10 @@ return new class extends Migration
                 'Menunggu_Dekan_Kepala',
                 'Revisi', 
                 'Ditolak', 
-                'Disetujui_L1', // Dekan/Kepala Unit
+                'Disetujui_L1',
                 'Menunggu_WR1', 'Menunggu_WR2', 'Menunggu_WR3',
                 'Disetujui_WR1', 'Disetujui_WR2', 'Disetujui_WR3',
-                'Disetujui_Final' // Rektor/Yayasan
+                'Disetujui_Final'
             ])->default('Draft');
             
             $table->datetime('tanggal_pengajuan')->nullable();
@@ -53,11 +52,9 @@ return new class extends Migration
             $table->unsignedBigInteger('id_header');
             $table->foreign('id_header')->references('id_header')->on('rkat_headers')->onDelete('cascade');
             
-            $table->string('kode_akun', 50);
             $table->string('judul_kegiatan');
             $table->text('deskripsi_kegiatan');
             
-            // Relasi Kinerja (IKU & IKK Saja)
             $table->unsignedBigInteger('id_iku')->nullable();
             $table->foreign('id_iku')->references('id_iku')->on('ikus');
             
@@ -78,8 +75,7 @@ return new class extends Migration
             $table->string('target')->nullable(); 
             $table->string('pjawab')->nullable(); 
             
-            $table->enum('keberlanjutan', ['Berlanjut', 'Tidak Berlanjut'])->default('Tidak Berlanjut');
-            $table->enum('jenis_kegiatan', ['Rutin', 'Pengembangan', 'Insidental'])->default('Rutin');
+            $table->enum('jenis_kegiatan', ['Rutin', 'Inovasi'])->default('Rutin');
             
             $table->decimal('anggaran', 15, 2)->default(0);
 

@@ -19,7 +19,8 @@ class RincianAnggaran extends Model
     protected $fillable = [
         'kode_anggaran', 
         'nama_anggaran', 
-        'kelompok_anggaran', 
-        'pagu_limit',
+        'satuan',
+        'nominal',
+        'kelompok_anggaran',
     ];
 }
