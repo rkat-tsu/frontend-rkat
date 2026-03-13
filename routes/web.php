@@ -30,7 +30,7 @@ Route::get('/', function () {
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    // === ROUTE RKAT (Sudah Ada) ===
+    // === ROUTE RKAT ===
     Route::get('/rkat/input', [RkatController::class, 'create'])->name('rkat.create');
     Route::post('/rkat', [RkatController::class, 'store'])->name('rkat.store');
 
@@ -65,7 +65,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/rincian-anggaran/{rincian}', [RincianAnggaranController::class, 'update'])->name('rincian.update');
         Route::delete('/rincian-anggaran/{rincian}', [RincianAnggaranController::class, 'destroy'])->name('rincian.destroy');
 
-        // Note: registration routes have been moved to admin-only in routes/auth.php
         // Admin-only user creation
         Route::get('/user/create', [UserController::class, 'create'])->name('user.create');
         Route::post('/user', [UserController::class, 'store'])->name('user.store');

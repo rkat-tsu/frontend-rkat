@@ -27,7 +27,6 @@ class RkatRabItemController extends Controller
                 $q->where('deskripsi_item', 'like', "%{$search}%")
                   ->orWhere('kode_anggaran', 'like', "%{$search}%")
                   // Cari berdasarkan Unit Kerja
-                  // PERBAIKAN: Ubah 'header' menjadi 'rkatHeader'
                   ->orWhereHas('rkatDetail.rkatHeader.unit', function($qUnit) use ($search) {
                       $qUnit->where('nama_unit', 'like', "%{$search}%");
                   });

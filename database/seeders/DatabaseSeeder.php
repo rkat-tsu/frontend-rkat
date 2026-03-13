@@ -26,6 +26,9 @@ class DatabaseSeeder extends Seeder
             UnitSeeder::class,
             IkuSeeder::class,
             RincianAnggaranSeeder::class,
+            SboKategoriSeeder::class,
+            SboItemSeeder::class,
+            SboTarifSeeder::class,
         ]);
 
         // Ensure a default unit exists for seeded admin user

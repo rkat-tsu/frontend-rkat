@@ -91,7 +91,7 @@ export default function Create({ auth, units = [] }) {
                                                 value={data.nama_lengkap} 
                                                 onChange={(e) => setData('nama_lengkap', e.target.value)} 
                                                 className="mt-1 block w-full" 
-                                                placeholder="Contoh: Dr. Budi Santoso, M.Kom"
+                                                placeholder="Masukkan Nama Lengkap"
                                             />
                                             <InputError message={errors.nama_lengkap} className="mt-2" />
                                         </div>
@@ -108,7 +108,7 @@ export default function Create({ auth, units = [] }) {
                                                     value={data.email} 
                                                     onChange={(e) => setData('email', e.target.value)} 
                                                     className="pl-10 block w-full" 
-                                                    placeholder="nama@universitas.ac.id"
+                                                    placeholder="Masukkan Alamat Email"
                                                 />
                                             </div>
                                             <InputError message={errors.email} className="mt-2" />
@@ -125,7 +125,7 @@ export default function Create({ auth, units = [] }) {
                                                     value={data.no_telepon} 
                                                     onChange={(e) => setData('no_telepon', e.target.value)} 
                                                     className="pl-10 block w-full" 
-                                                    placeholder="0812..."
+                                                    placeholder="Masukkan Nomor Telepon/WA"
                                                 />
                                             </div>
                                             <InputError message={errors.no_telepon} className="mt-2" />
@@ -147,7 +147,7 @@ export default function Create({ auth, units = [] }) {
                                                 value={data.peran}
                                                 onChange={(e) => setData('peran', e.target.value)}
                                                 options={roleOptions}
-                                                placeholder="Pilih Peran..."
+                                                
                                                 className="mt-1"
                                             />
                                             <InputError message={errors.peran} className="mt-2" />

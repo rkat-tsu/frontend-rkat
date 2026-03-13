@@ -69,7 +69,7 @@ export default function Create({ auth }) {
                                             value={data.tahun_anggaran}
                                             onChange={(e) => setData('tahun_anggaran', e.target.value)}
                                             className="mt-1 block w-full"
-                                            placeholder="Cth: 2026"
+                                            placeholder="Masukkan tahun anggaran"
                                             isFocused={true}
                                         />
                                         <InputError message={errors.tahun_anggaran} className="mt-2" />

@@ -32,8 +32,9 @@ class RincianAnggaranController extends Controller
         $validated = $request->validate([
             'kode_anggaran' => 'required|string|max:20|unique:rincian_anggarans,kode_anggaran',
             'nama_anggaran' => 'required|string|max:150',
+            'satuan' => 'nullable|string|max:50',
+            'nominal' => 'nullable|numeric|min:0',
             'kelompok_anggaran' => 'nullable|string|max:50',
-            'pagu_limit' => 'nullable|numeric|min:0',
         ]);
 
         RincianAnggaran::create($validated);
@@ -56,7 +57,9 @@ class RincianAnggaranController extends Controller
         $validated = $request->validate([
             'nama_anggaran' => 'required|string|max:150',
             'kelompok_anggaran' => 'nullable|string|max:50',
-            'pagu_limit' => 'nullable|numeric|min:0',
+            'satuan' => 'nullable|string|max:50',
+            'nominal' => 'nullable|numeric|min:0',
+            'kelompok_anggaran' => 'nullable|string|max:50',
         ]);
 
         $rincian->update($validated);

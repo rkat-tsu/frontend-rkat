@@ -41,7 +41,6 @@ class RkatController extends Controller
             'units' => $units,
             'akunAnggarans' => $akunAnggarans,
             'ikus' => $ikus,
-            // 'ikuSubs' dihapus
         ]);
     }
 
@@ -49,7 +48,7 @@ class RkatController extends Controller
     {
         Log::debug('[RKAT] Payload Simpan Diterima', $request->all());
 
-        // 1. VALIDASI KINERJA (Tanpa ikusub_id)
+        // 1. VALIDASI KINERJA
         $request->validate([
             'iku_id' => ['required', 'integer', 'exists:ikus,id_iku'],
             'ikk_id' => ['required', 'integer', 'exists:ikks,id_ikk'],

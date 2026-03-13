@@ -147,7 +147,7 @@ export default function Edit({ auth, unit, users, units }) {
                                                 value={data.no_telepon}
                                                 onChange={(e) => setData('no_telepon', e.target.value)}
                                                 className="pl-10 block w-full"
-                                                placeholder="0812..."
+                                                placeholder="Masukkan Nomor Telepon / WhatsApp"
                                             />
                                         </div>
                                         <InputError message={errors.no_telepon} className="mt-2" />
@@ -164,7 +164,7 @@ export default function Edit({ auth, unit, users, units }) {
                                                 value={data.email}
                                                 onChange={(e) => setData('email', e.target.value)}
                                                 className="pl-10 block w-full"
-                                                placeholder="unit@kampus.ac.id"
+                                                placeholder="Masukkan Email Resmi Unit"
                                             />
                                         </div>
                                         <InputError message={errors.email} className="mt-2" />

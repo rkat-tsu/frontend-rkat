@@ -3,41 +3,47 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Save, ArrowLeft } from 'lucide-react';
 
-export default function Create() {
-    // Inisialisasi useForm dari Inertia
-    const { data, setData, post, processing, errors } = useForm({
-        kode_anggaran: '',
-        nama_anggaran: '',
-        satuan: '',
-        kelompok_anggaran: '',
-        nominal: '',
+export default function Edit({ item }) {
+    // Inisialisasi useForm dengan data yang sudah ada (item) dari database
+    const { data, setData, put, processing, errors } = useForm({
+        kode_anggaran: item?.kode_anggaran || '',
+        nama_anggaran: item?.nama_anggaran || '',
+        satuan: item?.satuan || '',
+        kelompok_anggaran: item?.kelompok_anggaran || '',
+        nominal: item?.nominal || '',
     });
 
-    // Handle submit form
+    // Handle submit form untuk update data
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Pastikan route 'rincian.store' sudah terdaftar di web.php Laravel Anda
-        post(route('rincian.store'));
+        // Menggunakan method PUT untuk update data berdasarkan kode_anggaran/ID
+        put(route('rincian.update', item.kode_anggaran)); 
     };
 
     return (
         <AuthenticatedLayout header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Standar Biaya Operasional</h2>}>
-            <Head title="Tambah Item SBO" />
+            <Head title={`Edit Item SBO - ${item?.kode_anggaran}`} />
 
             <div className="py-8">
                 <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
                     
+                    {/* Header Bagian Atas */}
                     <div className="flex items-center gap-4 mb-6">
                         <Link 
-                            href={route('rincian.index')} // Sesuaikan dengan route index Anda
+                            href={route('rincian.index')}
                             className="p-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full transition"
                             title="Kembali"
                         >
                             <ArrowLeft className="w-5 h-5" />
                         </Link>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                            Tambah Item Baru
-                        </h1>
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                                Edit Item SBO
+                            </h1>
+                            <p className="text-sm text-gray-500 mt-1 dark:text-gray-400">
+                                Mengubah data untuk kode: <span className="font-semibold">{item?.kode_anggaran}</span>
+                            </p>
+                        </div>
                     </div>
 
                     <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-8 border-l-4 border-yellow-500">
@@ -58,6 +64,8 @@ export default function Create() {
                                         onChange={(e) => setData('kode_anggaran', e.target.value)}
                                         className={`w-full bg-gray-50 border ${errors.kode_anggaran ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg focus:ring-teal-500 focus:border-teal-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
                                         required
+                                        // Tambahkan atribut readOnly di bawah ini jika kode_anggaran adalah Primary Key yang tidak boleh diubah:
+                                        // readOnly
                                     />
                                     {errors.kode_anggaran && <p className="mt-1 text-sm text-red-600">{errors.kode_anggaran}</p>}
                                 </div>
@@ -140,7 +148,7 @@ export default function Create() {
                             {/* Tombol Aksi */}
                             <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
                                 <Link
-                                    href={route('rincian.index')} // Sesuaikan dengan nama route Anda
+                                    href={route('rincian.index')}
                                     className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors"
                                 >
                                     Batal
@@ -151,7 +159,7 @@ export default function Create() {
                                     className="flex items-center justify-center gap-2 px-5 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 focus:ring-4 focus:outline-none focus:ring-teal-300 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
                                     <Save className="w-4 h-4" />
-                                    {processing ? 'Menyimpan...' : 'Simpan Data'}
+                                    {processing ? 'Menyimpan...' : 'Simpan Perubahan'}
                                 </button>
                             </div>
 

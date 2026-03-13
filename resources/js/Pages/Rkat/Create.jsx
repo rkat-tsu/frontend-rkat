@@ -13,7 +13,7 @@ import { Plus, Trash2, Save, ArrowLeft, Calculator, ChevronDown, Check } from 'l
 import { cn } from "@/lib/utils";
 
 // --- IMPORT COMPONENT CUSTOM SELECT ---
-import CustomSelect from '@/Components/CustomSelect'; 
+import CustomSelect from '@/Components/CustomSelect';
 
 // --- UTILITY ---
 const formatRupiah = (angka) => {
@@ -23,7 +23,7 @@ const formatRupiah = (angka) => {
 
 // --- MAIN COMPONENT ---
 export default function Create({ auth, tahunAnggarans, units, akunAnggarans, ikus }) {
-        
+
     // Initial States
     const initialIndikator = {
         id: Date.now(),
@@ -39,7 +39,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
         id: Date.now() + 1,
         kode_anggaran: '',
         kebutuhan: '',
-        vol: 1, 
+        vol: 1,
         satuan: 'Paket',
         biaya_satuan: 0,
         jumlah: 0
@@ -63,7 +63,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
         rasional: '',
         tujuan: '',
         mekanisme: '',
-        
+
         // 4. Pelaksanaan
         jadwal_pelaksanaan_mulai: '',
         jadwal_pelaksanaan_akhir: '',
@@ -94,7 +94,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
         if (data.id_unit && data.tahun_anggaran) {
             const selectedUnit = units.find(u => String(u.id_unit) === String(data.id_unit));
             const kodeUnit = selectedUnit ? selectedUnit.kode_unit : 'UNIT';
-            const autoKode = `${kodeUnit}.${data.tahun_anggaran}.001`; 
+            const autoKode = `${kodeUnit}.${data.tahun_anggaran}.001`;
             setData(prev => ({ ...prev, kode_akun: autoKode }));
         }
     }, [data.id_unit, data.tahun_anggaran, units]);
@@ -122,7 +122,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
 
     // --- HANDLERS ---
     const addIndikatorRow = () => setData('indikator_kinerja', [...data.indikator_kinerja, { ...initialIndikator, id: Date.now() }]);
-    
+
     const removeIndikatorRow = (id) => {
         const list = data.indikator_kinerja.filter(item => item.id !== id);
         setData('indikator_kinerja', list.length ? list : [{ ...initialIndikator, id: Date.now() }]);
@@ -158,13 +158,13 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
             const kode = value;
             const akun = getReferenceAccount(kode);
             item.kode_anggaran = kode;
-            
+
             if (akun) {
                 item.kebutuhan = akun.nama_anggaran;
                 item.satuan = akun.satuan || item.satuan;
                 item.biaya_satuan = parseFloat(akun.nominal) || 0;
             }
-        } 
+        }
         else if (field === 'biaya_satuan') {
             const akun = getReferenceAccount(item.kode_anggaran);
             let inputHarga = parseFloat(value);
@@ -173,10 +173,10 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
             const maxHarga = akun ? parseFloat(akun.nominal) : Infinity;
 
             if (inputHarga > maxHarga) {
-                inputHarga = maxHarga; 
+                inputHarga = maxHarga;
             }
             item.biaya_satuan = inputHarga;
-        } 
+        }
         else {
             item[field] = value;
         }
@@ -187,7 +187,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
 
         list[index] = item;
         const totalAnggaranBaru = list.reduce((acc, curr) => acc + (parseFloat(curr.jumlah) || 0), 0);
-        
+
         setData(prev => ({ ...prev, rincian_anggaran: list, anggaran: totalAnggaranBaru }));
     };
 
@@ -199,8 +199,8 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
             onSuccess: () => { console.log("Data berhasil dikirim!"); },
             onError: (err) => {
                 console.error("Validation Error:", err);
-                if(err.kode_akun) alert("Error: Kode Akun otomatis belum terisi.");
-                else if(err.jenis_kegiatan) alert("Error: Jenis Kegiatan wajib dipilih.");
+                if (err.kode_akun) alert("Error: Kode Akun otomatis belum terisi.");
+                else if (err.jenis_kegiatan) alert("Error: Jenis Kegiatan wajib dipilih.");
                 else alert("Terdapat kesalahan input. Periksa form yang berwarna merah.");
             }
         });
@@ -237,7 +237,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                     <CustomSelect value={data.id_unit} onChange={(e) => setData('id_unit', e.target.value)} options={unitOptions} placeholder="Pilih Unit" disabled={auth.user.peran !== 'Admin'} className="mt-1" />
                                     <InputError message={errors.id_unit} className="mt-2" />
                                 </div>
-                                
+
                                 <div className="md:col-span-2">
                                     <InputLabel value="Kode Akun Kegiatan (Auto)" required />
                                     <TextInput value={data.kode_akun} readOnly className="mt-1 block w-full bg-gray-100 text-gray-600 cursor-not-allowed border-gray-200" placeholder="Otomatis..." />
@@ -259,35 +259,123 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                 <div className="space-y-4">
                                     <div>
                                         <InputLabel value="Deskripsi Kegiatan" required />
-                                        <TextArea value={data.deskripsi_kegiatan} onChange={(e) => { setData('deskripsi_kegiatan', e.target.value); setIsManualDeskripsi(true); }} rows={3} className="mt-1 w-full" placeholder="Deskripsi..." />
+                                        <TextArea
+                                            value={data.deskripsi_kegiatan}
+                                            onChange={(e) => { setData('deskripsi_kegiatan', e.target.value); setIsManualDeskripsi(true); }}
+                                            rows={3}
+                                            className="mt-1 w-full"
+                                            placeholder="Deskripsi kegiatan..."
+                                        />
                                         <InputError message={errors.deskripsi_kegiatan} className="mt-2" />
                                     </div>
-                                    <div><InputLabel value="Latar Belakang" required /><TextArea value={data.latar_belakang} onChange={(e) => setData('latar_belakang', e.target.value)} rows={4} className="mt-1 w-full" /><InputError message={errors.latar_belakang} className="mt-2" /></div>
-                                    <div><InputLabel value="Tujuan" required /><TextArea value={data.tujuan} onChange={(e) => setData('tujuan', e.target.value)} rows={4} className="mt-1 w-full" /><InputError message={errors.tujuan} className="mt-2" /></div>
-                                    <div><InputLabel value="Rasional" required /><TextArea value={data.rasional} onChange={(e) => setData('rasional', e.target.value)} rows={4} className="mt-1 w-full" /><InputError message={errors.rasional} className="mt-2" /></div>
-                                    <div><InputLabel value="Mekanisme" required /><TextArea value={data.mekanisme} onChange={(e) => setData('mekanisme', e.target.value)} rows={4} className="mt-1 w-full" /><InputError message={errors.mekanisme} className="mt-2" /></div>
+                                    <div>
+                                        <InputLabel value="Latar Belakang" required />
+                                        <TextArea
+                                            value={data.latar_belakang}
+                                            onChange={(e) => setData('latar_belakang', e.target.value)}
+                                            rows={4}
+                                            className="mt-1 w-full"
+                                            placeholder="Jelaskan latar belakang kegiatan..."
+                                        />
+                                        <InputError message={errors.latar_belakang} className="mt-2" />
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Tujuan" required />
+                                        <TextArea value={data.tujuan}
+                                            onChange={(e) => setData('tujuan', e.target.value)}
+                                            rows={4}
+                                            className="mt-1 w-full"
+                                            placeholder="Jelaskan tujuan kegiatan..."
+                                        />
+                                        <InputError message={errors.tujuan} className="mt-2" />
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Rasional" required />
+                                        <TextArea
+                                            value={data.rasional}
+                                            onChange={(e) => setData('rasional', e.target.value)}
+                                            rows={4}
+                                            className="mt-1 w-full"
+                                            placeholder="Jelaskan rasional kegiatan..."
+                                        />
+                                        <InputError message={errors.rasional} className="mt-2" />
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Mekanisme" required />
+                                        <TextArea
+                                            value={data.mekanisme}
+                                            onChange={(e) => setData('mekanisme', e.target.value)}
+                                            rows={4}
+                                            className="mt-1 w-full"
+                                            placeholder="Jelaskan mekanisme pelaksanaan kegiatan..."
+                                        />
+                                        <InputError message={errors.mekanisme} className="mt-2" />
+                                    </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t pt-4">
-                                    <div><InputLabel value="Tanggal Mulai" required /><DateInput value={data.jadwal_pelaksanaan_mulai} onChange={(val) => setData('jadwal_pelaksanaan_mulai', val)} className="mt-1 w-full" /><InputError message={errors.jadwal_pelaksanaan_mulai} className="mt-2" /></div>
-                                    <div><InputLabel value="Tanggal Selesai" required /><DateInput value={data.jadwal_pelaksanaan_akhir} onChange={(val) => setData('jadwal_pelaksanaan_akhir', val)} className="mt-1 w-full" /><InputError message={errors.jadwal_pelaksanaan_akhir} className="mt-2" /></div>
-                                    <div><InputLabel value="Lokasi" required /><TextInput value={data.lokasi_pelaksanaan} onChange={(e) => setData('lokasi_pelaksanaan', e.target.value)} className="mt-1 w-full h-11" /><InputError message={errors.lokasi_pelaksanaan} className="mt-2" /></div>
+                                    <div>
+                                        <InputLabel value="Tanggal Mulai" required />
+                                        <DateInput
+                                            value={data.jadwal_pelaksanaan_mulai}
+                                            onChange={(val) => setData('jadwal_pelaksanaan_mulai', val)}
+                                            className="mt-1 w-full"
+                                        />
+                                        <InputError message={errors.jadwal_pelaksanaan_mulai} className="mt-2" />
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Tanggal Selesai" required />
+                                        <DateInput
+                                            value={data.jadwal_pelaksanaan_akhir}
+                                            onChange={(val) => setData('jadwal_pelaksanaan_akhir', val)}
+                                            className="mt-1 w-full"
+                                        />
+                                        <InputError message={errors.jadwal_pelaksanaan_akhir} className="mt-2" />
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Lokasi" required />
+                                        <TextInput
+                                            value={data.lokasi_pelaksanaan}
+                                            onChange={(e) => setData('lokasi_pelaksanaan', e.target.value)}
+                                            className="mt-1 w-full h-11"
+                                            placeholder="Masukkan Lokasi Pelaksanaan"
+                                        />
+                                        <InputError message={errors.lokasi_pelaksanaan} className="mt-2" />
+                                    </div>
                                 </div>
-                                
+
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div><InputLabel value="PIC" required /><TextInput value={data.pjawab} onChange={(e) => setData('pjawab', e.target.value)} className="mt-1 w-full h-11" /><InputError message={errors.pjawab} className="mt-2" /></div>
-                                    <div><InputLabel value="Target Peserta" required /><TextInput value={data.target} onChange={(e) => setData('target', e.target.value)} className="mt-1 w-full h-11" /><InputError message={errors.target} className="mt-2" /></div>
-                                    
-                                    {/* Input Jenis Kegiatan (Hanya Rutin & Inovasi) */}
+                                    <div>
+                                        <InputLabel value="PIC" required />
+                                        <TextInput
+                                            value={data.pjawab}
+                                            onChange={(e) => setData('pjawab', e.target.value)}
+                                            className="mt-1 w-full h-11"
+                                            placeholder="Masukkan Penanggung Jawab"
+                                        />
+                                        <InputError message={errors.pjawab} className="mt-2" />
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Target Peserta" required />
+                                        <TextInput
+                                            value={data.target}
+                                            onChange={(e) => setData('target', e.target.value)}
+                                            className="mt-1 w-full h-11"
+                                            placeholder="Masukkan Target Peserta"
+                                        />
+                                        <InputError message={errors.target} className="mt-2" />
+                                    </div>
+
+                                    {/* Input Jenis Kegiatan */}
                                     <div>
                                         <InputLabel value="Jenis Kegiatan" required />
-                                        <CustomSelect 
-                                            value={data.jenis_kegiatan} 
-                                            onChange={(e) => setData('jenis_kegiatan', e.target.value)} 
+                                        <CustomSelect
+                                            value={data.jenis_kegiatan}
+                                            onChange={(e) => setData('jenis_kegiatan', e.target.value)}
                                             options={[
-                                                { value: 'Rutin', label: 'Rutin' }, 
+                                                { value: 'Rutin', label: 'Rutin' },
                                                 { value: 'Inovasi', label: 'Inovasi' }
-                                            ]} 
-                                            className="mt-1" 
+                                            ]}
+                                            className="mt-1"
                                         />
                                         <InputError message={errors.jenis_kegiatan} className="mt-2" />
                                     </div>
@@ -343,7 +431,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                     <thead className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-400 font-bold uppercase">
                                         <tr>
                                             <th className="px-2 py-2 w-8 text-center">No</th>
-                                            <th className="px-2 py-2 w-[30%] min-w-[250px]">Akun Belanja</th>
+                                            <th className="px-2 py-2 w-[30%] min-w-[250px]">Standar Biaya Operasional</th>
                                             <th className="px-2 py-2 min-w-[150px]">Uraian / Kebutuhan</th>
                                             <th className="px-2 py-2 w-16 text-center">Vol</th>
                                             <th className="px-2 py-2 w-20 text-center">Satuan</th>
@@ -396,13 +484,42 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-5 rounded-xl border">
                                 <div>
                                     <InputLabel value="Metode" />
-                                    <CustomSelect value={data.jenis_pencairan} onChange={(e) => setData('jenis_pencairan', e.target.value)} options={[{ value: 'Tunai', label: 'Tunai' }, { value: 'Bank', label: 'Transfer Bank' }]} className="mt-1 w-full" />
+                                    <CustomSelect
+                                        value={data.jenis_pencairan}
+                                        onChange={(e) => setData('jenis_pencairan', e.target.value)}
+                                        options={[{ value: 'Tunai', label: 'Tunai' }, { value: 'Bank', label: 'Transfer Bank' }]}
+                                        className="mt-1 w-full"
+                                    />
                                 </div>
                                 {data.jenis_pencairan === 'Bank' && (
                                     <div className="space-y-4 border-l-2 border-green-200 pl-4 animate-in fade-in slide-in-from-left-4">
-                                        <div><InputLabel value="Nama Bank" /><TextInput value={data.nama_bank} onChange={(e) => setData('nama_bank', e.target.value)} className="mt-1 w-full h-11" placeholder="Cth: BNI" /><InputError message={errors.nama_bank} className="mt-2" /></div>
-                                        <div><InputLabel value="No. Rekening" /><TextInput value={data.nomor_rekening} onChange={(e) => setData('nomor_rekening', e.target.value)} className="mt-1 w-full h-11" placeholder="123xxx" /><InputError message={errors.nomor_rekening} className="mt-2" /></div>
-                                        <div><InputLabel value="Atas Nama" /><TextInput value={data.atas_nama} onChange={(e) => setData('atas_nama', e.target.value)} className="mt-1 w-full h-11" placeholder="Nama Pemilik" /><InputError message={errors.atas_nama} className="mt-2" /></div>
+                                        <div><InputLabel value="Nama Bank" />
+                                            <TextInput
+                                                value={data.nama_bank}
+                                                onChange={(e) => setData('nama_bank', e.target.value)}
+                                                className="mt-1 w-full h-11"
+                                                placeholder="Masukkan Nama BANK"
+                                            />
+                                            <InputError message={errors.nama_bank} className="mt-2" />
+                                        </div>
+                                        <div><InputLabel value="No. Rekening" />
+                                            <TextInput
+                                                value={data.nomor_rekening}
+                                                onChange={(e) => setData('nomor_rekening', e.target.value)}
+                                                className="mt-1 w-full h-11"
+                                                placeholder="Masukkan No. Rekening"
+                                            />
+                                            <InputError message={errors.nomor_rekening} className="mt-2" />
+                                        </div>
+                                        <div><InputLabel value="Atas Nama" />
+                                            <TextInput
+                                                value={data.atas_nama}
+                                                onChange={(e) => setData('atas_nama', e.target.value)}
+                                                className="mt-1 w-full h-11"
+                                                placeholder="Masukkan Nama Pemilik Rekening"
+                                            />
+                                            <InputError message={errors.atas_nama} className="mt-2" />
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -410,18 +527,26 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
 
                         {/* --- STICKY FOOTER --- */}
                         <div className="sticky bottom-4 z-10 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border flex justify-between items-center">
-                            <Link href={route('dashboard')} className="text-gray-600 hover:text-gray-900 text-sm flex items-center px-4 py-2 hover:bg-gray-100 rounded-md"><ArrowLeft size={16} className="mr-2" /> Kembali</Link>
+                            <Link
+                                href={route('dashboard')}
+                                className="text-gray-600 hover:text-gray-900 text-sm flex items-center px-4 py-2 hover:bg-gray-100 rounded-md">
+                                <ArrowLeft size={16} className="mr-2" /> Kembali
+                            </Link>
                             <div className="flex items-center gap-4">
                                 <div className="text-right hidden sm:block mr-4">
                                     <p className="text-xs text-gray-500">Total Pengajuan</p>
                                     <p className="text-sm font-bold text-teal-600">{formatRupiah(data.anggaran)}</p>
                                 </div>
-                                <PrimaryButton disabled={processing} className="px-6 py-3 shadow-teal-200"><Save size={18} className="mr-2" /> Simpan Pengajuan</PrimaryButton>
+                                <PrimaryButton
+                                    disabled={processing}
+                                    className="px-6 py-3 shadow-teal-200">
+                                    <Save size={18} className="mr-2" /> Simpan Pengajuan
+                                </PrimaryButton>
                             </div>
                         </div>
                     </form>
                 </div>
-            </div>
-        </AuthenticatedLayout>
+            </div >
+        </AuthenticatedLayout >
     );
 }
