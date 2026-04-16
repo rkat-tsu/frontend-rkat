@@ -2,91 +2,56 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Inertia\Inertia;
 use App\Models\RkatHeader;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Carbon\Carbon;
 
-class DashboardController extends Controller 
+class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $user = Auth::user();
-        Log::debug('[Dashboard] Memuat dashboard untuk user: ' . $user->username . ' (' . $user->peran . ')');
-        
-        $superAdminRoles = ['Admin', 'Rektor', 'WR_1', 'WR_2', 'WR_3'];
+        $user = $request->user();
+        // Otomatis mengambil tahun hari ini
+        $tahunSekarang = Carbon::now()->year;
 
-        $baseQuery = RkatHeader::query();
+        // 1. Ambil Data RKAT tahun berjalan
+        $query = RkatHeader::whereYear('tanggal_pengajuan', $tahunSekarang);
 
-        if (!in_array($user->peran, $superAdminRoles)) {
-            $baseQuery->where('id_unit', $user->id_unit);
-            Log::debug('[Dashboard] Filter unit diterapkan: ' . $user->id_unit);
+        // Filter data jika bukan Admin (Opsional, sesuaikan kebutuhan)
+        if (!$user->isAdmin()) {
+            $query->where('id_unit', $user->id_unit);
         }
 
-        $pendingStatuses = [
-            'Draft',
-            'Diajukan', 'Revisi', 'Disetujui_L1', 
-            'Menunggu_Dekan_Kepala', 'Menunggu_WR1', 'Menunggu_WR3', 'Menunggu_WR2'
-        ];
-        $approvedStatuses = ['Disetujui_WR1', 'Disetujui_WR2', 'Disetujui_WR3', 'Disetujui_Final'];
-        $rejectedStatuses = ['Ditolak'];
+        // 2. Hitung jumlah RKAT per bulan
+        $rkatPerBulan = $query->selectRaw('MONTH(tanggal_pengajuan) as bulan, COUNT(*) as total')
+            ->groupBy('bulan')
+            ->pluck('total', 'bulan')
+            ->toArray();
 
-        $stats = [
-            'total' => (clone $baseQuery)->count(),
-            'pending' => (clone $baseQuery)->whereIn('status_persetujuan', $pendingStatuses)->count(),
-            'approved' => (clone $baseQuery)->whereIn('status_persetujuan', $approvedStatuses)->count(),
-            'rejected' => (clone $baseQuery)->whereIn('status_persetujuan', $rejectedStatuses)->count(),
-        ];
-        
-        Log::debug('[Dashboard] Statistik dihitung.', $stats);
+        // 3. Susun array 12 bulan (Jan - Des) agar grafik konsisten
+        $grafikRkat = [];
+        $namaBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
-        $recentRkats = (clone $baseQuery)
-            ->with('unit') 
-            ->latest('updated_at') 
-            ->take(5) 
-            ->get();
-
-        $rkatTerbaru = $recentRkats->map(function ($rkat) {
-            return [
-                'unit' => $rkat->unit->nama_unit ?? 'N/A',
-                'judul' => "Pengajuan RKAT dari " . ($rkat->unit->nama_unit ?? 'Unit tidak diketahui'), 
-                'waktu' => $rkat->updated_at->diffForHumans(), 
-                'status' => $this->mapStatusToFrontend($rkat->status_persetujuan), 
+        for ($i = 1; $i <= 12; $i++) {
+            $grafikRkat[] = [
+                'month' => $namaBulan[$i - 1],
+                'desktop' => $rkatPerBulan[$i] ?? 0 // Sesuaikan key 'desktop' dengan config Shadcn
             ];
-        });
+        }
+
+        // 4. Hitung Summary untuk Card
+        $summary = [
+            'total' => RkatHeader::count(),
+            'disetujui' => RkatHeader::where('status_persetujuan', 'Disetujui_Final')->count(),
+            'review' => RkatHeader::whereNotIn('status_persetujuan', ['Draft', 'Selesai', 'Disetujui_Final', 'Ditolak'])->count(),
+            'ditolak' => RkatHeader::where('status_persetujuan', 'Ditolak')->count(),
+        ];
 
         return Inertia::render('Dashboard', [
-            'stats' => $stats,
-            'rkatTerbaru' => $rkatTerbaru,
+            'grafikRkat' => $grafikRkat,
+            'tahunAnggaran' => $tahunSekarang,
+            'summary' => $summary
         ]);
-    }
-
-    private function mapStatusToFrontend($dbStatus)
-    {
-        switch ($dbStatus) {
-            case 'Diajukan':
-            case 'Menunggu_Dekan_Kepala':
-            case 'Menunggu_WR1':
-            case 'Menunggu_WR2':
-            case 'Menunggu_WR3':
-                return 'Menunggu Persetujuan';
-
-            case 'Disetujui_L1':
-            case 'Disetujui_WR1':
-            case 'Disetujui_WR2':
-            case 'Disetujui_WR3':
-            case 'Disetujui_Final':
-                return 'Approve'; 
-
-            case 'Ditolak':
-                return 'Ditolak';
-
-            case 'Draft':
-            case 'Revisi':
-            default:
-                return 'Pending'; 
-        }
     }
 }

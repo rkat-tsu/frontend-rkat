@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
-import { Menu, ChevronDown, User, LogOut, Loader2 } from 'lucide-react';
-import AutomaticBreadcrumbs from '@/Components/AutomaticBreadcrumbs'; // Pastikan path import benar
+import { Menu, ChevronDown, User, LogOut, Loader2, Sun, Moon } from 'lucide-react';
+import AutomaticBreadcrumbs from '@/Components/AutomaticBreadcrumbs';
 
 const SIDEBAR_STATE_KEY = 'sidebar_minimized_state';
+const THEME_STATE_KEY = 'app_theme_preference';
 
 // Komponen Loading dengan Animasi Fade
 const PageLoader = ({ visible }) => (
@@ -26,6 +27,9 @@ export default function AuthenticatedLayout({ header, children }) {
     // State Loading
     const [isLoading, setIsLoading] = useState(false);
 
+    // State Theme (Dark/Light Mode)
+    const [theme, setTheme] = useState('light');
+
     // Sidebar State
     const [isMinimized, setIsMinimized] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -35,6 +39,22 @@ export default function AuthenticatedLayout({ header, children }) {
         return false;
     });
 
+    // Inisialisasi Tema saat komponen dimuat
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const savedTheme = localStorage.getItem(THEME_STATE_KEY);
+            // Cek local storage atau preferensi sistem (OS)
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                setTheme('dark');
+                document.documentElement.classList.add('dark');
+            } else {
+                setTheme('light');
+                document.documentElement.classList.remove('dark');
+            }
+        }
+    }, []);
+
+    // Simpan state sidebar
     useEffect(() => {
         if (typeof window !== 'undefined') {
             localStorage.setItem(SIDEBAR_STATE_KEY, isMinimized.toString());
@@ -57,16 +77,29 @@ export default function AuthenticatedLayout({ header, children }) {
 
     const toggleMinimize = () => setIsMinimized(prev => !prev);
 
+    // Fungsi Toggle Tema (Pro Mode Switch)
+    const toggleTheme = () => {
+        if (theme === 'light') {
+            setTheme('dark');
+            document.documentElement.classList.add('dark');
+            localStorage.setItem(THEME_STATE_KEY, 'dark');
+        } else {
+            setTheme('light');
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem(THEME_STATE_KEY, 'light');
+        }
+    };
+
     const sidebarWidthClass = isMinimized ? 'sm:w-20' : 'sm:w-64';
     const mainContentMarginClass = isMinimized ? 'sm:ml-20' : 'sm:ml-64';
 
     return (
-        <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900 font-sans text-gray-800">
+        <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900 font-sans text-gray-800 transition-colors duration-300">
             
             {/* GLOBAL LOADER */}
             <PageLoader visible={isLoading} />
 
-            {/* SIDEBAR (Props diteruskan) */}
+            {/* SIDEBAR */}
             <Sidebar 
                 auth={authProps} 
                 isMinimized={isMinimized} 
@@ -125,15 +158,38 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 transition-all duration-200 ease-out z-50 overflow-hidden">
                                     
                                     <div className="px-4 py-3 bg-gray-50/50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-600">
-                                        <p className="text-xs text-gray-500 uppercase font-semibold">Login Sebagai</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Login Sebagai</p>
                                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user.email}</p>
                                     </div>
                                     
                                     <div className="py-1">
-                                        <Link href={route('profile.edit')} className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-teal-900/30 hover:text-teal-700 transition-colors">
-                                            <User className="mr-3 h-4 w-4" /> Profil Saya
+                                        <Link href={route('profile.edit')} className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                            <User className="mr-3 h-4 w-4 text-gray-400 dark:text-gray-400" /> Profil Saya
                                         </Link>
-                                        <Link href={route('logout')} method="post" as="button" className="flex w-full items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+
+                                        {/* --- FITUR DARK MODE SWITCH (PRO MODE) --- */}
+                                        <button 
+                                            onClick={toggleTheme}
+                                            className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                        >
+                                            <div className="flex items-center">
+                                                {theme === 'dark' ? (
+                                                    <Moon className="mr-3 h-4 w-4 text-indigo-400" />
+                                                ) : (
+                                                    <Sun className="mr-3 h-4 w-4 text-amber-500" />
+                                                )}
+                                                <span>Tema Tampilan</span>
+                                            </div>
+                                            {/* UI Toggle Pill */}
+                                            <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-300 ease-in-out cursor-pointer ${theme === 'dark' ? 'bg-teal-500' : 'bg-gray-300'}`}>
+                                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-300 ease-in-out ${theme === 'dark' ? 'translate-x-4' : 'translate-x-1'}`} />
+                                            </div>
+                                        </button>
+                                        {/* --------------------------------------- */}
+
+                                        <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+
+                                        <Link href={route('logout')} method="post" as="button" className="flex w-full items-center px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                                             <LogOut className="mr-3 h-4 w-4" /> Keluar
                                         </Link>
                                     </div>
@@ -143,8 +199,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
 
                     {/* BREADCRUMBS AREA */}
-                    {/* Warna diseragamkan lewat class text-gray-500 di parent div */}
-                    <div className="px-4 sm:px-6 lg:px-8 pb-3 pt-1 text-sm">
+                    <div className="px-4 sm:px-6 lg:px-8 pb-3 pt-1 text-sm text-gray-500 dark:text-gray-400">
                         <AutomaticBreadcrumbs />
                     </div>
                 </header>
