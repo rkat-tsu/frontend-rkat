@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Ikk;
+
 use App\Models\Iku;
 use App\Models\IndikatorKeberhasilan;
 use App\Models\RincianAnggaran;
@@ -24,6 +24,12 @@ class RkatController extends Controller
         Log::debug('[RKAT] Permintaan Halaman Buat oleh User: '.Auth::id());
 
         $tahunAnggarans = TahunAnggaran::where('status_rkat', '!=', 'Closed')->get();
+        
+        // JIKA TIDAK ADA TAHUN YANG DIBUKA:
+        if ($tahunAnggarans->isEmpty()) {
+            return redirect()->route('rkat.index')->with('error', 'Maaf, periode penginputan RKAT saat ini sedang ditutup atau belum dibuka.');
+        }
+
         $units = Unit::orderBy('kode_unit')->get();
         $akunAnggarans = RincianAnggaran::orderBy('kode_anggaran')->get();
         
@@ -44,9 +50,59 @@ class RkatController extends Controller
         ]);
     }
 
+    public function index(Request $request)
+    {
+        $query = RkatHeader::with([
+            'unit',
+            'user',
+            'rkatDetails.iku',
+            'rkatDetails.ikk',
+            'rkatDetails.rabItems',
+            'rkatDetails.indikators',
+        ]);
+
+        // Jika pengguna bukan admin, batasi ke unit sendiri
+        if (Auth::user()->peran !== 'Admin') {
+            $query->where('id_unit', Auth::user()->id_unit);
+        }
+        
+        // PENCARIAN & FILTER
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_dokumen', 'like', "%{$search}%")
+                  ->orWhereHas('unit', function ($q) use ($search) {
+                      $q->where('nama_unit', 'like', "%{$search}%");
+                  });
+            });
+        }
+        if ($request->filled('tahun')) {
+            $query->where('tahun_anggaran', $request->tahun);
+        }
+        if ($request->filled('status')) {
+            $query->where('status_persetujuan', $request->status);
+        }
+
+        $rkats = $query->orderBy('tanggal_pengajuan', 'desc')->paginate(15)->withQueryString();
+        
+        $tahunAnggarans = TahunAnggaran::orderBy('tahun_anggaran', 'desc')->pluck('tahun_anggaran');
+
+        return Inertia::render('Rkat/Index', [
+            'rkats' => $rkats,
+            'filters' => $request->only(['search', 'tahun', 'status']),
+            'tahunAnggarans' => $tahunAnggarans,
+        ]);
+    }
+
     public function store(Request $request)
     {
         Log::debug('[RKAT] Payload Simpan Diterima', $request->all());
+
+        // Cek kembali status tahun anggaran di backend
+        $tahun = TahunAnggaran::where('tahun_anggaran', $request->tahun_anggaran)->first();
+        if (!$tahun || $tahun->status_rkat === 'Closed') {
+            return redirect()->back()->with('error', 'Gagal menyimpan! Periode tahun anggaran ini sudah ditutup.');
+        }
 
         // 1. VALIDASI KINERJA
         $request->validate([
@@ -163,7 +219,7 @@ class RkatController extends Controller
 
             DB::commit();
 
-            return redirect()->route('dashboard')->with('success', 'Pengajuan RKAT berhasil disimpan sebagai Draft.');
+            return redirect()->route('rkat.index')->with('success', 'Pengajuan RKAT berhasil disimpan sebagai Draft.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -178,14 +234,34 @@ class RkatController extends Controller
         $rkat = RkatHeader::with([
             'unit',
             'user',
-            'detail.iku',
-            'detail.ikk',
-            'detail.rabItems',
-            'detail.indikators',
+            'rkatDetails.iku',
+            'rkatDetails.ikk',
+            'rkatDetails.rabItems',
+            'rkatDetails.indikators',
         ])->findOrFail($id);
 
         return Inertia::render('Rkat/Show', [
             'rkat' => $rkat,
         ]);
+    }
+
+    /**
+     * MENGIRIM / MENGAJUKAN RKAT DARI DRAFT KE APPROVAL
+     */
+    public function submit($id)
+    {
+        $rkat = RkatHeader::findOrFail($id);
+
+        // Pastikan hanya Draft atau Revisi yang bisa diajukan
+        if (!in_array($rkat->status_persetujuan, ['Draft', 'Revisi'])) {
+            return redirect()->back()->with('error', 'Hanya dokumen Draft atau Revisi yang dapat diajukan.');
+        }
+
+        // Ubah status ke tahap pertama persetujuan (sesuai roleStatusMap di ApprovalController)
+        $rkat->update([
+            'status_persetujuan' => 'Menunggu_Dekan_Kepala'
+        ]);
+
+        return redirect()->back()->with('success', 'RKAT berhasil diajukan dan sedang menunggu persetujuan Dekan/Kepala Unit.');
     }
 }

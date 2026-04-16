@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register custom middleware aliases
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'approver' => \App\Http\Middleware\ApproverMiddleware::class,
         ]);
 
         //

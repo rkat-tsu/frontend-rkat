@@ -159,8 +159,8 @@ export default function Create({ auth, ikus }) {
 
                         {/* --- TOMBOL AKSI STICKY --- */}
                         <div className="sticky bottom-4 z-10 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                            <Link href={route('dashboard')} className="text-gray-600 hover:text-gray-900 font-medium text-sm flex items-center px-4 py-2 hover:bg-gray-100 rounded-md transition-colors">
-                                <ArrowLeft size={16} className="mr-2" /> Dashboard
+                            <Link href={route('iku.index')} className="text-gray-600 hover:text-gray-900 font-medium text-sm flex items-center px-4 py-2 hover:bg-gray-100 rounded-md transition-colors">
+                                <ArrowLeft size={16} className="mr-2" /> Kembali
                             </Link>
                             
                             <div className="flex items-center gap-3">

@@ -11,10 +11,42 @@ use Inertia\Inertia;
 
 class IkuController extends Controller
 {
-    /**
-     * Menampilkan halaman input IKU & IKK.
-     * Mengambil data IKU beserta IKK-nya untuk ditampilkan di form.
-     */
+
+    public function index()
+    {
+        // Mengambil IKU beserta jumlah IKK yang ada di dalamnya
+        $ikus = Iku::with('ikks')->orderBy('id_iku', 'asc')->get();
+        
+        return Inertia::render('Iku/Index', [
+            'ikus' => $ikus,
+        ]);
+    }
+
+    public function storeMaster(Request $request)
+    {
+        $validated = $request->validate([
+            'id_iku'   => ['nullable', 'integer', 'exists:ikus,id_iku'],
+            'nama_iku' => ['required', 'string', 'max:500'],
+        ]);
+
+        if (isset($validated['id_iku'])) {
+            $iku = Iku::findOrFail($validated['id_iku']);
+            $iku->update(['nama_iku' => $validated['nama_iku']]);
+            $message = 'Nama IKU berhasil diperbarui.';
+        } else {
+            Iku::create(['nama_iku' => $validated['nama_iku']]);
+            $message = 'IKU baru berhasil ditambahkan.';
+        }
+
+        return redirect()->back()->with('success', $message);
+    }
+
+    public function destroy(Iku $iku)
+    {
+        $iku->delete(); // Pastikan DB tabel IKK diset cascade on delete
+        return redirect()->back()->with('success', 'IKU berhasil dihapus.');
+    }
+
     public function create()
     {
         Log::debug('[IKU] Halaman input IKU diakses.');
@@ -102,9 +134,8 @@ class IkuController extends Controller
             Log::info('[IKU] Data Berhasil Disimpan.');
 
             return redirect()
-                ->route('iku.create') // Redirect kembali ke halaman yang sama
-                ->with('success', 'Daftar IKK berhasil diperbarui untuk ' . $iku->nama_iku)
-                ->withInput(); // Kembalikan input agar form tidak kosong total (opsional)
+                ->route('iku.index') // <--- SAYA UBAH KE INDEX AGAR KEMBALI KE TABEL MASTER SETELAH SAVE
+                ->with('success', 'Daftar IKK berhasil diperbarui untuk ' . $iku->nama_iku);
 
         } catch (\Exception $e) {
             DB::rollBack();

@@ -6,21 +6,16 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Auth\Passwords\CanResetPassword; // WAJIB untuk fitur reset password
-
-// Import Notifikasi kustom yang telah Anda buat
+use Illuminate\Auth\Passwords\CanResetPassword;
 use App\Notifications\ResetPasswordNotification; 
-// Jika model Departemen berada di namespace yang sama atau di App\Models
-use App\Models\Departemen; 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, CanResetPassword; // Tambahkan CanResetPassword
-
-    protected $table = 'users'; // Nama tabel sudah sesuai
-    protected $primaryKey = 'id_user'; // Kunci utama sudah sesuai
+    use HasFactory, Notifiable, CanResetPassword; 
+    protected $table = 'users'; 
+    protected $primaryKey = 'id_user';
     
     // Kolom yang dapat diisi
     protected $fillable = [

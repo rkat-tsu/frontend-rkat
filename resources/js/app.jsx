@@ -1,3 +1,5 @@
+import React from 'react';
+
 import '../css/app.css';
 import './bootstrap';
 

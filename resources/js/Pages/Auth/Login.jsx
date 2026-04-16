@@ -31,9 +31,8 @@ export default function Login({ status, canResetPassword }) {
                 </div>
             )}
 
-            {/* Container form dengan padding agar sesuai gambar */}
             <div className="w-full sm:p-4">
-                
+
                 {/* --- Keterangan RKAT --- */}
                 <div className="mb-8 text-center">
                     <h1 className="text-2xl font-bold tracking-tight text-slate-800">
@@ -45,7 +44,7 @@ export default function Login({ status, canResetPassword }) {
                 </div>
 
                 <form onSubmit={submit} className="space-y-6">
-                    
+
                     {/* --- Input Email --- */}
                     <div>
                         <div className="mb-2 flex items-center text-sm font-medium text-slate-700">
@@ -61,8 +60,9 @@ export default function Login({ status, canResetPassword }) {
                             name="email"
                             value={data.email}
                             className="block w-full rounded-xl border-gray-300 px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:ring-blue-500"
-                            autoComplete="username"
+                            autoComplete="email"
                             isFocused={true}
+                            tabindex="1"
                             placeholder="Masukkan alamat email Anda"
                             onChange={(e) => setData('email', e.target.value)}
                         />
@@ -78,15 +78,7 @@ export default function Login({ status, canResetPassword }) {
                                 </svg>
                                 Kata Sandi
                             </div>
-                            
-                            {canResetPassword && (
-                                <Link
-                                    href={route('password.request')}
-                                    className="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline"
-                                >
-                                    Lupa sandi?
-                                </Link>
-                            )}
+
                         </div>
 
                         <PasswordInput
@@ -95,11 +87,22 @@ export default function Login({ status, canResetPassword }) {
                             value={data.password}
                             className="block w-full rounded-xl border-gray-300 px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:ring-blue-500"
                             autoComplete="current-password"
+                            tabindex="2"
                             placeholder="Masukkan kata sandi Anda"
                             onChange={(e) => setData('password', e.target.value)}
                             required
                         />
                         <InputError message={errors.password} className="mt-2" />
+
+                        {canResetPassword && (
+                            <Link
+                                href={route('password.request')}
+                                className="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                                tabindex="-1"
+                            >
+                                Lupa sandi?
+                            </Link>
+                        )}
                     </div>
 
                     {/* --- Checkbox Stay Logged In --- */}
@@ -110,6 +113,7 @@ export default function Login({ status, canResetPassword }) {
                                 checked={data.remember}
                                 className="h-5 w-5 rounded border-gray-300 text-teal-600 shadow-sm focus:ring-teal-500"
                                 onChange={(e) => setData('remember', e.target.checked)}
+                                tabindex="-1"
                             />
                             <span className="ms-3 text-sm font-medium text-slate-600">
                                 Biarkan saya tetap masuk
@@ -119,9 +123,10 @@ export default function Login({ status, canResetPassword }) {
 
                     {/* --- Tombol Login Gradien dengan Hover --- */}
                     <div className="pt-4">
-                        <PrimaryButton 
-                            className="group flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-teal-500 px-4 py-3.5 text-sm font-bold tracking-widest text-white shadow-lg shadow-blue-500/30 transition-all duration-300 hover:scale-[1.02] hover:from-blue-700 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50" 
+                        <PrimaryButton
+                            className="group flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-teal-500 px-4 py-3.5 text-sm font-bold tracking-widest text-white shadow-lg shadow-blue-500/30 transition-all duration-300 hover:scale-[1.02] hover:from-blue-700 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
                             disabled={processing}
+                            tabindex="3"
                         >
                             MASUK KE PORTAL RKAT
                             <svg className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">

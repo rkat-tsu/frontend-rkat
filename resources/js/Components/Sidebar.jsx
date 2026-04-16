@@ -16,10 +16,10 @@ import {
 // MENU BAHASA INDONESIA
 const navItems = [
     { name: 'Dasbor', href: '/dashboard', icon: LayoutDashboard, activePath: '/dashboard' },
-    { name: 'RKAT', href: '/rkat/input', icon: FileText, activePath: '/rkat/input' },
-    { name: 'Daftar Ajuan', href: '/rkat-rab-items', icon: LayoutList, activePath: '/rkat-rab-items' },
+    { name: 'RKAT', href: '/rkat', icon: FileText, activePath: '/rkat' },
+    { name: 'Daftar Ajuan', href: '/daftar-ajuan', icon: LayoutList, activePath: '/daftar-ajuan' },
     { name: 'Standar Biaya Operasional', href: '/rincian-anggaran', icon: BookOpenText, activePath: '/rincian-anggaran' },
-    { name: 'Indikator Kinerja Utama', href: '/iku/input', icon: BookPlus, activePath: '/iku/input' },
+    { name: 'Indikator Kinerja Utama', href: '/iku', icon: BookPlus, activePath: '/iku' },
     { name: 'Persetujuan', href: '/approval', icon: ListChecks, activePath: '/approval' },
     { name: 'Monitoring', href: '/monitoring', icon: Monitor, activePath: '/monitoring' },
     {
