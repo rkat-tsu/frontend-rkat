@@ -1,327 +1,224 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import React, { useEffect } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import React from 'react';
-import { 
-    Printer, 
-    Edit, 
-    ArrowLeft, 
-    Calendar, 
-    MapPin, 
-    User, 
-    CheckCircle, 
-    AlertCircle,
-    FileText,
-    TrendingUp,
-    Briefcase
-} from 'lucide-react';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { ArrowLeft } from 'lucide-react';
 
-// --- HELPER FUNCTIONS ---
-const formatRupiah = (angka) => {
-    const number = Number(angka) || 0;
-    return `Rp. ${number.toLocaleString('id-ID', { minimumFractionDigits: 0 })}`;
+const formatCurrency = (amount) => {
+    if (!amount) return 'Rp 0';
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+    }).format(amount);
 };
 
 const formatDate = (dateString) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('id-ID', {
-        day: 'numeric', month: 'long', year: 'numeric'
-    });
+    return new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 };
 
-const StatusBadge = ({ status }) => {
-    const colors = {
-        'Draft': 'bg-gray-100 text-gray-800 border-gray-200',
-        'Diajukan': 'bg-blue-100 text-blue-800 border-blue-200',
-        'Disetujui': 'bg-green-100 text-green-800 border-green-200',
-        'Revisi': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-        'Ditolak': 'bg-red-100 text-red-800 border-red-200',
-    };
-
-    const style = colors[status] || colors['Draft']; 
-    
-    return (
-        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${style}`}>
-            {status}
-        </span>
-    );
-};
-
-// --- UI COMPONENTS ---
-const InfoCard = ({ label, value, icon: Icon, fullWidth = false, className = '' }) => (
-    <div className={`bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm ${fullWidth ? 'col-span-full' : ''} ${className}`}>
-        <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider font-semibold mb-1 flex items-center gap-2">
-            {Icon && <Icon size={14} />}
-            {label}
-        </div>
-        <div className="text-gray-900 dark:text-gray-100 font-medium text-base whitespace-pre-wrap leading-relaxed">
-            {value || '-'}
-        </div>
+const ReadOnlyField = ({ label, value, isTextarea = false }) => (
+    <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
+        {isTextarea ? (
+            <div className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-800 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 min-h-[100px] whitespace-pre-wrap">
+                {value || '-'}
+            </div>
+        ) : (
+            <div className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-800 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 min-h-[38px]">
+                {value || '-'}
+            </div>
+        )}
     </div>
 );
 
-const SectionTitle = ({ title, icon: Icon }) => (
-    <div className="flex items-center gap-2 mb-4 mt-8 pb-2 border-b border-gray-200 dark:border-gray-700">
-        <div className="p-1.5 bg-teal-50 dark:bg-teal-900/30 rounded text-teal-600 dark:text-teal-400">
-            {Icon && <Icon size={20} />}
-        </div>
-        <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">{title}</h3>
-    </div>
-);
-
-export default function Show({ auth, rkat }) {
-    const detail = rkat.detail || {};
+export default function Show({ auth, rkat = {} }) {
+    const dataRkat = rkat.data || rkat;
     
-    // LOGIC: Mengambil indikator (bisa dari relasi baru 'indikators' atau fallback ke array kosong)
-    const indicators = detail.indikators || []; 
-    const rabItems = detail.rab_items || []; // Pastikan case snake_case/camelCase sesuai Controller
+    // PERBAIKAN: Tangani perubahan nama variabel menjadi snake_case (rkat_details) dari Laravel
+    const rawDetail = dataRkat?.rkat_details || dataRkat?.rkatDetails || dataRkat?.detail;
+    const dataDetail = Array.isArray(rawDetail) ? (rawDetail[0] || {}) : (rawDetail || {});
+    
+    // PERBAIKAN: Tangani perubahan nama variabel menjadi snake_case untuk relasi RAB (rab_items)
+    const indikators = dataDetail?.indikators || [];
+    const rabItems = dataDetail?.rab_items || dataDetail?.rabItems || [];
+
+    useEffect(() => {
+        // Fitur Debugging: Anda bisa melihat struktur data ini di Console Browser (F12)
+        console.log("Header RKAT:", dataRkat);
+        console.log("Detail RKAT Terbaca:", dataDetail);
+    }, [dataRkat, dataDetail]);
 
     return (
         <AuthenticatedLayout
             user={auth.user}
-            header={
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                        Detail Pengajuan RKAT
-                    </h2>
-                    <div className="flex gap-2">
-                         <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-md text-sm transition shadow-sm">
-                            <Printer size={16} />
-                            <span>Cetak</span>
-                        </button>
-                        
-                        {['Draft', 'Revisi'].includes(rkat.status_persetujuan) && (
-                            <Link 
-                                href={route('rkat.edit', rkat.id_header)} // Pastikan route edit ada
-                                className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-md text-sm transition shadow-sm"
-                            >
-                                <Edit size={16} />
-                                <span>Edit</span>
-                            </Link>
-                        )}
-                    </div>
-                </div>
-            }
+            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Detail Pengajuan RKAT</h2>}
         >
-            <Head title={`Detail RKAT - ${detail.judul_kegiatan || 'Untitled'}`} />
+            <Head title={`Detail RKAT - ${dataRkat?.nomor_dokumen || 'Baru'}`} />
 
             <div className="py-6">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     
-                    {/* 1. HEADER UTAMA (Status & Info Dasar) */}
-                    <div className="bg-white dark:bg-gray-800 p-6 shadow-sm sm:rounded-lg border-l-4 border-teal-500 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div>
-                            <div className="text-sm text-gray-500">Nomor Dokumen</div>
-                            <div className="text-xl font-bold font-mono text-gray-800 dark:text-gray-200">
-                                {rkat.nomor_dokumen || 'DRAFT'}
-                            </div>
-                        </div>
-                        <div className="flex flex-col md:flex-row gap-6 md:items-center w-full md:w-auto">
-                            <div>
-                                <div className="text-sm text-gray-500">Unit Pengusul</div>
-                                <div className="font-semibold">{rkat.unit?.nama_unit}</div>
-                            </div>
-                            <div>
-                                <div className="text-sm text-gray-500">Tahun Anggaran</div>
-                                <div className="font-semibold">{rkat.tahun_anggaran}</div>
-                            </div>
-                            <div className="flex flex-col items-start md:items-end">
-                                <div className="text-sm text-gray-500 mb-1">Status</div>
-                                <StatusBadge status={rkat.status_persetujuan} />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 2. KONTEN DETAIL */}
-                    <div className="bg-white dark:bg-gray-800 p-8 shadow-sm sm:rounded-lg">
-                        
-                        {/* Judul & Deskripsi */}
-                        <div className="mb-6 border-b border-gray-100 dark:border-gray-700 pb-6">
-                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                                    {detail.judul_kegiatan}
-                                </h1>
-                                <div className="text-left md:text-right p-3 bg-teal-50 dark:bg-teal-900/20 rounded-lg">
-                                    <span className="text-xs text-gray-500 uppercase font-bold">Total Anggaran</span>
-                                    <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">
-                                        {formatRupiah(detail.anggaran)}
-                                    </div>
-                                </div>
-                             </div>
-                             
-                             {/* Deskripsi Kegiatan (Perbaikan Error Sebelumnya) */}
-                             <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                                <span className="text-xs font-bold text-gray-500 uppercase block mb-1">Deskripsi Kegiatan</span>
-                                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                                    {detail.deskripsi_kegiatan || '-'}
-                                </p>
-                             </div>
-                        </div>
-
-                        {/* Grid Informasi Dasar */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                            <InfoCard label="Jenis Kegiatan" value={detail.jenis_kegiatan} icon={Briefcase} />
-                            <InfoCard label="Penanggung Jawab" value={detail.pjawab} icon={User} />
-                            <InfoCard label="Periode Pelaksanaan" value={`${formatDate(detail.jadwal_pelaksanaan_mulai)} s/d ${formatDate(detail.jadwal_pelaksanaan_akhir)}`} icon={Calendar} className="lg:col-span-2" />
-                            <InfoCard label="Lokasi" value={detail.lokasi_pelaksanaan} icon={MapPin} />
-                            <InfoCard label="Target Output" value={detail.target} icon={TrendingUp} />
-                        </div>
-
-                        {/* Detail Perencanaan */}
-                        <SectionTitle title="Detail Perencanaan" icon={FileText} />
-                        <div className="grid grid-cols-1 gap-4">
-                            <InfoCard label="Latar Belakang" value={detail.latar_belakang} fullWidth />
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <InfoCard label="Rasionalisasi" value={detail.rasional} />
-                                <InfoCard label="Tujuan" value={detail.tujuan} />
-                            </div>
-                            <InfoCard label="Mekanisme Pelaksanaan" value={detail.mekanisme} fullWidth />
-                            <InfoCard label="Keberlanjutan Program" value={detail.keberlanjutan} fullWidth />
-                        </div>
-
-                        {/* Keterkaitan Strategis */}
-                        <SectionTitle title="Keterkaitan Strategis (IKU/IKK)" icon={CheckCircle} />
-                        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-5 border border-gray-200 dark:border-gray-700">
-                            <ul className="space-y-4">
-                                <li className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
-                                    <span className="min-w-[80px] text-xs font-bold uppercase text-center text-gray-500 bg-white dark:bg-gray-800 px-2 py-1 rounded border dark:border-gray-600">IKU</span>
-                                    <span className="text-gray-800 dark:text-gray-200 font-medium">{detail.iku?.indikator || 'Indikator Kinerja Utama tidak dipilih'}</span>
-                                </li>
-                                <li className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
-                                    <span className="min-w-[80px] text-xs font-bold uppercase text-center text-gray-500 bg-white dark:bg-gray-800 px-2 py-1 rounded border dark:border-gray-600">Sub IKU</span>
-                                    <span className="text-gray-800 dark:text-gray-200 font-medium">{detail.iku_sub?.sub_indikator || '-'}</span>
-                                </li>
-                                <li className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
-                                    <span className="min-w-[80px] text-xs font-bold uppercase text-center text-gray-500 bg-white dark:bg-gray-800 px-2 py-1 rounded border dark:border-gray-600">IKK</span>
-                                    <span className="text-gray-800 dark:text-gray-200 font-medium">{detail.ikk?.ikk || '-'}</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        {/* Tabel Indikator Keberhasilan */}
-                        <SectionTitle title="Indikator Keberhasilan" icon={TrendingUp} />
-                        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                                <thead className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200">
-                                    <tr>
-                                        <th rowSpan="2" className="px-4 py-3 text-left font-semibold">Indikator</th>
-                                        <th rowSpan="2" className="px-4 py-3 text-center font-semibold border-l dark:border-gray-600">Capaian 2024</th>
-                                        <th colSpan="2" className="px-4 py-2 text-center font-semibold border-l border-b dark:border-gray-600">Tahun 2025</th>
-                                        <th colSpan="2" className="px-4 py-2 text-center font-semibold border-l border-b dark:border-gray-600">Tahun 2029</th>
-                                    </tr>
-                                    <tr>
-                                        <th className="px-4 py-2 text-center text-xs border-l dark:border-gray-600">Target</th>
-                                        <th className="px-4 py-2 text-center text-xs">Capaian</th>
-                                        <th className="px-4 py-2 text-center text-xs border-l dark:border-gray-600">Target</th>
-                                        <th className="px-4 py-2 text-center text-xs">Capaian</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                    {indicators.length > 0 ? indicators.map((ind, idx) => (
-                                        <tr key={ind.id_indikator || idx} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                                            <td className="px-4 py-3 text-gray-900 dark:text-gray-100 font-medium">{ind.nama_indikator}</td>
-                                            <td className="px-4 py-3 text-center border-l dark:border-gray-700 text-gray-600 dark:text-gray-300">{ind.capai_2024 || '-'}</td>
-                                            <td className="px-4 py-3 text-center border-l dark:border-gray-700 text-gray-600 dark:text-gray-300">{ind.target_2025 || '-'}</td>
-                                            <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-300">{ind.capai_2025 || '-'}</td>
-                                            <td className="px-4 py-3 text-center border-l dark:border-gray-700 text-gray-600 dark:text-gray-300">{ind.target_2029 || '-'}</td>
-                                            <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-300">{ind.capai_2029 || '-'}</td>
-                                        </tr>
-                                    )) : (
-                                        <tr>
-                                            <td colSpan="6" className="px-4 py-6 text-center text-gray-500 italic bg-gray-50">
-                                                Tidak ada data indikator keberhasilan.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* Tabel RAB */}
-                        <SectionTitle title="Rincian Anggaran (RAB)" icon={AlertCircle} />
-                        <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                                <thead className="bg-gray-100 dark:bg-gray-700">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-200 w-10">No</th>
-                                        <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-200">Kode Akun</th>
-                                        <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-200">Kebutuhan</th>
-                                        <th className="px-4 py-3 text-center font-semibold text-gray-600 dark:text-gray-200">Vol</th>
-                                        <th className="px-4 py-3 text-center font-semibold text-gray-600 dark:text-gray-200">Satuan</th>
-                                        <th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-200">Harga Satuan</th>
-                                        <th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-200">Sub Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                    {rabItems.length > 0 ? rabItems.map((item, index) => (
-                                        <tr key={item.id || index}>
-                                            <td className="px-4 py-3 text-center text-gray-500">{index + 1}</td>
-                                            <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-400">{item.kode_anggaran}</td>
-                                            <td className="px-4 py-3 text-gray-800 dark:text-gray-200">{item.deskripsi_item || item.kebutuhan || '-'}</td>
-                                            <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{item.volume || item.vol}</td>
-                                            <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{item.satuan}</td>
-                                            <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">{formatRupiah(item.harga_satuan || item.biaya_satuan)}</td>
-                                            <td className="px-4 py-3 text-right font-semibold text-gray-800 dark:text-gray-200">{formatRupiah(item.sub_total || item.jumlah)}</td>
-                                        </tr>
-                                    )) : (
-                                        <tr>
-                                            <td colSpan="7" className="px-4 py-6 text-center text-gray-500">Tidak ada rincian anggaran</td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                                <tfoot className="bg-gray-50 dark:bg-gray-800/50 font-bold text-gray-800 dark:text-gray-100 border-t dark:border-gray-700">
-                                    <tr>
-                                        <td colSpan="6" className="px-4 py-3 text-right uppercase tracking-wider text-xs text-gray-500">Total Anggaran Diajukan</td>
-                                        <td className="px-4 py-3 text-right text-teal-600 dark:text-teal-400 text-lg">
-                                            {formatRupiah(detail.anggaran)}
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-
-                        {/* Informasi Pencairan */}
-                        <div className="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-lg border border-blue-100 dark:border-blue-800">
-                            <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-3 flex items-center gap-2">
-                                <span className="flex items-center justify-center w-5 h-5 bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 rounded-full text-xs font-bold">i</span>
-                                Metode Pencairan
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div>
-                                    <div className="text-xs text-blue-600 dark:text-blue-400 uppercase font-bold">Metode</div>
-                                    <div className="font-medium text-gray-800 dark:text-gray-200">{detail.jenis_pencairan}</div>
-                                </div>
-                                {detail.jenis_pencairan === 'Bank' && (
-                                    <>
-                                        <div>
-                                            <div className="text-xs text-blue-600 dark:text-blue-400 uppercase font-bold">Nama Bank</div>
-                                            <div className="font-medium text-gray-800 dark:text-gray-200">{detail.nama_bank || '-'}</div>
-                                        </div>
-                                        <div>
-                                            <div className="text-xs text-blue-600 dark:text-blue-400 uppercase font-bold">No. Rekening</div>
-                                            <div className="font-medium text-gray-800 dark:text-gray-200 font-mono">{detail.nomor_rekening || '-'}</div>
-                                        </div>
-                                        <div>
-                                            <div className="text-xs text-blue-600 dark:text-blue-400 uppercase font-bold">Atas Nama</div>
-                                            <div className="font-medium text-gray-800 dark:text-gray-200">{detail.atas_nama || '-'}</div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-
-                    </div>
-
-                    {/* Footer Navigasi */}
-                    <div className="flex justify-start pb-6">
-                        <Link 
-                            href={route('rkat.index')} 
-                            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition font-medium"
+                    <div className="mb-6">
+                        <Link
+                            href={route('rkat.index')}
+                            className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 text-sm font-medium"
                         >
-                            <ArrowLeft size={20} />
-                            Kembali ke Daftar RKAT
+                            <ArrowLeft size={16} />
+                            Kembali ke Daftar
                         </Link>
                     </div>
 
+                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 space-y-8">
+                        
+                        {/* Section 1: Informasi Dasar Header */}
+                        <section>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+                                Informasi Dokumen (Header)
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <ReadOnlyField label="Nomor Dokumen" value={dataRkat?.nomor_dokumen} />
+                                <ReadOnlyField label="Tahun Anggaran" value={dataRkat?.tahun_anggaran} />
+                                <ReadOnlyField label="Unit Pengaju" value={dataRkat?.unit?.nama_unit} />
+                                <ReadOnlyField label="Diajukan Oleh" value={dataRkat?.user?.name} />
+                                <ReadOnlyField label="Status Persetujuan" value={dataRkat?.status_persetujuan} />
+                                <ReadOnlyField label="Tanggal Pengajuan" value={formatDate(dataRkat?.tanggal_pengajuan)} />
+                                <ReadOnlyField label="Total Anggaran" value={formatCurrency(dataRkat?.total_anggaran)} />
+                            </div>
+                        </section>
+
+                        {/* Section 2: Detail Kegiatan */}
+                        <section>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+                                Rincian Kegiatan (Detail)
+                            </h3>
+                            <div className="grid grid-cols-1 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <ReadOnlyField label="Judul Kegiatan" value={dataDetail?.judul_kegiatan} />
+                                    <ReadOnlyField label="Deskripsi Singkat" value={dataDetail?.deskripsi_kegiatan} />
+                                </div>
+                                
+                                <ReadOnlyField label="Latar Belakang" value={dataDetail?.latar_belakang} isTextarea />
+                                <ReadOnlyField label="Rasional" value={dataDetail?.rasional} isTextarea />
+                                <ReadOnlyField label="Tujuan" value={dataDetail?.tujuan} isTextarea />
+                                <ReadOnlyField label="Mekanisme Pelaksanaan" value={dataDetail?.mekanisme} isTextarea />
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <ReadOnlyField label="Jadwal Mulai" value={formatDate(dataDetail?.jadwal_pelaksanaan_mulai)} />
+                                    <ReadOnlyField label="Jadwal Selesai" value={formatDate(dataDetail?.jadwal_pelaksanaan_akhir)} />
+                                    <ReadOnlyField label="Lokasi Pelaksanaan" value={dataDetail?.lokasi_pelaksanaan} />
+                                    <ReadOnlyField label="Jenis Kegiatan" value={dataDetail?.jenis_kegiatan} />
+                                    <ReadOnlyField label="Penanggung Jawab" value={dataDetail?.pjawab} />
+                                    <ReadOnlyField label="Target Output" value={dataDetail?.target} />
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Section 3: Indikator Kinerja (IKU & IKK) */}
+                        <section>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+                                Indikator Kinerja & Keberhasilan
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <ReadOnlyField label="Indikator Kinerja Utama (IKU)" value={dataDetail?.iku?.nama_iku} />
+                                <ReadOnlyField label="Indikator Kinerja Kegiatan (IKK)" value={dataDetail?.ikk?.nama_ikk} />
+                            </div>
+
+                            <div className="overflow-x-auto rounded border border-gray-200 dark:border-gray-700">
+                                <table className="min-w-full text-sm divide-y divide-gray-200 dark:divide-gray-700">
+                                    <thead className="bg-gray-50 dark:bg-gray-700">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left font-medium text-gray-700 dark:text-gray-200">Indikator Keberhasilan</th>
+                                            <th className="px-4 py-3 text-center font-medium text-gray-700 dark:text-gray-200">Capaian 2024</th>
+                                            <th className="px-4 py-3 text-center font-medium text-gray-700 dark:text-gray-200">Target 2025</th>
+                                            <th className="px-4 py-3 text-center font-medium text-gray-700 dark:text-gray-200">Capaian 2025</th>
+                                            <th className="px-4 py-3 text-center font-medium text-gray-700 dark:text-gray-200">Target 2029</th>
+                                            <th className="px-4 py-3 text-center font-medium text-gray-700 dark:text-gray-200">Capaian 2029</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                        {indikators.length > 0 ? indikators.map((ind, idx) => (
+                                            <tr key={idx} className="bg-white dark:bg-gray-800">
+                                                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{ind.nama_indikator}</td>
+                                                <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">{ind.capai_2024 || '-'}</td>
+                                                <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">{ind.target_2025 || '-'}</td>
+                                                <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">{ind.capai_2025 || '-'}</td>
+                                                <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">{ind.target_2029 || '-'}</td>
+                                                <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">{ind.capai_2029 || '-'}</td>
+                                            </tr>
+                                        )) : (
+                                            <tr>
+                                                <td colSpan="6" className="px-4 py-4 text-center text-gray-500">Tidak ada data indikator.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        {/* Section 4: Pencairan Dana */}
+                        <section>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+                                Informasi Pencairan Dana
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <ReadOnlyField label="Jenis Pencairan" value={dataDetail?.jenis_pencairan} />
+                                {dataDetail?.jenis_pencairan === 'Bank' && (
+                                    <>
+                                        <ReadOnlyField label="Nama Bank" value={dataDetail?.nama_bank} />
+                                        <ReadOnlyField label="Nomor Rekening" value={dataDetail?.nomor_rekening} />
+                                        <ReadOnlyField label="Atas Nama" value={dataDetail?.atas_nama} />
+                                    </>
+                                )}
+                            </div>
+                        </section>
+
+                        {/* Section 5: Rincian Anggaran (RAB) */}
+                        <section>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+                                Rincian Anggaran Biaya (RAB)
+                            </h3>
+                            <div className="overflow-x-auto rounded border border-gray-200 dark:border-gray-700">
+                                <table className="min-w-full text-sm divide-y divide-gray-200 dark:divide-gray-700">
+                                    <thead className="bg-teal-50 dark:bg-teal-900/30">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left font-medium text-teal-800 dark:text-teal-200">Kode Akun</th>
+                                            <th className="px-4 py-3 text-left font-medium text-teal-800 dark:text-teal-200">Kebutuhan / Deskripsi</th>
+                                            <th className="px-4 py-3 text-right font-medium text-teal-800 dark:text-teal-200">Volume</th>
+                                            <th className="px-4 py-3 text-left font-medium text-teal-800 dark:text-teal-200">Satuan</th>
+                                            <th className="px-4 py-3 text-right font-medium text-teal-800 dark:text-teal-200">Harga Satuan</th>
+                                            <th className="px-4 py-3 text-right font-medium text-teal-800 dark:text-teal-200">Jumlah</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                        {rabItems.length > 0 ? rabItems.map((rab, idx) => (
+                                            <tr key={idx} className="bg-white dark:bg-gray-800">
+                                                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{rab.kode_anggaran}</td>
+                                                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{rab.deskripsi_item}</td>
+                                                <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{rab.volume}</td>
+                                                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{rab.satuan}</td>
+                                                <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{formatCurrency(rab.harga_satuan)}</td>
+                                                <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(rab.sub_total)}</td>
+                                            </tr>
+                                        )) : (
+                                            <tr>
+                                                <td colSpan="6" className="px-4 py-4 text-center text-gray-500">Tidak ada rincian anggaran.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                    <tfoot className="bg-gray-50 dark:bg-gray-700 font-bold">
+                                        <tr>
+                                            <td colSpan="5" className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">TOTAL KESELURUHAN</td>
+                                            <td className="px-4 py-3 text-right text-teal-600 dark:text-teal-400">
+                                                {formatCurrency(rabItems.reduce((acc, curr) => acc + parseFloat(curr.sub_total), 0))}
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </section>
+
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>

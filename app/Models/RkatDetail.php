@@ -15,11 +15,10 @@ class RkatDetail extends Model
     protected $fillable = [
         'id_header',
         'kode_akun',
-        'id_indikator', // Masih disimpan untuk kompatibilitas (bisa dihapus nanti jika full migrasi ke hasMany)
-        'deskripsi_kegiatan', // <--- PENTING: Wajib ada di sini
+        'id_indikator',
+        'deskripsi_kegiatan', 
         'judul_kegiatan',
         'id_iku',
-        'id_ikusub',
         'id_ikk',
         'latar_belakang',
         'rasional',
@@ -28,7 +27,6 @@ class RkatDetail extends Model
         'jadwal_pelaksanaan_mulai',
         'jadwal_pelaksanaan_akhir',
         'lokasi_pelaksanaan',
-        'keberlanjutan',
         'pjawab',
         'target',
         'jenis_kegiatan',
@@ -78,7 +76,6 @@ class RkatDetail extends Model
     }
 
     // Relasi BARU (Banyak Indikator - One to Many)
-    // Pastikan tabel 'indikator_keberhasilans' sudah punya kolom 'id_rkat_detail'
     public function indikators()
     {
         return $this->hasMany(IndikatorKeberhasilan::class, 'id_rkat_detail', 'id_rkat_detail');

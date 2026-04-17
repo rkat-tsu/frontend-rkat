@@ -15,7 +15,19 @@ return new class extends Migration
             $table->id('id_unit');
             $table->string('kode_unit', 10)->unique();
             $table->string('nama_unit', 100);
-            $table->enum('tipe_unit', ['Fakultas', 'Prodi', 'Unit', 'Lainnya']);
+            $table->enum('tipe_unit', [
+                'Rektorat',
+                'Fakultas',
+                'Prodi',
+                'Biro',
+                'Lembaga',
+                'UPT',
+                'Satuan',
+                'UKM',
+                'Unit',
+                'Admin',
+                'Lainnya'
+            ]);
             $table->enum('jalur_persetujuan', ['akademik', 'non-akademik']);
             $table->unsignedBigInteger('id_kepala')->nullable();
             $table->unsignedBigInteger('parent_id')->nullable();

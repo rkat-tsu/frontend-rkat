@@ -12,27 +12,24 @@ export default function Create({ auth, ikus }) {
     // Setup Form
     const { data, setData, post, processing, errors, reset } = useForm({
         id_iku: '',
-        ikks: [{ nama_ikk: '' }] // Default satu baris kosong
+        ikks: [{ nama_ikk: '' }]
     });
 
     // --- EFFECT: LOAD DATA SAAT IKU DIPILIH ---
     useEffect(() => {
         if (data.id_iku) {
-            // Cari data IKU lengkap (termasuk IKK-nya) dari props 'ikus'
             const selectedIku = ikus.find(item => String(item.id_iku) === String(data.id_iku));
             
             if (selectedIku && selectedIku.ikks && selectedIku.ikks.length > 0) {
-                // Jika sudah ada IKK, tampilkan ke form
                 setData('ikks', selectedIku.ikks.map(ikk => ({
-                    id_ikk: ikk.id_ikk, // Penting untuk update
+                    id_ikk: ikk.id_ikk,
                     nama_ikk: ikk.nama_ikk
                 })));
             } else {
-                // Jika belum ada IKK, reset ke satu baris kosong
                 setData('ikks', [{ nama_ikk: '' }]);
             }
         }
-    }, [data.id_iku]); // Jalankan setiap kali id_iku berubah
+    }, [data.id_iku]); 
 
     // --- HANDLERS ---
     const addRow = () => {
@@ -60,7 +57,6 @@ export default function Create({ auth, ikus }) {
         });
     };
 
-    // Opsi Dropdown IKU
     const ikuOptions = ikus.map(i => ({ 
         value: i.id_iku, 
         label: i.nama_iku 
@@ -69,7 +65,7 @@ export default function Create({ auth, ikus }) {
     return (
         <AuthenticatedLayout
             user={auth.user}
-            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Kelola Indikator Kegiatan (IKK)</h2>}
+            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Kelola Indikator Kinerja Utama (IKU)</h2>}
         >
             <Head title="Input IKU & IKK" />
 
@@ -163,8 +159,8 @@ export default function Create({ auth, ikus }) {
 
                         {/* --- TOMBOL AKSI STICKY --- */}
                         <div className="sticky bottom-4 z-10 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                            <Link href={route('dashboard')} className="text-gray-600 hover:text-gray-900 font-medium text-sm flex items-center px-4 py-2 hover:bg-gray-100 rounded-md transition-colors">
-                                <ArrowLeft size={16} className="mr-2" /> Dashboard
+                            <Link href={route('iku.index')} className="text-gray-600 hover:text-gray-900 font-medium text-sm flex items-center px-4 py-2 hover:bg-gray-100 rounded-md transition-colors">
+                                <ArrowLeft size={16} className="mr-2" /> Kembali
                             </Link>
                             
                             <div className="flex items-center gap-3">

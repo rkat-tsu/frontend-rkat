@@ -22,9 +22,13 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            UserSeeder::class,
-            //UnitSeeder::class,
+            //UserSeeder::class,
+            UnitSeeder::class,
             IkuSeeder::class,
+            RincianAnggaranSeeder::class,
+            SboKategoriSeeder::class,
+            SboItemSeeder::class,
+            SboTarifSeeder::class,
         ]);
 
         // Ensure a default unit exists for seeded admin user

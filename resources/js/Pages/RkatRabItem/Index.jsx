@@ -33,7 +33,7 @@ export default function Index({ auth, items, filters }) {
     return (
         <AuthenticatedLayout
             user={auth.user}
-            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Monitoring Item RAB</h2>}
+            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Daftar Ajuan</h2>}
         >
             <Head title="Daftar Item RAB" />
 
@@ -48,7 +48,7 @@ export default function Index({ auth, items, filters }) {
                             <div>
                                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
                                     <Package className="w-5 h-5 mr-2 text-indigo-500" />
-                                    Daftar Seluruh Item Belanja
+                                    Daftar Seluruh Item Ajuan Belanja
                                 </h3>
                                 <p className="text-sm text-gray-500 mt-1">
                                     Monitoring detail rincian belanja dari seluruh pengajuan unit kerja.

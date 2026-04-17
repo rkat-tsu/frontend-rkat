@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import {
-    LayoutDashboard, FileText, ListChecks, Monitor, BookPlus, 
+    LayoutDashboard, FileText, ListChecks, LayoutList, Monitor, BookPlus, BookOpenText,
     CalendarCog, ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight, 
-    Users, Settings
+    Users, Settings, Building2
 } from 'lucide-react';
 import {
     Tooltip,
@@ -16,23 +16,22 @@ import {
 // MENU BAHASA INDONESIA
 const navItems = [
     { name: 'Dasbor', href: '/dashboard', icon: LayoutDashboard, activePath: '/dashboard' },
-    { name: 'Input RKAT', href: '/rkat/input', icon: FileText, activePath: '/rkat/input' },
-    { name: 'Item RAB', href: '/rkat-rab-items', icon: ListChecks, activePath: '/rkat-rab-items' },
-    { name: 'Rincian Anggaran', href: '/rincian-anggaran', icon: BookPlus, activePath: '/rincian-anggaran' },
-    { name: 'Input IKU', href: '/iku/input', icon: BookPlus, activePath: '/iku/input' },
+    { name: 'RKAT', href: '/rkat', icon: FileText, activePath: '/rkat' },
+    { name: 'Daftar Ajuan', href: '/daftar-ajuan', icon: LayoutList, activePath: '/daftar-ajuan' },
+    { name: 'Standar Biaya Operasional', href: '/rincian-anggaran', icon: BookOpenText, activePath: '/rincian-anggaran' },
+    { name: 'Indikator Kinerja Utama', href: '/iku', icon: BookPlus, activePath: '/iku' },
     { name: 'Persetujuan', href: '/approval', icon: ListChecks, activePath: '/approval' },
     { name: 'Monitoring', href: '/monitoring', icon: Monitor, activePath: '/monitoring' },
     {
-        name: 'Manajemen Pengguna', // Dulu "Member"
-        icon: Users,
+        name: 'Daftar Unit Kerja', 
+        icon: Building2,
         activePath: '/unit', // Trigger aktif jika anak-anaknya aktif
-        // Tidak ada 'href' agar berfungsi sebagai Toggle Accordion
         children: [
             { name: 'Pengaturan Akun', href: '/user', icon: Settings, activePath: '/user', adminOnly: true },
-            { name: 'Daftar Unit Kerja', href: '/unit', icon: BookPlus, activePath: '/unit' },
+            { name: 'Daftar Unit Kerja', href: '/unit', icon: Users, activePath: '/unit' },
         ],
     },
-    { name: 'Tahun Anggaran', href: '/tahun', icon: CalendarCog, activePath: '/tahun' }
+    { name: 'Tahun Anggaran', href: '/tahun', icon: CalendarCog, activePath: '/tahun', adminOnly: true }
 ];
 
 function Sidebar({ auth, isMinimized, toggleMinimize }) {

@@ -38,7 +38,7 @@ class TahunAnggaranController extends Controller
         Log::info('[TahunAnggaran] Membuat data baru.');
 
         $validated = $request->validate([
-            'tahun_anggaran' => 'required|integer|unique:tahun_anggaran,tahun_anggaran',
+            'tahun_anggaran' => 'required|integer|unique:tahun_anggarans,tahun_anggaran',
             'tanggal_mulai' => 'required|date',
             'tanggal_akhir' => 'required|date|after_or_equal:tanggal_mulai',
             'status_rkat' => ['required', Rule::in(['Drafting', 'Submission', 'Approved', 'Closed'])],
@@ -51,7 +51,7 @@ class TahunAnggaranController extends Controller
 
     public function edit($id)
     {
-        $tahun = TahunAnggaran::where('id_tahun', $id)->firstOrFail();
+        $tahun = TahunAnggaran::where('tahun_anggaran', $id)->firstOrFail();
 
         return Inertia::render('Admin/TahunAnggaran/Edit', [
             'tahun' => $tahun,

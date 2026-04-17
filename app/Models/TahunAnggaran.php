@@ -11,7 +11,6 @@ class TahunAnggaran extends Model
 {
     use HasFactory;
 
-    // Primary key non-standar (bukan 'id')
     protected $table = 'tahun_anggarans';
     protected $primaryKey = 'id_tahun';
     public $incrementing = false;

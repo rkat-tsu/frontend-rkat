@@ -76,7 +76,7 @@ export default function Create({ auth, users, units }) {
                                         value={data.kode_unit}
                                         onChange={(e) => setData('kode_unit', e.target.value)}
                                         className="mt-1 block w-full"
-                                        placeholder="Cth: 1.01"
+                                        placeholder=""
                                         isFocused={true}
                                     />
                                     <InputError message={errors.kode_unit} className="mt-2" />
@@ -88,7 +88,7 @@ export default function Create({ auth, users, units }) {
                                         value={data.nama_unit}
                                         onChange={(e) => setData('nama_unit', e.target.value)}
                                         className="mt-1 block w-full"
-                                        placeholder="Cth: Biro Administrasi Umum"
+                                        placeholder="Masukkan Nama Unit Kerja"
                                     />
                                     <InputError message={errors.nama_unit} className="mt-2" />
                                 </div>
@@ -146,7 +146,7 @@ export default function Create({ auth, users, units }) {
                                                 value={data.no_telepon}
                                                 onChange={(e) => setData('no_telepon', e.target.value)}
                                                 className="pl-10 block w-full"
-                                                placeholder="0812..."
+                                                placeholder="Masukkan Nomor Telepon / WhatsApp"
                                             />
                                         </div>
                                         <InputError message={errors.no_telepon} className="mt-2" />
@@ -163,7 +163,7 @@ export default function Create({ auth, users, units }) {
                                                 value={data.email}
                                                 onChange={(e) => setData('email', e.target.value)}
                                                 className="pl-10 block w-full"
-                                                placeholder="unit@kampus.ac.id"
+                                                placeholder="Masukkan Email Resmi Unit"
                                             />
                                         </div>
                                         <InputError message={errors.email} className="mt-2" />

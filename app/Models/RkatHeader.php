@@ -34,7 +34,7 @@ class RkatHeader extends Model
     }
     
     // Relasi ke User (yang mengajukan)
-    public function pengaju()
+    public function user()
     {
         // Asumsi model User Anda ada di App\Models\User dan primary key-nya id_user
         return $this->belongsTo(User::class, 'diajukan_oleh', 'id_user');
