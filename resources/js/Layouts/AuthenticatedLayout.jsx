@@ -3,21 +3,12 @@ import { Link, usePage, router } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
 import { Menu, ChevronDown, User, LogOut, Loader2, Sun, Moon } from 'lucide-react';
 import AutomaticBreadcrumbs from '@/Components/AutomaticBreadcrumbs';
+import { Toaster } from '@/components/ui/sonner';
 
 const SIDEBAR_STATE_KEY = 'sidebar_minimized_state';
 const THEME_STATE_KEY = 'app_theme_preference';
 
-// Komponen Loading dengan Animasi Fade
-const PageLoader = ({ visible }) => (
-    <div 
-        className={`fixed inset-0 z-[200] flex items-center justify-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-    >
-        <div className="flex flex-col items-center">
-            <Loader2 className="h-10 w-10 text-teal-600 animate-spin mb-3" />
-            <span className="text-teal-700 font-medium text-sm tracking-wider animate-pulse">MEMUAT...</span>
-        </div>
-    </div>
-);
+import PageLoader from '@/Components/PageLoader';
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
@@ -98,6 +89,7 @@ export default function AuthenticatedLayout({ header, children }) {
             
             {/* GLOBAL LOADER */}
             <PageLoader visible={isLoading} />
+            <Toaster position="top-center" richColors />
 
             {/* SIDEBAR */}
             <Sidebar 

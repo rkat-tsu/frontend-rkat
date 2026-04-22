@@ -3,11 +3,11 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
-import PrimaryButton from '@/Components/PrimaryButton';
 import InputError from '@/Components/InputError';
-import CustomSelect from '@/Components/CustomSelect'; 
-import DateInput from '@/Components/DateInput'; 
+import CustomSelect from '@/Components/CustomSelect';
+import DateInput from '@/Components/DateInput';
 import { Save, ArrowLeft, CalendarClock, PencilLine } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Edit({ auth, tahun, tahunAnggaran, data: propData }) {
     
@@ -32,7 +32,17 @@ export default function Edit({ auth, tahun, tahunAnggaran, data: propData }) {
 
     const submit = (e) => {
         e.preventDefault();
-        patch(route('tahun.update', id));
+
+        if (!data.tahun_anggaran || !data.status_rkat || !data.tanggal_mulai || !data.tanggal_akhir) {
+            toast.error("Peringatan", { description: "Semua form wajib diisi." });
+            return;
+        }
+
+        const toastId = toast.loading("Sedang memperbarui data...");
+        patch(route('tahun.update', id), {
+            onSuccess: () => toast.success("Berhasil", { id: toastId, description: "Data Tahun Anggaran berhasil diperbarui." }),
+            onError: () => toast.error("Gagal Memperbarui", { id: toastId, description: "Terdapat kesalahan saat memperbarui data." })
+        });
     };
 
     const statusOptions = [
@@ -68,15 +78,15 @@ export default function Edit({ auth, tahun, tahunAnggaran, data: propData }) {
                         <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-teal-500">
                             
                             <div className="flex items-center gap-3 mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
-                                <div className="p-2 bg-teal-50 dark:bg-teal-900/30 rounded-lg">
+                                <div className="p-2 bg-teal-50 dark:bg-teal-900/40 rounded-lg">
                                     <PencilLine className="w-6 h-6 text-teal-600 dark:text-teal-400" />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                                         Perbarui Periode Anggaran
                                     </h3>
                                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        ID Data: {id} | Status: {data.status_rkat}
+                                        ID Data: <span className="font-semibold text-teal-600 dark:text-teal-400">{id}</span> | Status: <span className="font-semibold">{data.status_rkat}</span>
                                     </p>
                                 </div>
                             </div>
@@ -88,12 +98,12 @@ export default function Edit({ auth, tahun, tahunAnggaran, data: propData }) {
                                         <InputLabel htmlFor="tahun_anggaran" value="Tahun Anggaran" required />
                                         <TextInput
                                             id="tahun_anggaran"
-                                            type="number"
+                                            type="text"
                                             value={data.tahun_anggaran}
                                             onChange={(e) => setData('tahun_anggaran', e.target.value)}
-                                            className="mt-1 block w-full bg-gray-50 text-gray-500 cursor-not-allowed"
+                                            className="mt-1 block w-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 cursor-not-allowed focus:ring-0"
                                             placeholder="Cth: 2026"
-                                            readOnly // Biasanya tahun tidak boleh diubah saat edit
+                                            readOnly 
                                         />
                                         <InputError message={errors.tahun_anggaran} className="mt-2" />
                                     </div>
@@ -112,10 +122,10 @@ export default function Edit({ auth, tahun, tahunAnggaran, data: propData }) {
                                 </div>
 
                                 {/* Divider Visual: Durasi */}
-                                <div className="border-t border-gray-50 dark:border-gray-700/50 pt-4">
+                                <div className="border-t border-gray-100 dark:border-gray-700/50 pt-6 mt-4">
                                     <div className="flex items-center gap-2 mb-4">
-                                        <CalendarClock className="w-4 h-4 text-indigo-500" />
-                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Durasi Pelaksanaan</span>
+                                        <CalendarClock className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                                        <span className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Durasi Pelaksanaan</span>
                                     </div>
 
                                     {/* Baris 2: Tanggal Mulai & Akhir */}
@@ -128,6 +138,7 @@ export default function Edit({ auth, tahun, tahunAnggaran, data: propData }) {
                                                     value={data.tanggal_mulai}
                                                     onChange={(val) => setData('tanggal_mulai', val)}
                                                     placeholder="Pilih tanggal mulai..."
+                                                    position="right"
                                                 />
                                             </div>
                                             <InputError message={errors.tanggal_mulai} className="mt-2" />
@@ -141,6 +152,7 @@ export default function Edit({ auth, tahun, tahunAnggaran, data: propData }) {
                                                     value={data.tanggal_akhir}
                                                     onChange={(val) => setData('tanggal_akhir', val)}
                                                     placeholder="Pilih tanggal selesai..."
+                                                    position="left"
                                                 />
                                             </div>
                                             <InputError message={errors.tanggal_akhir} className="mt-2" />
@@ -151,17 +163,22 @@ export default function Edit({ auth, tahun, tahunAnggaran, data: propData }) {
                         </div>
 
                         {/* --- TOMBOL AKSI (STICKY) --- */}
-                        <div className="sticky bottom-4 z-30 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                        <div className="sticky bottom-4 z-10 bg-white/90 dark:bg-gray-900 backdrop-blur-sm p-4 rounded-xl shadow-lg flex justify-between items-center">
                             <Link
                                 href={route('tahun.index')}
-                                className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white font-medium text-sm flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 text-sm flex items-center px-4 py-2"
                             >
-                                <ArrowLeft size={16} className="mr-2" /> Batal
+                                <ArrowLeft size={16} className="mr-2" /> Kembali
                             </Link>
-                            
-                            <PrimaryButton disabled={processing} className="shadow-teal-200 hover:shadow-teal-400">
-                                <Save size={16} className="mr-2" /> Simpan Perubahan
-                            </PrimaryButton>
+                            <div className="flex items-center gap-4">
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="inline-flex items-center justify-center px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-md shadow-lg shadow-teal-200/50 dark:shadow-teal-900/50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50"
+                                >
+                                    <Save size={18} className="mr-2" /> Simpan Perubahan
+                                </button>
+                            </div>
                         </div>
 
                     </form>

@@ -93,7 +93,7 @@ export default function ApproverDashboard({ auth, rkatMenunggu, currentRole, fla
                                                     <div className="flex justify-end gap-2">
                                                         {/* Tombol Lihat Detail */}
                                                         <SecondaryButton 
-                                                            onClick={() => router.get(route('rkat.show', rkat.id_header))}
+                                                            onClick={() => router.get(route('rkat.show', rkat.uuid))}
                                                             className="inline-flex items-center gap-1 border-gray-300 text-gray-700"
                                                             title="Lihat Detail RKAT"
                                                         >

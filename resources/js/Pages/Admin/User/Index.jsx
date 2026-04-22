@@ -1,24 +1,36 @@
 import React, { useState } from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import CustomSelect from '@/Components/CustomSelect';
 import { Search, Plus, ChevronDown, CheckCircle, XCircle } from 'lucide-react';
 
 export default function Index({ users }) {
     const { props } = usePage();
     const authUser = props?.auth?.user;
     const [search, setSearch] = useState('');
+    const [selectedUnit, setSelectedUnit] = useState('');
+
+    // Extract unique units for filter dropdown
+    const uniqueUnits = [...new Set(users.data?.map(u => u.unit?.nama_unit).filter(Boolean))].sort();
+    const unitOptions = [
+        { value: '', label: 'Semua Unit' },
+        ...uniqueUnits.map(u => ({ value: u, label: u }))
+    ];
 
     // Client-side filter untuk data halaman saat ini
     const filtered = users.data ? users.data.filter(u => {
         const q = search.toLowerCase();
         const unitId = String(u.unit?.id_unit || u.id_unit || '').toLowerCase();
-        return (
-            u.nama_lengkap?.toLowerCase().includes(q) ||
+        
+        const matchesSearch = u.nama_lengkap?.toLowerCase().includes(q) ||
             u.email?.toLowerCase().includes(q) ||
             u.username?.toLowerCase().includes(q) ||
             u.peran?.toLowerCase().includes(q) ||
-            unitId.includes(q)
-        );
+            unitId.includes(q);
+            
+        const matchesUnit = selectedUnit === '' || u.unit?.nama_unit === selectedUnit;
+        
+        return matchesSearch && matchesUnit;
     }) : [];
 
     return (
@@ -35,7 +47,7 @@ export default function Index({ users }) {
                         Pengaturan Akun Pengguna
                     </h1>
 
-                    <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-yellow-500">
+                    <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-blue-500">
                         
                         {/* Top Bar: Search, Filter, & Tambah Button */}
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
@@ -48,24 +60,35 @@ export default function Index({ users }) {
                                     placeholder="Cari nama, email, atau peran..." 
                                     value={search} 
                                     onChange={(e) => setSearch(e.target.value)} 
-                                    className="pl-10 block w-full bg-gray-100 border-transparent rounded-lg focus:border-yellow-500 focus:bg-white focus:ring-0 text-sm dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+                                    className="pl-10 h-11 block w-full bg-gray-100 border-transparent rounded-lg focus:border-blue-500 focus:bg-white focus:ring-0 text-sm dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                                 />
                             </div>
                             
                             <div className="flex items-center gap-3 w-full md:w-auto">
-                                <button className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">
-                                    Filter <ChevronDown size={16} />
-                                </button>
+                                <div className="w-48">
+                                    <CustomSelect
+                                        value={selectedUnit}
+                                        onChange={(e) => setSelectedUnit(e.target.value)}
+                                        options={unitOptions}
+                                        placeholder="Semua Unit"
+                                        className="h-11 rounded-lg border-transparent bg-gray-200 dark:bg-gray-700 dark:text-gray-300 focus:border-blue-500 focus:bg-white focus:ring-0 text-sm"
+                                    />
+                                </div>
                                 
                                 {authUser?.peran === 'Admin' && (
                                     <Link 
                                         href={route('user.create')} 
-                                        className="flex items-center justify-center gap-2 px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-lg text-sm font-medium transition whitespace-nowrap"
+                                        className="h-11 flex items-center justify-center gap-2 px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-sm font-medium transition whitespace-nowrap"
                                     >
                                         <Plus size={16} /> Tambah User
                                     </Link>
                                 )}
                             </div>
+                        </div>
+
+                        {/* Record Count */}
+                        <div className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                            Menampilkan <span className="font-semibold text-gray-900 dark:text-white">{filtered.length}</span> data pengguna
                         </div>
 
                         {/* Tabel */}
@@ -144,7 +167,7 @@ export default function Index({ users }) {
                                                 href={link.url}
                                                 className={`px-3 py-1 text-sm border rounded-md transition-colors ${
                                                     link.active
-                                                        ? 'bg-teal-600 text-white border-teal-600'
+                                                        ? 'bg-blue-600 text-white border-blue-600'
                                                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
                                                 }`}
                                                 dangerouslySetInnerHTML={{ __html: link.label }}

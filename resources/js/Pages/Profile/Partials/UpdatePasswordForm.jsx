@@ -5,6 +5,7 @@ import PasswordInput from '@/Components/PasswordInput';
 import { Transition } from '@headlessui/react';
 import { useForm } from '@inertiajs/react';
 import { useRef } from 'react';
+import { toast } from 'sonner';
 
 export default function UpdatePasswordForm({ className = '' }) {
     const passwordInput = useRef();
@@ -27,10 +28,20 @@ export default function UpdatePasswordForm({ className = '' }) {
     const updatePassword = (e) => {
         e.preventDefault();
 
+        if (data.password !== data.password_confirmation) {
+            toast.error("Gagal", { description: "Password dan konfirmasi password tidak cocok." });
+            return;
+        }
+
+        const toastId = toast.loading("Memperbarui password...");
         put(route('password.update'), {
             preserveScroll: true,
-            onSuccess: () => reset(),
+            onSuccess: () => {
+                reset();
+                toast.success("Berhasil", { id: toastId, description: "Password berhasil diperbarui." });
+            },
             onError: (errors) => {
+                toast.error("Gagal Memperbarui", { id: toastId, description: "Periksa kembali input Anda." });
                 if (errors.password) {
                     reset('password', 'password_confirmation');
                     passwordInput.current.focus();

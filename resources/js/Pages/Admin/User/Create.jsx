@@ -8,6 +8,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import PasswordInput from '@/Components/PasswordInput';
 import CustomSelect from '@/Components/CustomSelect'; 
 import { UserPlus, Save, ArrowLeft, Shield, Building2, Lock, Phone, Mail, User } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Create({ auth, units = [] }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -41,7 +42,25 @@ export default function Create({ auth, units = [] }) {
 
     const submit = (e) => {
         e.preventDefault();
+
+        if (!data.nama_lengkap || !data.email || !data.peran || !data.password || !data.password_confirmation) {
+            toast.error("Peringatan", { description: "Semua form wajib diisi." });
+            return;
+        }
+
+        if (data.password !== data.password_confirmation) {
+            toast.error("Peringatan", { description: "Password dan konfirmasi password tidak cocok." });
+            return;
+        }
+
+        const toastId = toast.loading("Sedang menyimpan data...");
         post(route('user.store'), {
+            onSuccess: () => {
+                toast.success("Berhasil", { id: toastId, description: "User baru berhasil ditambahkan." });
+            },
+            onError: () => {
+                toast.error("Gagal Menyimpan", { id: toastId, description: "Terdapat kesalahan saat menyimpan data." });
+            },
             onFinish: () => reset('password', 'password_confirmation'),
         });
     };

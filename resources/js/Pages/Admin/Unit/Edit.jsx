@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import InputError from '@/Components/InputError';
 import CustomSelect from '@/Components/CustomSelect'; 
 import { Building2, Save, ArrowLeft, Settings2, UserCircle, Phone, Mail, PencilLine } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Edit({ auth, unit, users, units }) {
     // 1. SETUP FORM: Ganti 'put' menjadi 'patch'
@@ -23,8 +24,17 @@ export default function Edit({ auth, unit, users, units }) {
 
     const submit = (e) => {
         e.preventDefault();
-        // PERBAIKAN: Gunakan 'patch' agar sesuai dengan route resource Laravel
-        patch(route('unit.update', unit.id_unit));
+
+        if (!data.kode_unit || !data.nama_unit || !data.tipe_unit || !data.jalur_persetujuan) {
+            toast.error("Peringatan", { description: "Semua form bertanda * wajib diisi." });
+            return;
+        }
+
+        const toastId = toast.loading("Sedang memperbarui data...");
+        patch(route('unit.update', unit.id_unit), {
+            onSuccess: () => toast.success("Berhasil", { id: toastId, description: "Data Unit Kerja berhasil diperbarui." }),
+            onError: () => toast.error("Gagal Memperbarui", { id: toastId, description: "Terdapat kesalahan saat memperbarui data." })
+        });
     };
 
     // 2. OPSI DROPDOWN

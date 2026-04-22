@@ -3,7 +3,7 @@ import Calendar from "./Calendar";
 import TextInput from "./TextInput";
 import { CalendarDays } from "lucide-react"; 
 
-export default function DateInput({ id, value, onChange, className = "" }) {
+export default function DateInput({ id, value, onChange, className = "", position = "right" }) {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef(null);
   const inputRef = useRef(null);
@@ -52,6 +52,12 @@ export default function DateInput({ id, value, onChange, className = "" }) {
       : "text-gray-400 dark:text-gray-500 hover:text-teal-500 dark:hover:text-teal-400"}
   `;
 
+  // Tentukan class penempatan popup kalender
+  // Jika position="left" (input di sebelah kanan layar), popup menyamping ke kiri: right-0
+  // Jika position="right" (input di sebelah kiri layar), popup menyamping ke kanan: left-0
+  const popupPositionClass = position === 'left' ? 'right-0' : 'left-0';
+  const transformOrigin = position === 'left' ? 'top right' : 'top left';
+
   return (
     <div className={`relative ${className}`} ref={wrapperRef}>
       {/* Input utama */}
@@ -63,7 +69,7 @@ export default function DateInput({ id, value, onChange, className = "" }) {
         readOnly
         value={formattedDate || ""}
         className="block w-full cursor-pointer pr-10"
-        placeholder="Pilih Tanggal"
+        placeholder={formattedDate ? formattedDate : "Pilih Tanggal"}
         onClick={() => setIsOpen(true)}
       />
 
@@ -80,8 +86,8 @@ export default function DateInput({ id, value, onChange, className = "" }) {
       {/* Popup kalender */}
       {isOpen && (
         <div
-          className="absolute z-50 mt-2 right-0 animate-fade-in-up"
-          style={{ transformOrigin: "top right" }}
+          className={`absolute z-[999] top-0 ${popupPositionClass} animate-fade-in-up`}
+          style={{ transformOrigin }}
         >
           <Calendar selectedDate={dateValue} onDateChange={handleDateSelect} />
         </div>

@@ -21,10 +21,10 @@ class RkatController extends Controller
 {
     public function create()
     {
-        Log::debug('[RKAT] Permintaan Halaman Buat oleh User: '.Auth::id());
+        Log::debug('[RKAT] Permintaan Halaman Buat oleh User: ' . Auth::id());
 
         $tahunAnggarans = TahunAnggaran::where('status_rkat', '!=', 'Closed')->get();
-        
+
         // JIKA TIDAK ADA TAHUN YANG DIBUKA:
         if ($tahunAnggarans->isEmpty()) {
             return redirect()->route('rkat.index')->with('error', 'Maaf, periode penginputan RKAT saat ini sedang ditutup atau belum dibuka.');
@@ -32,9 +32,9 @@ class RkatController extends Controller
 
         $units = Unit::orderBy('kode_unit')->get();
         $akunAnggarans = RincianAnggaran::orderBy('kode_anggaran')->get();
-        
+
         $ikus = Iku::with(['ikks'])->get();
-                
+
         Log::debug('[RKAT] Data Master Dimuat', [
             'tahun_count' => $tahunAnggarans->count(),
             'unit_count' => $units->count(),
@@ -52,28 +52,21 @@ class RkatController extends Controller
 
     public function index(Request $request)
     {
-        $query = RkatHeader::with([
-            'unit',
-            'user',
-            'rkatDetails.iku',
-            'rkatDetails.ikk',
-            'rkatDetails.rabItems',
-            'rkatDetails.indikators',
-        ]);
+        $query = RkatHeader::with(['unit']);
 
         // Jika pengguna bukan admin, batasi ke unit sendiri
         if (Auth::user()->peran !== 'Admin') {
             $query->where('id_unit', Auth::user()->id_unit);
         }
-        
+
         // PENCARIAN & FILTER
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nomor_dokumen', 'like', "%{$search}%")
-                  ->orWhereHas('unit', function ($q) use ($search) {
-                      $q->where('nama_unit', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('unit', function ($q) use ($search) {
+                        $q->where('nama_unit', 'like', "%{$search}%");
+                    });
             });
         }
         if ($request->filled('tahun')) {
@@ -84,7 +77,7 @@ class RkatController extends Controller
         }
 
         $rkats = $query->orderBy('tanggal_pengajuan', 'desc')->paginate(15)->withQueryString();
-        
+
         $tahunAnggarans = TahunAnggaran::orderBy('tahun_anggaran', 'desc')->pluck('tahun_anggaran');
 
         return Inertia::render('Rkat/Index', [
@@ -145,6 +138,8 @@ class RkatController extends Controller
             'nama_bank' => ['nullable', 'required_if:jenis_pencairan,Bank', 'string'],
             'nomor_rekening' => ['nullable', 'required_if:jenis_pencairan,Bank', 'string'],
             'atas_nama' => ['nullable', 'required_if:jenis_pencairan,Bank', 'string'],
+            'dokumen_pendukung' => ['nullable', 'array'],
+            'dokumen_pendukung.*' => ['in:Pengajuan Rutin,Proposal,TOR,Usulan'],
         ]);
 
         try {
@@ -168,7 +163,7 @@ class RkatController extends Controller
                 'deskripsi_kegiatan' => $request->input('deskripsi_kegiatan') ?? $validatedData['judul_pengajuan'],
                 'id_iku' => $request->input('iku_id'),
                 'id_ikk' => $request->input('ikk_id'),
-                
+
                 // Form Isian Lengkap
                 'latar_belakang' => $validatedData['latar_belakang'],
                 'rasional' => $validatedData['rasional'],
@@ -181,12 +176,13 @@ class RkatController extends Controller
                 'pjawab' => $validatedData['pjawab'],
                 'target' => $validatedData['target'],
                 'anggaran' => $validatedData['anggaran'],
-                
+
                 // Pencairan
                 'jenis_pencairan' => $validatedData['jenis_pencairan'],
                 'nama_bank' => $validatedData['nama_bank'] ?? null,
                 'nomor_rekening' => $validatedData['nomor_rekening'] ?? null,
                 'atas_nama' => $validatedData['atas_nama'] ?? null,
+                'dokumen_pendukung' => $validatedData['dokumen_pendukung'] ?? null,
             ]);
 
             // C. SIMPAN INDIKATOR KEBERHASILAN (Multi-row)
@@ -194,7 +190,7 @@ class RkatController extends Controller
                 IndikatorKeberhasilan::create([
                     'id_rkat_detail' => $rkatDetail->id_rkat_detail,
                     'nama_indikator' => $item['indikator'],
-                    
+
                     // Mapping field Form -> Database
                     'capai_2024'  => $item['kondisi_akhir_2024_capaian'] ?? null,
                     'target_2025' => $item['tahun_2025_target'] ?? null,
@@ -220,47 +216,39 @@ class RkatController extends Controller
             DB::commit();
 
             return redirect()->route('rkat.index')->with('success', 'Pengajuan RKAT berhasil disimpan sebagai Draft.');
-
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('[RKAT] Kesalahan: '.$e->getMessage());
+            Log::error('[RKAT] Kesalahan: ' . $e->getMessage());
 
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat memproses data: '.$e->getMessage())->withInput();
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memproses data: ' . $e->getMessage())->withInput();
         }
     }
 
-    public function show($id)
+    public function show(RkatHeader $rkatHeader)
     {
-        $rkat = RkatHeader::with([
+        $rkatHeader->load([
             'unit',
             'user',
             'rkatDetails.iku',
             'rkatDetails.ikk',
             'rkatDetails.rabItems',
             'rkatDetails.indikators',
-        ])->findOrFail($id);
+        ]);
 
         return Inertia::render('Rkat/Show', [
-            'rkat' => $rkat,
+            'rkat' => $rkatHeader,
         ]);
     }
 
     /**
      * MENGIRIM / MENGAJUKAN RKAT DARI DRAFT KE APPROVAL
      */
-    public function submit($id)
+    public function submit(RkatHeader $rkatHeader)
     {
-        $rkat = RkatHeader::findOrFail($id);
-
         // Pastikan hanya Draft atau Revisi yang bisa diajukan
-        if (!in_array($rkat->status_persetujuan, ['Draft', 'Revisi'])) {
+        if (!in_array($rkatHeader->status_persetujuan, ['Draft', 'Revisi'])) {
             return redirect()->back()->with('error', 'Hanya dokumen Draft atau Revisi yang dapat diajukan.');
         }
-
-        // Ubah status ke tahap pertama persetujuan (sesuai roleStatusMap di ApprovalController)
-        $rkat->update([
-            'status_persetujuan' => 'Menunggu_Dekan_Kepala'
-        ]);
 
         return redirect()->back()->with('success', 'RKAT berhasil diajukan dan sedang menunggu persetujuan Dekan/Kepala Unit.');
     }

@@ -47,17 +47,23 @@ export default function AutomaticBreadcrumbs() {
                     // Format nama: Cek map dulu, kalau tidak ada, format title case dari segment
                     let displayName = breadcrumbNameMap[segment] || segment.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
-                    // Jika ini ID (angka), abaikan atau beri label "Detail"
-                    if (!isNaN(segment)) {
-                       displayName = `#${segment}`;
+                    // Cek apakah segment adalah UUID atau ID numerik
+                    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment);
+                    const isNumericId = !isNaN(segment) && !isNaN(parseFloat(segment));
+
+                    if (isUuid || isNumericId) {
+                        displayName = 'Detail';
                     }
+
+                    // Tentukan apakah segment ini harus menjadi link
+                    const isLink = !isLast && !isUuid && !isNumericId;
 
                     return (
                         <li key={index}>
                             <div className="flex items-center">
                                 <ChevronRight className="w-4 h-4 text-gray-300 mx-1" />
-                                {isLast ? (
-                                    <span className="text-xs font-medium text-teal-600 dark:text-teal-400">
+                                {isLast || !isLink ? (
+                                    <span className={`text-xs font-medium ${isLast ? 'text-teal-600 dark:text-teal-400' : 'text-gray-500'}`}>
                                         {displayName}
                                     </span>
                                 ) : (

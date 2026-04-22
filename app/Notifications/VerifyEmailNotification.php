@@ -18,7 +18,7 @@ class VerifyEmailNotification extends VerifyEmail
         // URL verifikasi yang ditandatangani oleh Laravel
         $verificationUrl = $this->verificationUrl($notifiable);
         
-        return (new VerifyUserEmail($verificationUrl))
+        return (new VerifyUserEmail($verificationUrl, $notifiable))
                     ->to($notifiable->email);
     }
 
@@ -27,7 +27,7 @@ class VerifyEmailNotification extends VerifyEmail
     {
         return URL::temporarySignedRoute(
             'verification.verify',
-            Carbon::now()->addMinutes(Config::get('auth.verification.expire', 60)),
+            Carbon::now()->addMinutes(Config::get('auth.passwords.users.expire', 60)),
             [
                 'id' => $notifiable->getKey(),
                 'hash' => sha1($notifiable->getEmailForVerification()),

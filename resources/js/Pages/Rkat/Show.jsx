@@ -34,12 +34,10 @@ const ReadOnlyField = ({ label, value, isTextarea = false }) => (
 
 export default function Show({ auth, rkat = {} }) {
     const dataRkat = rkat.data || rkat;
-    
-    // PERBAIKAN: Tangani perubahan nama variabel menjadi snake_case (rkat_details) dari Laravel
+
     const rawDetail = dataRkat?.rkat_details || dataRkat?.rkatDetails || dataRkat?.detail;
     const dataDetail = Array.isArray(rawDetail) ? (rawDetail[0] || {}) : (rawDetail || {});
-    
-    // PERBAIKAN: Tangani perubahan nama variabel menjadi snake_case untuk relasi RAB (rab_items)
+
     const indikators = dataDetail?.indikators || [];
     const rabItems = dataDetail?.rab_items || dataDetail?.rabItems || [];
 
@@ -58,7 +56,7 @@ export default function Show({ auth, rkat = {} }) {
 
             <div className="py-6">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    
+
                     <div className="mb-6">
                         <Link
                             href={route('rkat.index')}
@@ -70,7 +68,7 @@ export default function Show({ auth, rkat = {} }) {
                     </div>
 
                     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 space-y-8">
-                        
+
                         {/* Section 1: Informasi Dasar Header */}
                         <section>
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
@@ -97,17 +95,18 @@ export default function Show({ auth, rkat = {} }) {
                                     <ReadOnlyField label="Judul Kegiatan" value={dataDetail?.judul_kegiatan} />
                                     <ReadOnlyField label="Deskripsi Singkat" value={dataDetail?.deskripsi_kegiatan} />
                                 </div>
-                                
+
                                 <ReadOnlyField label="Latar Belakang" value={dataDetail?.latar_belakang} isTextarea />
                                 <ReadOnlyField label="Rasional" value={dataDetail?.rasional} isTextarea />
                                 <ReadOnlyField label="Tujuan" value={dataDetail?.tujuan} isTextarea />
                                 <ReadOnlyField label="Mekanisme Pelaksanaan" value={dataDetail?.mekanisme} isTextarea />
-                                
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <ReadOnlyField label="Jadwal Mulai" value={formatDate(dataDetail?.jadwal_pelaksanaan_mulai)} />
                                     <ReadOnlyField label="Jadwal Selesai" value={formatDate(dataDetail?.jadwal_pelaksanaan_akhir)} />
                                     <ReadOnlyField label="Lokasi Pelaksanaan" value={dataDetail?.lokasi_pelaksanaan} />
                                     <ReadOnlyField label="Jenis Kegiatan" value={dataDetail?.jenis_kegiatan} />
+                                    <ReadOnlyField label="Dokumen Pendukung" value={Array.isArray(dataDetail?.dokumen_pendukung) ? dataDetail.dokumen_pendukung.join(', ') : dataDetail?.dokumen_pendukung} />
                                     <ReadOnlyField label="Penanggung Jawab" value={dataDetail?.pjawab} />
                                     <ReadOnlyField label="Target Output" value={dataDetail?.target} />
                                 </div>

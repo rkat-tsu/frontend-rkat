@@ -11,12 +11,39 @@ use Illuminate\Validation\Rule;
 
 class RincianAnggaranController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         Log::debug('[RincianAnggaran] Halaman Index.');
-        $items = RincianAnggaran::orderBy('kode_anggaran')->paginate(20);
+        
+        $query = RincianAnggaran::query();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('kode_anggaran', 'like', "%{$search}%")
+                  ->orWhere('nama_anggaran', 'like', "%{$search}%")
+                  ->orWhere('kelompok_anggaran', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('letter')) {
+            $query->where('kode_anggaran', 'like', $request->letter . '%');
+        }
+
+        $items = $query->orderBy('kode_anggaran')->paginate(20)->withQueryString();
+
+        // Mengambil huruf depan unik dari kode_anggaran untuk dropdown filter
+        $letters = RincianAnggaran::selectRaw('SUBSTR(kode_anggaran, 1, 1) as letter')
+            ->whereNotNull('kode_anggaran')
+            ->where('kode_anggaran', '!=', '')
+            ->distinct()
+            ->orderBy('letter')
+            ->pluck('letter');
+
         return Inertia::render('Admin/RincianAnggaran/Index', [
             'items' => $items,
+            'filters' => $request->only(['search', 'letter']),
+            'letters' => $letters,
         ]);
     }
 

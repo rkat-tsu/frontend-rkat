@@ -25,12 +25,12 @@ class IkuController extends Controller
     public function storeMaster(Request $request)
     {
         $validated = $request->validate([
-            'id_iku'   => ['nullable', 'integer', 'exists:ikus,id_iku'],
+            'uuid'     => ['nullable', 'string', 'exists:ikus,uuid'],
             'nama_iku' => ['required', 'string', 'max:500'],
         ]);
 
-        if (isset($validated['id_iku'])) {
-            $iku = Iku::findOrFail($validated['id_iku']);
+        if (isset($validated['uuid'])) {
+            $iku = Iku::where('uuid', $validated['uuid'])->firstOrFail();
             $iku->update(['nama_iku' => $validated['nama_iku']]);
             $message = 'Nama IKU berhasil diperbarui.';
         } else {
@@ -68,15 +68,15 @@ class IkuController extends Controller
 
         // 1. Validasi Input
         $validated = $request->validate([
-            'id_iku' => ['required', 'integer', 'exists:ikus,id_iku'],
+            'uuid_iku' => ['required', 'string', 'exists:ikus,uuid'],
             
             // Validasi Array IKK
             'ikks' => ['required', 'array', 'min:1'],
-            'ikks.*.nama_ikk' => ['required', 'string', 'max:500'], // Max length disesuaikan
-            'ikks.*.id_ikk' => ['nullable', 'integer', 'exists:ikks,id_ikk'], // Untuk deteksi update
+            'ikks.*.nama_ikk' => ['required', 'string', 'max:500'], 
+            'ikks.*.id_ikk' => ['nullable', 'integer', 'exists:ikks,id_ikk'], // IKK ID still used internally or can be UUID later
         ], 
         [
-            'id_iku.required' => 'Silakan pilih IKU terlebih dahulu.',
+            'uuid_iku.required' => 'Silakan pilih IKU terlebih dahulu.',
             'ikks.min' => 'Minimal harus ada satu Indikator Kinerja Kegiatan (IKK).',
             'ikks.*.nama_ikk.required' => 'Nama kegiatan (IKK) tidak boleh kosong.',
         ]);
@@ -84,8 +84,8 @@ class IkuController extends Controller
         DB::beginTransaction();
 
         try {
-            $iku = Iku::findOrFail($validated['id_iku']); 
-            Log::debug('[IKU] Memproses data untuk IKU ID: ' . $iku->id_iku);
+            $iku = Iku::where('uuid', $validated['uuid_iku'])->firstOrFail(); 
+            Log::debug('[IKU] Memproses data untuk IKU UUID: ' . $iku->uuid);
 
             // Array untuk menampung ID IKK yang diproses (untuk keperluan sync/delete)
             $processedIkkIds = [];

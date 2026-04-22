@@ -10,11 +10,11 @@ import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 
 export default function ApprovalModal({ show, onClose, rkat }) {
     // Determine the type of action selected visually
-    const [actionType, setActionType] = useState('Setuju'); 
+    const [actionType, setActionType] = useState('Setuju');
 
     // Initialize Inertia form
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
-        aksi: 'Setuju', 
+        aksi: 'Setuju',
         catatan: '',
     });
 
@@ -31,7 +31,7 @@ export default function ApprovalModal({ show, onClose, rkat }) {
         setActionType(type);
         setData('aksi', type);
         clearErrors('aksi');
-        
+
         // If changing to Setuju, clear the notes since they aren't required
         if (type === 'Setuju') {
             setData('catatan', '');
@@ -41,15 +41,15 @@ export default function ApprovalModal({ show, onClose, rkat }) {
 
     const submit = (e) => {
         e.preventDefault();
-        
+
         // Final sanity check before submission
         if ((actionType === 'Revisi' || actionType === 'Tolak') && !data.catatan.trim()) {
             // Inertia will usually handle this via backend validation, 
             // but providing frontend feedback is faster.
-            return; 
+            return;
         }
 
-        post(route('approval.process', rkat.id_header), {
+        post(route('approval.process', rkat.uuid), {
             preserveScroll: true,
             onSuccess: () => {
                 reset();
@@ -74,11 +74,10 @@ export default function ApprovalModal({ show, onClose, rkat }) {
                         <button
                             type="button"
                             onClick={() => handleActionSelect('Setuju')}
-                            className={`flex flex-col items-center justify-center p-4 border rounded-xl transition-all duration-200 ${
-                                actionType === 'Setuju' 
-                                ? 'bg-green-50 border-green-500 text-green-700 shadow-sm ring-1 ring-green-500 dark:bg-green-900/30 dark:border-green-400 dark:text-green-300' 
-                                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700'
-                            }`}
+                            className={`flex flex-col items-center justify-center p-4 border rounded-xl transition-all duration-200 ${actionType === 'Setuju'
+                                    ? 'bg-green-50 border-green-500 text-green-700 shadow-sm ring-1 ring-green-500 dark:bg-green-900/30 dark:border-green-400 dark:text-green-300'
+                                    : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700'
+                                }`}
                         >
                             <CheckCircle size={28} className="mb-2" />
                             <span className="text-sm font-bold">Setujui</span>
@@ -88,11 +87,10 @@ export default function ApprovalModal({ show, onClose, rkat }) {
                         <button
                             type="button"
                             onClick={() => handleActionSelect('Revisi')}
-                            className={`flex flex-col items-center justify-center p-4 border rounded-xl transition-all duration-200 ${
-                                actionType === 'Revisi' 
-                                ? 'bg-yellow-50 border-yellow-500 text-yellow-700 shadow-sm ring-1 ring-yellow-500 dark:bg-yellow-900/30 dark:border-yellow-400 dark:text-yellow-300' 
-                                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700'
-                            }`}
+                            className={`flex flex-col items-center justify-center p-4 border rounded-xl transition-all duration-200 ${actionType === 'Revisi'
+                                    ? 'bg-yellow-50 border-yellow-500 text-yellow-700 shadow-sm ring-1 ring-yellow-500 dark:bg-yellow-900/30 dark:border-yellow-400 dark:text-yellow-300'
+                                    : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700'
+                                }`}
                         >
                             <AlertTriangle size={28} className="mb-2" />
                             <span className="text-sm font-bold">Revisi</span>
@@ -102,11 +100,10 @@ export default function ApprovalModal({ show, onClose, rkat }) {
                         <button
                             type="button"
                             onClick={() => handleActionSelect('Tolak')}
-                            className={`flex flex-col items-center justify-center p-4 border rounded-xl transition-all duration-200 ${
-                                actionType === 'Tolak' 
-                                ? 'bg-red-50 border-red-500 text-red-700 shadow-sm ring-1 ring-red-500 dark:bg-red-900/30 dark:border-red-400 dark:text-red-300' 
-                                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700'
-                            }`}
+                            className={`flex flex-col items-center justify-center p-4 border rounded-xl transition-all duration-200 ${actionType === 'Tolak'
+                                    ? 'bg-red-50 border-red-500 text-red-700 shadow-sm ring-1 ring-red-500 dark:bg-red-900/30 dark:border-red-400 dark:text-red-300'
+                                    : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700'
+                                }`}
                         >
                             <XCircle size={28} className="mb-2" />
                             <span className="text-sm font-bold">Tolak</span>
@@ -118,20 +115,19 @@ export default function ApprovalModal({ show, onClose, rkat }) {
                 {/* TEXTAREA CATATAN: Only shows if Revisi or Tolak is selected */}
                 {actionType !== 'Setuju' && (
                     <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-200 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700">
-                        <InputLabel 
-                            htmlFor="catatan" 
-                            value={`Catatan ${actionType} (Wajib diisi)`} 
-                            className={`font-semibold mb-1 ${actionType === 'Revisi' ? 'text-yellow-700 dark:text-yellow-500' : 'text-red-700 dark:text-red-500'}`} 
+                        <InputLabel
+                            htmlFor="catatan"
+                            value={`Catatan ${actionType} (Wajib diisi)`}
+                            className={`font-semibold mb-1 ${actionType === 'Revisi' ? 'text-yellow-700 dark:text-yellow-500' : 'text-red-700 dark:text-red-500'}`}
                         />
                         <textarea
                             id="catatan"
                             value={data.catatan}
                             onChange={(e) => setData('catatan', e.target.value)}
-                            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm dark:bg-gray-900 dark:text-gray-100 transition-colors ${
-                                errors.catatan 
-                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                                : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600'
-                            }`}
+                            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm dark:bg-gray-900 dark:text-gray-100 transition-colors ${errors.catatan
+                                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                    : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600'
+                                }`}
                             rows="4"
                             placeholder={actionType === 'Revisi' ? "Tuliskan bagian mana saja yang perlu diperbaiki oleh unit..." : "Tuliskan alasan utama mengapa pengajuan ini ditolak secara permanen..."}
                             required={actionType !== 'Setuju'}
@@ -143,7 +139,7 @@ export default function ApprovalModal({ show, onClose, rkat }) {
                 {/* FOOTER ACTIONS */}
                 <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
                     <SecondaryButton onClick={onClose} disabled={processing}>Batal</SecondaryButton>
-                    
+
                     {actionType === 'Setuju' && (
                         <PrimaryButton disabled={processing} className="bg-green-600 hover:bg-green-700 focus:ring-green-500 text-white border border-transparent">
                             {processing ? 'Memproses...' : 'Proses Persetujuan'}
@@ -156,7 +152,7 @@ export default function ApprovalModal({ show, onClose, rkat }) {
                     )}
                     {actionType === 'Tolak' && (
                         <DangerButton disabled={processing}>
-                             {processing ? 'Menolak...' : 'Tolak Pengajuan'}
+                            {processing ? 'Menolak...' : 'Tolak Pengajuan'}
                         </DangerButton>
                     )}
                 </div>

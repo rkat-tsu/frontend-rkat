@@ -1,27 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
-import PrimaryButton from '@/Components/PrimaryButton';
+//import PrimaryButton from '@/Components/PrimaryButton';
 import InputError from '@/Components/InputError';
 import TextArea from '@/Components/TextArea';
 import RupiahInput from '@/Components/RupiahInput';
 import DateInput from '@/Components/DateInput';
-import DangerButton from '@/Components/DangerButton';
-import { Plus, Trash2, Save, ArrowLeft, Calculator, ChevronDown, Check } from 'lucide-react';
-import { cn } from "@/lib/utils";
-
-// --- IMPORT COMPONENT CUSTOM SELECT ---
+import { Plus, Trash2, Save, ArrowLeft, Calculator } from 'lucide-react';
+//import { cn } from "@/lib/utils";
 import CustomSelect from '@/Components/CustomSelect';
+import {
+    Combobox,
+    ComboboxChip,
+    ComboboxChips,
+    ComboboxChipsInput,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxItem,
+    ComboboxList,
+    ComboboxValue,
+    useComboboxAnchor,
+} from "@/components/ui/combobox"
+import { toast } from 'sonner';
 
-// --- UTILITY ---
 const formatRupiah = (angka) => {
     const number = Number(angka) || 0;
     return `Rp. ${number.toLocaleString('id-ID', { minimumFractionDigits: 0 })}`;
 };
-
-// --- MAIN COMPONENT ---
 export default function Create({ auth, tahunAnggarans, units, akunAnggarans, ikus }) {
 
     // Initial States
@@ -46,7 +53,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
     };
 
     // Setup Form
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, isDirty } = useForm({
         // 1. Header
         tahun_anggaran: '',
         id_unit: auth.user.id_unit || '',
@@ -73,6 +80,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
         target: '',
         pjawab: '',
         jenis_kegiatan: 'Rutin',
+        dokumen_pendukung: [],
 
         // 6. Keuangan
         anggaran: 0,
@@ -191,17 +199,66 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
         setData(prev => ({ ...prev, rincian_anggaran: list, anggaran: totalAnggaranBaru }));
     };
 
+    const handleBack = () => {
+        if (isDirty) {
+            toast.warning("Konfirmasi Batal", {
+                description: "Anda memiliki draf pengajuan RKAT yang belum disimpan. Yakin ingin kembali? Semua input akan hilang.",
+                action: {
+                    label: "Ya, Kembali",
+                    onClick: () => router.get(route('rkat.index'))
+                },
+                cancel: {
+                    label: "Batal"
+                }
+            });
+        } else {
+            router.get(route('rkat.index'));
+        }
+    };
+
     const submit = (e) => {
         e.preventDefault();
-        console.log("🚀 SUBMITTING DATA:", data);
 
-        post(route('rkat.store'), {
-            onSuccess: () => { console.log("Data berhasil dikirim!"); },
-            onError: (err) => {
-                console.error("Validation Error:", err);
-                if (err.kode_akun) alert("Error: Kode Akun otomatis belum terisi.");
-                else if (err.jenis_kegiatan) alert("Error: Jenis Kegiatan wajib dipilih.");
-                else alert("Terdapat kesalahan input. Periksa form yang berwarna merah.");
+        // Validasi: pastikan semua field dasar terisi
+        if (
+            !data.tahun_anggaran || !data.id_unit || !data.judul_pengajuan ||
+            !data.deskripsi_kegiatan || !data.latar_belakang || !data.tujuan ||
+            !data.rasional || !data.mekanisme || !data.jadwal_pelaksanaan_mulai ||
+            !data.jadwal_pelaksanaan_akhir || !data.lokasi_pelaksanaan ||
+            !data.pjawab || !data.target || !data.jenis_kegiatan || !data.iku_id || !data.ikk_id || data.dokumen_pendukung.length === 0
+        ) {
+            toast.error("Gagal Menyimpan", { description: "Semua form input wajib diisi." });
+            return;
+        }
+
+        if (data.rincian_anggaran.length === 0 || data.anggaran === 0) {
+            toast.error("Gagal Menyimpan", { description: "Rincian anggaran belum diisi atau total anggaran masih 0." });
+            return;
+        }
+
+        // Peringatan sebelum menyimpan
+        toast("Konfirmasi Simpan", {
+            description: `Yakin ingin menyimpan pengajuan RKAT ini? Total anggaran dari rincian anggaran yang dipilih adalah ${formatRupiah(data.anggaran)}.`,
+            action: {
+                label: "Ya, Simpan",
+                onClick: () => {
+                    const toastId = toast.loading("Sedang menyimpan data...");
+                    post(route('rkat.store'), {
+                        onSuccess: () => {
+                            toast.success("Berhasil disimpan!", { id: toastId, description: "Pengajuan RKAT telah berhasil disimpan." });
+                        },
+                        onError: (err) => {
+                            console.error("Validation Error:", err);
+                            toast.error("Gagal Menyimpan", {
+                                id: toastId,
+                                description: "Terdapat kesalahan input. Periksa form yang berwarna merah."
+                            });
+                        }
+                    });
+                }
+            },
+            cancel: {
+                label: "Batal"
             }
         });
     };
@@ -211,6 +268,9 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
     const unitOptions = units.map(u => ({ value: u.id_unit, label: `${u.kode_unit} - ${u.nama_unit}` }));
     const ikuOptions = ikus.map(i => ({ value: i.id_iku, label: i.nama_iku }));
     const akunOptions = akunAnggarans.map(a => ({ value: a.kode_anggaran, label: `${a.kode_anggaran} - ${a.nama_anggaran}` }));
+
+    const dokumenPendukungList = ['Pengajuan Rutin', 'Proposal', 'TOR', 'Usulan'];
+    const anchor = useComboboxAnchor();
 
     return (
         <AuthenticatedLayout
@@ -234,7 +294,14 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                 </div>
                                 <div>
                                     <InputLabel value="Unit Kerja" required />
-                                    <CustomSelect value={data.id_unit} onChange={(e) => setData('id_unit', e.target.value)} options={unitOptions} placeholder="Pilih Unit" disabled={auth.user.peran !== 'Admin'} className="mt-1" />
+                                    <CustomSelect 
+                                        value={data.id_unit} 
+                                        onChange={(e) => setData('id_unit', e.target.value)} 
+                                        options={auth.user.peran === 'Admin' ? unitOptions : unitOptions.filter(u => String(u.value) === String(auth.user.id_unit))} 
+                                        placeholder="Pilih Unit" 
+                                        disabled={auth.user.peran !== 'Admin'} 
+                                        className="mt-1" 
+                                    />
                                     <InputError message={errors.id_unit} className="mt-2" />
                                 </div>
 
@@ -379,6 +446,42 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                         />
                                         <InputError message={errors.jenis_kegiatan} className="mt-2" />
                                     </div>
+                                    <div className="md:col-span-3">
+                                        <InputLabel value="Dokumen Pendukung" required />
+                                        <div className="mt-1">
+                                            <Combobox
+                                                multiple
+                                                autoHighlight
+                                                items={dokumenPendukungList}
+                                                value={data.dokumen_pendukung}
+                                                onValueChange={(val) => setData('dokumen_pendukung', val)}
+                                            >
+                                                <ComboboxChips ref={anchor}>
+                                                    <ComboboxValue>
+                                                        {(values) => (
+                                                            <React.Fragment>
+                                                                {values.map((value) => (
+                                                                    <ComboboxChip key={value}>{value}</ComboboxChip>
+                                                                ))}
+                                                                <ComboboxChipsInput placeholder="Pilih Dokumen..." />
+                                                            </React.Fragment>
+                                                        )}
+                                                    </ComboboxValue>
+                                                </ComboboxChips>
+                                                <ComboboxContent anchor={anchor}>
+                                                    <ComboboxEmpty>Tidak ditemukan.</ComboboxEmpty>
+                                                    <ComboboxList>
+                                                        {dokumenPendukungList.map((item) => (
+                                                            <ComboboxItem key={item} value={item}>
+                                                                {item}
+                                                            </ComboboxItem>
+                                                        ))}
+                                                    </ComboboxList>
+                                                </ComboboxContent>
+                                            </Combobox>
+                                        </div>
+                                        <InputError message={errors.dokumen_pendukung} className="mt-2" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -390,9 +493,9 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                 <div><InputLabel value="IKU" required /><CustomSelect value={data.iku_id} onChange={(e) => setData(prev => ({ ...prev, iku_id: e.target.value, ikk_id: '' }))} options={ikuOptions} placeholder="Pilih IKU" className="mt-1" /><InputError message={errors.iku_id} className="mt-2" /></div>
                                 <div><InputLabel value="IKK" required /><CustomSelect value={data.ikk_id} onChange={(e) => setData('ikk_id', e.target.value)} options={filteredIkks} placeholder="Pilih IKK" disabled={!data.iku_id} className="mt-1" /><InputError message={errors.ikk_id} className="mt-2" /></div>
                             </div>
-                            <div className="overflow-x-auto border rounded-lg mb-4">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
+                            <div className="overflow-x-auto rounded-lg mb-4">
+                                <table className="min-w-full">
+                                    <thead className="bg-gray-50 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300">
                                         <tr>
                                             <th className="px-2 py-3 text-xs text-center">No</th>
                                             <th className="px-4 py-3 text-xs text-left min-w-[200px]">Indikator</th>
@@ -404,9 +507,9 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                             <th></th>
                                         </tr>
                                     </thead>
-                                    <tbody className="bg-white divide-y">
+                                    <tbody className="bg-white dark:bg-gray-800">
                                         {data.indikator_kinerja.map((item, index) => (
-                                            <tr key={item.id}>
+                                            <tr key={item.id} className="hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors">
                                                 <td className="px-2 py-3 text-sm text-center align-top pt-4">{index + 1}</td>
                                                 <td className="p-2 align-top"><TextArea value={item.indikator} onChange={(e) => handleIndikatorChange(index, 'indikator', e.target.value)} className="w-full text-sm min-h-[80px]" rows="3" placeholder="Indikator..." /></td>
                                                 <td className="p-2 align-top"><TextArea value={item.kondisi_akhir_2024_capaian} onChange={(e) => handleIndikatorChange(index, 'kondisi_akhir_2024_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
@@ -414,7 +517,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                                 <td className="p-2 align-top"><TextArea value={item.tahun_2025_capaian} onChange={(e) => handleIndikatorChange(index, 'tahun_2025_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
                                                 <td className="p-2 align-top"><TextArea value={item.akhir_tahun_2029_target} onChange={(e) => handleIndikatorChange(index, 'akhir_tahun_2029_target', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
                                                 <td className="p-2 align-top"><TextArea value={item.akhir_tahun_2029_capaian} onChange={(e) => handleIndikatorChange(index, 'akhir_tahun_2029_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                <td className="p-2 pt-4 align-top"><DangerButton type="button" onClick={() => removeIndikatorRow(item.id)} className="p-1 h-8 w-8 flex justify-center items-center rounded-full"><Trash2 className="w-4 h-4" /></DangerButton></td>
+                                                <td className="p-2 pt-4 align-top"><button type="button" onClick={() => removeIndikatorRow(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"><Trash2 size={16} /></button></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -425,10 +528,10 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
 
                         {/* --- 4. RAB --- */}
                         <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-yellow-500">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b">4. Rincian Anggaran Belanja (RAB)</h3>
-                            <div className="overflow-x-auto rounded-lg border border-gray-200 mb-4">
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">4. Rincian Anggaran Belanja (RAB)</h3>
+                            <div className="overflow-x-auto rounded-lg mb-4">
                                 <table className="w-full text-xs text-left">
-                                    <thead className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-400 font-bold uppercase">
+                                    <thead className="bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 font-bold uppercase">
                                         <tr>
                                             <th className="px-2 py-2 w-8 text-center">No</th>
                                             <th className="px-2 py-2 w-[30%] min-w-[250px]">Standar Biaya Operasional</th>
@@ -440,26 +543,59 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                             <th className="px-2 py-2 w-8"></th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-200">
+                                    <tbody className="">
                                         {data.rincian_anggaran.map((item, index) => (
-                                            <tr key={item.id} className="bg-white hover:bg-gray-50 transition-colors">
-                                                <td className="px-2 py-1 text-center font-medium text-gray-500 align-middle">{index + 1}</td>
+                                            <tr key={item.id} className="bg-white dark:bg-gray-800 hover:bg-yellow-50 dark:hover:bg-yellow-900/30 transition-colors">
+                                                <td className="px-2 py-1 text-center font-medium text-gray-500 dark:text-gray-400 align-middle">{index + 1}</td>
                                                 <td className="px-2 py-1 align-middle">
-                                                    <CustomSelect value={item.kode_anggaran} onChange={(e) => handleRincianChange(index, 'kode_anggaran', e.target.value)} options={akunOptions} placeholder="- Pilih Akun -" className="w-full h-9 text-xs" />
+                                                    <CustomSelect
+                                                        value={item.kode_anggaran}
+                                                        onChange={(e) => handleRincianChange(index, 'kode_anggaran', e.target.value)}
+                                                        options={akunOptions}
+                                                        placeholder="Pilih "
+                                                        className="w-full h-9 text-xs"
+                                                    />
                                                 </td>
-                                                <td className="px-2 py-1 align-middle"><TextInput value={item.kebutuhan} onChange={(e) => handleRincianChange(index, 'kebutuhan', e.target.value)} className="w-full h-9 text-xs px-2" placeholder="Deskripsi..." /></td>
-                                                <td className="px-2 py-1 align-middle"><TextInput type="number" value={item.vol} onChange={(e) => handleRincianChange(index, 'vol', e.target.value)} className="w-full h-9 text-xs text-center px-1" min="1" placeholder="0" /></td>
-                                                <td className="px-2 py-1 align-middle"><TextInput value={item.satuan} onChange={(e) => handleRincianChange(index, 'satuan', e.target.value)} className="w-full h-9 text-xs text-center px-1" placeholder="Pkt" /></td>
+                                                <td className="px-2 py-1 align-middle">
+                                                    <TextInput
+                                                        value={item.kebutuhan}
+                                                        onChange={(e) => handleRincianChange(index, 'kebutuhan', e.target.value)}
+                                                        className="w-full h-9 text-xs px-2"
+                                                        placeholder="Deskripsi..."
+                                                    />
+                                                </td>
+                                                <td className="px-2 py-1 align-middle">
+                                                    <TextInput
+                                                        type="number"
+                                                        value={item.vol}
+                                                        onChange={(e) => handleRincianChange(index, 'vol', e.target.value)}
+                                                        className="w-full h-9 text-xs text-center px-1"
+                                                        min="1"
+                                                        placeholder="0"
+                                                    />
+                                                </td>
+                                                <td className="px-2 py-1 align-middle">
+                                                    <TextInput
+                                                        value={item.satuan}
+                                                        onChange={(e) => handleRincianChange(index, 'satuan', e.target.value)}
+                                                        className="w-full h-9 text-xs text-center px-1"
+                                                        placeholder="Paket"
+                                                    />
+                                                </td>
                                                 <td className="px-2 py-1 align-middle">
                                                     <div className="flex flex-col">
-                                                        <RupiahInput value={item.biaya_satuan} onValueChange={(val) => handleRincianChange(index, 'biaya_satuan', val)} className="w-full h-9 text-xs text-right px-2" />
+                                                        <RupiahInput
+                                                            value={item.biaya_satuan}
+                                                            onValueChange={(val) => handleRincianChange(index, 'biaya_satuan', val)}
+                                                            className="w-full h-9 text-xs text-right px-2"
+                                                        />
                                                         {item.kode_anggaran && (() => {
                                                             const akun = akunAnggarans.find(a => String(a.kode_anggaran) === String(item.kode_anggaran));
                                                             return akun ? <span className="text-[10px] text-gray-400 text-right mt-0.5">Max: {formatRupiah(akun.nominal)}</span> : null;
                                                         })()}
                                                     </div>
                                                 </td>
-                                                <td className="px-2 py-1 text-right font-semibold text-gray-700 align-middle">{formatRupiah(item.jumlah)}</td>
+                                                <td className="px-2 py-1 text-right font-semibold text-gray-700 dark:text-gray-200 align-middle">{formatRupiah(item.jumlah)}</td>
                                                 <td className="px-2 py-1 text-center align-middle">
                                                     <button type="button" onClick={() => removeRabItem(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"><Trash2 size={16} /></button>
                                                 </td>
@@ -471,8 +607,8 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                             <div className="flex justify-between items-end">
                                 <button type="button" onClick={addRabItem} className="flex items-center text-sm font-medium text-yellow-600 hover:text-yellow-700"><Plus size={16} className="mr-1" /> Tambah Item</button>
                                 <div className="flex flex-col items-end">
-                                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Total Estimasi</span>
-                                    <div className="text-xl font-bold text-gray-900 flex items-center"><Calculator className="w-4 h-4 mr-2 text-gray-400" />{formatRupiah(data.anggaran)}</div>
+                                    <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Total Estimasi</span>
+                                    <div className="text-xl font-bold text-gray-900 dark:text-white flex items-center"><Calculator className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />{formatRupiah(data.anggaran)}</div>
                                 </div>
                             </div>
                             <InputError message={errors.rincian_anggaran} className="mt-2" />
@@ -480,8 +616,8 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
 
                         {/* --- 5. PENCAIRAN --- */}
                         <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-green-500">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b">5. Metode Pencairan Dana</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-5 rounded-xl border">
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">5. Metode Pencairan Dana</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 dark:bg-gray-700/50 p-5 rounded-xl">
                                 <div>
                                     <InputLabel value="Metode" />
                                     <CustomSelect
@@ -526,22 +662,26 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                         </div>
 
                         {/* --- STICKY FOOTER --- */}
-                        <div className="sticky bottom-4 z-10 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border flex justify-between items-center">
-                            <Link
-                                href={route('dashboard')}
-                                className="text-gray-600 hover:text-gray-900 text-sm flex items-center px-4 py-2 hover:bg-gray-100 rounded-md">
+                        <div className="sticky bottom-4 z-10 bg-white/90 dark:bg-gray-900 backdrop-blur-sm p-4 rounded-xl shadow-lg flex justify-between items-center">
+                            <button
+                                type="button"
+                                onClick={handleBack}
+                                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 text-sm flex items-center px-4 py-2 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                            >
                                 <ArrowLeft size={16} className="mr-2" /> Kembali
-                            </Link>
+                            </button>
                             <div className="flex items-center gap-4">
                                 <div className="text-right hidden sm:block mr-4">
-                                    <p className="text-xs text-gray-500">Total Pengajuan</p>
-                                    <p className="text-sm font-bold text-teal-600">{formatRupiah(data.anggaran)}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Total Pengajuan</p>
+                                    <p className="text-sm font-bold text-teal-600 dark:text-teal-400">{formatRupiah(data.anggaran)}</p>
                                 </div>
-                                <PrimaryButton
+                                <button
+                                    type="submit"
                                     disabled={processing}
-                                    className="px-6 py-3 shadow-teal-200">
+                                    className="inline-flex items-center justify-center px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-md shadow-lg shadow-teal-200/50 dark:shadow-teal-900/50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50"
+                                >
                                     <Save size={18} className="mr-2" /> Simpan Pengajuan
-                                </PrimaryButton>
+                                </button>
                             </div>
                         </div>
                     </form>

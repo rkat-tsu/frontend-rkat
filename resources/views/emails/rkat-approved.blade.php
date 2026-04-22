@@ -1,32 +1,26 @@
 @component('mail::message')
-# ✅ RKAT Anda Telah Disetujui!
+# RKAT Disetujui
 
-Yth. **{{ $rkatHeader->pengaju->nama_lengkap ?? 'Bapak/Ibu' }}**,
+Yth. **{{ $rkatHeader->user->nama_lengkap ?? 'Bapak/Ibu' }}**,
 
-Kami dengan senang hati menginformasikan bahwa pengajuan Rencana Kegiatan dan Anggaran Tahunan (RKAT) Anda: **"{{ $judul }}"** telah **DISETUJUI** pada level **{{ $level_persetujuan ?? 'Manajemen' }}** oleh **{{ $approver }}**.
+Kami menginformasikan bahwa pengajuan Rencana Kegiatan dan Anggaran Tahunan (RKAT) Anda dengan judul: **"{{ $judul ?? '-' }}"** telah **DISETUJUI** oleh **{{ $approver ?? 'Atasan terkait' }}** pada tahap **{{ str_replace('_', ' ', $rkatHeader->status_persetujuan) }}**.
 
----
-
-### 📋 Detail Proses Persetujuan
-
-| Informasi | Keterangan |
+@component('mail::table')
+| Detail | Keterangan |
 | :--- | :--- |
-| **Nomor/Judul RKAT** | {{ $judul }} |
-| **Unit Kerja** | {{ $departemen }} |
-| **Disetujui Oleh** | {{ $approver }} |
-| **Status Saat Ini** | **DISETUJUI** (Menunggu Proses Selanjutnya) |
-
-### ➡️ Tindak Lanjut
-
-Kami mohon agar Anda segera memantau status persetujuan ini di sistem. Dokumen akan diteruskan ke peninjau (reviewer) pada level berikutnya dalam alur kerja (workflow).
-
-@component('mail::button', ['url' => url('/rkat/' . $headerId), 'color' => 'success'])
-**Lihat Detail & Riwayat Persetujuan**
+| **Nomor Dokumen** | {{ $rkatHeader->nomor_dokumen }} |
+| **Unit Kerja** | {{ $unit ?? '-' }} |
+| **Total Anggaran** | Rp {{ number_format($rkatHeader->total_anggaran, 0, ',', '.') }} |
+| **Status Saat Ini** | **{{ str_replace('_', ' ', $rkatHeader->status_persetujuan) }}** |
+| **Disetujui Oleh** | {{ $approver ?? '-' }} |
 @endcomponent
 
-Terima kasih atas kerja keras dan kontribusi Anda dalam perencanaan anggaran ini.
+@component('mail::button', ['url' => route('rkat.show', $rkatHeader->id_header), 'color' => 'teal'])
+Lihat Detail Pengajuan
+@endcomponent
 
-Salam Hormat,
+Silakan pantau status pengajuan Anda melalui dashboard sistem untuk melihat riwayat persetujuan atau langkah selanjutnya yang diperlukan.
 
-Tim Administrasi **{{ config('app.name') }}**
+Terima kasih,<br>
+Tim IT {{ config('app.name') }}
 @endcomponent

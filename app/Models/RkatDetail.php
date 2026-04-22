@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class RkatDetail extends Model
 {
@@ -59,11 +60,6 @@ class RkatDetail extends Model
         return $this->belongsTo(Iku::class, 'id_iku', 'id_iku');
     }
 
-    public function ikuSub()
-    {
-        return $this->belongsTo(IkuSub::class, 'id_ikusub', 'id_ikusub');
-    }
-
     public function ikk()
     {
         return $this->belongsTo(Ikk::class, 'id_ikk', 'id_ikk');
@@ -85,5 +81,21 @@ class RkatDetail extends Model
     public function rabItems()
     {
         return $this->hasMany(RkatRabItem::class, 'id_rkat_detail', 'id_rkat_detail');
+    }
+    
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->uuid)) {
+                $model->uuid = (string) Str::uuid();
+            }
+        });
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'uuid';
     }
 }

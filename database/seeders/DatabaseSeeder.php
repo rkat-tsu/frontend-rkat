@@ -4,8 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Unit;
-use App\Models\TahunAnggaran;
-use App\Models\RincianAnggaran;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
@@ -26,9 +24,6 @@ class DatabaseSeeder extends Seeder
             UnitSeeder::class,
             IkuSeeder::class,
             RincianAnggaranSeeder::class,
-            SboKategoriSeeder::class,
-            SboItemSeeder::class,
-            SboTarifSeeder::class,
         ]);
 
         // Ensure a default unit exists for seeded admin user

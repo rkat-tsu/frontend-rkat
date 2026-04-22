@@ -49,26 +49,16 @@ class TahunAnggaranController extends Controller
         return Redirect::route('tahun.index')->with('success', 'Tahun Anggaran berhasil ditambahkan.');
     }
 
-    public function edit($id)
+    public function edit(TahunAnggaran $tahun)
     {
-        $tahun = TahunAnggaran::where('tahun_anggaran', $id)->firstOrFail();
-
         return Inertia::render('Admin/TahunAnggaran/Edit', [
             'tahun' => $tahun,
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, TahunAnggaran $tahun)
     {
-        Log::info('[TahunAnggaran] Request Update ID: '.$id);
-
-        $tahun = TahunAnggaran::where('id_tahun', $id)->first();
-
-        if (! $tahun) {
-            Log::error('[TahunAnggaran] Data tidak ditemukan untuk ID: '.$id);
-
-            return Redirect::back()->with('error', 'Gagal update: Data tahun anggaran tidak ditemukan.');
-        }
+        Log::info('[TahunAnggaran] Request Update UUID: '.$tahun->uuid);
 
         $validated = $request->validate([
             'tanggal_mulai' => 'required|date',
@@ -83,17 +73,10 @@ class TahunAnggaranController extends Controller
         return Redirect::route('tahun.index')->with('success', 'Tahun Anggaran berhasil diperbarui.');
     }
 
-    public function destroy($id)
+    public function destroy(TahunAnggaran $tahun)
     {
-        // Cari manual juga untuk delete
-        $tahun = TahunAnggaran::where('id_tahun', $id)->first();
+        $tahun->delete();
 
-        if ($tahun) {
-            $tahun->delete();
-
-            return Redirect::route('tahun.index')->with('success', 'Data berhasil dihapus.');
-        }
-
-        return Redirect::back()->with('error', 'Gagal menghapus: Data tidak ditemukan.');
+        return Redirect::route('tahun.index')->with('success', 'Data berhasil dihapus.');
     }
 }

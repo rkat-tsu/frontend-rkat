@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import InputError from '@/Components/InputError';
 import CustomSelect from '@/Components/CustomSelect'; 
 import { Building2, Save, ArrowLeft, Settings2, UserCircle, Phone, Mail } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Create({ auth, users, units }) {
     // 1. SETUP FORM: Sesuai Controller Store Method
@@ -23,7 +24,17 @@ export default function Create({ auth, users, units }) {
 
     const submit = (e) => {
         e.preventDefault();
-        post(route('unit.store'));
+
+        if (!data.kode_unit || !data.nama_unit || !data.tipe_unit || !data.jalur_persetujuan) {
+            toast.error("Peringatan", { description: "Semua form bertanda * wajib diisi." });
+            return;
+        }
+
+        const toastId = toast.loading("Sedang menyimpan data...");
+        post(route('unit.store'), {
+            onSuccess: () => toast.success("Berhasil", { id: toastId, description: "Unit Kerja baru berhasil ditambahkan." }),
+            onError: () => toast.error("Gagal Menyimpan", { id: toastId, description: "Terdapat kesalahan saat menyimpan data." })
+        });
     };
 
     // 2. OPSI DROPDOWN (Sesuai Validasi Controller)

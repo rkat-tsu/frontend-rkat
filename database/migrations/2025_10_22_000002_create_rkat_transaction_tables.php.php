@@ -35,12 +35,16 @@ return new class extends Migration
                 'Disetujui_L1',
                 'Menunggu_WR1', 'Menunggu_WR2', 'Menunggu_WR3',
                 'Disetujui_WR1', 'Disetujui_WR2', 'Disetujui_WR3',
-                'Disetujui_Final'
+                'Disetujui_Final',
+                'History_Revisi'
             ])->default('Draft');
             
             $table->datetime('tanggal_pengajuan')->nullable();
             $table->text('catatan_revisi')->nullable();
             $table->decimal('total_anggaran', 15, 2)->default(0);
+
+            $table->unsignedBigInteger('parent_id')->nullable();
+            $table->foreign('parent_id')->references('id_header')->on('rkat_headers')->onDelete('cascade');
             
             $table->timestamps();
         });
@@ -76,6 +80,7 @@ return new class extends Migration
             $table->string('pjawab')->nullable(); 
             
             $table->enum('jenis_kegiatan', ['Rutin', 'Inovasi'])->default('Rutin');
+            $table->json('dokumen_pendukung')->nullable();
             
             $table->decimal('anggaran', 15, 2)->default(0);
 

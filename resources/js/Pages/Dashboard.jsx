@@ -126,11 +126,11 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                                 <CardHeader className="pb-2">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <CardTitle className="flex items-center gap-2 text-lg">
+                                            <CardTitle className="flex items-center gap-2 text-lg text-gray-900 dark:text-white">
                                                 <Activity className="h-5 w-5 text-indigo-500" />
                                                 Tren Pengajuan RKAT
                                             </CardTitle>
-                                            <CardDescription className="mt-1">
+                                            <CardDescription className="mt-1 text-gray-500 dark:text-gray-400">
                                                 Statistik pengajuan dokumen per bulan pada tahun anggaran {tahunAnggaran}
                                             </CardDescription>
                                         </div>
@@ -157,18 +157,20 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                                                         axisLine={false}
                                                         tickMargin={12}
                                                         tickFormatter={(value) => value.slice(0, 3)}
-                                                        className="text-xs font-medium text-gray-500"
+                                                        className="text-xs font-medium text-gray-500 dark:text-gray-100 fill-gray-500 dark:fill-gray-100"
+                                                        tick={{ fill: 'currentColor' }}
                                                     />
                                                     <YAxis 
                                                         tickLine={false} 
                                                         axisLine={false} 
                                                         tickMargin={12} 
                                                         allowDecimals={false}
-                                                        className="text-xs font-medium text-gray-500"
+                                                        className="text-xs font-medium text-gray-500 dark:text-gray-100 fill-gray-500 dark:fill-gray-100"
+                                                        tick={{ fill: 'currentColor' }}
                                                     />
                                                     <ChartTooltip 
                                                         cursor={{ stroke: 'rgba(99, 102, 241, 0.2)', strokeWidth: 2 }} 
-                                                        content={<ChartTooltipContent indicator="dot" className="rounded-xl shadow-lg border-gray-100 dark:border-gray-700" />} 
+                                                        content={<ChartTooltipContent indicator="dot" className="rounded-xl shadow-lg border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />} 
                                                     />
                                                     <Area
                                                         dataKey="desktop"
@@ -183,7 +185,7 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                                         </ChartContainer>
                                     </div>
                                 </CardContent>
-                                <CardFooter className="pt-0 pb-6 border-t border-gray-50 dark:border-gray-800 mt-auto">
+                                <CardFooter className="pt-0 pb-6 mt-auto">
                                     <div className="flex w-full items-center justify-between text-sm pt-4">
                                         <div className="flex items-center gap-2 font-medium text-gray-700 dark:text-gray-300">
                                             Data Real-time <TrendingUp className="h-4 w-4 text-emerald-500" />
@@ -205,8 +207,8 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                                     <PieChart size={100} />
                                 </div>
                                 <CardHeader>
-                                    <CardTitle className="text-lg">Aksi Cepat</CardTitle>
-                                    <CardDescription>Akses menu yang sering digunakan.</CardDescription>
+                                    <CardTitle className="text-lg text-gray-900 dark:text-white">Aksi Cepat</CardTitle>
+                                    <CardDescription className="text-gray-500 dark:text-gray-400">Akses menu yang sering digunakan.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-3 relative z-10">
                                     
@@ -216,8 +218,8 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                                         className="group flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-teal-200 dark:hover:border-teal-800 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all"
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg group-hover:bg-white dark:group-hover:bg-gray-700 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
-                                                <FileText size={18} />
+                                            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg group-hover:bg-white dark:group-hover:bg-gray-700 transition-colors">
+                                                <FileText size={18} className='group-hover:text-teal-600 dark:group-hover:text-teal-400 text-gray-500 dark:text-gray-400'/>
                                             </div>
                                             <div>
                                                 <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Daftar RKAT</p>
@@ -235,7 +237,7 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg group-hover:bg-white dark:group-hover:bg-gray-700 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                                    <CheckCircle size={18} />
+                                                    <CheckCircle size={18} className='group-hover:text-indigo-600 dark:group-hover:text-indigo-400 text-gray-500 dark:text-gray-400' />
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Persetujuan</p>

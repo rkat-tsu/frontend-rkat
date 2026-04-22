@@ -3,7 +3,7 @@ import { Link, usePage } from '@inertiajs/react';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import {
     LayoutDashboard, FileText, ListChecks, LayoutList, Monitor, BookPlus, BookOpenText,
-    CalendarCog, ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight, 
+    CalendarCog, ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight,
     Users, Settings, Building2
 } from 'lucide-react';
 import {
@@ -23,7 +23,7 @@ const navItems = [
     { name: 'Persetujuan', href: '/approval', icon: ListChecks, activePath: '/approval' },
     { name: 'Monitoring', href: '/monitoring', icon: Monitor, activePath: '/monitoring' },
     {
-        name: 'Daftar Unit Kerja', 
+        name: 'Daftar Unit Kerja',
         icon: Building2,
         activePath: '/unit', // Trigger aktif jika anak-anaknya aktif
         children: [
@@ -37,7 +37,7 @@ const navItems = [
 function Sidebar({ auth, isMinimized, toggleMinimize }) {
     const { url } = usePage();
     const currentPath = url;
-    
+
     // State untuk Accordion Menu
     const [openMenus, setOpenMenus] = useState({});
 
@@ -47,16 +47,16 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
 
     const NavItem = ({ item, isChild = false }) => {
         const hasChildren = item.children && item.children.length > 0;
-        
+
         // Cek status aktif
-        const isActive = item.href 
-            ? currentPath.startsWith(item.activePath) && item.activePath !== '/' 
+        const isActive = item.href
+            ? currentPath.startsWith(item.activePath) && item.activePath !== '/'
             : hasChildren && item.children.some(ch => currentPath.startsWith(ch.activePath));
 
         // Logic buka/tutup otomatis
         const isOpen = openMenus[item.name] || (isActive && !openMenus.hasOwnProperty(item.name) && !isMinimized);
 
-        const baseClasses = "flex items-center transition-all duration-200 ease-in-out w-full whitespace-nowrap overflow-hidden relative cursor-pointer outline-none focus:outline-none";
+        const baseClasses = "rounded-r-full flex items-center transition-all duration-200 ease-in-out w-full whitespace-nowrap overflow-hidden relative cursor-pointer outline-none focus:outline-none";
         const padding = isChild ? 'pl-11 pr-3 py-2 text-sm' : 'px-4 py-3 rounded-xl my-1';
         const activeClasses = 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 font-bold shadow-sm ring-1 ring-teal-100 dark:ring-teal-800';
         const inactiveClasses = "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200";
@@ -64,7 +64,7 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
         const content = (
             <>
                 {!isChild && isActive && !isMinimized && (
-                    <div className="absolute left-0 h-6 w-1 bg-teal-500 rounded-r-full" />
+                    <div className="absolute left-0 h-6 w-1 bg-teal-500" />
                 )}
                 <item.icon size={isChild ? 18 : 22} className={`${isMinimized ? 'mx-auto' : 'mr-3'} flex-shrink-0 transition-colors duration-200`} />
                 {!isMinimized && (
@@ -113,7 +113,6 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
             );
         }
 
-        // JIKA LINK BIASA
         const linkEl = (
             <Link href={item.href} className={`${baseClasses} ${padding} ${isActive ? activeClasses : inactiveClasses}`}>
                 {content}
@@ -124,7 +123,7 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
             return (
                 <Tooltip delayDuration={0}>
                     <TooltipTrigger asChild>{linkEl}</TooltipTrigger>
-                    <TooltipContent side="right" className="bg-gray-800 text-white ml-2"><p>{item.name}</p></TooltipContent>
+                    <TooltipContent side="right" className="bg-gray-800 dark:bg-gray-700 text-white dark:text-gray-200 ml-2"><p>{item.name}</p></TooltipContent>
                 </Tooltip>
             );
         }
@@ -134,7 +133,7 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
     return (
         <TooltipProvider>
             {/* Overlay Mobile */}
-            <div className={`fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[90] sm:hidden transition-opacity ${!isMinimized ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={toggleMinimize}></div>
+            <div className={`fixed inset-0 bg-gray-900/50 dark:bg-gray-900/50 backdrop-blur-sm z-[90] sm:hidden transition-opacity ${!isMinimized ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={toggleMinimize}></div>
 
             {/* Sidebar Container */}
             <div className={`fixed top-0 left-0 h-screen bg-white dark:bg-gray-900 shadow-lg border-r border-gray-100 dark:border-gray-800 transition-all duration-300 z-[100] ${isMinimized ? 'sm:w-20 w-0' : 'w-64'}`}>
@@ -149,7 +148,7 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
                         )}
                     </Link>
                     {/* Toggle Button: Selalu muncul di desktop untuk bisa kembali ke normal */}
-                    <button onClick={toggleMinimize} className={`hidden sm:flex items-center justify-center p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50 absolute ${isMinimized ? '-bottom-5' : 'right-2 top-1/2 -translate-y-1/2'}`}>
+                    <button onClick={toggleMinimize} className={`hidden sm:flex items-center justify-center p-1.5 rounded-lg text-gray-400 hover:text-teal-600  dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900 absolute ${isMinimized ? '-bottom-5' : 'right-2 top-1/2 -translate-y-1/2'}`}>
                         {isMinimized ? <ChevronsRight size={20} /> : <ChevronsLeft size={20} />}
                     </button>
                 </div>

@@ -36,9 +36,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/rkat/input', [RkatController::class, 'create'])->name('rkat.create');
     Route::post('/rkat', [RkatController::class, 'store'])->name('rkat.store');
     Route::get('/rkat', [RkatController::class, 'index'])->name('rkat.index');
-    Route::get('/rkat/{id}', [RkatController::class, 'show'])->name('rkat.show');
+    Route::get('/rkat/{rkatHeader}', [RkatController::class, 'show'])->name('rkat.show');
     // Tambahkan di bawah route rkat lainnya
-    Route::post('/rkat/{id}/submit', [RkatController::class, 'submit'])->name('rkat.submit');
+    Route::post('/rkat/{rkatHeader}/submit', [RkatController::class, 'submit'])->name('rkat.submit');
 
     // Unit resource routes
     Route::get('/unit', [UnitController::class, 'index'])->name('unit.index');

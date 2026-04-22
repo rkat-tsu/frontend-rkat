@@ -43,7 +43,7 @@ function ChartContainer({
         data-slot="chart"
         data-chart={chartId}
         className={cn(
-          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden",
+          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:!fill-gray-500 dark:[&_.recharts-cartesian-axis-tick_text]:!fill-gray-400 [&_.recharts-cartesian-grid_line[stroke='#ccc']]:!stroke-gray-200 dark:[&_.recharts-cartesian-grid_line[stroke='#ccc']]:!stroke-gray-700 [&_.recharts-curve.recharts-tooltip-cursor]:!stroke-gray-200 dark:[&_.recharts-curve.recharts-tooltip-cursor]:!stroke-gray-700 [&_.recharts-dot[stroke='#fff']]:!stroke-transparent [&_.recharts-layer]:outline-none [&_.recharts-polar-grid_[stroke='#ccc']]:!stroke-gray-200 dark:[&_.recharts-polar-grid_[stroke='#ccc']]:!stroke-gray-700 [&_.recharts-radial-bar-background-sector]:!fill-gray-100 dark:[&_.recharts-radial-bar-background-sector]:!fill-gray-800 [&_.recharts-rectangle.recharts-tooltip-cursor]:!fill-gray-100 dark:[&_.recharts-rectangle.recharts-tooltip-cursor]:!fill-gray-800 [&_.recharts-reference-line_[stroke='#ccc']]:!stroke-gray-200 dark:[&_.recharts-reference-line_[stroke='#ccc']]:!stroke-gray-700 [&_.recharts-sector]:outline-none [&_.recharts-sector[stroke='#fff']]:!stroke-transparent [&_.recharts-surface]:outline-none",
           className
         )}
         {...props}>
@@ -73,13 +73,13 @@ const ChartStyle = ({
           .map(([theme, prefix]) => `
 ${prefix} [data-chart=${id}] {
 ${colorConfig
-.map(([key, itemConfig]) => {
-const color =
-  itemConfig.theme?.[theme] ??
-  itemConfig.color
-return color ? `  --color-${key}: ${color};` : null
-})
-.join("\n")}
+              .map(([key, itemConfig]) => {
+                const color =
+                  itemConfig.theme?.[theme] ??
+                  itemConfig.color
+                return color ? `  --color-${key}: ${color};` : null
+              })
+              .join("\n")}
 }
 `)
           .join("\n"),
@@ -131,7 +131,7 @@ function ChartTooltipContent({
       return null
     }
 
-    return <div className={cn("font-medium", labelClassName)}>{value}</div>;
+    return <div className={cn("font-medium text-gray-900 dark:text-gray-100", labelClassName)}>{value}</div>;
   }, [
     label,
     labelFormatter,
@@ -151,7 +151,7 @@ function ChartTooltipContent({
   return (
     <div
       className={cn(
-        "grid min-w-32 items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl",
+        "grid min-w-32 items-start gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2.5 py-1.5 text-xs shadow-xl",
         className
       )}>
       {!nestLabel ? tooltipLabel : null}
@@ -167,7 +167,7 @@ function ChartTooltipContent({
               <div
                 key={index}
                 className={cn(
-                  "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground",
+                  "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-gray-500 dark:[&>svg]:text-gray-400",
                   indicator === "dot" && "items-center"
                 )}>
                 {formatter && item?.value !== undefined && item.name ? (
@@ -201,12 +201,12 @@ function ChartTooltipContent({
                       )}>
                       <div className="grid gap-1.5">
                         {nestLabel ? tooltipLabel : null}
-                        <span className="text-muted-foreground">
+                        <span className="text-gray-500 dark:text-gray-400">
                           {itemConfig?.label ?? item.name}
                         </span>
                       </div>
                       {item.value != null && (
-                        <span className="font-mono font-medium text-foreground tabular-nums">
+                        <span className="font-mono font-medium text-gray-900 dark:text-gray-100 tabular-nums">
                           {typeof item.value === "number"
                             ? item.value.toLocaleString()
                             : String(item.value)}
@@ -255,7 +255,7 @@ function ChartLegendContent({
             <div
               key={index}
               className={cn(
-                "flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground"
+                "flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-gray-500 dark:[&>svg]:text-gray-400 text-gray-700 dark:text-gray-300"
               )}>
               {itemConfig?.icon && !hideIcon ? (
                 <itemConfig.icon />
@@ -285,8 +285,8 @@ function getPayloadConfigFromPayload(
 
   const payloadPayload =
     "payload" in payload &&
-    typeof payload.payload === "object" &&
-    payload.payload !== null
+      typeof payload.payload === "object" &&
+      payload.payload !== null
       ? payload.payload
       : undefined
 

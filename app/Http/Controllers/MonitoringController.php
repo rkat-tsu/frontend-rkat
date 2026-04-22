@@ -41,6 +41,7 @@ class MonitoringController extends Controller
                     
                     // Data RKAT (Bisa null jika belum buat)
                     'id_header' => $rkat ? $rkat->id_header : null,
+                    'uuid' => $rkat ? $rkat->uuid : null,
                     'status' => $rkat ? $rkat->status_persetujuan : 'Belum Mengisi',
                     'total_anggaran' => $rkat ? $rkat->total_anggaran : 0,
                     'tanggal_pengajuan' => $rkat ? $rkat->tanggal_pengajuan : null,
