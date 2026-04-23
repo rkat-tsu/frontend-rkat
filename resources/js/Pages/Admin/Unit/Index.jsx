@@ -5,7 +5,8 @@ import CustomSelect from '@/Components/CustomSelect';
 import { Plus, Search, Edit2, Trash2, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function Index({ units = [] }) {
+export default function Index({ auth, units = [] }) {
+    const isAdmin = auth?.user?.peran === 'Admin';
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTipe, setSelectedTipe] = useState('');
     const [selectedParent, setSelectedParent] = useState('');
@@ -129,12 +130,14 @@ export default function Index({ units = [] }) {
                                     />
                                 </div>
 
-                                <Link 
-                                    href={route('unit.create')} // Pastikan route ini sesuai dengan setting Laravel Anda
-                                    className="h-11 flex items-center justify-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-medium transition whitespace-nowrap shadow-sm"
-                                >
-                                    <Plus size={16} /> Tambah
-                                </Link>
+                                {isAdmin && (
+                                    <Link 
+                                        href={route('unit.create')} // Pastikan route ini sesuai dengan setting Laravel Anda
+                                        className="h-11 flex items-center justify-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-medium transition whitespace-nowrap shadow-sm"
+                                    >
+                                        <Plus size={16} /> Tambah
+                                    </Link>
+                                )}
                             </div>
                         </div>
                         
@@ -152,7 +155,7 @@ export default function Index({ units = [] }) {
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Biro Unit</th>
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Nama Unit</th>
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Kepala Unit</th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>
+                                        {isAdmin && <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -173,24 +176,26 @@ export default function Index({ units = [] }) {
                                                 </td>
                                                 
                                                 {/* Kolom Aksi Icon Saja */}
-                                                <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                    <div className="flex gap-2 justify-center">
-                                                        <Link
-                                                            href={route('unit.edit', unit.uuid)}
-                                                            className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
-                                                            title="Edit"
-                                                        >
-                                                            <Edit2 className="w-4 h-4" />
-                                                        </Link>
-                                                        <button 
-                                                            onClick={() => handleDelete(unit.uuid)}
-                                                            className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
-                                                            title="Hapus"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                </td>
+                                                {isAdmin && (
+                                                    <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
+                                                        <div className="flex gap-2 justify-center">
+                                                            <Link
+                                                                href={route('unit.edit', unit.uuid)}
+                                                                className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
+                                                                title="Edit"
+                                                            >
+                                                                    <Edit2 className="w-4 h-4" />
+                                                            </Link>
+                                                            <button 
+                                                                onClick={() => handleDelete(unit.uuid)}
+                                                                className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                                                                title="Hapus"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                )}
                                             </tr>
                                         ))
                                     ) : (

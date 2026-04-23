@@ -18,7 +18,7 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         //'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
+        //'canRegister' => Route::has('register'),
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
     ]);
@@ -37,19 +37,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/rkat', [RkatController::class, 'store'])->name('rkat.store');
     Route::get('/rkat', [RkatController::class, 'index'])->name('rkat.index');
     Route::get('/rkat/{rkatHeader}', [RkatController::class, 'show'])->name('rkat.show');
-    // Tambahkan di bawah route rkat lainnya
+    Route::get('/rkat/{rkatHeader}/edit', [RkatController::class, 'edit'])->name('rkat.edit');
+    Route::patch('/rkat/{rkatHeader}', [RkatController::class, 'update'])->name('rkat.update');
     Route::post('/rkat/{rkatHeader}/submit', [RkatController::class, 'submit'])->name('rkat.submit');
 
-    // Unit resource routes
+    // Unit resource routes (Public view)
     Route::get('/unit', [UnitController::class, 'index'])->name('unit.index');
-    Route::get('/unit/create', [UnitController::class, 'create'])->name('unit.create');
-    Route::post('/unit', [UnitController::class, 'store'])->name('unit.store');
-    Route::get('/unit/{unit}/edit', [UnitController::class, 'edit'])->name('unit.edit');
-    Route::patch('/unit/{unit}', [UnitController::class, 'update'])->name('unit.update');
-    Route::delete('/unit/{unit}', [UnitController::class, 'destroy'])->name('unit.destroy');
 
     // Master IKU
     Route::get('/iku', [IkuController::class, 'index'])->name('iku.index');
+
+    // Standar Biaya Operasional (Public view)
+    Route::get('/rincian-anggaran', [RincianAnggaranController::class, 'index'])->name('rincian.index');
 
     // Routes for Rkat RAB items (basic index & create)
     Route::get('/daftar-ajuan', [RkatRabItemController::class, 'index'])->name('daftar-ajuan.index');
@@ -74,7 +73,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/tahun/{tahun}', [TahunAnggaranController::class, 'destroy'])->name('tahun.destroy');
 
         // Rincian Anggaran (master akun anggaran)
-        Route::get('/rincian-anggaran', [RincianAnggaranController::class, 'index'])->name('rincian.index');
         Route::get('/rincian-anggaran/create', [RincianAnggaranController::class, 'create'])->name('rincian.create');
         Route::post('/rincian-anggaran', [RincianAnggaranController::class, 'store'])->name('rincian.store');
         Route::get('/rincian-anggaran/{rincian}/edit', [RincianAnggaranController::class, 'edit'])->name('rincian.edit');
@@ -86,6 +84,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/user', [UserController::class, 'store'])->name('user.store');
         // Admin-only user listing
         Route::get('/user', [UserController::class, 'index'])->name('user.index');
+
+        // Unit management
+        Route::get('/unit/create', [UnitController::class, 'create'])->name('unit.create');
+        Route::post('/unit', [UnitController::class, 'store'])->name('unit.store');
+        Route::get('/unit/{unit}/edit', [UnitController::class, 'edit'])->name('unit.edit');
+        Route::patch('/unit/{unit}', [UnitController::class, 'update'])->name('unit.update');
+        Route::delete('/unit/{unit}', [UnitController::class, 'destroy'])->name('unit.destroy');
 
         // Master IKU
         Route::post('/iku/master', [IkuController::class, 'storeMaster'])->name('iku.master.store');

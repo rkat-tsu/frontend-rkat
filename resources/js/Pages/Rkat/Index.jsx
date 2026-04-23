@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { ArrowRight, Plus, Search, Download, Send, AlertCircle } from 'lucide-react';
+import { ArrowRight, Plus, Search, Download, Send, AlertCircle, Edit2 } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import { toast } from 'sonner';
 
@@ -232,6 +232,18 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, flash = {}
                                                     Lihat
                                                     <ArrowRight size={14} />
                                                 </Link>
+
+                                                {/* TOMBOL EDIT: Hanya tampil jika Draft atau Revisi */}
+                                                {(item.status_persetujuan === 'Draft' || item.status_persetujuan === 'Revisi') && (
+                                                    <Link
+                                                        href={route('rkat.edit', item.uuid)}
+                                                        className="inline-flex items-center gap-1 px-3 py-1.5 border border-blue-300 rounded-md shadow-sm text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-900/50 dark:hover:bg-blue-900/20 transition-colors"
+                                                        title="Edit RKAT"
+                                                    >
+                                                        Edit
+                                                        <Edit2 size={14} />
+                                                    </Link>
+                                                )}
 
                                                 {/* TOMBOL AJUKAN: Hanya tampil jika Draft atau Revisi */}
                                                 {(item.status_persetujuan === 'Draft' || item.status_persetujuan === 'Revisi') && (

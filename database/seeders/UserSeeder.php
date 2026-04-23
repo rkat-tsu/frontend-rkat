@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
             'nama_lengkap' => 'Administrator Sistem',
             'username'     => 'admin',
             'email'        => 'admin@tsu.ac.id',
-            'password'     => $defaultPassword,
+            'password'     => $defaultPassword, 
             'peran'        => 'Admin',
             'id_unit'      => null,
             'no_telepon'   => '081234567890',
@@ -163,5 +163,31 @@ class UserSeeder extends Seeder
             'id_unit'      => $lppm?->id_unit,
             'is_aktif'     => true,
         ]);
+
+        $testerRoles = [
+            'Inputer'     => $if?->id_unit,        // Simulasi staf di Prodi Informatika
+            'Kaprodi'     => $if?->id_unit,        // Simulasi Kaprodi Informatika
+            'Kepala_Unit' => $biroKeu?->id_unit,   // Simulasi Kepala Biro Keuangan
+            'Dekan'       => $ft?->id_unit,        // Simulasi Dekan Fakultas Teknik
+            'WR_1'        => $rektorat?->id_unit,  // Simulasi WR 1
+            'WR_2'        => $rektorat?->id_unit,  // Simulasi WR 2
+            'WR_3'        => $rektorat?->id_unit,  // Simulasi WR 3
+            'Rektor'      => $rektorat?->id_unit,  // Simulasi Rektor
+        ];
+
+        foreach ($testerRoles as $role => $unitId) {
+            // Mengubah format nama role untuk email & username (Contoh: Kepala_Unit -> kepala_unit)
+            $roleLower = strtolower($role); 
+
+            User::create([
+                'nama_lengkap' => "Tester $role",
+                'username'     => "test_{$roleLower}",
+                'email'        => "tester.{$roleLower}@dummy.tsu.ac.id",
+                'password'     => $defaultPassword,
+                'peran'        => $role,
+                'id_unit'      => $unitId,
+                'is_aktif'     => true,
+            ]);
+        }
     }
 }

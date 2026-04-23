@@ -30,14 +30,14 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        Log::info('[Auth] Percobaan Login', ['email' => $request->email, 'ip' => $request->ip()]);
+        Log::info('[Auth] Percobaan Login', ['login' => $request->login, 'ip' => $request->ip()]);
 
         // authenticate() akan throw ValidationException jika gagal
         try {
             $request->authenticate();
-            Log::info('[Auth] Login Berhasil', ['email' => $request->email]);
+            Log::info('[Auth] Login Berhasil', ['login' => $request->login]);
         } catch (\Exception $e) {
-            Log::warning('[Auth] Login Gagal', ['email' => $request->email, 'error' => $e->getMessage()]);
+            Log::warning('[Auth] Login Gagal', ['login' => $request->login, 'error' => $e->getMessage()]);
             throw $e;
         }
 

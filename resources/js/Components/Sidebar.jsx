@@ -20,7 +20,7 @@ const navItems = [
     { name: 'Daftar Ajuan', href: '/daftar-ajuan', icon: LayoutList, activePath: '/daftar-ajuan' },
     { name: 'Standar Biaya Operasional', href: '/rincian-anggaran', icon: BookOpenText, activePath: '/rincian-anggaran' },
     { name: 'Indikator Kinerja Utama', href: '/iku', icon: BookPlus, activePath: '/iku' },
-    { name: 'Persetujuan', href: '/approval', icon: ListChecks, activePath: '/approval' },
+    { name: 'Persetujuan', href: '/approval', icon: ListChecks, activePath: '/approval', hideForInputer: true },
     { name: 'Monitoring', href: '/monitoring', icon: Monitor, activePath: '/monitoring' },
     {
         name: 'Daftar Unit Kerja',
@@ -155,7 +155,13 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
 
                 {/* Nav List */}
                 <nav className="flex-grow px-3 space-y-1 overflow-y-auto h-[calc(100vh-5rem)] scrollbar-hide pb-6 pt-4">
-                    {navItems.map((item, index) => <NavItem key={index} item={item} />)}
+                    {navItems.map((item, index) => {
+                        // Global visibility check
+                        if (item.adminOnly && auth?.user?.peran !== 'Admin') return null;
+                        if (item.hideForInputer && auth?.user?.peran === 'Inputer') return null;
+                        
+                        return <NavItem key={index} item={item} />;
+                    })}
                 </nav>
             </div>
         </TooltipProvider>

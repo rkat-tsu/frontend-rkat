@@ -4,7 +4,22 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Save, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function Edit({ rincian: item }) {
+export default function Edit({ auth, rincian: item }) {
+    // Cek Akses Admin
+    if (auth.user.peran !== 'Admin') {
+        return (
+            <AuthenticatedLayout user={auth.user} header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Akses Ditolak</h2>}>
+                <Head title="Akses Ditolak" />
+                <div className="py-12">
+                    <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 text-center text-red-500 font-medium">
+                            Anda tidak memiliki izin untuk mengakses halaman ini.
+                        </div>
+                    </div>
+                </div>
+            </AuthenticatedLayout>
+        );
+    }
     const { data, setData, patch, processing, errors, isDirty } = useForm({
         kode_anggaran: item?.kode_anggaran || '',
         nama_anggaran: item?.nama_anggaran || '',
