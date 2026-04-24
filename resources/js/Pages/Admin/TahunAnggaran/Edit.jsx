@@ -14,7 +14,7 @@ export default function Edit({ auth, tahun, tahunAnggaran, data: propData }) {
     // 1. SAFE DATA DETECTION
     const sourceData = tahun || tahunAnggaran || propData || {};
     // Deteksi ID (prioritas id_tahun karena sesuai JSON Anda, lalu fallback ke yang lain)
-    const id = sourceData.id_tahun || sourceData.id_tahun_anggaran || sourceData.id;
+    const id = sourceData.uuid || sourceData.id_tahun || sourceData.id;
 
     // Helper: Ambil hanya tanggal (YYYY-MM-DD) dari format ISO database
     const formatDate = (isoString) => {

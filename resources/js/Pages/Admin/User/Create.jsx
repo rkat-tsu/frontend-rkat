@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 export default function Create({ auth, units = [] }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         nama_lengkap: '',
+        nik: '',
         username: '', // Field ini ada di state tapi tidak ditampilkan di form asli, dibiarkan saja
         email: '',
         peran: 'Inputer',
@@ -27,6 +28,7 @@ export default function Create({ auth, units = [] }) {
         { value: 'Kaprodi', label: 'Kaprodi (Kepala Program Studi)' },
         { value: 'Kepala_Unit', label: 'Kepala Unit' },
         { value: 'Dekan', label: 'Dekan' },
+        { value: 'Tim_Renbang', label: 'Tim Renbang' },
         { value: 'Rektor', label: 'Rektor' },
         { value: 'WR_1', label: 'Wakil Rektor 1' },
         { value: 'WR_2', label: 'Wakil Rektor 2' },
@@ -113,6 +115,18 @@ export default function Create({ auth, units = [] }) {
                                                 placeholder="Masukkan Nama Lengkap"
                                             />
                                             <InputError message={errors.nama_lengkap} className="mt-2" />
+                                        </div>
+
+                                        <div>
+                                            <InputLabel htmlFor="nik" value="NIK (Nomor Induk Karyawan)" />
+                                            <TextInput 
+                                                id="nik" 
+                                                value={data.nik} 
+                                                onChange={(e) => setData('nik', e.target.value)} 
+                                                className="mt-1 block w-full" 
+                                                placeholder="Masukkan NIK"
+                                            />
+                                            <InputError message={errors.nik} className="mt-2" />
                                         </div>
 
                                         <div>

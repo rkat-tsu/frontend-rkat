@@ -23,11 +23,11 @@ class RkatController extends Controller
     {
         Log::debug('[RKAT] Permintaan Halaman Buat oleh User: ' . Auth::id());
 
-        $tahunAnggarans = TahunAnggaran::where('status_rkat', '!=', 'Closed')->get();
+        // JIKA TIDAK ADA TAHUN YANG DIBUKA (Drafting atau Submission):
+        $tahunAnggarans = TahunAnggaran::whereIn('status_rkat', ['Drafting', 'Submission'])->get();
 
-        // JIKA TIDAK ADA TAHUN YANG DIBUKA:
         if ($tahunAnggarans->isEmpty()) {
-            return redirect()->route('rkat.index')->with('error', 'Maaf, periode penginputan RKAT saat ini sedang ditutup atau belum dibuka.');
+            return redirect()->route('rkat.index')->with('error', 'Maaf, periode penginputan RKAT saat ini sedang ditutup atau sudah melewati batas waktu.');
         }
 
         $units = Unit::orderBy('kode_unit')->get();
@@ -191,10 +191,10 @@ class RkatController extends Controller
                     'id_rkat_detail' => $rkatDetail->id_rkat_detail,
                     'nama_indikator' => $item['indikator'],
 
-                    // Mapping field Form -> Database
-                    'capai_2024'  => $item['kondisi_akhir_2024_capaian'] ?? null,
-                    'target_2025' => $item['tahun_2025_target'] ?? null,
-                    'capai_2025'  => $item['tahun_2025_capaian'] ?? null,
+                    // Mapping field Form -> Database (Updated years)
+                    'capai_2025'  => $item['kondisi_akhir_2024_capaian'] ?? null,
+                    'target_2026' => $item['tahun_2025_target'] ?? null,
+                    'capai_2026'  => $item['tahun_2025_capaian'] ?? null,
                     'target_2029' => $item['akhir_tahun_2029_target'] ?? null,
                     'capai_2029'  => $item['akhir_tahun_2029_capaian'] ?? null,
                 ]);
@@ -245,20 +245,26 @@ class RkatController extends Controller
      */
     public function submit(RkatHeader $rkatHeader)
     {
-        // Pastikan hanya Draft atau Revisi yang bisa diajukan
+        $rkatHeader->load('tahunAnggaran');
+        
+        // Cek status Tahun Anggaran
+        if ($rkatHeader->tahunAnggaran->status_rkat !== 'Submission') {
+            return redirect()->back()->with('error', 'Pengajuan hanya dapat dilakukan pada periode Submission.');
+        }
+
         if (!in_array($rkatHeader->status_persetujuan, ['Draft', 'Revisi'])) {
             return redirect()->back()->with('error', 'Hanya dokumen Draft atau Revisi yang dapat diajukan.');
         }
 
         try {
             $rkatHeader->update([
-                'status_persetujuan' => 'Menunggu_Dekan_Kepala',
-                'tanggal_pengajuan' => now(), // Update tanggal saat diajukan
+                'status_persetujuan' => 'Menunggu_Unit_Kepala',
+                'tanggal_pengajuan' => now(), 
             ]);
 
-            Log::info('[RKAT] Dokumen Berhasil Diajukan', ['id' => $rkatHeader->id_header, 'status' => 'Menunggu_Dekan_Kepala']);
+            Log::info('[RKAT] Dokumen Berhasil Diajukan', ['id' => $rkatHeader->id_header, 'status' => 'Menunggu_Unit_Kepala']);
 
-            return redirect()->route('rkat.index')->with('success', 'RKAT berhasil diajukan dan sedang menunggu persetujuan Dekan/Kepala Unit.');
+            return redirect()->route('rkat.index')->with('success', 'RKAT berhasil diajukan dan sedang menunggu persetujuan Kepala Unit.');
         } catch (\Exception $e) {
             Log::error('[RKAT] Gagal Submit: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal mengajukan RKAT: ' . $e->getMessage());
@@ -267,9 +273,28 @@ class RkatController extends Controller
 
     public function edit(RkatHeader $rkatHeader)
     {
-        // Hanya boleh edit jika status Draft atau Revisi
-        if (!in_array($rkatHeader->status_persetujuan, ['Draft', 'Revisi'])) {
-            return redirect()->route('rkat.index')->with('error', 'Dokumen ini tidak dapat diubah karena sedang dalam proses approval atau sudah selesai.');
+        $rkatHeader->load('tahunAnggaran');
+        $taStatus = $rkatHeader->tahunAnggaran->status_rkat;
+
+        // Aturan Edit:
+        // 1. Dokumen harus Draft atau Revisi
+        // 2. Jika TA status Drafting/Submission, boleh edit Draft/Revisi.
+        // 3. Jika TA status Approved, hanya boleh edit jika status dokumen adalah Revisi.
+        // 4. Jika TA status Closed, tidak boleh edit sama sekali.
+
+        $canEdit = false;
+        if ($taStatus === 'Drafting' || $taStatus === 'Submission') {
+            if (in_array($rkatHeader->status_persetujuan, ['Draft', 'Revisi'])) {
+                $canEdit = true;
+            }
+        } elseif ($taStatus === 'Approved') {
+            if ($rkatHeader->status_persetujuan === 'Revisi') {
+                $canEdit = true;
+            }
+        }
+
+        if (!$canEdit) {
+            return redirect()->route('rkat.index')->with('error', 'Dokumen ini tidak dapat diubah pada tahap ini.');
         }
 
         $rkatHeader->load([
@@ -295,12 +320,24 @@ class RkatController extends Controller
 
     public function update(Request $request, RkatHeader $rkatHeader)
     {
-        // 1. CEK STATUS
-        if (!in_array($rkatHeader->status_persetujuan, ['Draft', 'Revisi'])) {
+        $rkatHeader->load('tahunAnggaran');
+        $taStatus = $rkatHeader->tahunAnggaran->status_rkat;
+
+        $canUpdate = false;
+        if ($taStatus === 'Drafting' || $taStatus === 'Submission') {
+            if (in_array($rkatHeader->status_persetujuan, ['Draft', 'Revisi'])) {
+                $canUpdate = true;
+            }
+        } elseif ($taStatus === 'Approved') {
+            if ($rkatHeader->status_persetujuan === 'Revisi') {
+                $canUpdate = true;
+            }
+        }
+
+        if (!$canUpdate) {
             return redirect()->route('rkat.index')->with('error', 'Dokumen tidak dapat diubah.');
         }
 
-        // 2. VALIDASI (Sama seperti store)
         $request->validate([
             'iku_id' => ['required', 'integer', 'exists:ikus,id_iku'],
             'ikk_id' => ['required', 'integer', 'exists:ikks,id_ikk'],
@@ -336,8 +373,38 @@ class RkatController extends Controller
         try {
             DB::beginTransaction();
 
-            // A. UPDATE HEADER
-            // Jika tahun atau unit berubah, regenerasi nomor dokumen
+            // LOGIKA REVISI: Simpan versi lama jika status saat ini adalah Revisi
+            if ($rkatHeader->status_persetujuan === 'Revisi') {
+                // 1. Kloning Header (Versi Archive)
+                $archiveHeader = $rkatHeader->replicate();
+                $archiveHeader->nomor_dokumen = $rkatHeader->nomor_dokumen . '-REV-' . now()->format('YmdHis');
+                $archiveHeader->status_persetujuan = 'Revisi'; // Tetap catat sbg revisi
+                $archiveHeader->parent_id = $rkatHeader->id_header;
+                $archiveHeader->save();
+
+                // 2. Kloning Detail & Items
+                $oldDetail = $rkatHeader->rkatDetails()->first();
+                if ($oldDetail) {
+                    $archiveDetail = $oldDetail->replicate();
+                    $archiveDetail->id_header = $archiveHeader->id_header;
+                    $archiveDetail->save();
+
+                    // Kloning Indikator
+                    foreach ($oldDetail->indikators as $ind) {
+                        $newInd = $ind->replicate();
+                        $newInd->id_rkat_detail = $archiveDetail->id_rkat_detail;
+                        $newInd->save();
+                    }
+
+                    // Kloning RAB
+                    foreach ($oldDetail->rabItems as $rab) {
+                        $newRab = $rab->replicate();
+                        $newRab->id_rkat_detail = $archiveDetail->id_rkat_detail;
+                        $newRab->save();
+                    }
+                }
+            }
+
             if ($rkatHeader->tahun_anggaran != $request->tahun_anggaran || $rkatHeader->id_unit != $request->id_unit) {
                 $rkatHeader->nomor_dokumen = RkatHeader::generateNomorDokumen($request->tahun_anggaran, $request->id_unit);
             }
@@ -348,7 +415,6 @@ class RkatController extends Controller
                 'total_anggaran' => $request->anggaran,
             ]);
 
-            // B. UPDATE DETAIL
             $rkatDetail = $rkatHeader->rkatDetails()->first();
             $rkatDetail->update([
                 'judul_kegiatan' => $request->judul_pengajuan,
@@ -373,21 +439,19 @@ class RkatController extends Controller
                 'dokumen_pendukung' => $request->dokumen_pendukung,
             ]);
 
-            // C. SYNC INDIKATOR (Delete and Recreate)
             $rkatDetail->indikators()->delete();
             foreach ($request->input('indikator_kinerja') as $item) {
                 IndikatorKeberhasilan::create([
                     'id_rkat_detail' => $rkatDetail->id_rkat_detail,
                     'nama_indikator' => $item['indikator'],
-                    'capai_2024'  => $item['kondisi_akhir_2024_capaian'] ?? null,
-                    'target_2025' => $item['tahun_2025_target'] ?? null,
-                    'capai_2025'  => $item['tahun_2025_capaian'] ?? null,
+                    'capai_2025'  => $item['kondisi_akhir_2024_capaian'] ?? null,
+                    'target_2026' => $item['tahun_2025_target'] ?? null,
+                    'capai_2026'  => $item['tahun_2025_capaian'] ?? null,
                     'target_2029' => $item['akhir_tahun_2029_target'] ?? null,
                     'capai_2029'  => $item['akhir_tahun_2029_capaian'] ?? null,
                 ]);
             }
 
-            // D. SYNC RAB (Delete and Recreate)
             $rkatDetail->rabItems()->delete();
             foreach ($request->input('rincian_anggaran') as $item) {
                 RkatRabItem::create([
@@ -409,5 +473,21 @@ class RkatController extends Controller
             Log::error('[RKAT] Gagal Update: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal memperbarui RKAT: ' . $e->getMessage())->withInput();
         }
+    }
+    public function exportPdf(RkatHeader $rkatHeader)
+    {
+        $rkatHeader->load([
+            'unit',
+            'user',
+            'rkatDetails.iku',
+            'rkatDetails.ikk',
+            'rkatDetails.rabItems',
+            'rkatDetails.indikators',
+            'logPersetujuans.approver',
+        ]);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.rkat', ['rkat' => $rkatHeader]);
+        
+        return $pdf->download('RKAT_' . str_replace('/', '-', $rkatHeader->nomor_dokumen) . '.pdf');
     }
 }

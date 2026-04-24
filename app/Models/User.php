@@ -21,13 +21,13 @@ class User extends Authenticatable implements MustVerifyEmail
     // Kolom yang dapat diisi
     protected $fillable = [
         'username',
-        'email', 
-        'password',
+        'nik',
+        'email',         'password',
         'nama_lengkap',
         'peran',
         'id_unit',
         'is_aktif',
-        'nomor_telepon',
+        'no_telepon',
     ];
 
     /**
@@ -74,7 +74,22 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isApprover(): bool
     {
-        return in_array($this->peran, ['Dekan', 'Kepala_Unit', 'WR_1', 'WR_2', 'WR_3', 'Rektor']);
+        return in_array($this->peran, ['Dekan', 'Kepala_Unit', 'Tim_Renbang', 'WR_1', 'WR_2', 'WR_3', 'Rektor']);
+    }
+
+    public function isTimRenbang(): bool
+    {
+        return $this->peran === 'Tim_Renbang';
+    }
+
+    public function isUnitKepala(): bool
+    {
+        return $this->peran === 'Kepala_Unit';
+    }
+
+    public function isDekan(): bool
+    {
+        return $this->peran === 'Dekan';
     }
 
     public function isUnitHead(): bool

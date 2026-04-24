@@ -8,7 +8,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
-        email: '',
+        login: '',
         password: '',
         remember: false,
     });
@@ -35,96 +35,95 @@ export default function Login({ status, canResetPassword }) {
 
                 {/* --- Keterangan RKAT --- */}
                 <div className="mb-8 text-center">
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-800">
+                    <h1 className="text-2xl font-black tracking-tight text-slate-800 dark:text-white">
                         Sistem RKAT
                     </h1>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
                         Rencana Kerja dan Anggaran Tahunan
                     </p>
                 </div>
 
                 <form onSubmit={submit} className="space-y-6">
 
-                    {/* --- Input Email --- */}
+                    {/* --- Input Login (Email/Username) --- */}
                     <div>
-                        <div className="mb-2 flex items-center text-sm font-medium text-slate-700">
+                        <div className="mb-2 flex items-center text-sm font-bold text-slate-700 dark:text-slate-300">
                             <svg className="mr-2 h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                             </svg>
-                            Alamat Email
+                            Email atau Username
                         </div>
 
                         <TextInput
-                            id="email"
-                            type="email"
-                            name="email"
-                            value={data.email}
-                            className="block w-full rounded-xl border-gray-300 px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:ring-blue-500"
-                            autoComplete="email"
+                            id="login"
+                            type="text"
+                            name="login"
+                            value={data.login}
+                            className="block w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900/50 dark:text-white px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:ring-blue-500"
+                            autoComplete="username"
                             isFocused={true}
                             tabindex="1"
-                            placeholder="Masukkan alamat email Anda"
-                            onChange={(e) => setData('email', e.target.value)}
+                            placeholder="Masukkan email atau username"
+                            onChange={(e) => setData('login', e.target.value)}
                         />
-                        <InputError message={errors.email} className="mt-2" />
+                        <InputError message={errors.login} className="mt-2" />
                     </div>
 
                     {/* --- Input Password & Lupa Sandi --- */}
                     <div>
-                        <div className="mb-2 flex items-center justify-between text-sm font-medium">
-                            <div className="flex items-center text-slate-700">
+                        <div className="mb-2 flex items-center justify-between text-sm font-bold text-slate-700 dark:text-slate-300">
+                            <div className="flex items-center">
                                 <svg className="mr-2 h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                                 </svg>
                                 Kata Sandi
                             </div>
-
                         </div>
 
                         <PasswordInput
                             id="password"
                             name="password"
                             value={data.password}
-                            className="block w-full rounded-xl border-gray-300 px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:ring-blue-500"
+                            className="block w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900/50 dark:text-white px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:ring-blue-500"
                             autoComplete="current-password"
                             tabindex="2"
-                            placeholder="Masukkan kata sandi Anda"
+                            placeholder="Masukkan kata sandi"
                             onChange={(e) => setData('password', e.target.value)}
                             required
                         />
                         <InputError message={errors.password} className="mt-2" />
 
-                        {canResetPassword && (
+                        <div className="mt-2 flex justify-end">
                             <Link
                                 href={route('password.request')}
-                                className="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline transition-colors"
                                 tabindex="-1"
                             >
                                 Lupa sandi?
                             </Link>
-                        )}
+                        </div>
                     </div>
 
                     {/* --- Checkbox Stay Logged In --- */}
                     <div className="pt-2">
-                        <label className="flex cursor-pointer items-center">
+                        <label className="flex cursor-pointer items-center group">
                             <Checkbox
                                 name="remember"
                                 checked={data.remember}
-                                className="h-5 w-5 rounded border-gray-300 text-teal-600 shadow-sm focus:ring-teal-500"
+                                className="h-5 w-5 rounded border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-blue-600 shadow-sm focus:ring-blue-500"
                                 onChange={(e) => setData('remember', e.target.checked)}
                                 tabindex="-1"
                             />
-                            <span className="ms-3 text-sm font-medium text-slate-600">
+                            <span className="ms-3 text-sm font-bold text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                                 Biarkan saya tetap masuk
                             </span>
                         </label>
                     </div>
 
-                    {/* --- Tombol Login Gradien dengan Hover --- */}
+                    {/* --- Tombol Login Gradien --- */}
                     <div className="pt-4">
                         <PrimaryButton
-                            className="group flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-teal-500 px-4 py-3.5 text-sm font-bold tracking-widest text-white shadow-lg shadow-blue-500/30 transition-all duration-300 hover:scale-[1.02] hover:from-blue-700 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                            className="group flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-teal-500 dark:from-blue-700 dark:to-teal-600 px-4 py-3.5 text-sm font-black tracking-widest text-white shadow-xl shadow-blue-500/30 dark:shadow-blue-950/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-blue-500/40 active:scale-95 disabled:opacity-50"
                             disabled={processing}
                             tabindex="3"
                         >

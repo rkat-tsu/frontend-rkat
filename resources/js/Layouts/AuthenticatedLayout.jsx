@@ -86,47 +86,46 @@ export default function AuthenticatedLayout({ header, children }) {
 
     return (
         <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900 font-sans text-gray-800 transition-colors duration-300">
-            
+
             {/* GLOBAL LOADER */}
             <PageLoader visible={isLoading} />
             <Toaster position="top-center" richColors />
 
             {/* SIDEBAR */}
-            <Sidebar 
-                auth={authProps} 
-                isMinimized={isMinimized} 
-                toggleMinimize={toggleMinimize} 
+            <Sidebar
+                auth={authProps}
+                isMinimized={isMinimized}
+                toggleMinimize={toggleMinimize}
             />
 
             {/* MOBILE OVERLAY */}
-            <div 
-                className={`fixed inset-0 bg-gray-900/60 z-[90] transition-opacity duration-300 sm:hidden ${
-                    isMinimized ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
-                }`}
+            <div
+                className={`fixed inset-0 bg-gray-900/60 z-[90] transition-opacity duration-300 sm:hidden ${isMinimized ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+                    }`}
                 onClick={toggleMinimize}
             ></div>
 
             {/* MAIN CONTENT WRAPPER */}
-            <div 
+            <div
                 className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out w-full min-w-0 ${mainContentMarginClass} ml-0`}
             >
                 {/* STICKY HEADER DENGAN EFEK GLASS/GRADASI TRANSPARAN */}
-                <header 
+                <header
                     className="sticky top-0 z-40 w-full border-b border-gray-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm transition-all duration-300"
                 >
                     <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-                        
+
                         {/* Kiri: Toggle Mobile & Judul */}
                         <div className="flex items-center gap-4">
                             {typeof window !== 'undefined' && window.innerWidth < 640 && isMinimized && (
-                                <button 
-                                    onClick={toggleMinimize} 
+                                <button
+                                    onClick={toggleMinimize}
                                     className="sm:hidden text-gray-500 hover:text-teal-600 transition-colors p-1"
                                 >
                                     <Menu size={24} />
                                 </button>
                             )}
-                            
+
                             {header && (
                                 <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100 tracking-tight leading-tight">
                                     {header}
@@ -148,19 +147,19 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 invisible opacity-0 translate-y-2 scale-95
                                                 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 
                                                 transition-all duration-200 ease-out z-50 overflow-hidden">
-                                    
+
                                     <div className="px-4 py-3 bg-gray-50/50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-600">
                                         <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Login Sebagai</p>
                                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user.email}</p>
                                     </div>
-                                    
+
                                     <div className="py-1">
                                         <Link href={route('profile.edit')} className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                             <User className="mr-3 h-4 w-4 text-gray-400 dark:text-gray-400" /> Profil Saya
                                         </Link>
 
                                         {/* --- FITUR DARK MODE SWITCH (PRO MODE) --- */}
-                                        <button 
+                                        <button
                                             onClick={toggleTheme}
                                             className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                         >
@@ -198,19 +197,6 @@ export default function AuthenticatedLayout({ header, children }) {
 
                 {/* PAGE CONTENT */}
                 <main className="flex-1 p-4 sm:p-6 lg:p-8">
-                    {/* Flash Messages */}
-                    {(flash.success || flash.error) && (
-                        <div className={`mb-6 rounded-lg p-4 border shadow-sm flex items-start animate-in fade-in slide-in-from-top-4 duration-300 ${
-                            flash.success 
-                                ? 'bg-teal-50 border-teal-200 text-teal-800 dark:bg-teal-900/30 dark:border-teal-800 dark:text-teal-200' 
-                                : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/30 dark:border-red-800 dark:text-red-200'
-                        }`}>
-                            <div className="flex-1 text-sm font-medium">
-                                {flash.success || flash.error}
-                            </div>
-                        </div>
-                    )}
-                    
                     {children}
                 </main>
             </div>

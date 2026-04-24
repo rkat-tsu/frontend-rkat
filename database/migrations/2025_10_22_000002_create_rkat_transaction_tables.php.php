@@ -29,14 +29,15 @@ return new class extends Migration
             $table->enum('status_persetujuan', [
                 'Draft', 
                 'Diajukan', 
+                'Menunggu_Unit_Kepala',
                 'Menunggu_Dekan_Kepala',
+                'Menunggu_Tim_Renbang',
                 'Revisi', 
                 'Ditolak', 
                 'Disetujui_L1',
                 'Menunggu_WR1', 'Menunggu_WR2', 'Menunggu_WR3',
                 'Disetujui_WR1', 'Disetujui_WR2', 'Disetujui_WR3',
-                'Disetujui_Final',
-                'History_Revisi'
+                'Disetujui_Final'
             ])->default('Draft');
             
             $table->datetime('tanggal_pengajuan')->nullable();

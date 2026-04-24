@@ -159,7 +159,7 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
                         // Global visibility check
                         if (item.adminOnly && auth?.user?.peran !== 'Admin') return null;
                         if (item.hideForInputer && auth?.user?.peran === 'Inputer') return null;
-                        
+
                         return <NavItem key={index} item={item} />;
                     })}
                 </nav>

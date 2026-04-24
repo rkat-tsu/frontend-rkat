@@ -17,12 +17,7 @@ class ApproverMiddleware
         // Gunakan fungsi yang sudah ada di Model User Anda
         if (!$user || (!$user->isApprover() && !$user->isAdmin())) {
             Log::warning('[Middleware] Akses Ditolak untuk halaman Approval oleh: ' . ($user->username ?? 'Guest'));
-            
-            // Kembalikan halaman Error 403 via Inertia
-            return Inertia::render('Error', [
-                'status' => 403,
-                'message' => 'Anda tidak memiliki hak akses sebagai Approver untuk halaman ini.'
-            ])->toResponse($request)->setStatusCode(403);
+            abort(403, 'Anda tidak memiliki hak akses sebagai Approver untuk halaman ini.');
         }
 
         // Jika lolos, lanjutkan request ke Controller

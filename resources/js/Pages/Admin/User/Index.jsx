@@ -1,37 +1,37 @@
-import React, { useState } from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import React, { useState, useEffect } from 'react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import CustomSelect from '@/Components/CustomSelect';
-import { Search, Plus, ChevronDown, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Plus, ChevronDown, CheckCircle, XCircle, Edit2, Trash2 } from 'lucide-react';
 
-export default function Index({ users }) {
+export default function Index({ users, filters = {}, units = [] }) {
     const { props } = usePage();
     const authUser = props?.auth?.user;
-    const [search, setSearch] = useState('');
-    const [selectedUnit, setSelectedUnit] = useState('');
+    
+    const [searchTerm, setSearchTerm] = useState(filters.q || '');
+    const [selectedUnit, setSelectedUnit] = useState(filters.unit || '');
 
-    // Extract unique units for filter dropdown
-    const uniqueUnits = [...new Set(users.data?.map(u => u.unit?.nama_unit).filter(Boolean))].sort();
+    // Debounced Search & Filter
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (searchTerm !== (filters.q || '') || selectedUnit !== (filters.unit || '')) {
+                router.get(
+                    route('user.index'),
+                    { q: searchTerm, unit: selectedUnit },
+                    { preserveState: true, preserveScroll: true, replace: true }
+                );
+            }
+        }, 300);
+
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm, selectedUnit]);
+
     const unitOptions = [
         { value: '', label: 'Semua Unit' },
-        ...uniqueUnits.map(u => ({ value: u, label: u }))
+        ...units.map(u => ({ value: u.id_unit, label: u.nama_unit }))
     ];
 
-    // Client-side filter untuk data halaman saat ini
-    const filtered = users.data ? users.data.filter(u => {
-        const q = search.toLowerCase();
-        const unitId = String(u.unit?.id_unit || u.id_unit || '').toLowerCase();
-        
-        const matchesSearch = u.nama_lengkap?.toLowerCase().includes(q) ||
-            u.email?.toLowerCase().includes(q) ||
-            u.username?.toLowerCase().includes(q) ||
-            u.peran?.toLowerCase().includes(q) ||
-            unitId.includes(q);
-            
-        const matchesUnit = selectedUnit === '' || u.unit?.nama_unit === selectedUnit;
-        
-        return matchesSearch && matchesUnit;
-    }) : [];
+    const filtered = users.data || [];
 
     return (
         <AuthenticatedLayout
@@ -58,8 +58,8 @@ export default function Index({ users }) {
                                 <input 
                                     type="text" 
                                     placeholder="Cari nama, email, atau peran..." 
-                                    value={search} 
-                                    onChange={(e) => setSearch(e.target.value)} 
+                                    value={searchTerm} 
+                                    onChange={(e) => setSearchTerm(e.target.value)} 
                                     className="pl-10 h-11 block w-full bg-gray-100 border-transparent rounded-lg focus:border-blue-500 focus:bg-white focus:ring-0 text-sm dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                                 />
                             </div>
@@ -71,7 +71,7 @@ export default function Index({ users }) {
                                         onChange={(e) => setSelectedUnit(e.target.value)}
                                         options={unitOptions}
                                         placeholder="Semua Unit"
-                                        className="h-11 rounded-lg border-transparent bg-gray-200 dark:bg-gray-700 dark:text-gray-300 focus:border-blue-500 focus:bg-white focus:ring-0 text-sm"
+                                        className="h-11 rounded-lg border-transparent bg-gray-200 dark:bg-gray-700 dark:text-gray-300 focus:border-blue-500 dark:focus:border-blue-500 focus:bg-white focus:ring-0 text-sm"
                                     />
                                 </div>
                                 
@@ -97,11 +97,13 @@ export default function Index({ users }) {
                                 <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                     <tr>
                                         <th className="px-4 py-3 border-b border-gray-300 dark:border-gray-600 font-medium">Nama</th>
+                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">NIK</th>
                                         <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Email / Username</th>
                                         <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Peran</th>
                                         <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Unit ID</th>
                                         <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Unit</th>
                                         <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Status</th>
+                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -110,6 +112,9 @@ export default function Index({ users }) {
                                             <tr key={user.id_user} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                                                 <td className="px-4 py-3 border-b border-gray-300 dark:border-gray-700 font-medium text-gray-900 dark:text-white">
                                                     {user.nama_lengkap}
+                                                </td>
+                                                <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">
+                                                    {user.nik || '-'}
                                                 </td>
                                                 <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700">
                                                     <div className="flex flex-col">
@@ -136,6 +141,34 @@ export default function Index({ users }) {
                                                             <CheckCircle className="w-5 h-5 text-green-500" title="Aktif" />
                                                         ) : (
                                                             <XCircle className="w-5 h-5 text-red-500" title="Tidak Aktif" />
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center">
+                                                    <div className="flex justify-center gap-2">
+                                                        <Link
+                                                            href={route('user.edit', user.uuid)}
+                                                            className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
+                                                            title="Edit User"
+                                                        >
+                                                            <Edit2 className="w-4 h-4" /> 
+                                                        </Link>
+                                                        
+                                                        {authUser?.id_user !== user.id_user && (
+                                                            <Link
+                                                                as="button"
+                                                                method="delete"
+                                                                href={route('user.destroy', user.uuid)}
+                                                                className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                                                                onClick={(e) => {
+                                                                    if (!confirm('Apakah Anda yakin ingin menghapus user ini?')) {
+                                                                        e.preventDefault();
+                                                                    }
+                                                                }}
+                                                                title="Hapus User"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </Link>
                                                         )}
                                                     </div>
                                                 </td>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { ArrowRight, Plus, Search, Download, Send, AlertCircle, Edit2 } from 'lucide-react';
+import { ArrowRight, Plus, Search, Download, Send, AlertCircle, Edit2, FileDown } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import { toast } from 'sonner';
 
@@ -143,7 +143,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, flash = {}
                                     />
                                 </div>
 
-                                <div className="w-40 md:w-48">
+                                <div className="w-36 md:w-40">
                                     <CustomSelect
                                         value={status}
                                         onChange={handleStatusChange}
@@ -151,9 +151,14 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, flash = {}
                                         options={[
                                             { value: '', label: 'Semua Status' },
                                             { value: 'Draft', label: 'Draft' },
-                                            { value: 'Review', label: 'Review' },
+                                            { value: 'Menunggu_Unit_Kepala', label: 'Menunggu Unit Kepala' },
+                                            { value: 'Menunggu_Dekan_Kepala', label: 'Menunggu Dekan' },
+                                            { value: 'Menunggu_Tim_Renbang', label: 'Menunggu Tim Renbang' },
+                                            { value: 'Menunggu_WR_1', label: 'Menunggu WR 1' },
+                                            { value: 'Menunggu_WR_2', label: 'Menunggu WR 2' },
+                                            { value: 'Menunggu_WR_3', label: 'Menunggu WR 3' },
+                                            { value: 'Menunggu_Rektor', label: 'Menunggu Rektor' },
                                             { value: 'Revisi', label: 'Revisi' },
-                                            { value: 'Disetujui_Revisi', label: 'Disetujui Revisi' },
                                             { value: 'Disetujui_Final', label: 'Disetujui Final' },
                                             { value: 'Ditolak', label: 'Ditolak' }
                                         ]}
@@ -232,6 +237,16 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, flash = {}
                                                     Lihat
                                                     <ArrowRight size={14} />
                                                 </Link>
+
+                                                <a
+                                                    href={route('rkat.export', item.uuid)}
+                                                    target="_blank"
+                                                    className="inline-flex items-center gap-1 px-3 py-1.5 border border-blue-300 rounded-md shadow-sm text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-900/50 dark:hover:bg-blue-900/20 transition-colors"
+                                                    title="Export PDF"
+                                                >
+                                                    Export
+                                                    <FileDown size={14} />
+                                                </a>
 
                                                 {/* TOMBOL EDIT: Hanya tampil jika Draft atau Revisi */}
                                                 {(item.status_persetujuan === 'Draft' || item.status_persetujuan === 'Revisi') && (

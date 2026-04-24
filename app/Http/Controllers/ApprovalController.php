@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LogPersetujuan;
 use App\Models\RkatHeader;
+use App\Models\TahunAnggaran;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,8 +18,9 @@ class ApprovalController extends Controller
 {
     // Pemetaan Role ke Status Dokumen yang sedang menunggu
     protected $roleStatusMap = [
-        'Kepala_Unit' => 'Menunggu_Dekan_Kepala',
+        'Kepala_Unit' => 'Menunggu_Unit_Kepala',
         'Dekan'       => 'Menunggu_Dekan_Kepala',
+        'Tim_Renbang' => 'Menunggu_Tim_Renbang',
         'WR_1'        => 'Menunggu_WR1',
         'WR_2'        => 'Menunggu_WR2',
         'WR_3'        => 'Menunggu_WR3',
@@ -37,9 +39,17 @@ class ApprovalController extends Controller
         // Otorisasi: Hanya approver dan Admin yang boleh masuk
         if (! $user->isApprover() && ! $user->isAdmin()) {
             Log::warning('[Approval] Akses Ditolak untuk: ' . $user->username);
-            return Inertia::render('Error', [
-                'status'  => 403,
-                'message' => 'Anda tidak memiliki hak akses untuk halaman ini.',
+            abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
+        }
+
+        // === CEK STATUS TAHUN ANGGARAN ===
+        // Hanya izinkan review jika ada Tahun Anggaran dengan status 'Approved'
+        $activeTahun = TahunAnggaran::where('status_rkat', 'Approved')->exists();
+        if (!$activeTahun && !$user->isAdmin()) {
+             return Inertia::render('Approval/Index', [
+                'rkatMenunggu' => [],
+                'currentRole'  => $peran,
+                'message'      => 'Tahap review belum dibuka atau sudah ditutup.'
             ]);
         }
 
@@ -107,6 +117,13 @@ class ApprovalController extends Controller
             ],
         ]);
 
+        $rkatHeader->load('tahunAnggaran');
+        if ($rkatHeader->tahunAnggaran->status_rkat !== 'Approved' && !$user->isAdmin()) {
+            return Redirect::back()->withErrors([
+                'error' => 'Persetujuan hanya dapat dilakukan pada tahap Approved (Review).',
+            ]);
+        }
+
         $currentStatus = $rkatHeader->status_persetujuan;
         $expectedStatus = $this->roleStatusMap[$user->peran] ?? null;
         
@@ -122,33 +139,43 @@ class ApprovalController extends Controller
         
         $aksi = $request->aksi;
 
-        // 3. Proses Transaksi Database
-        DB::transaction(function () use ($rkatHeader, $user, $aksi, $request) {
-            $oldStatus = $rkatHeader->status_persetujuan;
-            
-            // Tentukan status berikutnya berdasarkan aksi
-            $newStatus = match ($aksi) {
-                'Setuju' => $this->getNextStatus($rkatHeader), // Lanjut ke step berikutnya
-                'Revisi' => 'Revisi', // Mundur ke Inputer
-                'Tolak'  => 'Ditolak', // Berhenti total
-                default  => $rkatHeader->status_persetujuan,
-            };
+        try {
+            // 3. Proses Transaksi Database
+            DB::transaction(function () use ($rkatHeader, $user, $aksi, $request) {
+                $oldStatus = $rkatHeader->status_persetujuan;
+                
+                // Tentukan status berikutnya berdasarkan aksi
+                $newStatus = match ($aksi) {
+                    'Setuju' => $this->getNextStatus($rkatHeader), // Lanjut ke step berikutnya
+                    'Revisi' => 'Revisi', // Mundur ke Inputer
+                    'Tolak'  => 'Ditolak', // Berhenti total
+                    default  => $rkatHeader->status_persetujuan,
+                };
 
-            // Update Status RKAT
-            $rkatHeader->update(['status_persetujuan' => $newStatus]);
-            Log::info("[Approval] Status Berubah: $oldStatus -> $newStatus");
+                // Update Status RKAT
+                $rkatHeader->update(['status_persetujuan' => $newStatus]);
+                Log::info("[Approval] Status Berubah: $oldStatus -> $newStatus");
 
-            // Catat Riwayat Persetujuan (Audit Trail)
-            LogPersetujuan::create([
-                'id_header'         => $rkatHeader->id_header,
-                'id_approver'       => $user->id_user,
-                'level_persetujuan' => $user->peran, // Tercatat sbg "Admin" jika yang mengeksekusi adalah Admin
-                'aksi'              => $aksi,
-                'catatan'           => $request->catatan,
+                // Catat Riwayat Persetujuan (Audit Trail)
+                LogPersetujuan::create([
+                    'id_header'         => $rkatHeader->id_header,
+                    'id_approver'       => $user->id_user,
+                    'level_persetujuan' => $user->peran, 
+                    'aksi'              => $aksi,
+                    'catatan'           => $request->catatan,
+                ]);
+            });
+
+            return Redirect::route('approval.index')->with('success', "RKAT #{$rkatHeader->id_header} berhasil di{$aksi}.");
+        } catch (\Exception $e) {
+            Log::error('[Approval] Gagal memproses aksi: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
             ]);
-        });
-
-        return Redirect::route('approval.index')->with('success', "RKAT #{$rkatHeader->id_header} berhasil di{$aksi}.");
+            
+            return Redirect::back()->withErrors([
+                'error' => 'Gagal memproses persetujuan: ' . $e->getMessage(),
+            ])->with('error', 'Gagal memproses persetujuan: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -170,15 +197,16 @@ class ApprovalController extends Controller
         // State Machine Flow
         $flows = [
             'akademik' => [
-                'Menunggu_Dekan_Kepala' => 'Menunggu_WR1',
-                'Menunggu_WR1'          => 'Menunggu_WR3',
-                'Menunggu_WR3'          => 'Menunggu_WR2',
+                'Menunggu_Unit_Kepala'  => 'Menunggu_Dekan_Kepala',
+                'Menunggu_Dekan_Kepala' => 'Menunggu_Tim_Renbang',
+                'Menunggu_Tim_Renbang'  => 'Menunggu_WR1',
+                'Menunggu_WR1'          => 'Menunggu_WR2',
                 'Menunggu_WR2'          => 'Disetujui_Final',
             ],
-            'non_akademik' => [
-                'Menunggu_Dekan_Kepala' => 'Menunggu_WR3',
-                'Menunggu_WR3'          => 'Menunggu_WR1',
-                'Menunggu_WR1'          => 'Menunggu_WR2',
+            'non-akademik' => [
+                'Menunggu_Unit_Kepala'  => 'Menunggu_Tim_Renbang',
+                'Menunggu_Tim_Renbang'  => 'Menunggu_WR3',
+                'Menunggu_WR3'          => 'Menunggu_WR2',
                 'Menunggu_WR2'          => 'Disetujui_Final',
             ],
         ];

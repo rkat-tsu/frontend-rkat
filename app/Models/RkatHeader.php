@@ -22,6 +22,8 @@ class RkatHeader extends Model
         'nomor_dokumen',
         'status_persetujuan',
         'tanggal_pengajuan',
+        'total_anggaran',
+        'parent_id',
     ];
 
     protected $casts = [

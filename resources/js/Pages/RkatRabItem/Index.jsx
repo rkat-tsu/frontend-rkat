@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import TextInput from '@/Components/TextInput';
@@ -8,17 +8,23 @@ export default function Index({ auth, items, filters }) {
     // State untuk pencarian
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
 
-    // Handle Search dengan Delay (Debounce sederhana)
-    const handleSearch = (e) => {
-        const value = e.target.value;
-        setSearchTerm(value);
+    // Handle Search dengan Delay (Debounce) via useEffect
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (searchTerm !== (filters.search || '')) {
+                router.get(
+                    route('daftar-ajuan.index'),
+                    { search: searchTerm },
+                    { preserveState: true, replace: true, preserveScroll: true }
+                );
+            }
+        }, 500); // 500ms delay
 
-        // Trigger reload inertia
-        router.get(
-            route('rkat-rab-items.index'),
-            { search: value },
-            { preserveState: true, replace: true }
-        );
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm]);
+
+    const handleSearch = (e) => {
+        setSearchTerm(e.target.value);
     };
 
     // Helper Format Rupiah

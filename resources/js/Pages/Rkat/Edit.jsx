@@ -431,9 +431,9 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                         <tr>
                                             <th className="px-2 py-3 text-xs text-center">No</th>
                                             <th className="px-4 py-3 text-xs text-left min-w-[200px]">Indikator</th>
-                                            <th className="px-4 py-3 text-xs text-center min-w-[100px]">Kondisi 2024</th>
-                                            <th className="px-4 py-3 text-xs text-center">Target 2025</th>
-                                            <th className="px-4 py-3 text-xs text-center">Capaian 2025</th>
+                                            <th className="px-4 py-3 text-xs text-center min-w-[100px]">Kondisi 2025</th>
+                                            <th className="px-4 py-3 text-xs text-center">Target 2026</th>
+                                            <th className="px-4 py-3 text-xs text-center">Capaian 2026</th>
                                             <th className="px-4 py-3 text-xs text-center">Target 2029</th>
                                             <th className="px-4 py-3 text-xs text-center">Capaian 2029</th>
                                             <th></th>
@@ -496,7 +496,7 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                                         <RupiahInput value={item.biaya_satuan} onValueChange={(val) => handleRincianChange(index, 'biaya_satuan', val)} className="w-full h-9 text-xs text-right px-2" />
                                                     </div>
                                                 </td>
-                                                <td className="px-2 py-1 text-right font-semibold align-middle">{formatRupiah(item.jumlah)}</td>
+                                                <td className="px-2 py-1 text-right font-semibold align-middle text-gray-100 dark:text-gray-100">{formatRupiah(item.jumlah)}</td>
                                                 <td className="px-2 py-1 text-center align-middle">
                                                     <button type="button" onClick={() => removeRabItem(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-md"><Trash2 size={16} /></button>
                                                 </td>

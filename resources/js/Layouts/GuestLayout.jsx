@@ -5,13 +5,13 @@ import { Toaster } from '@/Components/ui/sonner';
 export default function GuestLayout({ children }) {
     return (
         <div
-            className="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100"
+            className="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100 dark:bg-gray-950 transition-colors duration-500"
             style={{
                 backgroundImage: 'url("/img/backgrounds/login-bg.png")',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
-                backgroundColor: 'rgba(0,0,0,0.5)',
+                backgroundColor: 'rgba(0,0,0,0.6)',
                 backgroundBlendMode: 'overlay',
             }}
         >

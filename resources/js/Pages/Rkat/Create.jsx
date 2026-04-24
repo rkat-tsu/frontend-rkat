@@ -294,13 +294,13 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                 </div>
                                 <div>
                                     <InputLabel value="Unit Kerja" required />
-                                    <CustomSelect 
-                                        value={data.id_unit} 
-                                        onChange={(e) => setData('id_unit', e.target.value)} 
-                                        options={auth.user.peran === 'Admin' ? unitOptions : unitOptions.filter(u => String(u.value) === String(auth.user.id_unit))} 
-                                        placeholder="Pilih Unit" 
-                                        disabled={auth.user.peran !== 'Admin'} 
-                                        className="mt-1" 
+                                    <CustomSelect
+                                        value={data.id_unit}
+                                        onChange={(e) => setData('id_unit', e.target.value)}
+                                        options={auth.user.peran === 'Admin' ? unitOptions : unitOptions.filter(u => String(u.value) === String(auth.user.id_unit))}
+                                        placeholder="Pilih Unit"
+                                        disabled={auth.user.peran !== 'Admin'}
+                                        className="mt-1"
                                     />
                                     <InputError message={errors.id_unit} className="mt-2" />
                                 </div>
@@ -499,9 +499,9 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                         <tr>
                                             <th className="px-2 py-3 text-xs text-center">No</th>
                                             <th className="px-4 py-3 text-xs text-left min-w-[200px]">Indikator</th>
-                                            <th className="px-4 py-3 text-xs text-center min-w-[100px]">Kondisi 2024</th>
-                                            <th className="px-4 py-3 text-xs text-center">Target 2025</th>
-                                            <th className="px-4 py-3 text-xs text-center">Capaian 2025</th>
+                                            <th className="px-4 py-3 text-xs text-center min-w-[100px]">Kondisi 2025</th>
+                                            <th className="px-4 py-3 text-xs text-center">Target 2026</th>
+                                            <th className="px-4 py-3 text-xs text-center">Capaian 2026</th>
                                             <th className="px-4 py-3 text-xs text-center">Target 2029</th>
                                             <th className="px-4 py-3 text-xs text-center">Capaian 2029</th>
                                             <th></th>

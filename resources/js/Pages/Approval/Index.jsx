@@ -31,20 +31,6 @@ export default function ApproverDashboard({ auth, rkatMenunggu, currentRole, fla
             <div className="py-8">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     
-                    {/* Pesan Sukses */}
-                    {flash?.success && (
-                        <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 shadow-sm rounded-r-lg">
-                            {flash.success}
-                        </div>
-                    )}
-                    
-                    {/* Pesan Error */}
-                    {flash?.error && (
-                        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 shadow-sm rounded-r-lg">
-                            {flash.error}
-                        </div>
-                    )}
-
                     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-gray-200 dark:border-gray-700">
                         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
                             <div>

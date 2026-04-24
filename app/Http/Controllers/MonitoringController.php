@@ -52,7 +52,7 @@ class MonitoringController extends Controller
         // 4. Hitung Statistik Ringkas
         $stats = [
             'total_unit' => $monitoringData->count(),
-            'sudah_submit' => $monitoringData->whereIn('status', ['Diajukan', 'Disetujui_L1', 'Disetujui_Final', 'Menunggu_Dekan_Kepala'])->count(),
+            'sudah_submit' => $monitoringData->whereNotIn('status', ['Belum Mengisi', 'Draft', 'Revisi', 'Ditolak'])->count(),
             'approved' => $monitoringData->where('status', 'Disetujui_Final')->count(),
             'total_anggaran_diajukan' => $monitoringData->sum('total_anggaran'),
         ];

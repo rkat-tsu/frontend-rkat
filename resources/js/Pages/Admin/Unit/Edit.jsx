@@ -31,7 +31,7 @@ export default function Edit({ auth, unit, users, units }) {
         }
 
         const toastId = toast.loading("Sedang memperbarui data...");
-        patch(route('unit.update', unit.id_unit), {
+        patch(route('unit.update', unit.uuid || unit.id_unit), {
             onSuccess: () => toast.success("Berhasil", { id: toastId, description: "Data Unit Kerja berhasil diperbarui." }),
             onError: () => toast.error("Gagal Memperbarui", { id: toastId, description: "Terdapat kesalahan saat memperbarui data." })
         });

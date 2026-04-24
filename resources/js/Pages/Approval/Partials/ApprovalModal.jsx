@@ -7,6 +7,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import DangerButton from '@/Components/DangerButton';
 import { useForm } from '@inertiajs/react';
 import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function ApprovalModal({ show, onClose, rkat }) {
     // Determine the type of action selected visually
@@ -44,16 +45,21 @@ export default function ApprovalModal({ show, onClose, rkat }) {
 
         // Final sanity check before submission
         if ((actionType === 'Revisi' || actionType === 'Tolak') && !data.catatan.trim()) {
-            // Inertia will usually handle this via backend validation, 
-            // but providing frontend feedback is faster.
+            toast.error("Catatan Wajib Diisi", { description: "Silakan tuliskan alasan revisi atau penolakan." });
             return;
         }
 
+        const toastId = toast.loading(`Sedang memproses ${actionType}...`);
+        
         post(route('approval.process', rkat.uuid), {
             preserveScroll: true,
             onSuccess: () => {
+                toast.success("Berhasil", { id: toastId, description: `Dokumen berhasil di${actionType.toLowerCase()}.` });
                 reset();
                 onClose();
+            },
+            onError: () => {
+                toast.error("Gagal Memproses", { id: toastId, description: "Terdapat kesalahan saat memproses persetujuan." });
             },
         });
     };
@@ -126,7 +132,7 @@ export default function ApprovalModal({ show, onClose, rkat }) {
                             onChange={(e) => setData('catatan', e.target.value)}
                             className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm dark:bg-gray-900 dark:text-gray-100 transition-colors ${errors.catatan
                                     ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                                    : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600'
+                                    : `border-gray-300 ${actionType === 'Revisi' ? 'focus:border-yellow-500 focus:ring-yellow-500' : 'focus:border-red-500 focus:ring-red-500'} dark:border-gray-600`
                                 }`}
                             rows="4"
                             placeholder={actionType === 'Revisi' ? "Tuliskan bagian mana saja yang perlu diperbaiki oleh unit..." : "Tuliskan alasan utama mengapa pengajuan ini ditolak secara permanen..."}

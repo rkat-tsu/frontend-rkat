@@ -40,6 +40,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/rkat/{rkatHeader}/edit', [RkatController::class, 'edit'])->name('rkat.edit');
     Route::patch('/rkat/{rkatHeader}', [RkatController::class, 'update'])->name('rkat.update');
     Route::post('/rkat/{rkatHeader}/submit', [RkatController::class, 'submit'])->name('rkat.submit');
+    Route::get('/rkat/{rkatHeader}/export', [RkatController::class, 'exportPdf'])->name('rkat.export');
 
     // Unit resource routes (Public view)
     Route::get('/unit', [UnitController::class, 'index'])->name('unit.index');
@@ -55,11 +56,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/daftar-ajuan/create', [RkatRabItemController::class, 'create'])->name('daftar-ajuan.create');
     Route::post('/daftar-ajuan', [RkatRabItemController::class, 'store'])->name('daftar-ajuan.store');
 
-    //approval routes
-    Route::get('/approval', [ApprovalController::class, 'index'])->name('approval.index');
-    Route::post('/approval/approve/{rkatHeader}', [ApprovalController::class, 'approve'])->name('approval.approve');
+    // === ROUTE APPROVAL ===
+    Route::middleware(['approver'])->group(function () {
+        Route::get('/approval', [ApprovalController::class, 'index'])->name('approval.index');
+        Route::post('/approval/approve/{rkatHeader}', [ApprovalController::class, 'approve'])->name('approval.process');
+    });
 
-    //monitoring route
+    // monitoring route
     Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
 
     // Admin-only routes: Tahun Anggaran and account creation
@@ -79,11 +82,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/rincian-anggaran/{rincian}', [RincianAnggaranController::class, 'update'])->name('rincian.update');
         Route::delete('/rincian-anggaran/{rincian}', [RincianAnggaranController::class, 'destroy'])->name('rincian.destroy');
 
-        // Admin-only user creation
+        // Admin-only user management
+        Route::get('/user', [UserController::class, 'index'])->name('user.index');
         Route::get('/user/create', [UserController::class, 'create'])->name('user.create');
         Route::post('/user', [UserController::class, 'store'])->name('user.store');
-        // Admin-only user listing
-        Route::get('/user', [UserController::class, 'index'])->name('user.index');
+        Route::get('/user/{user}/edit', [UserController::class, 'edit'])->name('user.edit');
+        Route::patch('/user/{user}', [UserController::class, 'update'])->name('user.update');
+        Route::delete('/user/{user}', [UserController::class, 'destroy'])->name('user.destroy');
+        Route::patch('/user/{user}/password', [UserController::class, 'updatePassword'])->name('user.password.update');
 
         // Unit management
         Route::get('/unit/create', [UnitController::class, 'create'])->name('unit.create');
@@ -99,12 +105,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // IKK Management
         Route::get('/iku/input-ikk', [IkuController::class, 'create'])->name('iku.create');
         Route::post('/iku/sync-ikk', [IkuController::class, 'store'])->name('iku.store');
-
-        Route::middleware(['approver','admin'])->group(function () {
-            // Routes untuk approver (Dekan, Kepala Unit, WR, Rektor)
-            Route::get('/approval', [ApprovalController::class, 'index'])->name('approval.index');
-            Route::post('/approval/approve/{rkatHeader}', [ApprovalController::class, 'approve'])->name('approval.process');
-        });
     });
 });
 
