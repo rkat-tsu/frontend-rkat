@@ -38,12 +38,6 @@ export default function ForgotPassword({ status }) {
                 </p>
             </div>
 
-            {status && (
-                <div className="mb-6 rounded-lg bg-emerald-50 p-4 text-sm font-medium text-emerald-600 border border-emerald-100">
-                    {status}
-                </div>
-            )}
-
             <form onSubmit={submit} className="space-y-4">
                 <div>
                     <div className="mb-1.5 flex items-center text-sm font-medium text-slate-700">
@@ -57,7 +51,7 @@ export default function ForgotPassword({ status }) {
                         value={data.email}
                         className="block w-full rounded-xl border-gray-300 px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:ring-blue-500"
                         isFocused={true}
-                        placeholder="nama@email.com"
+                        placeholder="Masukan Email"
                         onChange={(e) => setData('email', e.target.value)}
                         required
                     />

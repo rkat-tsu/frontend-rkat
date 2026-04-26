@@ -75,15 +75,20 @@ class RkatController extends Controller
         if ($request->filled('status')) {
             $query->where('status_persetujuan', $request->status);
         }
+        if ($request->filled('unit_id')) {
+            $query->where('id_unit', $request->unit_id);
+        }
 
         $rkats = $query->orderBy('tanggal_pengajuan', 'desc')->paginate(15)->withQueryString();
 
         $tahunAnggarans = TahunAnggaran::orderBy('tahun_anggaran', 'desc')->pluck('tahun_anggaran');
+        $units = Unit::orderBy('nama_unit')->get();
 
         return Inertia::render('Rkat/Index', [
             'rkats' => $rkats,
-            'filters' => $request->only(['search', 'tahun', 'status']),
+            'filters' => $request->only(['search', 'tahun', 'status', 'unit_id']),
             'tahunAnggarans' => $tahunAnggarans,
+            'units' => $units,
         ]);
     }
 
@@ -191,12 +196,12 @@ class RkatController extends Controller
                     'id_rkat_detail' => $rkatDetail->id_rkat_detail,
                     'nama_indikator' => $item['indikator'],
 
-                    // Mapping field Form -> Database (Updated years)
-                    'capai_2025'  => $item['kondisi_akhir_2024_capaian'] ?? null,
-                    'target_2026' => $item['tahun_2025_target'] ?? null,
-                    'capai_2026'  => $item['tahun_2025_capaian'] ?? null,
-                    'target_2029' => $item['akhir_tahun_2029_target'] ?? null,
-                    'capai_2029'  => $item['akhir_tahun_2029_capaian'] ?? null,
+                    // Mapping field Form -> Database (Standardized)
+                    'capai_2025'  => $item['capai_2025'] ?? null,
+                    'target_2026' => $item['target_2026'] ?? null,
+                    'capai_2026'  => $item['capai_2026'] ?? null,
+                    'target_2029' => $item['target_2029'] ?? null,
+                    'capai_2029'  => $item['capai_2029'] ?? null,
                 ]);
             }
 
@@ -444,11 +449,11 @@ class RkatController extends Controller
                 IndikatorKeberhasilan::create([
                     'id_rkat_detail' => $rkatDetail->id_rkat_detail,
                     'nama_indikator' => $item['indikator'],
-                    'capai_2025'  => $item['kondisi_akhir_2024_capaian'] ?? null,
-                    'target_2026' => $item['tahun_2025_target'] ?? null,
-                    'capai_2026'  => $item['tahun_2025_capaian'] ?? null,
-                    'target_2029' => $item['akhir_tahun_2029_target'] ?? null,
-                    'capai_2029'  => $item['akhir_tahun_2029_capaian'] ?? null,
+                    'capai_2025'  => $item['capai_2025'] ?? null,
+                    'target_2026' => $item['target_2026'] ?? null,
+                    'capai_2026'  => $item['capai_2026'] ?? null,
+                    'target_2029' => $item['target_2029'] ?? null,
+                    'capai_2029'  => $item['capai_2029'] ?? null,
                 ]);
             }
 
@@ -476,18 +481,30 @@ class RkatController extends Controller
     }
     public function exportPdf(RkatHeader $rkatHeader)
     {
-        $rkatHeader->load([
-            'unit',
-            'user',
-            'rkatDetails.iku',
-            'rkatDetails.ikk',
-            'rkatDetails.rabItems',
-            'rkatDetails.indikators',
-            'logPersetujuans.approver',
-        ]);
+        try {
+            ini_set('memory_limit', '512M');
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.rkat', ['rkat' => $rkatHeader]);
-        
-        return $pdf->download('RKAT_' . str_replace('/', '-', $rkatHeader->nomor_dokumen) . '.pdf');
+            $rkatHeader->load([
+                'unit',
+                'user',
+                'rkatDetails.iku',
+                'rkatDetails.ikk',
+                'rkatDetails.rabItems',
+                'rkatDetails.indikators',
+                'logPersetujuans.approver',
+            ]);
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.rkat', ['rkat' => $rkatHeader]);
+            $pdf->setPaper('a4', 'portrait');
+            
+            return $pdf->download('RKAT_' . str_replace(['/', '\\'], '-', $rkatHeader->nomor_dokumen) . '.pdf');
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Export Failed',
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ], 500);
+        }
     }
 }

@@ -195,14 +195,12 @@ export default function Index({
                                             {item.total_anggaran > 0 ? formatRupiah(item.total_anggaran) : '-'}
                                         </td>
                                         <td className="px-6 py-4 border-b border-l border-gray-200 dark:border-gray-700 text-center">
-                                            {item.uuid ? (
-                                                <Link
-                                                    href={route('rkat.show', item.uuid)}
-                                                    className="inline-flex items-center gap-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors text-sm"
-                                                >
-                                                    <Eye size={14} /> Detail
-                                                </Link>
-                                            ) : <span className="text-gray-400 dark:text-gray-500 text-xs">-</span>}
+                                            <Link
+                                                href={route('rkat.index', { unit_id: item.id_unit, tahun: selectedYear })}
+                                                className="inline-flex items-center gap-1 px-3 py-1.5 border border-indigo-200 dark:border-indigo-900/50 rounded-md shadow-sm text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors text-sm font-semibold"
+                                            >
+                                                <Eye size={14} /> Detail
+                                            </Link>
                                         </td>
                                     </tr>
                                 )) : (

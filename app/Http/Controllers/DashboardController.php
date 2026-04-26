@@ -48,9 +48,24 @@ class DashboardController extends Controller
             'ditolak' => RkatHeader::where('status_persetujuan', 'Ditolak')->count(),
         ];
 
+        // 5. Ambil data Tahun Anggaran Aktif & Mapping Status
+        $activeBudget = \App\Models\TahunAnggaran::where('tahun_anggaran', $tahunSekarang)->first();
+        
+        $statusMap = [
+            'Drafting'   => 'Penyusunan',
+            'Submission' => 'Pengajuan',
+            'Approved'   => 'Disetujui',
+            'Closed'     => 'Ditutup',
+        ];
+
+        $rawStatus = $activeBudget->status_rkat ?? 'None';
+        $statusTeks = $statusMap[$rawStatus] ?? ($rawStatus === 'None' ? 'Tidak Aktif' : $rawStatus);
+
         return Inertia::render('Dashboard', [
             'grafikRkat' => $grafikRkat,
             'tahunAnggaran' => $tahunSekarang,
+            'statusAnggaran' => $statusTeks,
+            'rawStatus' => $rawStatus,
             'summary' => $summary
         ]);
     }

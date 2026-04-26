@@ -128,9 +128,9 @@ export default function Show({ auth, rkat = {} }) {
                                     <thead className="bg-gray-50 dark:bg-gray-700">
                                         <tr>
                                             <th className="px-4 py-3 text-left font-medium text-gray-700 dark:text-gray-200">Indikator Keberhasilan</th>
-                                            <th className="px-4 py-3 text-center font-medium text-gray-700 dark:text-gray-200">Capaian 2024</th>
-                                            <th className="px-4 py-3 text-center font-medium text-gray-700 dark:text-gray-200">Target 2025</th>
-                                            <th className="px-4 py-3 text-center font-medium text-gray-700 dark:text-gray-200">Capaian 2025</th>
+                                            <th className="px-4 py-3 text-center font-medium text-gray-700 dark:text-gray-200">Kondisi 2025</th>
+                                            <th className="px-4 py-3 text-center font-medium text-gray-700 dark:text-gray-200">Target 2026</th>
+                                            <th className="px-4 py-3 text-center font-medium text-gray-700 dark:text-gray-200">Capaian 2026</th>
                                             <th className="px-4 py-3 text-center font-medium text-gray-700 dark:text-gray-200">Target 2029</th>
                                             <th className="px-4 py-3 text-center font-medium text-gray-700 dark:text-gray-200">Capaian 2029</th>
                                         </tr>
@@ -139,9 +139,9 @@ export default function Show({ auth, rkat = {} }) {
                                         {indikators.length > 0 ? indikators.map((ind, idx) => (
                                             <tr key={idx} className="bg-white dark:bg-gray-800">
                                                 <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{ind.nama_indikator}</td>
-                                                <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">{ind.capai_2024 || '-'}</td>
-                                                <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">{ind.target_2025 || '-'}</td>
                                                 <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">{ind.capai_2025 || '-'}</td>
+                                                <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">{ind.target_2026 || '-'}</td>
+                                                <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">{ind.capai_2026 || '-'}</td>
                                                 <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">{ind.target_2029 || '-'}</td>
                                                 <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">{ind.capai_2029 || '-'}</td>
                                             </tr>

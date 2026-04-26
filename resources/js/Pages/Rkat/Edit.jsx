@@ -35,11 +35,11 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
     const initialIndikator = {
         id: Date.now(),
         indikator: '',
-        kondisi_akhir_2024_capaian: '',
-        tahun_2025_target: '',
-        tahun_2025_capaian: '',
-        akhir_tahun_2029_target: '',
-        akhir_tahun_2029_capaian: ''
+        capai_2025: '',
+        target_2026: '',
+        capai_2026: '',
+        target_2029: '',
+        capai_2029: ''
     };
 
     const initialRAB = {
@@ -80,11 +80,11 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
         indikator_kinerja: detail.indikators ? detail.indikators.map(i => ({
             id: i.id_indikator,
             indikator: i.nama_indikator,
-            kondisi_akhir_2024_capaian: i.capai_2024 || '',
-            tahun_2025_target: i.target_2025 || '',
-            tahun_2025_capaian: i.capai_2025 || '',
-            akhir_tahun_2029_target: i.target_2029 || '',
-            akhir_tahun_2029_capaian: i.capai_2029 || ''
+            capai_2025: i.capai_2025 || '',
+            target_2026: i.target_2026 || '',
+            capai_2026: i.capai_2026 || '',
+            target_2029: i.target_2029 || '',
+            capai_2029: i.capai_2029 || ''
         })) : [initialIndikator],
         rincian_anggaran: detail.rab_items ? detail.rab_items.map(r => ({
             id: r.id_rab_item,
@@ -422,8 +422,8 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                         <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-blue-500">
                             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">3. Indikator Kinerja</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                <div><InputLabel value="IKU" required /><CustomSelect value={data.iku_id} onChange={(e) => setData(prev => ({ ...prev, iku_id: e.target.value, ikk_id: '' }))} options={ikuOptions} placeholder="Pilih IKU" className="mt-1" /><InputError message={errors.iku_id} className="mt-2" /></div>
-                                <div><InputLabel value="IKK" required /><CustomSelect value={data.ikk_id} onChange={(e) => setData('ikk_id', e.target.value)} options={filteredIkks} placeholder="Pilih IKK" disabled={!data.iku_id} className="mt-1" /><InputError message={errors.ikk_id} className="mt-2" /></div>
+                                <div><InputLabel value="IKU" required /><CustomSelect value={data.iku_id} onChange={(e) => setData(prev => ({ ...prev, iku_id: e.target.value, ikk_id: '' }))} options={ikuOptions} placeholder="Pilih IKU" isMarquee={true} className="mt-1" /><InputError message={errors.iku_id} className="mt-2" /></div>
+                                <div><InputLabel value="IKK" required /><CustomSelect value={data.ikk_id} onChange={(e) => setData('ikk_id', e.target.value)} options={filteredIkks} placeholder="Pilih IKK" disabled={!data.iku_id} isMarquee={true} className="mt-1" /><InputError message={errors.ikk_id} className="mt-2" /></div>
                             </div>
                             <div className="overflow-x-auto rounded-lg mb-4">
                                 <table className="min-w-full">
@@ -444,11 +444,11 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                             <tr key={item.id} className="hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors">
                                                 <td className="px-2 py-3 text-sm text-center align-top pt-4">{index + 1}</td>
                                                 <td className="p-2 align-top"><TextArea value={item.indikator} onChange={(e) => handleIndikatorChange(index, 'indikator', e.target.value)} className="w-full text-sm min-h-[80px]" rows="3" /></td>
-                                                <td className="p-2 align-top"><TextArea value={item.kondisi_akhir_2024_capaian} onChange={(e) => handleIndikatorChange(index, 'kondisi_akhir_2024_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                <td className="p-2 align-top"><TextArea value={item.tahun_2025_target} onChange={(e) => handleIndikatorChange(index, 'tahun_2025_target', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                <td className="p-2 align-top"><TextArea value={item.tahun_2025_capaian} onChange={(e) => handleIndikatorChange(index, 'tahun_2025_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                <td className="p-2 align-top"><TextArea value={item.akhir_tahun_2029_target} onChange={(e) => handleIndikatorChange(index, 'akhir_tahun_2029_target', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                <td className="p-2 align-top"><TextArea value={item.akhir_tahun_2029_capaian} onChange={(e) => handleIndikatorChange(index, 'akhir_tahun_2029_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                <td className="p-2 align-top"><TextArea value={item.capai_2025} onChange={(e) => handleIndikatorChange(index, 'capai_2025', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                <td className="p-2 align-top"><TextArea value={item.target_2026} onChange={(e) => handleIndikatorChange(index, 'target_2026', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                <td className="p-2 align-top"><TextArea value={item.capai_2026} onChange={(e) => handleIndikatorChange(index, 'capai_2026', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                <td className="p-2 align-top"><TextArea value={item.target_2029} onChange={(e) => handleIndikatorChange(index, 'target_2029', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                <td className="p-2 align-top"><TextArea value={item.capai_2029} onChange={(e) => handleIndikatorChange(index, 'capai_2029', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
                                                 <td className="p-2 pt-4 align-top"><button type="button" onClick={() => removeIndikatorRow(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"><Trash2 size={16} /></button></td>
                                             </tr>
                                         ))}
@@ -480,7 +480,7 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                             <tr key={item.id} className="bg-white dark:bg-gray-800 hover:bg-yellow-50 dark:hover:bg-yellow-900/30 transition-colors">
                                                 <td className="px-2 py-1 text-center font-medium text-gray-500 align-middle">{index + 1}</td>
                                                 <td className="px-2 py-1 align-middle">
-                                                    <CustomSelect value={item.kode_anggaran} onChange={(e) => handleRincianChange(index, 'kode_anggaran', e.target.value)} options={akunOptions} placeholder="Pilih " className="w-full h-9 text-xs" />
+                                                    <CustomSelect value={item.kode_anggaran} onChange={(e) => handleRincianChange(index, 'kode_anggaran', e.target.value)} options={akunOptions} placeholder="Pilih " isMarquee={true} className="w-full h-9 text-xs" />
                                                 </td>
                                                 <td className="px-2 py-1 align-middle">
                                                     <TextInput value={item.kebutuhan} onChange={(e) => handleRincianChange(index, 'kebutuhan', e.target.value)} className="w-full h-9 text-xs px-2" />
@@ -496,7 +496,7 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                                         <RupiahInput value={item.biaya_satuan} onValueChange={(val) => handleRincianChange(index, 'biaya_satuan', val)} className="w-full h-9 text-xs text-right px-2" />
                                                     </div>
                                                 </td>
-                                                <td className="px-2 py-1 text-right font-semibold align-middle text-gray-100 dark:text-gray-100">{formatRupiah(item.jumlah)}</td>
+                                                <td className="px-2 py-1 text-right font-semibold align-middle text-gray-800 dark:text-gray-100">{formatRupiah(item.jumlah)}</td>
                                                 <td className="px-2 py-1 text-center align-middle">
                                                     <button type="button" onClick={() => removeRabItem(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-md"><Trash2 size={16} /></button>
                                                 </td>

@@ -15,17 +15,18 @@ const formatDate = (value) => {
 };
 
 // Tambahkan prop 'flash' untuk menangkap pesan error/success dari Controller
-export default function Index({ auth, rkats, filters, tahunAnggarans, flash = {} }) {
+export default function Index({ auth, rkats, filters, tahunAnggarans, units = [], flash = {} }) {
     // State untuk menyimpan nilai filter
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [tahun, setTahun] = useState(filters?.tahun || '');
     const [status, setStatus] = useState(filters?.status || '');
+    const [unitId, setUnitId] = useState(filters?.unit_id || '');
 
     // Fungsi untuk menerapkan filter ke backend
-    const applyFilters = (newSearch, newTahun, newStatus) => {
+    const applyFilters = (newSearch, newTahun, newStatus, newUnitId) => {
         router.get(
             route('rkat.index'),
-            { search: newSearch, tahun: newTahun, status: newStatus },
+            { search: newSearch, tahun: newTahun, status: newStatus, unit_id: newUnitId },
             { preserveState: true, preserveScroll: true, replace: true }
         );
     };
@@ -38,7 +39,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, flash = {}
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             if (searchTerm !== (filters?.search || '')) {
-                applyFilters(searchTerm, tahun, status);
+                applyFilters(searchTerm, tahun, status, unitId);
             }
         }, 300); // 300ms delay
 
@@ -48,13 +49,19 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, flash = {}
     const handleTahunChange = (e) => {
         const val = e.target.value;
         setTahun(val);
-        applyFilters(searchTerm, val, status);
+        applyFilters(searchTerm, val, status, unitId);
     };
 
     const handleStatusChange = (e) => {
         const val = e.target.value;
         setStatus(val);
-        applyFilters(searchTerm, tahun, val);
+        applyFilters(searchTerm, tahun, val, unitId);
+    };
+
+    const handleUnitChange = (e) => {
+        const val = e.target.value;
+        setUnitId(val);
+        applyFilters(searchTerm, tahun, status, val);
     };
 
     // Fungsi untuk mengirim dokumen (Submit)
@@ -116,8 +123,9 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, flash = {}
                     <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-teal-500 mb-6">
 
                         {/* Top Bar: Search, Filters & Buttons */}
-                        <div className="flex flex-col xl:flex-row justify-between items-center gap-4">
-                            <div className="relative w-full xl:w-1/3">
+                        <div className="flex flex-col lg:flex-row items-center gap-4 w-full">
+                            {/* Search */}
+                            <div className="relative w-full lg:flex-1">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <Search size={18} className="text-gray-400" />
                                 </div>
@@ -126,16 +134,17 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, flash = {}
                                     value={searchTerm}
                                     onChange={handleSearchChange}
                                     placeholder="Cari nomor dokumen atau unit..."
-                                    className="pl-10 h-11 block w-full bg-gray-100 border-transparent rounded-lg focus:border-teal-500 focus:bg-white focus:ring-0 text-sm dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+                                    className="pl-10 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
                                 />
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-end">
-                                <div className="w-36 md:w-40">
+                            {/* Filters Group */}
+                            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                                <div className="flex-1 min-w-[140px] lg:w-36">
                                     <CustomSelect
                                         value={tahun}
                                         onChange={handleTahunChange}
-                                        className="h-11 rounded-lg border-transparent bg-gray-200 dark:bg-gray-700 dark:text-gray-300 focus:border-teal-500 focus:bg-white focus:ring-0 text-sm w-full"
+                                        className="h-11"
                                         options={[
                                             { value: '', label: 'Semua Tahun' },
                                             ...(tahunAnggarans || []).map(th => ({ value: th, label: th }))
@@ -143,11 +152,25 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, flash = {}
                                     />
                                 </div>
 
-                                <div className="w-36 md:w-40">
+                                {auth.user.peran === 'Admin' && units.length > 0 && (
+                                    <div className="flex-1 min-w-[200px] lg:w-56">
+                                        <CustomSelect
+                                            value={unitId}
+                                            onChange={handleUnitChange}
+                                            className="h-11"
+                                            options={[
+                                                { value: '', label: 'Semua Unit Kerja' },
+                                                ...units.map(u => ({ value: u.id_unit, label: u.nama_unit }))
+                                            ]}
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="flex-1 min-w-[160px] lg:w-44">
                                     <CustomSelect
                                         value={status}
                                         onChange={handleStatusChange}
-                                        className="h-11 rounded-lg border-transparent bg-gray-200 dark:bg-gray-700 dark:text-gray-300 focus:border-teal-500 focus:bg-white focus:ring-0 text-sm w-full"
+                                        className="h-11"
                                         options={[
                                             { value: '', label: 'Semua Status' },
                                             { value: 'Draft', label: 'Draft' },
@@ -165,24 +188,16 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, flash = {}
                                     />
                                 </div>
 
-                                <button
-                                    type="button"
-                                    className="h-11 inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-                                >
-                                    <Download size={16} />
-                                    Export
-                                </button>
-
-                                {/* TOMBOL BARU - DIKUNCI JIKA PERIODE DITUTUP */}
+                                {/* TOMBOL BARU */}
                                 <Link
                                     href={isLocked ? '#' : route('rkat.create')}
                                     onClick={(e) => isLocked && e.preventDefault()}
-                                    className={`h-11 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap shadow-sm ${isLocked
+                                    className={`h-11 inline-flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md ${isLocked
                                             ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                                            : 'bg-teal-600 hover:bg-teal-700 text-white'
+                                            : 'bg-teal-600 hover:bg-teal-700 text-white active:scale-95'
                                         }`}
                                 >
-                                    <Plus size={16} />
+                                    <Plus size={18} />
                                     Baru
                                 </Link>
                             </div>

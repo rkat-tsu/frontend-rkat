@@ -1,9 +1,10 @@
 import React from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
-import { 
-    FileText, CheckCircle, Clock, XCircle, TrendingUp, 
-    ArrowRight, Activity, PieChart 
+import {
+    FileText, CheckCircle, Clock, XCircle, TrendingUp,
+    ArrowRight, Activity, PieChart, Bell, Info, Calendar,
+    MessageCircle
 } from 'lucide-react';
 
 import {
@@ -23,13 +24,22 @@ import {
 
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
-export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new Date().getFullYear(), summary = {} }) {
-    
-    // Konfigurasi Warna Shadcn Chart
+export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new Date().getFullYear(), statusAnggaran = 'Aktif', rawStatus = 'None', summary = {} }) {
+
+    // Fungsi untuk mendapatkan warna badge berdasarkan status mentah
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'Drafting': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200 dark:border-blue-800';
+            case 'Submission': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800';
+            case 'Approved': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
+            case 'Closed': return 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border-rose-200 dark:border-rose-800';
+            default: return 'bg-gray-100 text-gray-700 dark:bg-gray-900/40 dark:text-gray-300 border-gray-200 dark:border-gray-800';
+        }
+    };
     const chartConfig = {
         desktop: {
             label: "Pengajuan RKAT",
-            color: "hsl(var(--chart-1))", 
+            color: "hsl(var(--chart-1))",
         },
     };
 
@@ -42,10 +52,10 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
 
             <div className="py-8">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
-                    
+
                     {/* --- BAGIAN 1: KARTU RINGKASAN (STATISTIC CARDS) YANG DIPERBARUI --- */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        
+
                         {/* Card 1: Total Dokumen */}
                         <div className="relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1 group">
                             <div className="absolute -right-6 -top-6 bg-blue-50 dark:bg-blue-900/20 w-24 h-24 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500 ease-in-out"></div>
@@ -117,18 +127,17 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                     </div>
 
 
-                    {/* --- BAGIAN 2: GRAFIK & QUICK ACTION --- */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        
-                        {/* CHART AREA (Lebar 2 Kolom di Desktop) */}
-                        <div className="lg:col-span-2">
-                            <Card className="shadow-sm border-gray-100 dark:border-gray-700 h-full flex flex-col">
+                    {/* --- BAGIAN 2: GRAFIK TREN (FULL WIDTH) --- */}
+                    <div className="grid grid-cols-1 gap-6">
+
+                        <div className="lg:col-span-1">
+                            <Card className="shadow-sm border-gray-100 dark:border-gray-700 h-full flex flex-col bg-white dark:bg-gray-800">
                                 <CardHeader className="pb-2">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <CardTitle className="flex items-center gap-2 text-lg text-gray-900 dark:text-white">
-                                                <Activity className="h-5 w-5 text-indigo-500" />
-                                                Tren Pengajuan RKAT
+                                            <CardTitle className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white">
+                                                <Activity className="h-6 w-6 text-indigo-500" />
+                                                Tren Pengajuan RKAT Bulanan
                                             </CardTitle>
                                             <CardDescription className="mt-1 text-gray-500 dark:text-gray-400">
                                                 Statistik pengajuan dokumen per bulan pada tahun anggaran {tahunAnggaran}
@@ -137,137 +146,118 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                                     </div>
                                 </CardHeader>
                                 <CardContent className="flex-1 pb-4">
-                                    <div className="h-[300px] w-full mt-4">
+                                    <div className="h-[350px] w-full mt-6">
                                         <ChartContainer config={chartConfig} className="h-full w-full">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <AreaChart
                                                     data={grafikRkat}
-                                                    margin={{ left: 0, right: 0, top: 10, bottom: 0 }}
+                                                    margin={{ left: 10, right: 10, top: 10, bottom: 0 }}
                                                 >
                                                     <defs>
                                                         <linearGradient id="fillPengajuan" x1="0" y1="0" x2="0" y2="1">
-                                                            <stop offset="5%" stopColor="var(--color-desktop)" stopOpacity={0.4} />
-                                                            <stop offset="95%" stopColor="var(--color-desktop)" stopOpacity={0.0} />
+                                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                                                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
                                                         </linearGradient>
                                                     </defs>
-                                                    <CartesianGrid vertical={false} strokeDasharray="4 4" strokeOpacity={0.5} />
+                                                    <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
                                                     <XAxis
                                                         dataKey="month"
                                                         tickLine={false}
                                                         axisLine={false}
-                                                        tickMargin={12}
+                                                        tickMargin={15}
                                                         tickFormatter={(value) => value.slice(0, 3)}
-                                                        className="text-xs font-medium text-gray-500 dark:text-gray-100 fill-gray-500 dark:fill-gray-100"
+                                                        className="text-xs font-bold text-gray-600 dark:text-gray-300"
                                                         tick={{ fill: 'currentColor' }}
                                                     />
-                                                    <YAxis 
-                                                        tickLine={false} 
-                                                        axisLine={false} 
-                                                        tickMargin={12} 
+                                                    <YAxis
+                                                        tickLine={false}
+                                                        axisLine={false}
+                                                        tickMargin={15}
                                                         allowDecimals={false}
-                                                        className="text-xs font-medium text-gray-500 dark:text-gray-100 fill-gray-500 dark:fill-gray-100"
+                                                        className="text-xs font-bold text-gray-600 dark:text-gray-300"
                                                         tick={{ fill: 'currentColor' }}
                                                     />
-                                                    <ChartTooltip 
-                                                        cursor={{ stroke: 'rgba(99, 102, 241, 0.2)', strokeWidth: 2 }} 
-                                                        content={<ChartTooltipContent indicator="dot" className="rounded-xl shadow-lg border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />} 
+                                                    <ChartTooltip
+                                                        cursor={{ stroke: '#6366f1', strokeWidth: 2, strokeDasharray: '5 5' }}
+                                                        content={<ChartTooltipContent indicator="dot" className="rounded-xl shadow-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white" />}
                                                     />
                                                     <Area
                                                         dataKey="desktop"
-                                                        type="monotone" // Melengkung halus
+                                                        type="monotone"
                                                         fill="url(#fillPengajuan)"
-                                                        stroke="var(--color-desktop)"
-                                                        strokeWidth={3}
-                                                        activeDot={{ r: 6, strokeWidth: 0, fill: "var(--color-desktop)" }}
+                                                        stroke="#6366f1"
+                                                        strokeWidth={4}
+                                                        activeDot={{ r: 8, strokeWidth: 0, fill: "#6366f1" }}
                                                     />
                                                 </AreaChart>
                                             </ResponsiveContainer>
                                         </ChartContainer>
                                     </div>
                                 </CardContent>
-                                <CardFooter className="pt-0 pb-6 mt-auto">
+                                <CardFooter className="pt-2 pb-6 border-t border-gray-50 dark:border-gray-700/50 mx-6">
                                     <div className="flex w-full items-center justify-between text-sm pt-4">
-                                        <div className="flex items-center gap-2 font-medium text-gray-700 dark:text-gray-300">
-                                            Data Real-time <TrendingUp className="h-4 w-4 text-emerald-500" />
+                                        <div className="flex items-center gap-2 font-bold text-gray-700 dark:text-gray-300">
+                                            Status: Real-time <TrendingUp className="h-4 w-4 text-emerald-500 animate-pulse" />
                                         </div>
-                                        <div className="text-gray-500 dark:text-gray-400">
-                                            Januari - Desember {tahunAnggaran}
+                                        <div className="font-medium text-gray-500 dark:text-gray-400">
+                                            Periode {tahunAnggaran} • Tiga Serangkai University
                                         </div>
                                     </div>
                                 </CardFooter>
                             </Card>
                         </div>
+                    </div>
 
-                        {/* QUICK ACTION / INFO AREA (Kolom Kanan) */}
-                        <div className="space-y-6">
-                            
-                            {/* Panel Pintasan */}
-                            <Card className="shadow-sm border-gray-100 dark:border-gray-700 overflow-hidden relative">
-                                <div className="absolute top-0 right-0 p-4 opacity-5">
-                                    <PieChart size={100} />
-                                </div>
-                                <CardHeader>
-                                    <CardTitle className="text-lg text-gray-900 dark:text-white">Aksi Cepat</CardTitle>
-                                    <CardDescription className="text-gray-500 dark:text-gray-400">Akses menu yang sering digunakan.</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-3 relative z-10">
-                                    
-                                    {/* Link ke Daftar RKAT */}
-                                    <Link 
-                                        href={route('rkat.index')}
-                                        className="group flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-teal-200 dark:hover:border-teal-800 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg group-hover:bg-white dark:group-hover:bg-gray-700 transition-colors">
-                                                <FileText size={18} className='group-hover:text-teal-600 dark:group-hover:text-teal-400 text-gray-500 dark:text-gray-400'/>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Daftar RKAT</p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">Lihat semua pengajuan</p>
-                                            </div>
+                    {/* --- BAGIAN 3: INFO TERBARU & PENGUMUMAN TSU --- */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        {/* Info 1: Status Anggaran */}
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-between transition-all hover:shadow-md">
+                            <div>
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-lg">
+                                            <Calendar size={20} />
                                         </div>
-                                        <ArrowRight size={18} className="text-gray-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 transform group-hover:translate-x-1 transition-all" />
-                                    </Link>
-
-                                    {/* Link ke Persetujuan (Hanya muncul jika bukan Staf) */}
-                                    {auth.user.peran !== 'Staf_Unit' && (
-                                        <Link 
-                                            href={route('approval.index')}
-                                            className="group flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg group-hover:bg-white dark:group-hover:bg-gray-700 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                                    <CheckCircle size={18} className='group-hover:text-indigo-600 dark:group-hover:text-indigo-400 text-gray-500 dark:text-gray-400' />
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Persetujuan</p>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Dokumen menunggu review</p>
-                                                </div>
-                                            </div>
-                                            <ArrowRight size={18} className="text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transform group-hover:translate-x-1 transition-all" />
-                                        </Link>
-                                    )}
-
-                                </CardContent>
-                            </Card>
-
-                            {/* Banner Informasi */}
-                            <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
-                                <div className="absolute -right-4 -bottom-4 opacity-20">
-                                    <FileText size={120} strokeWidth={1} />
-                                </div>
-                                <div className="relative z-10">
-                                    <h4 className="text-lg font-bold mb-2">Tahun Anggaran Aktif</h4>
-                                    <p className="text-teal-50 text-sm mb-4">
-                                        Pastikan Anda menginput dokumen Rencana Kerja pada periode tahun yang sesuai.
-                                    </p>
-                                    <div className="inline-flex items-center px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold">
-                                        Tahun: {tahunAnggaran}
+                                        <h4 className="font-bold text-gray-900 dark:text-white">Status Anggaran</h4>
                                     </div>
+                                    <span className={`text-[10px] uppercase tracking-widest font-black px-2.5 py-1 rounded-full border ${getStatusColor(rawStatus)}`}>
+                                        {statusAnggaran}
+                                    </span>
                                 </div>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                                    Tahun Anggaran <b className="font-semibold text-gray-900 dark:text-white">{tahunAnggaran}</b> saat ini dalam tahap <b className="font-semibold text-gray-900 dark:text-white">{statusAnggaran}</b>. Pastikan semua dokumen diinput sesuai jadwal.
+                                </p>
                             </div>
-
+                            <div className="mt-4 pt-4 border-t border-gray-50 dark:border-gray-700/50">
+                                <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Tiga Serangkai University</span>
+                            </div>
                         </div>
+
+                        {/* Info 3: Bantuan / Help Desk */}
+                        <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-2xl p-6 shadow-md text-white flex flex-col justify-between transition-all hover:shadow-lg hover:scale-[1.01]">
+                            <div>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="p-2 bg-white/20 backdrop-blur-md rounded-lg">
+                                        <MessageCircle size={20} />
+                                    </div>
+                                    <h4 className="font-bold">Butuh Bantuan?</h4>
+                                </div>
+                                <p className="text-sm text-indigo-50 leading-relaxed">
+                                    Jika Anda mengalami kendala teknis dalam penginputan RKAT, silakan hubungi Tim IT TSU melalui kanal resmi.
+                                </p>
+                            </div>
+                            <div className="mt-4">
+                                <a 
+                                    href="https://youtu.be/vai2dy9L1SE?si=Uvg2_DHkc7QY2zSu&t=139" 
+                                    className="inline-flex items-center gap-2 text-xs font-bold bg-white text-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-50 transition-all shadow-sm"
+                                >
+                                    Hubungi IT Support
+                                    <ArrowRight size={14} />
+                                </a>
+                            </div>
+                        </div>
+
                     </div>
 
                 </div>

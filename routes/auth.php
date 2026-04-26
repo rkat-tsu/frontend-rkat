@@ -56,8 +56,4 @@ Route::middleware('auth')->group(function () {
         ->name('logout');
 });
 
-// Admin-only account creation routes (only accessible by authenticated admins)
-Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
-    Route::post('register', [RegisteredUserController::class, 'store']);
-});
+// Admin-only account creation is handled via UserController in web.php

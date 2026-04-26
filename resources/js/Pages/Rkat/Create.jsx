@@ -35,11 +35,11 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
     const initialIndikator = {
         id: Date.now(),
         indikator: '',
-        kondisi_akhir_2024_capaian: '',
-        tahun_2025_target: '',
-        tahun_2025_capaian: '',
-        akhir_tahun_2029_target: '',
-        akhir_tahun_2029_capaian: ''
+        capai_2025: '',
+        target_2026: '',
+        capai_2026: '',
+        target_2029: '',
+        capai_2029: ''
     };
 
     const initialRAB = {
@@ -490,8 +490,8 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                         <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-blue-500">
                             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">3. Indikator Kinerja</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                <div><InputLabel value="IKU" required /><CustomSelect value={data.iku_id} onChange={(e) => setData(prev => ({ ...prev, iku_id: e.target.value, ikk_id: '' }))} options={ikuOptions} placeholder="Pilih IKU" className="mt-1" /><InputError message={errors.iku_id} className="mt-2" /></div>
-                                <div><InputLabel value="IKK" required /><CustomSelect value={data.ikk_id} onChange={(e) => setData('ikk_id', e.target.value)} options={filteredIkks} placeholder="Pilih IKK" disabled={!data.iku_id} className="mt-1" /><InputError message={errors.ikk_id} className="mt-2" /></div>
+                                <div><InputLabel value="IKU" required /><CustomSelect value={data.iku_id} onChange={(e) => setData(prev => ({ ...prev, iku_id: e.target.value, ikk_id: '' }))} options={ikuOptions} placeholder="Pilih IKU" isMarquee={true} className="mt-1" /><InputError message={errors.iku_id} className="mt-2" /></div>
+                                <div><InputLabel value="IKK" required /><CustomSelect value={data.ikk_id} onChange={(e) => setData('ikk_id', e.target.value)} options={filteredIkks} placeholder="Pilih IKK" disabled={!data.iku_id} isMarquee={true} className="mt-1" /><InputError message={errors.ikk_id} className="mt-2" /></div>
                             </div>
                             <div className="overflow-x-auto rounded-lg mb-4">
                                 <table className="min-w-full">
@@ -512,11 +512,11 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                             <tr key={item.id} className="hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors">
                                                 <td className="px-2 py-3 text-sm text-center align-top pt-4">{index + 1}</td>
                                                 <td className="p-2 align-top"><TextArea value={item.indikator} onChange={(e) => handleIndikatorChange(index, 'indikator', e.target.value)} className="w-full text-sm min-h-[80px]" rows="3" placeholder="Indikator..." /></td>
-                                                <td className="p-2 align-top"><TextArea value={item.kondisi_akhir_2024_capaian} onChange={(e) => handleIndikatorChange(index, 'kondisi_akhir_2024_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                <td className="p-2 align-top"><TextArea value={item.tahun_2025_target} onChange={(e) => handleIndikatorChange(index, 'tahun_2025_target', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                <td className="p-2 align-top"><TextArea value={item.tahun_2025_capaian} onChange={(e) => handleIndikatorChange(index, 'tahun_2025_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                <td className="p-2 align-top"><TextArea value={item.akhir_tahun_2029_target} onChange={(e) => handleIndikatorChange(index, 'akhir_tahun_2029_target', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                <td className="p-2 align-top"><TextArea value={item.akhir_tahun_2029_capaian} onChange={(e) => handleIndikatorChange(index, 'akhir_tahun_2029_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                <td className="p-2 align-top"><TextArea value={item.capai_2025} onChange={(e) => handleIndikatorChange(index, 'capai_2025', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                <td className="p-2 align-top"><TextArea value={item.target_2026} onChange={(e) => handleIndikatorChange(index, 'target_2026', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                <td className="p-2 align-top"><TextArea value={item.capai_2026} onChange={(e) => handleIndikatorChange(index, 'capai_2026', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                <td className="p-2 align-top"><TextArea value={item.target_2029} onChange={(e) => handleIndikatorChange(index, 'target_2029', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                <td className="p-2 align-top"><TextArea value={item.capai_2029} onChange={(e) => handleIndikatorChange(index, 'capai_2029', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
                                                 <td className="p-2 pt-4 align-top"><button type="button" onClick={() => removeIndikatorRow(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"><Trash2 size={16} /></button></td>
                                             </tr>
                                         ))}
@@ -553,6 +553,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                                         onChange={(e) => handleRincianChange(index, 'kode_anggaran', e.target.value)}
                                                         options={akunOptions}
                                                         placeholder="Pilih "
+                                                        isMarquee={true}
                                                         className="w-full h-9 text-xs"
                                                     />
                                                 </td>
