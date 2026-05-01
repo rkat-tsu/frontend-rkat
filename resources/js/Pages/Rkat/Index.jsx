@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { ArrowRight, Plus, Search, Download, Send, AlertCircle, Edit2, FileDown } from 'lucide-react';
+import { ArrowRight, Plus, Search, Download, Send, AlertCircle, Edit2, FileDown, Eye } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
 
 const formatDate = (value) => {
@@ -177,9 +178,9 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                             { value: 'Menunggu_Unit_Kepala', label: 'Menunggu Unit Kepala' },
                                             { value: 'Menunggu_Dekan_Kepala', label: 'Menunggu Dekan' },
                                             { value: 'Menunggu_Tim_Renbang', label: 'Menunggu Tim Renbang' },
-                                            { value: 'Menunggu_WR_1', label: 'Menunggu WR 1' },
-                                            { value: 'Menunggu_WR_2', label: 'Menunggu WR 2' },
-                                            { value: 'Menunggu_WR_3', label: 'Menunggu WR 3' },
+                                            { value: 'Menunggu_WR1', label: 'Menunggu WR 1' },
+                                            { value: 'Menunggu_WR2', label: 'Menunggu WR 2' },
+                                            { value: 'Menunggu_WR3', label: 'Menunggu WR 3' },
                                             { value: 'Menunggu_Rektor', label: 'Menunggu Rektor' },
                                             { value: 'Revisi', label: 'Revisi' },
                                             { value: 'Disetujui_Final', label: 'Disetujui Final' },
@@ -213,79 +214,96 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                         <table className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
                             <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                 <tr>
-                                    <th className="px-6 py-3 border-b border-gray-300 dark:border-gray-600 font-medium">No</th>
+                                    <th className="px-6 py-3 border-b border-gray-300 dark:border-gray-600 font-medium text-center">No</th>
                                     <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Nomor Dokumen</th>
                                     <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Unit</th>
-                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Tahun</th>
-                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Status</th>
-                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Tanggal</th>
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Tahun</th>
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Status</th>
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Tanggal</th>
                                     <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {rkats.data && rkats.data.length > 0 ? rkats.data.map((item, index) => (
                                     <tr key={item.id_header} className="bg-white dark:bg-gray-800 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors">
-                                        <td className="px-6 py-4 border-b border-gray-300 dark:border-gray-700 font-medium text-gray-900 dark:text-white">{rkats.from + index}</td>
+                                        <td className="px-6 py-4 border-b border-gray-300 dark:border-gray-700 font-medium text-gray-900 dark:text-white text-center">{rkats.from + index}</td>
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 font-medium">{item.nomor_dokumen}</td>
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">{item.unit?.nama_unit || '-'}</td>
-                                        <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">{item.tahun_anggaran}</td>
-                                        <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">
-                                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full 
+                                        <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">{item.tahun_anggaran}</td>
+                                        <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">
+                                            <span className={`px-2.5 py-1 inline-flex whitespace-nowrap text-xs leading-5 font-bold rounded-md 
                                                     ${item.status_persetujuan === 'Draft' ? 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300' : ''}
-                                                    ${item.status_persetujuan === 'Disetujui_Final' ? 'bg-green-100 text-green-800' : ''}
-                                                    ${item.status_persetujuan === 'Ditolak' ? 'bg-red-100 text-red-800' : ''}
-                                                    ${item.status_persetujuan === 'Revisi' ? 'bg-yellow-100 text-yellow-800' : ''}
-                                                    ${item.status_persetujuan.includes('Menunggu') || item.status_persetujuan === 'Review' ? 'bg-blue-100 text-blue-800' : ''}
+                                                    ${item.status_persetujuan === 'Disetujui_Final' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : ''}
+                                                    ${item.status_persetujuan === 'Ditolak' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : ''}
+                                                    ${item.status_persetujuan === 'Revisi' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' : ''}
+                                                    ${item.status_persetujuan.includes('Menunggu') || item.status_persetujuan === 'Review' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : ''}
                                                 `}>
                                                 {item.status_persetujuan.replace(/_/g, ' ')}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">{formatDate(item.tanggal_pengajuan)}</td>
+                                        <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">{formatDate(item.tanggal_pengajuan)}</td>
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
 
                                             {/* --- KUMPULAN TOMBOL AKSI --- */}
-                                            <div className="flex justify-end gap-2">
-                                                <Link
-                                                    href={route('rkat.show', item.uuid)}
-                                                    className="inline-flex items-center gap-1 px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 transition-colors"
-                                                >
-                                                    Lihat
-                                                    <ArrowRight size={14} />
-                                                </Link>
+                                            <div className="flex justify-center gap-1.5">
+                                                <TooltipProvider>
+                                                    {/* --- DETAIL --- */}
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Link
+                                                                href={route('rkat.show', item.uuid)}
+                                                                className="inline-flex items-center justify-center w-8 h-8 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 transition-colors"
+                                                            >
+                                                                <Eye size={16} />
+                                                            </Link>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>Detail RKAT</TooltipContent>
+                                                    </Tooltip>
 
-                                                <a
-                                                    href={route('rkat.export', item.uuid)}
-                                                    target="_blank"
-                                                    className="inline-flex items-center gap-1 px-3 py-1.5 border border-blue-300 rounded-md shadow-sm text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-900/50 dark:hover:bg-blue-900/20 transition-colors"
-                                                    title="Export PDF"
-                                                >
-                                                    Export
-                                                    <FileDown size={14} />
-                                                </a>
+                                                    {/* --- EXPORT --- */}
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <a
+                                                                href={route('rkat.export', item.uuid)}
+                                                                target="_blank"
+                                                                className="inline-flex items-center justify-center w-8 h-8 border border-blue-300 rounded-md shadow-sm text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-900/50 dark:hover:bg-blue-900/20 transition-colors"
+                                                            >
+                                                                <FileDown size={16} />
+                                                            </a>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>Export PDF</TooltipContent>
+                                                    </Tooltip>
 
-                                                {/* TOMBOL EDIT: Hanya tampil jika Draft atau Revisi */}
-                                                {(item.status_persetujuan === 'Draft' || item.status_persetujuan === 'Revisi') && (
-                                                    <Link
-                                                        href={route('rkat.edit', item.uuid)}
-                                                        className="inline-flex items-center gap-1 px-3 py-1.5 border border-blue-300 rounded-md shadow-sm text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-900/50 dark:hover:bg-blue-900/20 transition-colors"
-                                                        title="Edit RKAT"
-                                                    >
-                                                        Edit
-                                                        <Edit2 size={14} />
-                                                    </Link>
-                                                )}
+                                                    {/* --- EDIT --- */}
+                                                    {(item.status_persetujuan === 'Draft' || item.status_persetujuan === 'Revisi') && (
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Link
+                                                                    href={route('rkat.edit', item.uuid)}
+                                                                    className="inline-flex items-center justify-center w-8 h-8 border border-amber-300 rounded-md shadow-sm text-amber-700 bg-white hover:bg-amber-50 dark:bg-gray-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-900/20 transition-colors"
+                                                                >
+                                                                    <Edit2 size={16} />
+                                                                </Link>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>Edit RKAT</TooltipContent>
+                                                        </Tooltip>
+                                                    )}
 
-                                                {/* TOMBOL AJUKAN: Hanya tampil jika Draft atau Revisi */}
-                                                {(item.status_persetujuan === 'Draft' || item.status_persetujuan === 'Revisi') && (
-                                                    <button
-                                                        onClick={() => handleAjukan(item)}
-                                                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white rounded-md shadow-sm hover:bg-teal-700 transition"
-                                                        title="Ajukan untuk di-review"
-                                                    >
-                                                        Ajukan
-                                                        <Send size={14} />
-                                                    </button>
-                                                )}
+                                                    {/* --- AJUKAN --- */}
+                                                    {(item.status_persetujuan === 'Draft' || item.status_persetujuan === 'Revisi') && (
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <button
+                                                                    onClick={() => handleAjukan(item)}
+                                                                    className="inline-flex items-center justify-center w-8 h-8 bg-teal-600 text-white rounded-md shadow-sm hover:bg-teal-700 transition"
+                                                                >
+                                                                    <Send size={16} />
+                                                                </button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>Ajukan RKAT</TooltipContent>
+                                                        </Tooltip>
+                                                    )}
+                                                </TooltipProvider>
                                             </div>
 
                                         </td>

@@ -238,6 +238,7 @@ class RkatController extends Controller
             'rkatDetails.ikk',
             'rkatDetails.rabItems',
             'rkatDetails.indikators',
+            'logPersetujuans.approver',
         ]);
 
         return Inertia::render('Rkat/Show', [

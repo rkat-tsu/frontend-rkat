@@ -56,8 +56,8 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
         // Logic buka/tutup otomatis
         const isOpen = openMenus[item.name] || (isActive && !openMenus.hasOwnProperty(item.name) && !isMinimized);
 
-        const baseClasses = "rounded-r-full flex items-center transition-all duration-200 ease-in-out w-full whitespace-nowrap overflow-hidden relative cursor-pointer outline-none focus:outline-none";
-        const padding = isChild ? 'pl-11 pr-3 py-2 text-sm' : 'px-4 py-3 rounded-xl my-1';
+        const baseClasses = "rounded-xl flex items-center transition-all duration-200 ease-in-out w-full whitespace-nowrap overflow-hidden relative cursor-pointer outline-none focus:outline-none";
+        const padding = isChild ? 'pl-11 pr-3 py-2 text-sm' : 'px-4 py-3 my-1';
         const activeClasses = 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 font-bold shadow-sm ring-1 ring-teal-100 dark:ring-teal-800';
         const inactiveClasses = "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200";
 
@@ -80,9 +80,7 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
             </>
         );
 
-        // JIKA PUNYA ANAK (Accordion)
         if (hasChildren) {
-            // Mode Mini: Klik -> Expand Sidebar dulu
             if (isMinimized) {
                 return (
                     <Tooltip delayDuration={0}>
@@ -91,7 +89,9 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
                                 {content}
                             </button>
                         </TooltipTrigger>
-                        <TooltipContent side="right" className="bg-gray-800 text-white ml-2"><p>{item.name}</p></TooltipContent>
+                        <TooltipContent side="right" sideOffset={10}>
+                            {item.name}
+                        </TooltipContent>
                     </Tooltip>
                 );
             }
@@ -123,7 +123,9 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
             return (
                 <Tooltip delayDuration={0}>
                     <TooltipTrigger asChild>{linkEl}</TooltipTrigger>
-                    <TooltipContent side="right" className="bg-gray-800 dark:bg-gray-700 text-white dark:text-gray-200 ml-2"><p>{item.name}</p></TooltipContent>
+                    <TooltipContent side="right" sideOffset={10}>
+                        {item.name}
+                    </TooltipContent>
                 </Tooltip>
             );
         }

@@ -4,6 +4,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import CustomSelect from '@/Components/CustomSelect';
 import { Monitor, BarChart3, Clock, FileText, Eye, PieChart as PieChartIcon } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/Components/ui/chart';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 export default function Index({
@@ -29,6 +30,24 @@ export default function Index({
             maximumFractionDigits: 0
         }).format(num);
 
+    const getStatusLabel = (status) => {
+        const mapping = {
+            'Draft': 'Draft',
+            'Menunggu_Unit_Kepala': 'Menunggu Unit Kepala',
+            'Menunggu_Dekan_Kepala': 'Menunggu Dekan',
+            'Menunggu_Tim_Renbang': 'Menunggu Tim Renbang',
+            'Menunggu_WR1': 'Menunggu WR 1',
+            'Menunggu_WR2': 'Menunggu WR 2',
+            'Menunggu_WR3': 'Menunggu WR 3',
+            'Menunggu_Rektor': 'Menunggu Rektor',
+            'Revisi': 'Revisi',
+            'Disetujui_Final': 'Disetujui Final',
+            'Ditolak': 'Ditolak',
+            'Belum Mengisi': 'Belum Mengisi'
+        };
+        return mapping[status] || status.replace(/_/g, ' ');
+    };
+
     // Chart Data Processing
     const chartDataBudget = useMemo(() => {
         return data
@@ -50,7 +69,8 @@ export default function Index({
 
     const chartDataStatus = useMemo(() => {
         const counts = data.reduce((acc, curr) => {
-            const st = curr.status === 'Belum Ada' ? 'Belum Dibuat' : curr.status;
+            const rawStatus = curr.status === 'Belum Ada' ? 'Belum Mengisi' : curr.status;
+            const st = getStatusLabel(rawStatus);
             acc[st] = (acc[st] || 0) + 1;
             return acc;
         }, {});
@@ -183,24 +203,34 @@ export default function Index({
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 border-b border-l border-gray-200 dark:border-gray-700 text-center">
-                                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            <span className={`px-2.5 py-1 inline-flex whitespace-nowrap text-xs leading-5 font-semibold rounded-md 
                                                 ${item.status === 'Belum Mengisi' ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-100' : ''}
                                                 ${item.status.includes('Disetujui') ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : ''}
+                                                ${item.status.includes('Ditolak') ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : ''}
                                                 ${item.status.includes('Review') || item.status.includes('Draft') ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : ''}
                                             `}>
-                                                {item.status}
+                                                {getStatusLabel(item.status)}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 border-b border-l border-gray-200 dark:border-gray-700 text-right font-bold text-teal-600 dark:text-teal-400">
                                             {item.total_anggaran > 0 ? formatRupiah(item.total_anggaran) : '-'}
                                         </td>
                                         <td className="px-6 py-4 border-b border-l border-gray-200 dark:border-gray-700 text-center">
-                                            <Link
-                                                href={route('rkat.index', { unit_id: item.id_unit, tahun: selectedYear })}
-                                                className="inline-flex items-center gap-1 px-3 py-1.5 border border-indigo-200 dark:border-indigo-900/50 rounded-md shadow-sm text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors text-sm font-semibold"
-                                            >
-                                                <Eye size={14} /> Detail
-                                            </Link>
+                                            <div className="flex justify-center">
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Link
+                                                                href={route('rkat.index', { unit_id: item.id_unit, tahun: selectedYear })}
+                                                                className="inline-flex items-center justify-center w-8 h-8 border border-indigo-200 dark:border-indigo-900/50 rounded-md shadow-sm text-indigo-700 dark:text-indigo-300 bg-white hover:bg-indigo-50 dark:bg-gray-700 dark:hover:bg-indigo-900/20 transition-colors"
+                                                            >
+                                                                <Eye size={16} />
+                                                            </Link>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>Detail RKAT</TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            </div>
                                         </td>
                                     </tr>
                                 )) : (

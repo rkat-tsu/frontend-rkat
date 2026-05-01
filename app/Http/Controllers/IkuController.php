@@ -51,8 +51,8 @@ class IkuController extends Controller
     {
         Log::debug('[IKU] Halaman input IKU diakses.');
         
-        // Eager load 'ikks' karena sekarang relasinya langsung IKU -> IKK
-        $ikus = Iku::with('ikks')->get(['id_iku', 'nama_iku']);
+        // Mengambil semua IKU beserta IKK-nya untuk keperluan edit/input
+        $ikus = Iku::with('ikks')->get();
         
         return Inertia::render('Iku/Create', [
             'ikus' => $ikus, 

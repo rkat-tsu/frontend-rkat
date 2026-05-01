@@ -16,23 +16,24 @@ export default function Create({ auth, ikus }) {
         ikks: [{ nama_ikk: '' }]
     });
 
-    // --- EFFECT: LOAD DATA SAAT IKU DIPILIH ---
-    useEffect(() => {
-        if (data.uuid_iku) {
-            const selectedIku = ikus.find(item => item.uuid === data.uuid_iku);
-            
-            if (selectedIku && selectedIku.ikks && selectedIku.ikks.length > 0) {
-                setData('ikks', selectedIku.ikks.map(ikk => ({
-                    id_ikk: ikk.id_ikk,
-                    nama_ikk: ikk.nama_ikk
-                })));
-            } else {
-                setData('ikks', [{ nama_ikk: '' }]);
-            }
-        }
-    }, [data.uuid_iku]); 
-
     // --- HANDLERS ---
+    const handleIkuChange = (uuid) => {
+        const selectedIku = ikus.find(item => item.uuid === uuid);
+        
+        const newIkks = (selectedIku && selectedIku.ikks && selectedIku.ikks.length > 0)
+            ? selectedIku.ikks.map(ikk => ({
+                id_ikk: ikk.id_ikk,
+                nama_ikk: ikk.nama_ikk
+            }))
+            : [{ nama_ikk: '' }];
+
+        setData({
+            ...data,
+            uuid_iku: uuid,
+            ikks: newIkks
+        });
+    };
+
     const addRow = () => {
         setData('ikks', [...data.ikks, { nama_ikk: '' }]);
     };
@@ -135,7 +136,7 @@ export default function Create({ auth, ikus }) {
                                 <div className="mt-1">
                                     <CustomSelect
                                         value={data.uuid_iku}
-                                        onChange={(e) => setData('uuid_iku', e.target.value)}
+                                        onChange={(e) => handleIkuChange(e.target.value)}
                                         options={ikuOptions}
                                         placeholder="-- Pilih IKU untuk mengedit kegiatannya --"
                                         className="w-full"

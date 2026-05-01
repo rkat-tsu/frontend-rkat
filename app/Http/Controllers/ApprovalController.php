@@ -200,13 +200,15 @@ class ApprovalController extends Controller
                 'Menunggu_Unit_Kepala'  => 'Menunggu_Dekan_Kepala',
                 'Menunggu_Dekan_Kepala' => 'Menunggu_Tim_Renbang',
                 'Menunggu_Tim_Renbang'  => 'Menunggu_WR1',
-                'Menunggu_WR1'          => 'Menunggu_WR2',
+                'Menunggu_WR1'          => 'Menunggu_WR3',
+                'Menunggu_WR3'          => 'Menunggu_WR2',
                 'Menunggu_WR2'          => 'Disetujui_Final',
             ],
             'non-akademik' => [
                 'Menunggu_Unit_Kepala'  => 'Menunggu_Tim_Renbang',
                 'Menunggu_Tim_Renbang'  => 'Menunggu_WR3',
-                'Menunggu_WR3'          => 'Menunggu_WR2',
+                'Menunggu_WR3'          => 'Menunggu_WR1',
+                'Menunggu_WR1'          => 'Menunggu_WR2',
                 'Menunggu_WR2'          => 'Disetujui_Final',
             ],
         ];

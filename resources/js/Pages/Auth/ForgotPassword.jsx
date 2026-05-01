@@ -29,18 +29,18 @@ export default function ForgotPassword({ status }) {
             <Head title="Lupa Kata Sandi" />
 
             <div className="mb-6 text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
                     <KeyRound size={24} />
                 </div>
-                <h2 className="text-xl font-bold text-slate-800">Lupa Kata Sandi?</h2>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                <h2 className="text-xl font-bold text-slate-800 dark:text-white">Lupa Kata Sandi?</h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                     Silakan masukkan alamat email yang terdaftar. Kami akan mengirimkan tautan verifikasi untuk mengatur ulang kata sandi Anda secara aman.
                 </p>
             </div>
 
             <form onSubmit={submit} className="space-y-4">
                 <div>
-                    <div className="mb-1.5 flex items-center text-sm font-medium text-slate-700">
+                    <div className="mb-1.5 flex items-center text-sm font-medium text-slate-700 dark:text-slate-300">
                         <Mail className="mr-2 h-4 w-4 text-blue-500" />
                         Alamat Email
                     </div>
@@ -49,7 +49,7 @@ export default function ForgotPassword({ status }) {
                         type="email"
                         name="email"
                         value={data.email}
-                        className="block w-full rounded-xl border-gray-300 px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:ring-blue-500"
+                        className="block w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:ring-blue-500"
                         isFocused={true}
                         placeholder="Masukan Email"
                         onChange={(e) => setData('email', e.target.value)}
@@ -59,8 +59,8 @@ export default function ForgotPassword({ status }) {
                 </div>
 
                 <div className="pt-2">
-                    <PrimaryButton 
-                        className="w-full flex justify-center py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-teal-500 font-bold shadow-lg shadow-blue-500/20" 
+                    <PrimaryButton
+                        className="w-full flex justify-center py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-teal-500 font-bold shadow-lg shadow-blue-500/20 dark:shadow-blue-900/40 transition-all duration-300 hover:scale-[1.02] text-white dark:text-white"
                         disabled={processing}
                     >
                         {processing ? 'MENGIRIM...' : 'KIRIM TAUTAN PEMULIHAN'}
@@ -70,7 +70,7 @@ export default function ForgotPassword({ status }) {
                 <div className="mt-6 text-center">
                     <Link
                         href={route('login')}
-                        className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors"
+                        className="inline-flex items-center text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                     >
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Kembali ke halaman Login

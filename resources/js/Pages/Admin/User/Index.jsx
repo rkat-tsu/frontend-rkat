@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import CustomSelect from '@/Components/CustomSelect';
-import { Search, Plus, ChevronDown, CheckCircle, XCircle, Edit2, Trash2 } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 
 export default function Index({ users, filters = {}, units = [] }) {
     const { props } = usePage();
@@ -123,10 +124,10 @@ export default function Index({ users, filters = {}, units = [] }) {
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                                                    <span className={`px-2.5 py-1 text-xs rounded-md font-medium whitespace-nowrap inline-flex ${
                                                         user.peran === 'Admin' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                                                     }`}>
-                                                        {user.peran}
+                                                        {user.peran.replace(/_/g, ' ')}
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center">
@@ -145,31 +146,37 @@ export default function Index({ users, filters = {}, units = [] }) {
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                    <div className="flex justify-center gap-2">
-                                                        <Link
-                                                            href={route('user.edit', user.uuid)}
-                                                            className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
-                                                            title="Edit User"
-                                                        >
-                                                            <Edit2 className="w-4 h-4" /> 
-                                                        </Link>
-                                                        
-                                                        {authUser?.id_user !== user.id_user && (
-                                                            <Link
-                                                                as="button"
-                                                                method="delete"
-                                                                href={route('user.destroy', user.uuid)}
-                                                                className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
-                                                                onClick={(e) => {
-                                                                    if (!confirm('Apakah Anda yakin ingin menghapus user ini?')) {
-                                                                        e.preventDefault();
-                                                                    }
-                                                                }}
-                                                                title="Hapus User"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </Link>
-                                                        )}
+                                                    <div className="flex justify-center gap-1.5">
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Link
+                                                                        href={route('user.edit', user.uuid)}
+                                                                        className="inline-flex items-center justify-center w-8 h-8 border border-blue-300 rounded-md shadow-sm text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-900/50 dark:hover:bg-blue-900/20 transition-colors"
+                                                                    >
+                                                                        <Edit2 size={16} /> 
+                                                                    </Link>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>Edit User</TooltipContent>
+                                                            </Tooltip>
+                                                            
+                                                            {authUser?.id_user !== user.id_user && (
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Link
+                                                                            as="button"
+                                                                            method="delete"
+                                                                            href={route('user.destroy', user.uuid)}
+                                                                            onBefore={() => confirm('Yakin ingin menghapus user ini?')}
+                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-red-300 rounded-md shadow-sm text-red-700 bg-white hover:bg-red-50 dark:bg-gray-700 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/20 transition-colors"
+                                                                        >
+                                                                            <Trash2 size={16} />
+                                                                        </Link>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>Hapus User</TooltipContent>
+                                                                </Tooltip>
+                                                            )}
+                                                        </TooltipProvider>
                                                     </div>
                                                 </td>
                                             </tr>

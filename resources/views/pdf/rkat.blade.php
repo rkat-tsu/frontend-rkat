@@ -141,7 +141,12 @@
         // Approval logic
         $isRenbangAcc = $rkat->logPersetujuans->where('level_persetujuan', 'Tim_Renbang')->where('aksi', 'Setuju')->last();
         $isUnitAcc = $rkat->logPersetujuans->whereIn('level_persetujuan', ['Kepala_Unit', 'Dekan'])->where('aksi', 'Setuju')->last();
-        $isWRAcc = $rkat->logPersetujuans->whereIn('level_persetujuan', ['WR_1', 'WR_2', 'WR_3'])->where('aksi', 'Setuju')->last();
+        
+        // Pilih WR pertama berdasarkan alur (Akademik: WR 1, Non-Akademik: WR 3)
+        $jalur = $rkat->unit->jalur_persetujuan ?? 'akademik';
+        $targetWR = ($jalur == 'akademik') ? 'WR_1' : 'WR_3';
+        
+        $isWRAcc = $rkat->logPersetujuans->where('level_persetujuan', $targetWR)->where('aksi', 'Setuju')->last();
         
         $renbangApprover = $isRenbangAcc ? $isRenbangAcc->approver : null;
         $unitApprover = $isUnitAcc ? $isUnitAcc->approver : null;

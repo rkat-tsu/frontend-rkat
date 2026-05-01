@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import CustomSelect from '@/Components/CustomSelect';
-import { Plus, Search, Edit2, Trash2, ChevronDown } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
 
 export default function Index({ auth, units = [] }) {
@@ -178,21 +179,32 @@ export default function Index({ auth, units = [] }) {
                                                 {/* Kolom Aksi Icon Saja */}
                                                 {isAdmin && (
                                                     <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                        <div className="flex gap-2 justify-center">
-                                                            <Link
-                                                                href={route('unit.edit', unit.uuid)}
-                                                                className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
-                                                                title="Edit"
-                                                            >
-                                                                    <Edit2 className="w-4 h-4" />
-                                                            </Link>
-                                                            <button 
-                                                                onClick={() => handleDelete(unit.uuid)}
-                                                                className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
-                                                                title="Hapus"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
+                                                        <div className="flex gap-1.5 justify-center">
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Link
+                                                                            href={route('unit.edit', unit.uuid)}
+                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-amber-300 rounded-md shadow-sm text-amber-700 bg-white hover:bg-amber-50 dark:bg-gray-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-900/20 transition-colors"
+                                                                        >
+                                                                            <Edit2 size={16} />
+                                                                        </Link>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>Edit Unit</TooltipContent>
+                                                                </Tooltip>
+
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <button 
+                                                                            onClick={() => handleDelete(unit.uuid)}
+                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-red-300 rounded-md shadow-sm text-red-700 bg-white hover:bg-red-50 dark:bg-gray-700 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/20 transition-colors"
+                                                                        >
+                                                                            <Trash2 size={16} />
+                                                                        </button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>Hapus Unit</TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
                                                         </div>
                                                     </td>
                                                 )}

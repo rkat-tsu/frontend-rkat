@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Edit2, Trash2, Search, Plus } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
 
 export default function Index({ tahunAnggarans }) {
@@ -110,10 +111,10 @@ export default function Index({ tahunAnggarans }) {
                             <table className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
                                 <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                     <tr>
-                                        <th className="px-6 py-3 border-b border-gray-300 dark:border-gray-600 font-medium">Tahun Anggaran</th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Tanggal Mulai</th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Tanggal Akhir</th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Status</th>
+                                        <th className="px-2 py-3 border-b border-gray-300 dark:border-gray-600 font-medium text-center">Tahun Anggaran</th>
+                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Tanggal Mulai</th>
+                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Tanggal Akhir</th>
+                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Status</th>
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>
                                     </tr>
                                 </thead>
@@ -121,37 +122,51 @@ export default function Index({ tahunAnggarans }) {
                                     {filtered.length > 0 ? (
                                         filtered.map(tahun => (
                                             <tr key={tahun.tahun_anggaran} className="hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors duration-200">
-                                                <td className="px-6 py-4 border-b border-gray-300 dark:border-gray-700 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-gray-100">
+                                                <td className="px-6 py-4 border-b border-gray-300 dark:border-gray-700 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-gray-100 text-center">
                                                     {tahun.tahun_anggaran}
                                                 </td>
-                                                <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                                <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-center">
                                                     {formatDate(tahun.tanggal_mulai)}
                                                 </td>
-                                                <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                                <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-center">
                                                     {formatDate(tahun.tanggal_akhir)}
                                                 </td>
-                                                <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 whitespace-nowrap">
-                                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(tahun.status_rkat)}`}>
+                                                <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 whitespace-nowrap text-center">
+                                                    <span className={`inline-flex items-center px-3 py-1 rounded-md text-xs font-bold whitespace-nowrap ${getStatusColor(tahun.status_rkat)}`}>
                                                         {tahun.status_rkat}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 whitespace-nowrap text-sm text-center">
-                                                    <div className="flex items-center justify-center gap-2">
-                                                        {authUser?.peran === 'Admin' && (
-                                                            <>
-                                                                <Link href={route('tahun.edit', tahun.uuid)}>
-                                                                    <button className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded transition">
-                                                                        <Edit2 size={18} />
-                                                                    </button>
-                                                                </Link>
-                                                                <button
-                                                                    onClick={() => handleDelete(tahun)}
-                                                                    className="p-1 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 rounded transition"
-                                                                >
-                                                                    <Trash2 size={18} />
-                                                                </button>
-                                                            </>
-                                                        )}
+                                                    <div className="flex items-center justify-center gap-1.5">
+                                                        <TooltipProvider>
+                                                            {authUser?.peran === 'Admin' && (
+                                                                <>
+                                                                    <Tooltip>
+                                                                        <TooltipTrigger asChild>
+                                                                            <Link 
+                                                                                href={route('tahun.edit', tahun.uuid)}
+                                                                                className="inline-flex items-center justify-center w-8 h-8 border border-teal-300 rounded-md shadow-sm text-teal-700 bg-white hover:bg-teal-50 dark:bg-gray-700 dark:text-teal-400 dark:border-teal-900/50 dark:hover:bg-teal-900/20 transition-colors"
+                                                                            >
+                                                                                <Edit2 size={16} />
+                                                                            </Link>
+                                                                        </TooltipTrigger>
+                                                                        <TooltipContent>Edit Tahun</TooltipContent>
+                                                                    </Tooltip>
+
+                                                                    <Tooltip>
+                                                                        <TooltipTrigger asChild>
+                                                                            <button
+                                                                                onClick={() => handleDelete(tahun)}
+                                                                                className="inline-flex items-center justify-center w-8 h-8 border border-red-300 rounded-md shadow-sm text-red-700 bg-white hover:bg-red-50 dark:bg-gray-700 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/20 transition-colors"
+                                                                            >
+                                                                                <Trash2 size={16} />
+                                                                            </button>
+                                                                        </TooltipTrigger>
+                                                                        <TooltipContent>Hapus Tahun</TooltipContent>
+                                                                    </Tooltip>
+                                                                </>
+                                                            )}
+                                                        </TooltipProvider>
                                                     </div>
                                                 </td>
                                             </tr>

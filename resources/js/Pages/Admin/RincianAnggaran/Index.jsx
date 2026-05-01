@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Edit, Trash2, Search, ChevronDown, Plus } from 'lucide-react';
+import { Edit2, Trash2, Search, Plus } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 
 export default function Index({ auth, items = {}, filters = {}, letters = [] }) {
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
@@ -106,7 +107,7 @@ export default function Index({ auth, items = {}, filters = {}, letters = [] }) 
                                         <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Kode Item</th>
                                         <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Keterangan</th>
                                         <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Kelompok</th>
-                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-left">Pagu Anggaran</th>
+                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Pagu Anggaran</th>
                                         {isAdmin && <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>}
                                     </tr>
                                 </thead>
@@ -138,27 +139,38 @@ export default function Index({ auth, items = {}, filters = {}, letters = [] }) 
                                                 <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center">
                                                     {item.kelompok_anggaran || item.satuan || '-'}
                                                 </td>
-                                                <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 whitespace-nowrap">
+                                                <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 whitespace-nowrap text-right">
                                                     {formatRupiah(item.nominal)}
                                                 </td>
 
                                                 {isAdmin && (
                                                     <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                        <div className="flex gap-2 justify-center">
-                                                            <Link
-                                                                href={route('rincian.edit', item.uuid)}
-                                                                className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
-                                                                title="Edit"
-                                                            >
-                                                                <Edit className="w-4 h-4" />
-                                                            </Link>
-                                                            <button
-                                                                onClick={() => handleDelete(item.uuid)}
-                                                                className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
-                                                                title="Hapus"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
+                                                        <div className="flex gap-1.5 justify-center">
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Link
+                                                                            href={route('rincian.edit', item.uuid)}
+                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-amber-300 rounded-md shadow-sm text-amber-700 bg-white hover:bg-amber-50 dark:bg-gray-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-900/20 transition-colors"
+                                                                        >
+                                                                            <Edit2 size={16} />
+                                                                        </Link>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>Edit SBO</TooltipContent>
+                                                                </Tooltip>
+
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <button
+                                                                            onClick={() => handleDelete(item.uuid)}
+                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-red-300 rounded-md shadow-sm text-red-700 bg-white hover:bg-red-50 dark:bg-gray-700 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/20 transition-colors"
+                                                                        >
+                                                                            <Trash2 size={16} />
+                                                                        </button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>Hapus SBO</TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
                                                         </div>
                                                     </td>
                                                 )}

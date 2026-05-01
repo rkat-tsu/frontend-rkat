@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Plus, Edit2, Trash2, ListChecks, ChevronDown, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -175,28 +176,39 @@ export default function Index({ auth, ikus }) {
                                                     {iku.nama_iku}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${ikkList.length > 0 ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}>
+                                                    <span className={`px-2.5 py-1 rounded-md text-xs font-semibold ${ikkList.length > 0 ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}>
                                                         {ikkList.length} IKK
                                                     </span>
                                                 </td>
 
-                                                {isAdmin && (
+                                                 {isAdmin && (
                                                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                        <div className="flex justify-end gap-3">
-                                                            <button
-                                                                onClick={() => openModal(iku)}
-                                                                className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/60 p-1.5 rounded transition"
-                                                                title="Ubah Nama IKU"
-                                                            >
-                                                                <Edit2 size={16} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleDelete(iku.uuid)}
-                                                                className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/60 p-1.5 rounded transition"
-                                                                title="Hapus IKU"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
+                                                        <div className="flex justify-end gap-1.5">
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <button
+                                                                            onClick={() => openModal(iku)}
+                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-amber-300 rounded-md shadow-sm text-amber-700 bg-white hover:bg-amber-50 dark:bg-gray-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-900/20 transition-colors"
+                                                                        >
+                                                                            <Edit2 size={16} />
+                                                                        </button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>Ubah Nama IKU</TooltipContent>
+                                                                </Tooltip>
+
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <button
+                                                                            onClick={() => handleDelete(iku.uuid)}
+                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-red-300 rounded-md shadow-sm text-red-700 bg-white hover:bg-red-50 dark:bg-gray-700 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/20 transition-colors"
+                                                                        >
+                                                                            <Trash2 size={16} />
+                                                                        </button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>Hapus IKU</TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
                                                         </div>
                                                     </td>
                                                 )}

@@ -249,7 +249,7 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                             </div>
                             <div className="mt-4">
                                 <a 
-                                    href="https://youtu.be/vai2dy9L1SE?si=Uvg2_DHkc7QY2zSu&t=139" 
+                                    href="https://youtu.be/vai2dy9L1SE?si=Uvg2_DHkc7QY2zSu&t=139" target="_blank"
                                     className="inline-flex items-center gap-2 text-xs font-bold bg-white text-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-50 transition-all shadow-sm"
                                 >
                                     Hubungi IT Support

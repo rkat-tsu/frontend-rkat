@@ -36,7 +36,7 @@ export default function Login({ status, canResetPassword }) {
                 {/* --- Keterangan RKAT --- */}
                 <div className="mb-8 text-center">
                     <h1 className="text-2xl font-black tracking-tight text-slate-800 dark:text-white">
-                        Sistem RKAT
+                        Sistem ReKAT
                     </h1>
                     <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
                         Rencana Kerja dan Anggaran Tahunan
@@ -123,7 +123,7 @@ export default function Login({ status, canResetPassword }) {
                     {/* --- Tombol Login Gradien --- */}
                     <div className="pt-4">
                         <PrimaryButton
-                            className="group flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-teal-500 dark:from-blue-700 dark:to-teal-600 px-4 py-3.5 text-sm font-black tracking-widest text-white shadow-xl shadow-blue-500/30 dark:shadow-blue-950/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-blue-500/40 active:scale-95 disabled:opacity-50"
+                            className="group flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-teal-500 dark:from-blue-700 dark:to-teal-600 px-4 py-3.5 text-sm font-bold tracking-widest text-white dark:text-white shadow-xl shadow-blue-500/30 dark:shadow-blue-950/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-blue-500/40 active:scale-95 disabled:opacity-50"
                             disabled={processing}
                             tabindex="3"
                         >
