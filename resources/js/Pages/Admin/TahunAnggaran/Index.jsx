@@ -4,10 +4,10 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Edit2, Trash2, Search, Plus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
+import { usePermission } from '@/hooks/usePermission';
 
 export default function Index({ tahunAnggarans }) {
-    const { props } = usePage();
-    const authUser = props?.auth?.user;
+    const { isAdmin, user: authUser } = usePermission();
     const [search, setSearch] = useState('');
 
     // Client-side filter for the current page
@@ -96,7 +96,7 @@ export default function Index({ tahunAnggarans }) {
                             </div>
                             
                             <div className="flex items-center gap-3 w-full md:w-auto">
-                                {authUser?.peran === 'Admin' && (
+                                {isAdmin() && (
                                     <Link 
                                         href={route('tahun.create')} 
                                         className="flex items-center justify-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium transition whitespace-nowrap h-11"
@@ -139,7 +139,7 @@ export default function Index({ tahunAnggarans }) {
                                                 <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 whitespace-nowrap text-sm text-center">
                                                     <div className="flex items-center justify-center gap-1.5">
                                                         <TooltipProvider>
-                                                            {authUser?.peran === 'Admin' && (
+                                                            {isAdmin() && (
                                                                 <>
                                                                     <Tooltip>
                                                                         <TooltipTrigger asChild>

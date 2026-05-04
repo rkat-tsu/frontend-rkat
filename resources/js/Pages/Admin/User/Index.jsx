@@ -4,10 +4,10 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import CustomSelect from '@/Components/CustomSelect';
 import { Search, Plus, Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
+import { usePermission } from '@/hooks/usePermission';
 
 export default function Index({ users, filters = {}, units = [] }) {
-    const { props } = usePage();
-    const authUser = props?.auth?.user;
+    const { isAdmin, user: authUser } = usePermission();
     
     const [searchTerm, setSearchTerm] = useState(filters.q || '');
     const [selectedUnit, setSelectedUnit] = useState(filters.unit || '');
@@ -76,7 +76,7 @@ export default function Index({ users, filters = {}, units = [] }) {
                                     />
                                 </div>
                                 
-                                {authUser?.peran === 'Admin' && (
+                                {isAdmin() && (
                                     <Link 
                                         href={route('user.create')} 
                                         className="h-11 flex items-center justify-center gap-2 px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-sm font-medium transition whitespace-nowrap"

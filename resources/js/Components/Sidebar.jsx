@@ -12,6 +12,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/Components/ui/tooltip";
+import { usePermission } from '@/hooks/usePermission';
 
 // MENU BAHASA INDONESIA
 const navItems = [
@@ -36,6 +37,7 @@ const navItems = [
 
 function Sidebar({ auth, isMinimized, toggleMinimize }) {
     const { url } = usePage();
+    const { isAdmin, role } = usePermission();
     const currentPath = url;
 
     // State untuk Accordion Menu
@@ -104,7 +106,7 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
                     {isOpen && !isMinimized && (
                         <div className="mt-1 space-y-1 relative before:absolute before:left-6 before:top-0 before:bottom-0 before:w-px before:bg-gray-200 dark:before:bg-gray-700 animate-in slide-in-from-top-1">
                             {item.children.map((child, idx) => {
-                                if (child.adminOnly && auth?.user?.peran !== 'Admin') return null;
+                                if (child.adminOnly && !isAdmin()) return null;
                                 return <NavItem key={idx} item={child} isChild={true} />;
                             })}
                         </div>
@@ -159,8 +161,8 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
                 <nav className="flex-grow px-3 space-y-1 overflow-y-auto h-[calc(100vh-5rem)] scrollbar-hide pb-6 pt-4">
                     {navItems.map((item, index) => {
                         // Global visibility check
-                        if (item.adminOnly && auth?.user?.peran !== 'Admin') return null;
-                        if (item.hideForInputer && auth?.user?.peran === 'Inputer') return null;
+                        if (item.adminOnly && !isAdmin()) return null;
+                        if (item.hideForInputer && role === 'Inputer') return null;
 
                         return <NavItem key={index} item={item} />;
                     })}

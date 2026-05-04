@@ -22,6 +22,7 @@ import {
     useComboboxAnchor,
 } from "@/components/ui/combobox"
 import { toast } from 'sonner';
+import { usePermission } from '@/hooks/usePermission';
 
 const formatRupiah = (angka) => {
     const number = Number(angka) || 0;
@@ -29,6 +30,7 @@ const formatRupiah = (angka) => {
 };
 
 export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans, ikus }) {
+    const { user, isAdmin } = usePermission();
     const detail = rkat.rkat_details?.[0] || {};
 
     // Initial States
@@ -292,9 +294,9 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                     <CustomSelect
                                         value={data.id_unit}
                                         onChange={(e) => setData('id_unit', e.target.value)}
-                                        options={auth.user.peran === 'Admin' ? unitOptions : unitOptions.filter(u => String(u.value) === String(auth.user.id_unit))}
+                                        options={isAdmin() ? unitOptions : unitOptions.filter(u => String(u.value) === String(user.id_unit))}
                                         placeholder="Pilih Unit"
-                                        disabled={auth.user.peran !== 'Admin'}
+                                        disabled={!isAdmin()}
                                         className="mt-1"
                                     />
                                     <InputError message={errors.id_unit} className="mt-2" />

@@ -17,14 +17,14 @@ import {
     ShieldCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePermission } from '@/hooks/usePermission';
 
 export default function UpdateProfileInformation({
     mustVerifyEmail,
     status,
     className = '',
 }) {
-    const user = usePage().props.auth.user;
-    const isAdmin = user.peran === 'Admin';
+    const { user, isAdmin } = usePermission();
 
     const { data, setData, patch, transform, errors, processing, recentlySuccessful } =
         useForm({
@@ -68,8 +68,8 @@ export default function UpdateProfileInformation({
 
                 <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{user.nama_lengkap || data.username || 'User'}</h3>
                 <div className="mt-2 flex items-center gap-2">
-                    <span className={`px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-full flex items-center gap-1.5 ${isAdmin ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300 border border-teal-200 dark:border-teal-800' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700'}`}>
-                        {isAdmin && <ShieldCheck className="w-3.5 h-3.5" />}
+                    <span className={`px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-full flex items-center gap-1.5 ${isAdmin() ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300 border border-teal-200 dark:border-teal-800' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700'}`}>
+                        {isAdmin() && <ShieldCheck className="w-3.5 h-3.5" />}
                         {data.peran.replace('_', ' ')}
                     </span>
                 </div>

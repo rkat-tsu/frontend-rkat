@@ -5,9 +5,10 @@ import CustomSelect from '@/Components/CustomSelect';
 import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
+import { usePermission } from '@/hooks/usePermission';
 
 export default function Index({ auth, units = [], flash = {} }) {
-    const isAdmin = auth?.user?.peran === 'Admin';
+    const { isAdmin } = usePermission();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTipe, setSelectedTipe] = useState('');
     const [selectedParent, setSelectedParent] = useState('');
@@ -141,7 +142,7 @@ export default function Index({ auth, units = [], flash = {} }) {
                                     />
                                 </div>
 
-                                {isAdmin && (
+                                {isAdmin() && (
                                     <Link 
                                         href={route('unit.create')} // Pastikan route ini sesuai dengan setting Laravel Anda
                                         className="h-11 flex items-center justify-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-medium transition whitespace-nowrap shadow-sm"
@@ -166,7 +167,7 @@ export default function Index({ auth, units = [], flash = {} }) {
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Biro Unit</th>
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Nama Unit</th>
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Kepala Unit</th>
-                                        {isAdmin && <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>}
+                                        {isAdmin() && <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -187,7 +188,7 @@ export default function Index({ auth, units = [], flash = {} }) {
                                                 </td>
                                                 
                                                 {/* Kolom Aksi Icon Saja */}
-                                                {isAdmin && (
+                                                {isAdmin() && (
                                                     <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
                                                         <div className="flex gap-1.5 justify-center">
                                                             <TooltipProvider>

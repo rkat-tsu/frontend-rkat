@@ -3,10 +3,12 @@ import { Head, Link, useForm, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Save, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePermission } from '@/hooks/usePermission';
 
 export default function Create({ auth }) {
+    const { isAdmin } = usePermission();
     // Cek Akses Admin
-    if (auth.user.peran !== 'Admin') {
+    if (!isAdmin()) {
         return (
             <AuthenticatedLayout user={auth.user} header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Akses Ditolak</h2>}>
                 <Head title="Akses Ditolak" />

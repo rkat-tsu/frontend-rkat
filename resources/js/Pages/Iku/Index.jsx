@@ -10,6 +10,7 @@ import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import { toast } from 'sonner';
+import { usePermission } from '@/hooks/usePermission';
 
 export default function Index({ auth, ikus }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,8 +19,7 @@ export default function Index({ auth, ikus }) {
     // State untuk menyimpan ID baris yang sedang dibuka (Expand)
     const [expandedRows, setExpandedRows] = useState([]);
 
-    // Cek apakah user yang login adalah Admin
-    const isAdmin = auth.user.peran === 'Admin';
+    const { isAdmin } = usePermission();
 
     const { data, setData, post, processing, errors, reset, delete: destroy, isDirty } = useForm({
         uuid: '',
@@ -122,7 +122,7 @@ export default function Index({ auth, ikus }) {
                         </div>
 
                         {/* HANYA TAMPILKAN TOMBOL KELOLA JIKA ADMIN */}
-                        {isAdmin && (
+                        {isAdmin() && (
                             <div className="flex gap-3">
                                 <Link
                                     href={route('iku.create')}
@@ -150,7 +150,7 @@ export default function Index({ auth, ikus }) {
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">No</th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Nama Indikator Utama (IKU)</th>
                                     <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Jumlah IKK</th>
-                                    {isAdmin && (
+                                    {isAdmin() && (
                                         <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Aksi</th>
                                     )}
                                 </tr>
@@ -181,7 +181,7 @@ export default function Index({ auth, ikus }) {
                                                     </span>
                                                 </td>
 
-                                                 {isAdmin && (
+                                                 {isAdmin() && (
                                                     <td className="px-6 py-4 whitespace-nowrap text-right">
                                                         <div className="flex justify-end gap-1.5">
                                                             <TooltipProvider>
@@ -240,7 +240,7 @@ export default function Index({ auth, ikus }) {
                                                                 ) : (
                                                                     <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400 italic flex flex-col items-center">
                                                                         <span>Belum ada rincian IKK untuk IKU ini.</span>
-                                                                        {isAdmin && (
+                                                                        {isAdmin() && (
                                                                             <Link href={route('iku.create')} className="text-indigo-600 hover:underline mt-1 font-medium">
                                                                                 + Tambahkan IKK sekarang
                                                                             </Link>
@@ -258,7 +258,7 @@ export default function Index({ auth, ikus }) {
 
                                 {ikus.length === 0 && (
                                     <tr>
-                                        <td colSpan={isAdmin ? 5 : 4} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                                        <td colSpan={isAdmin() ? 5 : 4} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
                                             Belum ada data Indikator Kinerja Utama yang terdaftar.
                                         </td>
                                     </tr>

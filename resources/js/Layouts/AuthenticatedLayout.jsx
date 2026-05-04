@@ -4,6 +4,7 @@ import Sidebar from '@/Components/Sidebar';
 import { Menu, ChevronDown, User, LogOut, Loader2, Sun, Moon } from 'lucide-react';
 import AutomaticBreadcrumbs from '@/Components/AutomaticBreadcrumbs';
 import { Toaster } from '@/components/ui/sonner';
+import { usePermission } from '@/hooks/usePermission';
 
 const SIDEBAR_STATE_KEY = 'sidebar_minimized_state';
 const THEME_STATE_KEY = 'app_theme_preference';
@@ -11,7 +12,7 @@ const THEME_STATE_KEY = 'app_theme_preference';
 
 
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
+    const { user, isAdmin } = usePermission();
     const authProps = usePage().props.auth;
     const flash = usePage().props.flash || {};
 

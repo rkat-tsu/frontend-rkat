@@ -5,6 +5,7 @@ import { ArrowRight, Plus, Search, Download, Send, AlertCircle, Edit2, FileDown,
 import CustomSelect from '@/Components/CustomSelect';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
+import { usePermission } from '@/hooks/usePermission';
 
 const formatDate = (value) => {
     if (!value) return '-';
@@ -17,6 +18,7 @@ const formatDate = (value) => {
 
 // Tambahkan prop 'flash' untuk menangkap pesan error/success dari Controller
 export default function Index({ auth, rkats, filters, tahunAnggarans, units = [], flash = {} }) {
+    const { isAdmin } = usePermission();
     // State untuk menyimpan nilai filter
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [tahun, setTahun] = useState(filters?.tahun || '');
@@ -153,7 +155,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                     />
                                 </div>
 
-                                {auth.user.peran === 'Admin' && units.length > 0 && (
+                                {isAdmin() && units.length > 0 && (
                                     <div className="flex-1 min-w-[200px] lg:w-56">
                                         <CustomSelect
                                             value={unitId}

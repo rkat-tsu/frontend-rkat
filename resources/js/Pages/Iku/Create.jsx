@@ -9,8 +9,10 @@ import InputError from '@/Components/InputError';
 import CustomSelect from '@/Components/CustomSelect';
 import { Plus, Trash2, Save, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePermission } from '@/hooks/usePermission';
 
 export default function Create({ auth, ikus }) {
+    const { isAdmin } = usePermission();
     // Setup Form
     const { data, setData, post, processing, errors, reset } = useForm({
         uuid_iku: '',
@@ -101,7 +103,7 @@ export default function Create({ auth, ikus }) {
     }));
 
     // Cek Akses Admin
-    if (auth.user.peran !== 'Admin') {
+    if (!isAdmin()) {
         return (
             <AuthenticatedLayout user={auth.user} header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Akses Ditolak</h2>}>
                 <Head title="Akses Ditolak" />

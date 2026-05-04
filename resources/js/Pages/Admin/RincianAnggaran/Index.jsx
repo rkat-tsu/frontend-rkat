@@ -5,12 +5,13 @@ import { Edit2, Trash2, Search, Plus } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
+import { usePermission } from '@/hooks/usePermission';
 
 export default function Index({ auth, items = {}, filters = {}, letters = [], flash = {} }) {
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [letterFilter, setLetterFilter] = useState(filters.letter || '');
 
-    const isAdmin = auth?.user?.peran === 'Admin';
+    const { isAdmin } = usePermission();
 
     useEffect(() => {
         const timeoutId = setTimeout(() => {
@@ -110,7 +111,7 @@ export default function Index({ auth, items = {}, filters = {}, letters = [], fl
                                         className="h-11 rounded-lg border-transparent bg-gray-200 dark:bg-gray-700 dark:text-gray-300 focus:border-yellow-500 focus:bg-white focus:ring-0 text-sm"
                                     />
                                 </div>
-                                {isAdmin && (
+                                {isAdmin() && (
                                     <Link
                                         href={route('rincian.create')}
                                         className="flex items-center justify-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-medium transition whitespace-nowrap h-11"
@@ -132,7 +133,7 @@ export default function Index({ auth, items = {}, filters = {}, letters = [], fl
                                         <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Keterangan</th>
                                         <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Kelompok</th>
                                         <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Pagu Anggaran</th>
-                                        {isAdmin && <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>}
+                                        {isAdmin() && <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -167,7 +168,7 @@ export default function Index({ auth, items = {}, filters = {}, letters = [], fl
                                                     {formatRupiah(item.nominal)}
                                                 </td>
 
-                                                {isAdmin && (
+                                                {isAdmin() && (
                                                     <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center">
                                                         <div className="flex gap-1.5 justify-center">
                                                             <TooltipProvider>
@@ -203,7 +204,7 @@ export default function Index({ auth, items = {}, filters = {}, letters = [], fl
                                         );
                                     }) : (
                                         <tr>
-                                            <td colSpan={isAdmin ? 6 : 5} className="px-6 py-8 text-center text-sm text-gray-500 border-b border-gray-300">
+                                            <td colSpan={isAdmin() ? 6 : 5} className="px-6 py-8 text-center text-sm text-gray-500 border-b border-gray-300">
                                                 Tidak ada data item operasional ditemukan.
                                             </td>
                                         </tr>

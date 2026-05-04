@@ -24,12 +24,14 @@ import {
     useComboboxAnchor,
 } from "@/components/ui/combobox"
 import { toast } from 'sonner';
+import { usePermission } from '@/hooks/usePermission';
 
 const formatRupiah = (angka) => {
     const number = Number(angka) || 0;
     return `Rp. ${number.toLocaleString('id-ID', { minimumFractionDigits: 0 })}`;
 };
 export default function Create({ auth, tahunAnggarans, units, akunAnggarans, ikus }) {
+    const { user, isAdmin } = usePermission();
 
     // Initial States
     const initialIndikator = {
@@ -301,9 +303,9 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                     <CustomSelect
                                         value={data.id_unit}
                                         onChange={(e) => setData('id_unit', e.target.value)}
-                                        options={auth.user.peran === 'Admin' ? unitOptions : unitOptions.filter(u => String(u.value) === String(auth.user.id_unit))}
+                                        options={isAdmin() ? unitOptions : unitOptions.filter(u => String(u.value) === String(user.id_unit))}
                                         placeholder="Pilih Unit"
-                                        disabled={auth.user.peran !== 'Admin'}
+                                        disabled={!isAdmin()}
                                         className="mt-1"
                                     />
                                     <InputError message={errors.id_unit} className="mt-2" />
