@@ -182,6 +182,10 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
 
             if (inputHarga > maxHarga) {
                 inputHarga = maxHarga;
+                toast.warning("Batas Maksimal Terlampaui", {
+                    description: `Harga satuan untuk item ini tidak boleh melebihi standar biaya (${formatRupiah(maxHarga)}).`,
+                    duration: 3000,
+                });
             }
             item.biaya_satuan = inputHarga;
         }
@@ -587,13 +591,9 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                                     <div className="flex flex-col">
                                                         <RupiahInput
                                                             value={item.biaya_satuan}
-                                                            onValueChange={(val) => handleRincianChange(index, 'biaya_satuan', val)}
+                                                            onChange={(e) => handleRincianChange(index, 'biaya_satuan', e.target.value)}
                                                             className="w-full h-9 text-xs text-right px-2"
                                                         />
-                                                        {item.kode_anggaran && (() => {
-                                                            const akun = akunAnggarans.find(a => String(a.kode_anggaran) === String(item.kode_anggaran));
-                                                            return akun ? <span className="text-[10px] text-gray-400 text-right mt-0.5">Max: {formatRupiah(akun.nominal)}</span> : null;
-                                                        })()}
                                                     </div>
                                                 </td>
                                                 <td className="px-2 py-1 text-right font-semibold text-gray-700 dark:text-gray-200 align-middle">{formatRupiah(item.jumlah)}</td>

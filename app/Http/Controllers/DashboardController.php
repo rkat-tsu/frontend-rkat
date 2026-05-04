@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\RkatHeader;
+use App\Models\TahunAnggaran;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -12,44 +13,10 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        // Otomatis mengambil tahun hari ini
         $tahunSekarang = Carbon::now()->year;
 
-        // 1. Ambil Data RKAT tahun berjalan
-        $query = RkatHeader::whereYear('tanggal_pengajuan', $tahunSekarang);
-
-        // Filter data jika bukan Admin (Opsional, sesuaikan kebutuhan)
-        if (!$user->isAdmin()) {
-            $query->where('id_unit', $user->id_unit);
-        }
-
-        // 2. Hitung jumlah RKAT per bulan
-        $rkatPerBulan = $query->selectRaw('MONTH(tanggal_pengajuan) as bulan, COUNT(*) as total')
-            ->groupBy('bulan')
-            ->pluck('total', 'bulan')
-            ->toArray();
-
-        // 3. Susun array 12 bulan (Jan - Des) agar grafik konsisten
-        $grafikRkat = [];
-        $namaBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-
-        for ($i = 1; $i <= 12; $i++) {
-            $grafikRkat[] = [
-                'month' => $namaBulan[$i - 1],
-                'desktop' => $rkatPerBulan[$i] ?? 0 // Sesuaikan key 'desktop' dengan config Shadcn
-            ];
-        }
-
-        // 4. Hitung Summary untuk Card
-        $summary = [
-            'total' => RkatHeader::count(),
-            'disetujui' => RkatHeader::where('status_persetujuan', 'Disetujui_Final')->count(),
-            'review' => RkatHeader::whereNotIn('status_persetujuan', ['Draft', 'Selesai', 'Disetujui_Final', 'Ditolak'])->count(),
-            'ditolak' => RkatHeader::where('status_persetujuan', 'Ditolak')->count(),
-        ];
-
-        // 5. Ambil data Tahun Anggaran Aktif & Mapping Status
-        $activeBudget = \App\Models\TahunAnggaran::where('tahun_anggaran', $tahunSekarang)->first();
+        // 1. Data Ringan (Initial Load)
+        $activeBudget = TahunAnggaran::query()->where('tahun_anggaran', '=', $tahunSekarang, 'and')->first();
         
         $statusMap = [
             'Drafting'   => 'Penyusunan',
@@ -62,11 +29,64 @@ class DashboardController extends Controller
         $statusTeks = $statusMap[$rawStatus] ?? ($rawStatus === 'None' ? 'Tidak Aktif' : $rawStatus);
 
         return Inertia::render('Dashboard', [
-            'grafikRkat' => $grafikRkat,
             'tahunAnggaran' => $tahunSekarang,
             'statusAnggaran' => $statusTeks,
             'rawStatus' => $rawStatus,
-            'summary' => $summary
+
+            // OPTIMASI: Memuat data berat di latar belakang (Deferred)
+            'summary' => Inertia::defer(fn () => $this->getOptimizedSummary()),
+            'grafikRkat' => Inertia::defer(fn () => $this->getOptimizedGrafik($user, $tahunSekarang)),
         ]);
+    }
+
+    /**
+     * Optimasi: Mengambil semua statistik dalam SATU kueri database saja
+     */
+    private function getOptimizedSummary(): array
+    {
+        $stats = RkatHeader::query()
+            ->selectRaw("
+                COUNT(*) as total,
+                SUM(CASE WHEN status_persetujuan = 'Disetujui_Final' THEN 1 ELSE 0 END) as disetujui,
+                SUM(CASE WHEN status_persetujuan = 'Ditolak' THEN 1 ELSE 0 END) as ditolak,
+                SUM(CASE WHEN status_persetujuan NOT IN ('Draft', 'Selesai', 'Disetujui_Final', 'Ditolak') THEN 1 ELSE 0 END) as review
+            ")
+            ->first();
+
+        return [
+            'total'     => (int) ($stats->total ?? 0),
+            'disetujui' => (int) ($stats->disetujui ?? 0),
+            'review'    => (int) ($stats->review ?? 0),
+            'ditolak'   => (int) ($stats->ditolak ?? 0),
+        ];
+    }
+
+    /**
+     * Optimasi: Mengambil data grafik
+     */
+    private function getOptimizedGrafik($user, int $tahunSekarang): array
+    {
+        $query = RkatHeader::query()->whereYear('tanggal_pengajuan', '=', $tahunSekarang, 'and');
+
+        if (!$user->isAdmin()) {
+            $query->where('id_unit', '=', $user->id_unit, 'and');
+        }
+
+        $rkatPerBulan = $query->selectRaw('MONTH(tanggal_pengajuan) as bulan, COUNT(*) as total')
+            ->groupBy('bulan')
+            ->pluck('total', 'bulan')
+            ->toArray();
+
+        $namaBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        $grafikRkat = [];
+
+        for ($i = 1; $i <= 12; $i++) {
+            $grafikRkat[] = [
+                'month' => $namaBulan[$i - 1],
+                'desktop' => $rkatPerBulan[$i] ?? 0
+            ];
+        }
+
+        return $grafikRkat;
     }
 }

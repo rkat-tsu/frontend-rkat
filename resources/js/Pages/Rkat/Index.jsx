@@ -194,8 +194,8 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                     href={isLocked ? '#' : route('rkat.create')}
                                     onClick={(e) => isLocked && e.preventDefault()}
                                     className={`h-11 inline-flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md ${isLocked
-                                            ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                                            : 'bg-teal-600 hover:bg-teal-700 text-white active:scale-95'
+                                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                                        : 'bg-teal-600 hover:bg-teal-700 text-white active:scale-95'
                                         }`}
                                 >
                                     <Plus size={18} />
@@ -331,8 +331,8 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                         key={index}
                                         href={link.url || '#'}
                                         className={`px-3 py-2 border border-gray-200 dark:border-gray-700 text-sm ${link.active
-                                                ? 'bg-teal-600 text-white border-teal-600 z-10'
-                                                : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                                            ? 'bg-teal-600 text-white border-teal-600 z-10'
+                                            : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
                                             } ${!link.url ? 'opacity-50 cursor-not-allowed' : ''} ${index === 0 ? 'rounded-l-md' : ''
                                             } ${index === rkats.links.length - 1 ? 'rounded-r-md' : ''}`}
                                         dangerouslySetInnerHTML={{ __html: link.label }}

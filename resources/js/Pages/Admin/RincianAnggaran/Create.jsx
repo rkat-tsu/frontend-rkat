@@ -49,7 +49,7 @@ export default function Create({ auth }) {
         }
     };
 
-    // Handle submit form
+    // Handle submit form dengan Konfirmasi Toast
     const handleSubmit = (e) => {
         e.preventDefault();
         
@@ -58,10 +58,21 @@ export default function Create({ auth }) {
             return;
         }
 
-        const toastId = toast.loading("Sedang menyimpan data...");
-        post(route('rincian.store'), {
-            onSuccess: () => toast.success("Berhasil", { id: toastId, description: "Item SBO baru berhasil ditambahkan." }),
-            onError: () => toast.error("Gagal Menyimpan", { id: toastId, description: "Terdapat kesalahan saat menyimpan data." })
+        toast("Konfirmasi Simpan", {
+            description: "Apakah Anda yakin ingin menambahkan item SBO baru ini?",
+            action: {
+                label: "Ya, Simpan",
+                onClick: () => {
+                    const toastId = toast.loading("Sedang menyimpan data...");
+                    post(route('rincian.store'), {
+                        onSuccess: () => toast.success("Berhasil", { id: toastId, description: "Item SBO baru berhasil ditambahkan." }),
+                        onError: () => toast.error("Gagal Menyimpan", { id: toastId, description: "Terdapat kesalahan saat menyimpan data." })
+                    });
+                }
+            },
+            cancel: {
+                label: "Batal"
+            }
         });
     };
 

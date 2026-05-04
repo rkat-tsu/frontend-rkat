@@ -20,7 +20,7 @@ class TahunAnggaranController extends Controller
         }
 
         // Urutkan berdasarkan tahun terbaru
-        $tahunAnggarans = $query->orderBy('tahun_anggaran', 'desc')->paginate(10);
+        $tahunAnggarans = $query->select(['id_tahun', 'uuid', 'tahun_anggaran', 'tanggal_mulai', 'tanggal_akhir', 'status_rkat'])->orderBy('tahun_anggaran', 'desc')->paginate(10);
 
         return Inertia::render('Admin/TahunAnggaran/Index', [
             'tahunAnggarans' => $tahunAnggarans,
@@ -66,7 +66,9 @@ class TahunAnggaranController extends Controller
             'status_rkat' => ['required', Rule::in(['Drafting', 'Submission', 'Approved', 'Closed'])],
         ]);
 
-        $tahun->update($validated);
+        TahunAnggaran::query()
+            ->where('id_tahun', $tahun->id_tahun)
+            ->update($validated);
 
         Log::info('[TahunAnggaran] Berhasil update data.');
 
@@ -75,7 +77,7 @@ class TahunAnggaranController extends Controller
 
     public function destroy(TahunAnggaran $tahun)
     {
-        $tahun->delete();
+        TahunAnggaran::destroy($tahun->id_tahun);
 
         return Redirect::route('tahun.index')->with('success', 'Data berhasil dihapus.');
     }

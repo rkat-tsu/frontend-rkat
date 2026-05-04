@@ -17,7 +17,7 @@ use Inertia\Response;
 class ApprovalController extends Controller
 {
     // Pemetaan Role ke Status Dokumen yang sedang menunggu
-    protected $roleStatusMap = [
+    protected array $roleStatusMap = [
         'Kepala_Unit' => 'Menunggu_Unit_Kepala',
         'Dekan'       => 'Menunggu_Dekan_Kepala',
         'Tim_Renbang' => 'Menunggu_Tim_Renbang',
@@ -42,9 +42,12 @@ class ApprovalController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
         }
 
+        // Eager load unit.children untuk menghindari N+1 query pada hierarki workflow
+        $user->loadMissing('unit.children');
+
         // === CEK STATUS TAHUN ANGGARAN ===
         // Hanya izinkan review jika ada Tahun Anggaran dengan status 'Approved'
-        $activeTahun = TahunAnggaran::where('status_rkat', 'Approved')->exists();
+        $activeTahun = TahunAnggaran::query()->where('status_rkat', 'Approved')->exists();
         if (!$activeTahun && !$user->isAdmin()) {
              return Inertia::render('Approval/Index', [
                 'rkatMenunggu' => [],
@@ -152,8 +155,11 @@ class ApprovalController extends Controller
                     default  => $rkatHeader->status_persetujuan,
                 };
 
-                // Update Status RKAT
-                $rkatHeader->update(['status_persetujuan' => $newStatus]);
+                // Update Status RKAT menggunakan Query Builder agar IDE paham argumennya (1 Query)
+                RkatHeader::query()->where('id_header', $rkatHeader->id_header)->update([
+                    'status_persetujuan' => $newStatus
+                ]);
+                
                 Log::info("[Approval] Status Berubah: $oldStatus -> $newStatus");
 
                 // Catat Riwayat Persetujuan (Audit Trail)

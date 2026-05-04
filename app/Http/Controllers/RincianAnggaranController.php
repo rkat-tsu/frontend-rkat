@@ -30,14 +30,18 @@ class RincianAnggaranController extends Controller
             $query->where('kode_anggaran', 'like', $request->letter . '%');
         }
 
-        $items = $query->orderBy('kode_anggaran')->paginate(20)->withQueryString();
+        $items = $query->select(['uuid', 'kode_anggaran', 'nama_anggaran', 'kelompok_anggaran', 'nominal', 'satuan'])
+            ->orderBy('kode_anggaran', 'asc')
+            ->paginate(20)
+            ->withQueryString();
 
         // Mengambil huruf depan unik dari kode_anggaran untuk dropdown filter
-        $letters = RincianAnggaran::selectRaw('SUBSTR(kode_anggaran, 1, 1) as letter')
-            ->whereNotNull('kode_anggaran')
+        $letters = RincianAnggaran::query()
+            ->where('kode_anggaran', '!=', null)
             ->where('kode_anggaran', '!=', '')
+            ->selectRaw('SUBSTR(kode_anggaran, 1, 1) as letter')
             ->distinct()
-            ->orderBy('letter')
+            ->orderBy('letter', 'asc')
             ->pluck('letter');
 
         return Inertia::render('Admin/RincianAnggaran/Index', [
@@ -86,10 +90,12 @@ class RincianAnggaranController extends Controller
             'kelompok_anggaran' => 'nullable|string|max:50',
             'satuan' => 'nullable|string|max:50',
             'nominal' => 'nullable|numeric|min:0',
-            'kelompok_anggaran' => 'nullable|string|max:50',
         ]);
 
-        $rincian->update($validated);
+        RincianAnggaran::query()
+            ->where('kode_anggaran', $rincian->kode_anggaran)
+            ->update($validated);
+            
         Log::info('[RincianAnggaran] Diperbarui: ' . $rincian->kode_anggaran);
 
         return Redirect::route('rincian.index')->with('success', 'Rincian Anggaran berhasil diperbarui.');
@@ -99,7 +105,7 @@ class RincianAnggaranController extends Controller
     {
         Log::warning('[RincianAnggaran] Menghapus: ' . $rincian->kode_anggaran);
         try {
-            $rincian->delete();
+            RincianAnggaran::destroy($rincian->kode_anggaran);
             return Redirect::route('rincian.index')->with('success', 'Rincian Anggaran berhasil dihapus.');
         } catch (\Exception $e) {
             Log::error('[RincianAnggaran] Kesalahan Hapus: ' . $e->getMessage());

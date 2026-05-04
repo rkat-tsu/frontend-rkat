@@ -8,15 +8,14 @@ import { Toaster } from '@/components/ui/sonner';
 const SIDEBAR_STATE_KEY = 'sidebar_minimized_state';
 const THEME_STATE_KEY = 'app_theme_preference';
 
-import PageLoader from '@/Components/PageLoader';
+
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
     const authProps = usePage().props.auth;
     const flash = usePage().props.flash || {};
 
-    // State Loading
-    const [isLoading, setIsLoading] = useState(false);
+
 
     // State Theme (Dark/Light Mode)
     const [theme, setTheme] = useState('light');
@@ -52,19 +51,7 @@ export default function AuthenticatedLayout({ header, children }) {
         }
     }, [isMinimized]);
 
-    // Listener Router untuk Trigger Loading
-    useEffect(() => {
-        const start = () => setIsLoading(true);
-        const finish = () => setIsLoading(false);
 
-        const removeStart = router.on('start', start);
-        const removeFinish = router.on('finish', finish);
-
-        return () => {
-            removeStart();
-            removeFinish();
-        };
-    }, []);
 
     const toggleMinimize = () => setIsMinimized(prev => !prev);
 
@@ -87,8 +74,7 @@ export default function AuthenticatedLayout({ header, children }) {
     return (
         <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900 font-sans text-gray-800 transition-colors duration-300">
 
-            {/* GLOBAL LOADER */}
-            <PageLoader visible={isLoading} />
+
             <Toaster position="top-center" richColors />
 
             {/* SIDEBAR */}
@@ -195,8 +181,11 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
                 </header>
 
-                {/* PAGE CONTENT */}
-                <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                {/* PAGE CONTENT DENGAN ANIMASI TRANSISI */}
+                <main 
+                    key={usePage().url} 
+                    className="flex-1 p-4 sm:p-6 lg:p-8 animate-page-in"
+                >
                     {children}
                 </main>
             </div>

@@ -130,6 +130,7 @@
 </head>
 <body>
     @php
+        \Carbon\Carbon::setLocale('id');
         $detail = $rkat->rkatDetails->first();
         $year = $rkat->tahun_anggaran;
         $logoPath = public_path('img/logo-full-tsu.svg');
@@ -143,7 +144,7 @@
         $isUnitAcc = $rkat->logPersetujuans->whereIn('level_persetujuan', ['Kepala_Unit', 'Dekan'])->where('aksi', 'Setuju')->last();
         
         // Pilih WR pertama berdasarkan alur (Akademik: WR 1, Non-Akademik: WR 3)
-        $jalur = $rkat->unit->jalur_persetujuan ?? 'akademik';
+        $jalur = optional($rkat->unit)->jalur_persetujuan ?? 'akademik';
         $targetWR = ($jalur == 'akademik') ? 'WR_1' : 'WR_3';
         
         $isWRAcc = $rkat->logPersetujuans->where('level_persetujuan', $targetWR)->where('aksi', 'Setuju')->last();
@@ -155,7 +156,7 @@
         $revisions = $rkat->logPersetujuans->where('aksi', 'Revisi');
         
         // Calculate real RAB total
-        $rabTotal = $detail->rabItems->sum('sub_total');
+        $rabTotal = $detail ? $detail->rabItems->sum('sub_total') : 0;
     @endphp
 
     <div class="header">
@@ -387,17 +388,17 @@
                         <div class="sig-status">ACC</div>
                     @endif
                 </div>
-                <p class="font-bold">{{ $renbangApprover ? $renbangApprover->nama_lengkap : 'Sapto Nugroho, S.T' }}</p>
-                <p>NIK. {{ $renbangApprover ? ($renbangApprover->nik ?? '212013066') : '212013066' }}</p>
+                <p class="font-bold">{{ optional($renbangApprover)->nama_lengkap ?: '............................' }}</p>
+                <p>NIK. {{ optional($renbangApprover)->nik ?: '............................' }}</p>
             </div>
             <div class="sig-box text-right" style="float: right;">
-                <p>Surakarta, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</p>
+                <p>Surakarta, {{ \Carbon\Carbon::now()->isoFormat('D MMMM YYYY') }}</p>
                 <p>PIC Kegiatan / Pembina UKM</p>
                 <div class="sig-space">
                     <div class="sig-status" style="border: none; opacity: 0.1; color: #eee;">DRAFT</div>
                 </div>
-                <p class="font-bold">{{ $rkat->user->nama_lengkap }}</p>
-                <p>NIK. {{ $rkat->user->nik ?? '............................' }}</p>
+                <p class="font-bold">{{ optional($rkat->user)->nama_lengkap ?? '............................' }}</p>
+                <p>NIK. {{ optional($rkat->user)->nik ?: '............................' }}</p>
             </div>
             <div style="clear: both;"></div>
         </div>
@@ -411,8 +412,8 @@
                         <div class="sig-status">ACC</div>
                     @endif
                 </div>
-                <p class="font-bold">{{ $unitApprover ? $unitApprover->nama_lengkap : 'Gege Noby Priohananto, S.Sn, M.Sn' }}</p>
-                <p>NIK. {{ $unitApprover ? ($unitApprover->nik ?? '112025133') : '112025133' }}</p>
+                <p class="font-bold">{{ optional($unitApprover)->nama_lengkap ?: '............................' }}</p>
+                <p>NIK. {{ optional($unitApprover)->nik ?: '............................' }}</p>
             </div>
             <div class="sig-box text-right" style="float: right;">
                 <p>Menyetujui,</p>
@@ -422,8 +423,8 @@
                         <div class="sig-status">ACC</div>
                     @endif
                 </div>
-                <p class="font-bold">{{ $wrApprover ? $wrApprover->nama_lengkap : 'Prof. Dr. Drajat Tri Kartono, M.SI' }}</p>
-                <p>NIK. {{ $wrApprover ? ($wrApprover->nik ?? '102024039') : '102024039' }}</p>
+                <p class="font-bold">{{ optional($wrApprover)->nama_lengkap ?: '............................' }}</p>
+                <p>NIK. {{ optional($wrApprover)->nik ?: '............................' }}</p>
             </div>
             <div style="clear: both;"></div>
         </div>

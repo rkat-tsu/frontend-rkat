@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
+import TextArea from '@/Components/TextArea';
 import PrimaryButton from '@/Components/PrimaryButton';
 import InputError from '@/Components/InputError';
 import CustomSelect from '@/Components/CustomSelect';
@@ -163,36 +164,42 @@ export default function Create({ auth, ikus }) {
 
                                 <div className="space-y-3">
                                     {data.ikks.map((item, index) => (
-                                        <div key={index} className="flex items-start gap-3 group">
-                                            <div className="flex-shrink-0 mt-2.5">
-                                                <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 flex items-center justify-center text-xs font-bold border border-gray-200 dark:border-gray-600">
+                                        <div key={index} className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-900/10 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all group">
+                                            <div className="flex-shrink-0 mt-1">
+                                                <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm font-bold border border-indigo-100 dark:border-indigo-800 shadow-sm">
                                                     {index + 1}
                                                 </div>
                                             </div>
                                             
                                             <div className="flex-grow">
                                                 <InputLabel value={`Nama Kegiatan / Indikator ${index + 1}`} className="sr-only" />
-                                                <TextInput
+                                                <TextArea
                                                     value={item.nama_ikk}
                                                     onChange={(e) => updateRow(index, e.target.value)}
-                                                    className="w-full"
-                                                    placeholder={`Contoh: Penyelenggaraan Seminar Internasional...`}
-                                                    isFocused={index === data.ikks.length - 1 && index > 0} // Auto focus baris baru
+                                                    className="w-full text-sm leading-relaxed"
+                                                    placeholder={`Masukkan deskripsi lengkap kegiatan/indikator di sini...`}
+                                                    rows={2}
+                                                    isFocused={index === data.ikks.length - 1 && index > 0}
                                                 />
                                                 {errors[`ikks.${index}.nama_ikk`] && (
-                                                    <p className="text-sm text-red-600 mt-1">Nama kegiatan tidak boleh kosong.</p>
+                                                    <p className="text-sm text-red-600 mt-1 font-medium flex items-center gap-1">
+                                                        <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                                                        Nama kegiatan tidak boleh kosong.
+                                                    </p>
                                                 )}
                                             </div>
-
-                                            <button
-                                                type="button"
-                                                onClick={() => removeRow(index)}
-                                                className="mt-2 p-2 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                                                title="Hapus baris ini"
-                                                disabled={data.ikks.length === 1} // Jangan hapus jika sisa 1
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
+                                            
+                                            <div className="flex-shrink-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeRow(index)}
+                                                    className="p-2.5 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
+                                                    title="Hapus baris ini"
+                                                    disabled={data.ikks.length === 1}
+                                                >
+                                                    <Trash2 size={20} />
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

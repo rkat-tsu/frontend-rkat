@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import TextInput from '@/Components/TextInput';
 import { Search, Package, ArrowLeft, ArrowRight, FileSpreadsheet } from 'lucide-react';
 
 export default function Index({ auth, items, filters }) {

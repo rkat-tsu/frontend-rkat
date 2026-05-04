@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import CustomSelect from '@/Components/CustomSelect';
@@ -6,12 +6,22 @@ import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
 
-export default function Index({ auth, units = [] }) {
+export default function Index({ auth, units = [], flash = {} }) {
     const isAdmin = auth?.user?.peran === 'Admin';
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTipe, setSelectedTipe] = useState('');
     const [selectedParent, setSelectedParent] = useState('');
     const [selectedJalur, setSelectedJalur] = useState('');
+
+    // Handle flash messages
+    useEffect(() => {
+        if (flash.success) {
+            toast.success(flash.success);
+        }
+        if (flash.error) {
+            toast.error(flash.error);
+        }
+    }, [flash]);
 
     // Extract unique filter values
     const uniqueTipes = [...new Set(units.map(u => u.tipe_unit).filter(Boolean))].sort();

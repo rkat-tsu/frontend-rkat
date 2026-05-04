@@ -84,7 +84,7 @@ class RkatHeader extends Model
         $prefix = sprintf('RKAT-%d-%d', $tahunAnggaran, $idUnit);
 
         // Find last nomor_dokumen for same year and unit and increment sequence
-        $last = self::where('tahun_anggaran', $tahunAnggaran)
+        $last = self::query()->where('tahun_anggaran', $tahunAnggaran)
             ->where('id_unit', $idUnit)
             ->where('nomor_dokumen', 'like', $prefix . '%')
             ->orderBy('id_header', 'desc')

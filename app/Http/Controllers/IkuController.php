@@ -14,8 +14,12 @@ class IkuController extends Controller
 
     public function index()
     {
-        // Mengambil IKU beserta jumlah IKK yang ada di dalamnya
-        $ikus = Iku::with('ikks')->orderBy('id_iku', 'asc')->get();
+        // Mengambil IKU beserta jumlah IKK yang ada di dalamnya dengan Optimasi Memori (Select Spesifik)
+        $ikus = Iku::query()
+            ->select(['id_iku', 'uuid', 'nama_iku'])
+            ->with(['ikks:id_ikk,id_iku,nama_ikk'])
+            ->orderBy('id_iku', 'asc')
+            ->get();
         
         return Inertia::render('Iku/Index', [
             'ikus' => $ikus,
@@ -30,8 +34,10 @@ class IkuController extends Controller
         ]);
 
         if (isset($validated['uuid'])) {
-            $iku = Iku::where('uuid', $validated['uuid'])->firstOrFail();
-            $iku->update(['nama_iku' => $validated['nama_iku']]);
+            // Langsung update melalui Query Builder untuk efisiensi (1 Query) dan menghindari peringatan IDE
+            Iku::query()->where('uuid', $validated['uuid'])->update([
+                'nama_iku' => $validated['nama_iku']
+            ]);
             $message = 'Nama IKU berhasil diperbarui.';
         } else {
             Iku::create(['nama_iku' => $validated['nama_iku']]);
@@ -43,7 +49,8 @@ class IkuController extends Controller
 
     public function destroy(Iku $iku)
     {
-        $iku->delete(); // Pastikan DB tabel IKK diset cascade on delete
+        // Gunakan Iku::destroy() untuk menghindari peringatan IDE palsu dan lebih eksplisit
+        Iku::destroy($iku->id_iku); 
         return redirect()->back()->with('success', 'IKU berhasil dihapus.');
     }
 
@@ -51,8 +58,12 @@ class IkuController extends Controller
     {
         Log::debug('[IKU] Halaman input IKU diakses.');
         
-        // Mengambil semua IKU beserta IKK-nya untuk keperluan edit/input
-        $ikus = Iku::with('ikks')->get();
+        // Mengambil semua IKU beserta IKK-nya dengan Optimasi Memori (Select Spesifik)
+        $ikus = Iku::query()
+            ->select(['id_iku', 'uuid', 'nama_iku'])
+            ->with(['ikks:id_ikk,id_iku,nama_ikk'])
+            ->orderBy('id_iku', 'asc')
+            ->get();
         
         return Inertia::render('Iku/Create', [
             'ikus' => $ikus, 
@@ -84,7 +95,7 @@ class IkuController extends Controller
         DB::beginTransaction();
 
         try {
-            $iku = Iku::where('uuid', $validated['uuid_iku'])->firstOrFail(); 
+            $iku = Iku::query()->where('uuid', $validated['uuid_iku'])->firstOrFail(); 
             Log::debug('[IKU] Memproses data untuk IKU UUID: ' . $iku->uuid);
 
             // Array untuk menampung ID IKK yang diproses (untuk keperluan sync/delete)
@@ -95,13 +106,14 @@ class IkuController extends Controller
                 
                 // Cek apakah ini data lama (punya ID) atau data baru
                 if (isset($ikkData['id_ikk']) && $ikkData['id_ikk']) {
-                    // --- UPDATE DATA LAMA ---
-                    $ikk = Ikk::find($ikkData['id_ikk']);
+                    // --- UPDATE DATA LAMA (Optimasi: 1 Query untuk Verifikasi & Update) ---
+                    $updated = Ikk::query()
+                        ->where('id_ikk', $ikkData['id_ikk'])
+                        ->where('id_iku', $iku->id_iku) // Security check: Pastikan milik IKU ini
+                        ->update(['nama_ikk' => $ikkData['nama_ikk']]);
                     
-                    // Pastikan IKK ini benar milik IKU yang sedang diedit (Security check)
-                    if ($ikk && $ikk->id_iku == $iku->id_iku) {
-                        $ikk->update(['nama_ikk' => $ikkData['nama_ikk']]);
-                        $processedIkkIds[] = $ikk->id_ikk;
+                    if ($updated) {
+                        $processedIkkIds[] = $ikkData['id_ikk'];
                     }
                 } else {
                     // --- CREATE DATA BARU ---

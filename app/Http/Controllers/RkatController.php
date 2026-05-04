@@ -15,6 +15,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf; 
+use Carbon\Carbon;
 use Inertia\Inertia;
 
 class RkatController extends Controller
@@ -24,16 +26,19 @@ class RkatController extends Controller
         Log::debug('[RKAT] Permintaan Halaman Buat oleh User: ' . Auth::id());
 
         // JIKA TIDAK ADA TAHUN YANG DIBUKA (Drafting atau Submission):
-        $tahunAnggarans = TahunAnggaran::whereIn('status_rkat', ['Drafting', 'Submission'])->get();
+        $tahunAnggarans = TahunAnggaran::query()
+            ->select(['id_tahun', 'tahun_anggaran', 'status_rkat'])
+            ->whereIn('status_rkat', ['Drafting', 'Submission'], 'and', false)
+            ->orderBy('tahun_anggaran', 'desc')
+            ->get();
 
         if ($tahunAnggarans->isEmpty()) {
             return redirect()->route('rkat.index')->with('error', 'Maaf, periode penginputan RKAT saat ini sedang ditutup atau sudah melewati batas waktu.');
         }
 
-        $units = Unit::orderBy('kode_unit')->get();
-        $akunAnggarans = RincianAnggaran::orderBy('kode_anggaran')->get();
-
-        $ikus = Iku::with(['ikks'])->get();
+        $units = Unit::query()->select(['id_unit', 'kode_unit', 'nama_unit'])->orderBy('kode_unit', 'asc')->get();
+        $akunAnggarans = RincianAnggaran::query()->select(['kode_anggaran', 'nama_anggaran', 'nominal', 'satuan'])->orderBy('kode_anggaran', 'asc')->get();
+        $ikus = Iku::query()->select(['id_iku', 'nama_iku'])->with(['ikks:id_ikk,id_iku,nama_ikk'])->orderBy('id_iku', 'asc')->get();
 
         Log::debug('[RKAT] Data Master Dimuat', [
             'tahun_count' => $tahunAnggarans->count(),
@@ -52,7 +57,7 @@ class RkatController extends Controller
 
     public function index(Request $request)
     {
-        $query = RkatHeader::with(['unit']);
+        $query = RkatHeader::query()->with(['unit:id_unit,nama_unit']);
 
         // Jika pengguna bukan admin, batasi ke unit sendiri
         if (Auth::user()->peran !== 'Admin') {
@@ -81,8 +86,8 @@ class RkatController extends Controller
 
         $rkats = $query->orderBy('tanggal_pengajuan', 'desc')->paginate(15)->withQueryString();
 
-        $tahunAnggarans = TahunAnggaran::orderBy('tahun_anggaran', 'desc')->pluck('tahun_anggaran');
-        $units = Unit::orderBy('nama_unit')->get();
+        $tahunAnggarans = TahunAnggaran::query()->orderBy('tahun_anggaran', 'desc')->pluck('tahun_anggaran');
+        $units = Unit::query()->select(['id_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get();
 
         return Inertia::render('Rkat/Index', [
             'rkats' => $rkats,
@@ -97,7 +102,7 @@ class RkatController extends Controller
         Log::debug('[RKAT] Payload Simpan Diterima', $request->all());
 
         // Cek kembali status tahun anggaran di backend
-        $tahun = TahunAnggaran::where('tahun_anggaran', $request->tahun_anggaran)->first();
+        $tahun = TahunAnggaran::query()->where('tahun_anggaran', $request->tahun_anggaran)->first();
         if (!$tahun || $tahun->status_rkat === 'Closed') {
             return redirect()->back()->with('error', 'Gagal menyimpan! Periode tahun anggaran ini sudah ditutup.');
         }
@@ -232,13 +237,13 @@ class RkatController extends Controller
     public function show(RkatHeader $rkatHeader)
     {
         $rkatHeader->load([
-            'unit',
-            'user',
-            'rkatDetails.iku',
-            'rkatDetails.ikk',
+            'unit:id_unit,nama_unit,kode_unit',
+            'user:id_user,nama_lengkap,nik',
+            'rkatDetails.iku:id_iku,nama_iku',
+            'rkatDetails.ikk:id_ikk,id_iku,nama_ikk',
             'rkatDetails.rabItems',
             'rkatDetails.indikators',
-            'logPersetujuans.approver',
+            'logPersetujuans.approver:id_user,nama_lengkap,nik',
         ]);
 
         return Inertia::render('Rkat/Show', [
@@ -252,7 +257,7 @@ class RkatController extends Controller
     public function submit(RkatHeader $rkatHeader)
     {
         $rkatHeader->load('tahunAnggaran');
-        
+
         // Cek status Tahun Anggaran
         if ($rkatHeader->tahunAnggaran->status_rkat !== 'Submission') {
             return redirect()->back()->with('error', 'Pengajuan hanya dapat dilakukan pada periode Submission.');
@@ -263,9 +268,9 @@ class RkatController extends Controller
         }
 
         try {
-            $rkatHeader->update([
+            RkatHeader::query()->where('id_header', $rkatHeader->id_header)->update([
                 'status_persetujuan' => 'Menunggu_Unit_Kepala',
-                'tanggal_pengajuan' => now(), 
+                'tanggal_pengajuan' => now(),
             ]);
 
             Log::info('[RKAT] Dokumen Berhasil Diajukan', ['id' => $rkatHeader->id_header, 'status' => 'Menunggu_Unit_Kepala']);
@@ -310,10 +315,15 @@ class RkatController extends Controller
             'rkatDetails.indikators',
         ]);
 
-        $tahunAnggarans = TahunAnggaran::where('status_rkat', '!=', 'Closed')->get();
-        $units = Unit::orderBy('kode_unit')->get();
-        $akunAnggarans = RincianAnggaran::orderBy('kode_anggaran')->get();
-        $ikus = Iku::with(['ikks'])->get();
+        $tahunAnggarans = TahunAnggaran::query()
+            ->select(['id_tahun', 'tahun_anggaran', 'status_rkat'])
+            ->where('status_rkat', '!=', 'Closed')
+            ->orderBy('tahun_anggaran', 'desc')
+            ->get();
+
+        $units = Unit::query()->select(['id_unit', 'kode_unit', 'nama_unit'])->orderBy('kode_unit', 'asc')->get();
+        $akunAnggarans = RincianAnggaran::query()->select(['kode_anggaran', 'nama_anggaran', 'nominal', 'satuan'])->orderBy('kode_anggaran', 'asc')->get();
+        $ikus = Iku::query()->select(['id_iku', 'nama_iku'])->with(['ikks:id_ikk,id_iku,nama_ikk'])->orderBy('id_iku', 'asc')->get();
 
         return Inertia::render('Rkat/Edit', [
             'rkat' => $rkatHeader,
@@ -415,14 +425,14 @@ class RkatController extends Controller
                 $rkatHeader->nomor_dokumen = RkatHeader::generateNomorDokumen($request->tahun_anggaran, $request->id_unit);
             }
 
-            $rkatHeader->update([
+            RkatHeader::query()->where('id_header', $rkatHeader->id_header)->update([
                 'tahun_anggaran' => $request->tahun_anggaran,
                 'id_unit' => $request->id_unit,
                 'total_anggaran' => $request->anggaran,
             ]);
 
             $rkatDetail = $rkatHeader->rkatDetails()->first();
-            $rkatDetail->update([
+            RkatDetail::query()->where('id_rkat_detail', $rkatDetail->id_rkat_detail)->update([
                 'judul_kegiatan' => $request->judul_pengajuan,
                 'deskripsi_kegiatan' => $request->deskripsi_kegiatan,
                 'id_iku' => $request->iku_id,
@@ -495,9 +505,9 @@ class RkatController extends Controller
                 'logPersetujuans.approver',
             ]);
 
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.rkat', ['rkat' => $rkatHeader]);
+            $pdf = Pdf::loadView('pdf.rkat', ['rkat' => $rkatHeader]);
             $pdf->setPaper('a4', 'portrait');
-            
+
             return $pdf->download('RKAT_' . str_replace(['/', '\\'], '-', $rkatHeader->nomor_dokumen) . '.pdf');
         } catch (\Exception $e) {
             return response()->json([

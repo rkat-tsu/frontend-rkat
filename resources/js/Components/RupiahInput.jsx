@@ -17,7 +17,7 @@ const parseRupiah = (rupiah) => {
 
 // Komponen RupiahInput
 const RupiahInput = React.forwardRef(({ value, onChange, ...props }, ref) => {
-    
+
     // State untuk menyimpan nilai yang diformat saat ditampilkan
     const [displayValue, setDisplayValue] = useState(value ? formatRupiah(value) : 'Rp. 0,00');
 
@@ -35,7 +35,7 @@ const RupiahInput = React.forwardRef(({ value, onChange, ...props }, ref) => {
         // Saat blur, format kembali ke Rupiah
         const parsedValue = parseRupiah(displayValue);
         setDisplayValue(formatRupiah(parsedValue));
-        
+
         // Memastikan komponen induk mendapatkan nilai numerik yang bersih
         if (onChange) {
             // Mengirim balik nilai numerik bersih

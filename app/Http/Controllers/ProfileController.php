@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ class ProfileController extends Controller
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
             'auth' => [
-                'user' => $request->user()->only('id_user', 'username', 'email', 'nama_lengkap', 'no_telepon', 'peran'), 
+                'user' => $request->user()->only(['id_user', 'username', 'email', 'nama_lengkap', 'no_telepon', 'peran']), 
             ],
         ]);
     }
@@ -66,7 +67,7 @@ class ProfileController extends Controller
 
         Auth::logout();
 
-        $user->delete();
+        User::query()->where('id_user', $user->id_user)->delete();
         Log::info('[Profile] Akun Dihapus.');
 
         $request->session()->invalidate();

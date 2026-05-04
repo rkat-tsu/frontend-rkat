@@ -16,7 +16,11 @@ class UnitController extends Controller
     public function index()
     {
         Log::debug('[Unit] Melihat Index');
-        $units = Unit::with(['kepala'])->orderBy('nama_unit')->get();
+        $units = Unit::query()
+            ->select(['id_unit', 'uuid', 'kode_unit', 'nama_unit', 'tipe_unit', 'jalur_persetujuan', 'id_kepala', 'parent_id', 'no_telepon', 'email'])
+            ->with(['kepala:id_user,nama_lengkap'])
+            ->orderBy('nama_unit', 'asc')
+            ->get();
 
         return Inertia::render('Admin/Unit/Index', [
             'units' => $units,
@@ -25,8 +29,8 @@ class UnitController extends Controller
 
     public function create()
     {
-        $users = User::orderBy('nama_lengkap')->get();
-        $units = Unit::orderBy('nama_unit')->get();
+        $users = User::query()->select(['id_user', 'nama_lengkap'])->orderBy('nama_lengkap', 'asc')->get();
+        $units = Unit::query()->select(['id_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get();
 
         return Inertia::render('Admin/Unit/Create', [
             'users' => $users,
@@ -59,8 +63,8 @@ class UnitController extends Controller
     {
         return Inertia::render('Admin/Unit/Edit', [
             'unit' => $unit,
-            'users' => User::all(),
-            'units' => Unit::all(),
+            'users' => User::query()->select(['id_user', 'nama_lengkap'])->orderBy('nama_lengkap', 'asc')->get(),
+            'units' => Unit::query()->select(['id_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get(),
         ]);
     }
 
@@ -79,7 +83,7 @@ class UnitController extends Controller
             'email' => 'nullable|email',
         ]);
 
-        $unit->update($validated);
+        Unit::query()->where('id_unit', $unit->id_unit)->update($validated);
 
         return Redirect::route('unit.index')->with('success', 'Unit berhasil diperbarui.');
     }
@@ -88,7 +92,7 @@ class UnitController extends Controller
     {
         Log::warning('[Unit] Mencoba menghapus: ' . $unit->nama_unit);
         try {
-            $unit->delete();
+            Unit::query()->where('id_unit', $unit->id_unit)->delete();
             Log::info('[Unit] Berhasil dihapus.');
             return Redirect::route('unit.index')->with('success', 'Unit berhasil dihapus.');
         } catch (\Exception $e) {

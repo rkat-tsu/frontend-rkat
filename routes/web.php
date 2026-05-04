@@ -11,7 +11,6 @@ use App\Http\Controllers\RkatController;
 use App\Http\Controllers\RkatRabItemController;
 use App\Http\Controllers\TahunAnggaranController;
 use App\Http\Controllers\UnitController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -19,9 +18,7 @@ Route::get('/', function () {
     return Inertia::render('Auth/Login');
 });
 
-// Route::middleware(['auth', 'verified'])->group(function () {
-//    Route::get('/dashboard', Inertia::render('Dashboard'))->name('dashboard');
-// });
+
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // dashboard route
@@ -59,6 +56,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // monitoring route
     Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
+
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Admin-only routes: Tahun Anggaran and account creation
     Route::middleware(['admin'])->group(function () {
@@ -101,12 +103,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/iku/input-ikk', [IkuController::class, 'create'])->name('iku.create');
         Route::post('/iku/sync-ikk', [IkuController::class, 'store'])->name('iku.store');
     });
-});
-
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 require __DIR__ . '/auth.php';

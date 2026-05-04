@@ -45,7 +45,7 @@ export default function Edit({ auth, rincian: item }) {
         }
     };
 
-    // Handle submit form untuk update data
+    // Handle submit form untuk update data dengan Konfirmasi Toast
     const handleSubmit = (e) => {
         e.preventDefault();
         
@@ -54,10 +54,21 @@ export default function Edit({ auth, rincian: item }) {
             return;
         }
 
-        const toastId = toast.loading("Sedang memperbarui data...");
-        patch(route('rincian.update', item.uuid || item.kode_anggaran), {
-            onSuccess: () => toast.success("Berhasil", { id: toastId, description: "Data SBO berhasil diperbarui." }),
-            onError: () => toast.error("Gagal Memperbarui", { id: toastId, description: "Terdapat kesalahan saat memperbarui data." })
+        toast("Konfirmasi Perubahan", {
+            description: "Apakah Anda yakin ingin menyimpan perubahan pada item SBO ini?",
+            action: {
+                label: "Ya, Simpan",
+                onClick: () => {
+                    const toastId = toast.loading("Sedang memperbarui data...");
+                    patch(route('rincian.update', item.uuid || item.kode_anggaran), {
+                        onSuccess: () => toast.success("Berhasil", { id: toastId, description: "Data SBO berhasil diperbarui." }),
+                        onError: () => toast.error("Gagal Memperbarui", { id: toastId, description: "Terdapat kesalahan saat memperbarui data." })
+                    });
+                }
+            },
+            cancel: {
+                label: "Batal"
+            }
         });
     };
 

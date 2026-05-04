@@ -4,8 +4,9 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Edit2, Trash2, Search, Plus } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
+import { toast } from 'sonner';
 
-export default function Index({ auth, items = {}, filters = {}, letters = [] }) {
+export default function Index({ auth, items = {}, filters = {}, letters = [], flash = {} }) {
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [letterFilter, setLetterFilter] = useState(filters.letter || '');
 
@@ -25,6 +26,16 @@ export default function Index({ auth, items = {}, filters = {}, letters = [] }) 
         return () => clearTimeout(timeoutId);
     }, [searchTerm, letterFilter]);
 
+    // Toast Flash Messages
+    useEffect(() => {
+        if (flash.success) {
+            toast.success(flash.success);
+        }
+        if (flash.error) {
+            toast.error(flash.error);
+        }
+    }, [flash]);
+
     // Data dari server
     const filtered = items.data || [];
 
@@ -38,11 +49,24 @@ export default function Index({ auth, items = {}, filters = {}, letters = [] }) 
         }).format(number);
     };
 
-    // Fungsi untuk menghapus data menggunakan Inertia Router
-    const handleDelete = (kode_anggaran) => {
-        if (confirm('Hapus item ini?')) {
-            router.delete(route('rincian.destroy', kode_anggaran));
-        }
+    // Fungsi untuk menghapus data menggunakan Inertia Router dengan konfirmasi Toast
+    const handleDelete = (uuid) => {
+        toast.warning("Konfirmasi Hapus", {
+            description: "Apakah Anda yakin ingin menghapus item Standar Biaya Operasional ini?",
+            action: {
+                label: "Ya, Hapus",
+                onClick: () => {
+                    const toastId = toast.loading("Sedang menghapus...");
+                    router.delete(route('rincian.destroy', uuid), {
+                        onSuccess: () => toast.success("Berhasil dihapus", { id: toastId }),
+                        onError: () => toast.error("Gagal menghapus data", { id: toastId })
+                    });
+                }
+            },
+            cancel: {
+                label: "Batal"
+            }
+        });
     };
 
     return (

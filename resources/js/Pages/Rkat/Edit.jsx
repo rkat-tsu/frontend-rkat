@@ -107,7 +107,7 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
             // Only update if it's different from original or if it's a new draft
             const autoKode = `${kodeUnit}.${data.tahun_anggaran}.001`;
             if (data.id_unit !== rkat.id_unit || data.tahun_anggaran !== rkat.tahun_anggaran) {
-                 setData(prev => ({ ...prev, kode_akun: autoKode }));
+                setData(prev => ({ ...prev, kode_akun: autoKode }));
             }
         }
     }, [data.id_unit, data.tahun_anggaran, units]);
@@ -180,6 +180,10 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
 
             if (inputHarga > maxHarga) {
                 inputHarga = maxHarga;
+                toast.warning("Batas Maksimal Terlampaui", {
+                    description: `Harga satuan untuk item ini tidak boleh melebihi standar biaya (${formatRupiah(maxHarga)}).`,
+                    duration: 3000,
+                });
             }
             item.biaya_satuan = inputHarga;
         }
@@ -285,13 +289,13 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                 </div>
                                 <div>
                                     <InputLabel value="Unit Kerja" required />
-                                    <CustomSelect 
-                                        value={data.id_unit} 
-                                        onChange={(e) => setData('id_unit', e.target.value)} 
-                                        options={auth.user.peran === 'Admin' ? unitOptions : unitOptions.filter(u => String(u.value) === String(auth.user.id_unit))} 
-                                        placeholder="Pilih Unit" 
-                                        disabled={auth.user.peran !== 'Admin'} 
-                                        className="mt-1" 
+                                    <CustomSelect
+                                        value={data.id_unit}
+                                        onChange={(e) => setData('id_unit', e.target.value)}
+                                        options={auth.user.peran === 'Admin' ? unitOptions : unitOptions.filter(u => String(u.value) === String(auth.user.id_unit))}
+                                        placeholder="Pilih Unit"
+                                        disabled={auth.user.peran !== 'Admin'}
+                                        className="mt-1"
                                     />
                                     <InputError message={errors.id_unit} className="mt-2" />
                                 </div>
@@ -493,7 +497,11 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                                 </td>
                                                 <td className="px-2 py-1 align-middle">
                                                     <div className="flex flex-col">
-                                                        <RupiahInput value={item.biaya_satuan} onValueChange={(val) => handleRincianChange(index, 'biaya_satuan', val)} className="w-full h-9 text-xs text-right px-2" />
+                                                        <RupiahInput
+                                                            value={item.biaya_satuan}
+                                                            onChange={(e) => handleRincianChange(index, 'biaya_satuan', e.target.value)}
+                                                            className="w-full h-9 text-xs text-right px-2"
+                                                        />
                                                     </div>
                                                 </td>
                                                 <td className="px-2 py-1 text-right font-semibold align-middle text-gray-800 dark:text-gray-100">{formatRupiah(item.jumlah)}</td>
