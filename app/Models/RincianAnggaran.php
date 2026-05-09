@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class RincianAnggaran extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
     
     // Primary key non-standar (bukan 'id')
     protected $primaryKey = 'kode_anggaran';

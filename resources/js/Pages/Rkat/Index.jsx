@@ -28,7 +28,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
     // Fungsi untuk menerapkan filter ke backend
     const applyFilters = (newSearch, newTahun, newStatus, newUnitId) => {
         router.get(
-            route('rkat.index'),
+            route('daftar-ajuan.index'),
             { search: newSearch, tahun: newTahun, status: newStatus, unit_id: newUnitId },
             { preserveState: true, preserveScroll: true, replace: true }
         );
@@ -75,12 +75,9 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                 label: "Ya, Ajukan",
                 onClick: () => {
                     const toastId = toast.loading("Sedang mengirim pengajuan...");
-                    router.post(route('rkat.submit', item.uuid), {}, {
-                        onSuccess: () => {
-                            toast.success("Berhasil diajukan!", { id: toastId });
-                        },
-                        onError: () => {
-                            toast.error("Gagal mengajukan data.", { id: toastId });
+                    router.post(route('daftar-ajuan.submit', item.uuid), {}, {
+                        onFinish: () => {
+                            toast.dismiss(toastId);
                         }
                     });
                 }
@@ -110,9 +107,9 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
     return (
         <AuthenticatedLayout
             user={auth.user}
-            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Daftar RKAT</h2>}
+            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Daftar Ajuan</h2>}
         >
-            <Head title="Daftar RKAT" />
+            <Head title="Daftar Ajuan" />
 
             <div className="py-6">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -120,7 +117,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
 
 
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-                        Daftar RKAT
+                        Daftar Ajuan
                     </h1>
 
                     <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-teal-500 mb-6">
@@ -193,7 +190,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
 
                                 {/* TOMBOL BARU */}
                                 <Link
-                                    href={isLocked ? '#' : route('rkat.create')}
+                                    href={isLocked ? '#' : route('daftar-ajuan.create')}
                                     onClick={(e) => isLocked && e.preventDefault()}
                                     className={`h-11 inline-flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md ${isLocked
                                         ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
@@ -253,7 +250,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
                                                             <Link
-                                                                href={route('rkat.show', item.uuid)}
+                                                                href={route('daftar-ajuan.show', item.uuid)}
                                                                 className="inline-flex items-center justify-center w-8 h-8 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 transition-colors"
                                                             >
                                                                 <Eye size={16} />
@@ -266,7 +263,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
                                                             <a
-                                                                href={route('rkat.export', item.uuid)}
+                                                                href={route('daftar-ajuan.export', item.uuid)}
                                                                 target="_blank"
                                                                 className="inline-flex items-center justify-center w-8 h-8 border border-blue-300 rounded-md shadow-sm text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-900/50 dark:hover:bg-blue-900/20 transition-colors"
                                                             >
@@ -281,7 +278,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                                         <Tooltip>
                                                             <TooltipTrigger asChild>
                                                                 <Link
-                                                                    href={route('rkat.edit', item.uuid)}
+                                                                    href={route('daftar-ajuan.edit', item.uuid)}
                                                                     className="inline-flex items-center justify-center w-8 h-8 border border-amber-300 rounded-md shadow-sm text-amber-700 bg-white hover:bg-amber-50 dark:bg-gray-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-900/20 transition-colors"
                                                                 >
                                                                     <Edit2 size={16} />

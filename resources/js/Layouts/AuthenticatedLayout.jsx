@@ -73,7 +73,7 @@ export default function AuthenticatedLayout({ header, children }) {
     const mainContentMarginClass = isMinimized ? 'sm:ml-20' : 'sm:ml-64';
 
     return (
-        <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900 font-sans text-gray-800 transition-colors duration-300">
+        <div className="min-h-screen flex bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 transition-colors duration-300">
 
 
             <Toaster position="top-center" richColors />
@@ -124,8 +124,11 @@ export default function AuthenticatedLayout({ header, children }) {
                         <div className="flex items-center">
                             <div className="relative group h-16 flex items-center">
                                 <button className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors focus:outline-none">
-                                    <span className="mr-2 hidden sm:inline-block">{user.nama_lengkap}</span>
-                                    <span className="sm:hidden inline-block">{user.username}</span>
+                                    <div className="flex flex-col items-end mr-3">
+                                        <span className="hidden sm:inline-block font-bold">{user.nama_lengkap}</span>
+                                        <span className="hidden sm:inline-block text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest font-black leading-none mt-0.5">{user.peran?.replace(/_/g, ' ')}</span>
+                                        <span className="sm:hidden inline-block">{user.username}</span>
+                                    </div>
                                     <ChevronDown className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />
                                 </button>
 

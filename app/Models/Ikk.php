@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class Ikk extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'ikks';
     protected $primaryKey = 'id_ikk';

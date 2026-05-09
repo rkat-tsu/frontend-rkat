@@ -209,14 +209,14 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                 description: "Perubahan belum disimpan. Yakin ingin kembali?",
                 action: {
                     label: "Ya, Kembali",
-                    onClick: () => router.get(route('rkat.index'))
+                    onClick: () => router.get(route('daftar-ajuan.index'))
                 },
                 cancel: {
                     label: "Batal"
                 }
             });
         } else {
-            router.get(route('rkat.index'));
+            router.get(route('daftar-ajuan.index'));
         }
     };
 
@@ -241,7 +241,7 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                 label: "Ya, Simpan",
                 onClick: () => {
                     const toastId = toast.loading("Sedang memperbarui data...");
-                    patch(route('rkat.update', rkat.uuid), {
+                    patch(route('daftar-ajuan.update', rkat.uuid), {
                         onSuccess: () => {
                             toast.success("Berhasil diperbarui!", { id: toastId });
                         },

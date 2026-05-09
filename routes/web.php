@@ -24,15 +24,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // dashboard route
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // === ROUTE RKAT ===
-    Route::get('/rkat/input', [RkatController::class, 'create'])->name('rkat.create');
-    Route::post('/rkat', [RkatController::class, 'store'])->name('rkat.store');
-    Route::get('/rkat', [RkatController::class, 'index'])->name('rkat.index');
-    Route::get('/rkat/{rkatHeader}', [RkatController::class, 'show'])->name('rkat.show');
-    Route::get('/rkat/{rkatHeader}/edit', [RkatController::class, 'edit'])->name('rkat.edit');
-    Route::patch('/rkat/{rkatHeader}', [RkatController::class, 'update'])->name('rkat.update');
-    Route::post('/rkat/{rkatHeader}/submit', [RkatController::class, 'submit'])->name('rkat.submit');
-    Route::get('/rkat/{rkatHeader}/export', [RkatController::class, 'exportPdf'])->name('rkat.export');
+    // === ROUTE DAFTAR AJUAN (RKA Headers) ===
+    Route::get('/daftar-ajuan/input', [RkatController::class, 'create'])->name('daftar-ajuan.create');
+    Route::post('/daftar-ajuan', [RkatController::class, 'store'])->name('daftar-ajuan.store');
+    Route::get('/daftar-ajuan', [RkatController::class, 'index'])->name('daftar-ajuan.index');
+    Route::get('/daftar-ajuan/{rkatHeader}', [RkatController::class, 'show'])->name('daftar-ajuan.show');
+    Route::get('/daftar-ajuan/{rkatHeader}/edit', [RkatController::class, 'edit'])->name('daftar-ajuan.edit');
+    Route::patch('/daftar-ajuan/{rkatHeader}', [RkatController::class, 'update'])->name('daftar-ajuan.update');
+    Route::post('/daftar-ajuan/{rkatHeader}/submit', [RkatController::class, 'submit'])->name('daftar-ajuan.submit');
+    Route::get('/daftar-ajuan/{rkatHeader}/export', [RkatController::class, 'exportPdf'])->name('daftar-ajuan.export');
 
     // Unit resource routes (Public view)
     Route::get('/unit', [UnitController::class, 'index'])->name('unit.index');
@@ -43,10 +43,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Standar Biaya Operasional (Public view)
     Route::get('/rincian-anggaran', [RincianAnggaranController::class, 'index'])->name('rincian.index');
 
-    // Routes for Rkat RAB items (basic index & create)
-    Route::get('/daftar-ajuan', [RkatRabItemController::class, 'index'])->name('daftar-ajuan.index');
-    Route::get('/daftar-ajuan/create', [RkatRabItemController::class, 'create'])->name('daftar-ajuan.create');
-    Route::post('/daftar-ajuan', [RkatRabItemController::class, 'store'])->name('daftar-ajuan.store');
+    // Routes for RKAT (RAB items)
+    Route::get('/rkat', [RkatRabItemController::class, 'index'])->name('rkat.index');
+    Route::get('/rkat/create', [RkatRabItemController::class, 'create'])->name('rkat.create');
+    Route::post('/rkat', [RkatRabItemController::class, 'store'])->name('rkat.store');
 
     // === ROUTE APPROVAL ===
     Route::middleware(['approver'])->group(function () {

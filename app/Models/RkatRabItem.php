@@ -29,7 +29,7 @@ class RkatRabItem extends Model
 
     public function rincianAnggaran()
     {
-        return $this->belongsTo(RincianAnggaran::class, 'kode_anggaran', 'kode_anggaran');
+        return $this->belongsTo(RincianAnggaran::class, 'kode_anggaran', 'kode_anggaran')->withTrashed();
     }
 
     protected static function boot()

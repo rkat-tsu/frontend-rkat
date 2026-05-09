@@ -15,8 +15,7 @@ export default function AutomaticBreadcrumbs() {
     const breadcrumbNameMap = {
         'dashboard': 'Dashboard',
         'rkat': 'RKAT',
-        'input': 'Input Baru',
-        'rkat-rab-items': 'Daftar Ajuan',
+        'daftar-ajuan': 'Daftar Ajuan RKA',
         'rincian-anggaran': 'SBO',
         'iku': 'IKU',
         'approval': 'Persetujuan',

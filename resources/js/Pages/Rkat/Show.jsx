@@ -40,7 +40,7 @@ const TableRow = ({ no, label, children, colSpan = 1 }) => (
     </tr>
 );
 
-export default function Show({ auth, rkat = {} }) {
+export default function Show({ auth, rkat = {}, history = [] }) {
     const dataRkat = rkat.data || rkat;
     const rawDetail = dataRkat?.rkat_details || dataRkat?.rkatDetails || dataRkat?.detail;
     const dataDetail = Array.isArray(rawDetail) ? (rawDetail[0] || {}) : (rawDetail || {});
@@ -64,7 +64,7 @@ export default function Show({ auth, rkat = {} }) {
                     {/* Toolbar */}
                     <div className="flex justify-between items-center mb-6">
                         <Link
-                            href={route('rkat.index')}
+                            href={route('daftar-ajuan.index')}
                             className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 text-sm font-medium transition-colors"
                         >
                             <ArrowLeft size={16} />
@@ -72,7 +72,7 @@ export default function Show({ auth, rkat = {} }) {
                         </Link>
 
                         <a 
-                            href={dataRkat?.uuid ? route('rkat.export', dataRkat.uuid) : '#'}
+                            href={dataRkat?.uuid ? route('daftar-ajuan.export', dataRkat.uuid) : '#'}
                             target="_blank"
                             className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-lg font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white transition"
                         >
@@ -332,7 +332,38 @@ export default function Show({ auth, rkat = {} }) {
 
                         </div>
                     </div>
-
+ 
+                    {/* Riwayat Revisi */}
+                    {history.length > 0 && (
+                        <div className="mt-8 bg-gray-50 dark:bg-gray-800/30 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                                <Save size={20} className="text-teal-600" />
+                                Riwayat Revisi (Arsip)
+                            </h3>
+                            <div className="space-y-3">
+                                {history.map((rev) => (
+                                    <div key={rev.id_header} className="flex items-center justify-between p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{rev.nomor_dokumen}</span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                Diarsipkan pada: {formatDate(rev.created_at)}
+                                            </span>
+                                        </div>
+                                        <Link
+                                            href={route('daftar-ajuan.show', rev.uuid)}
+                                            className="px-3 py-1.5 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 rounded-md text-xs font-bold hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors"
+                                        >
+                                            Lihat Versi Ini
+                                        </Link>
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="mt-4 text-xs text-gray-500 dark:text-gray-400 italic">
+                                * Dokumen arsip di atas adalah salinan data sebelum revisi dilakukan.
+                            </p>
+                        </div>
+                    )}
+ 
                 </div>
             </div>
         </AuthenticatedLayout>

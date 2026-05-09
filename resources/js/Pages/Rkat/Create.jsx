@@ -211,14 +211,14 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                 description: "Anda memiliki draf pengajuan RKAT yang belum disimpan. Yakin ingin kembali? Semua input akan hilang.",
                 action: {
                     label: "Ya, Kembali",
-                    onClick: () => router.get(route('rkat.index'))
+                    onClick: () => router.get(route('daftar-ajuan.index'))
                 },
                 cancel: {
                     label: "Batal"
                 }
             });
         } else {
-            router.get(route('rkat.index'));
+            router.get(route('daftar-ajuan.index'));
         }
     };
 
@@ -249,7 +249,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                 label: "Ya, Simpan",
                 onClick: () => {
                     const toastId = toast.loading("Sedang menyimpan data...");
-                    post(route('rkat.store'), {
+                    post(route('daftar-ajuan.store'), {
                         onSuccess: () => {
                             toast.success("Berhasil disimpan!", { id: toastId, description: "Pengajuan RKAT telah berhasil disimpan." });
                         },

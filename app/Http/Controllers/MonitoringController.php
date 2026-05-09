@@ -41,35 +41,37 @@ class MonitoringController extends Controller
                         'total_anggaran',
                         'tanggal_pengajuan',
                         'updated_at'
-                    ])->where('tahun_anggaran', $selectedYear);
+                    ])->where('tahun_anggaran', $selectedYear)
+                      ->whereNull('parent_id');
                 }
             ])
             ->get()
             ->map(function ($unit) {
-                // Ambil RKAT Header unit ini yang sudah di-eager load
-                $rkat = $unit->rkatHeaders->first();
-
+                $rkats = $unit->rkatHeaders;
+                
                 return [
                     'id_unit' => $unit->id_unit,
                     'kode_unit' => $unit->kode_unit,
                     'nama_unit' => $unit->nama_unit,
                     'kepala_unit' => $unit->kepala ? $unit->kepala->nama_lengkap : '-',
 
-                    // Data RKAT (Bisa null jika belum buat)
-                    'id_header' => $rkat ? $rkat->id_header : null,
-                    'uuid' => $rkat ? $rkat->uuid : null,
-                    'status' => $rkat ? $rkat->status_persetujuan : 'Belum Mengisi',
-                    'total_anggaran' => $rkat ? $rkat->total_anggaran : 0,
-                    'tanggal_pengajuan' => $rkat ? $rkat->tanggal_pengajuan : null,
-                    'last_update' => $rkat ? $rkat->updated_at : null,
+                    // Counts
+                    'count_draft' => $rkats->where('status_persetujuan', 'Draft')->count(),
+                    'count_revisi' => $rkats->where('status_persetujuan', 'Revisi')->count(),
+                    'count_tolak' => $rkats->where('status_persetujuan', 'Ditolak')->count(),
+                    'count_final' => $rkats->where('status_persetujuan', 'Disetujui_Final')->count(),
+                    'count_proses' => $rkats->whereNotIn('status_persetujuan', ['Draft', 'Revisi', 'Ditolak', 'Disetujui_Final'])->count(),
+                    
+                    'total_rkat' => $rkats->count(),
+                    'total_anggaran' => $rkats->sum('total_anggaran'),
                 ];
             });
 
         // 4. Hitung Statistik Ringkas
         $stats = [
             'total_unit' => $monitoringData->count(),
-            'sudah_submit' => $monitoringData->whereNotIn('status', ['Belum Mengisi', 'Draft', 'Revisi', 'Ditolak'])->count(),
-            'approved' => $monitoringData->where('status', 'Disetujui_Final')->count(),
+            'sudah_submit' => $monitoringData->sum('count_proses') + $monitoringData->sum('count_final'),
+            'approved' => $monitoringData->sum('count_final'),
             'total_anggaran_diajukan' => $monitoringData->sum('total_anggaran'),
         ];
 

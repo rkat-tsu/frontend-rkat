@@ -57,12 +57,12 @@ class RkatDetail extends Model
     // Relasi ke Master IKU/IKK
     public function iku()
     {
-        return $this->belongsTo(Iku::class, 'id_iku', 'id_iku');
+        return $this->belongsTo(Iku::class, 'id_iku', 'id_iku')->withTrashed();
     }
 
     public function ikk()
     {
-        return $this->belongsTo(Ikk::class, 'id_ikk', 'id_ikk');
+        return $this->belongsTo(Ikk::class, 'id_ikk', 'id_ikk')->withTrashed();
     }
 
     // Relasi Lama (Single Indikator - One to One)

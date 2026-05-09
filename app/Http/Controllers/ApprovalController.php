@@ -120,8 +120,8 @@ class ApprovalController extends Controller
             ],
         ]);
 
-        $rkatHeader->load('tahunAnggaran');
-        if ($rkatHeader->tahunAnggaran->status_rkat !== 'Approved' && !$user->isAdmin()) {
+        $rkatHeader->load('tahun_obj');
+        if ($rkatHeader->tahun_obj->status_rkat !== 'Approved' && !$user->isAdmin()) {
             return Redirect::back()->withErrors([
                 'error' => 'Persetujuan hanya dapat dilakukan pada tahap Approved (Review).',
             ]);

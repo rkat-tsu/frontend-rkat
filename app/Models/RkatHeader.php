@@ -7,7 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Str; 
+use Illuminate\Support\Str;
 
 class RkatHeader extends Model
 {
@@ -45,13 +45,13 @@ class RkatHeader extends Model
     {
         return 'uuid';
     }
-    
+
     // Relasi ke TahunAnggaran
-    public function tahunAnggaran()
+    public function tahun_obj()
     {
-        return $this->belongsTo(TahunAnggaran::class, 'tahun_anggaran', 'tahun_anggaran');
+        return $this->belongsTo(TahunAnggaran::class, 'tahun_anggaran', 'tahun_anggaran')->withTrashed();
     }
-    
+
     // Relasi ke User (yang mengajukan)
     public function user()
     {
@@ -62,7 +62,7 @@ class RkatHeader extends Model
     // Fungsi ini sekarang sudah benar karena 'use' statement di atas
     public function unit(): BelongsTo
     {
-        return $this->belongsTo(Unit::class, 'id_unit', 'id_unit');
+        return $this->belongsTo(Unit::class, 'id_unit', 'id_unit')->withTrashed();
     }
 
     public function rkatDetails()

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Search, Package, ArrowLeft, ArrowRight, FileSpreadsheet } from 'lucide-react';
+import { Search, Package, ArrowLeft, ArrowRight, FileSpreadsheet, Plus } from 'lucide-react';
 
 export default function Index({ auth, items, filters }) {
     // State untuk pencarian
@@ -12,7 +12,7 @@ export default function Index({ auth, items, filters }) {
         const timeoutId = setTimeout(() => {
             if (searchTerm !== (filters.search || '')) {
                 router.get(
-                    route('daftar-ajuan.index'),
+                    route('rkat.index'),
                     { search: searchTerm },
                     { preserveState: true, replace: true, preserveScroll: true }
                 );
@@ -38,16 +38,16 @@ export default function Index({ auth, items, filters }) {
     return (
         <AuthenticatedLayout
             user={auth.user}
-            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Daftar Ajuan</h2>}
+            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">RKAT</h2>}
         >
-            <Head title="Daftar Item RAB" />
+            <Head title="RKAT" />
 
             <div className="py-8 pb-24">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
                         <Package className="w-8 h-8 text-indigo-500" />
-                        Daftar Item RAB
+                        RKAT
                     </h1>
 
                     {/* --- KONTAINER: FILTER & TABLE --- */}
@@ -69,7 +69,13 @@ export default function Index({ auth, items, filters }) {
                             </div>
 
                             <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-                                {/* Future filters or buttons can go here */}
+                                <Link
+                                    href={route('daftar-ajuan.create')}
+                                    className="h-11 inline-flex items-center justify-center gap-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md active:scale-95"
+                                >
+                                    <Plus size={18} />
+                                    Baru
+                                </Link>
                             </div>
                         </div>
 

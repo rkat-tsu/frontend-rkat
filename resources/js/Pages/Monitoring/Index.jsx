@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import CustomSelect from '@/Components/CustomSelect';
 import { Monitor, BarChart3, Clock, FileText, Eye, PieChart as PieChartIcon } from 'lucide-react';
+import { usePermission } from '@/hooks/usePermission';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/Components/ui/chart';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
@@ -19,6 +20,8 @@ export default function Index({
     }
 }) {
 
+    const { isAdmin } = usePermission();
+    
     const handleYearChange = (e) => {
         router.get('/monitoring', { tahun: e.target.value }, { preserveState: true });
     };
@@ -30,23 +33,7 @@ export default function Index({
             maximumFractionDigits: 0
         }).format(num);
 
-    const getStatusLabel = (status) => {
-        const mapping = {
-            'Draft': 'Draft',
-            'Menunggu_Unit_Kepala': 'Menunggu Unit Kepala',
-            'Menunggu_Dekan_Kepala': 'Menunggu Dekan',
-            'Menunggu_Tim_Renbang': 'Menunggu Tim Renbang',
-            'Menunggu_WR1': 'Menunggu WR 1',
-            'Menunggu_WR2': 'Menunggu WR 2',
-            'Menunggu_WR3': 'Menunggu WR 3',
-            'Menunggu_Rektor': 'Menunggu Rektor',
-            'Revisi': 'Revisi',
-            'Disetujui_Final': 'Disetujui Final',
-            'Ditolak': 'Ditolak',
-            'Belum Mengisi': 'Belum Mengisi'
-        };
-        return mapping[status] || status.replace(/_/g, ' ');
-    };
+
 
     // Chart Data Processing
     const chartDataBudget = useMemo(() => {
@@ -68,12 +55,20 @@ export default function Index({
     };
 
     const chartDataStatus = useMemo(() => {
-        const counts = data.reduce((acc, curr) => {
-            const rawStatus = curr.status === 'Belum Ada' ? 'Belum Mengisi' : curr.status;
-            const st = getStatusLabel(rawStatus);
-            acc[st] = (acc[st] || 0) + 1;
-            return acc;
-        }, {});
+        const counts = {
+            'Draft': 0,
+            'Proses': 0,
+            'Revisi': 0,
+            'Final': 0,
+            'Tolak': 0
+        };
+        data.forEach(item => {
+            counts['Draft'] += item.count_draft || 0;
+            counts['Proses'] += item.count_proses || 0;
+            counts['Revisi'] += item.count_revisi || 0;
+            counts['Final'] += item.count_final || 0;
+            counts['Tolak'] += item.count_tolak || 0;
+        });
         return Object.keys(counts).map(status => ({
             status,
             count: counts[status]
@@ -137,10 +132,10 @@ export default function Index({
                                 <ChartContainer config={chartConfigBudget} className="h-full w-full">
                                     <BarChart data={chartDataBudget} margin={{ top: 0, right: 0, left: 0, bottom: 20 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-gray-200 dark:stroke-gray-700" />
-                                        <XAxis dataKey="unit" tickLine={false} axisLine={false} className="text-xs font-medium fill-gray-500 dark:fill-gray-400" />
-                                        <YAxis tickFormatter={(val) => `Rp${(val / 1000000).toFixed(0)}M`} tickLine={false} axisLine={false} className="text-xs font-medium fill-gray-500 dark:fill-gray-400" width={60} />
+                                        <XAxis dataKey="unit" tickLine={false} axisLine={false} tick={{fill: '#9ca3af', fontSize: 11}} />
+                                        <YAxis tickFormatter={(val) => `Rp${(val / 1000000).toFixed(0)}M`} tickLine={false} axisLine={false} tick={{fill: '#9ca3af', fontSize: 11}} width={60} />
                                         <ChartTooltip content={<ChartTooltipContent />} />
-                                        <Bar dataKey="anggaran" fill="var(--color-anggaran)" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                                        <Bar dataKey="anggaran" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={50} />
                                     </BarChart>
                                 </ChartContainer>
                             ) : (
@@ -160,10 +155,10 @@ export default function Index({
                                 <ChartContainer config={chartConfigStatus} className="h-full w-full">
                                     <BarChart data={chartDataStatus} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-gray-200 dark:stroke-gray-700" />
-                                        <XAxis type="number" tickLine={false} axisLine={false} className="text-xs font-medium fill-gray-500 dark:fill-gray-100" />
-                                        <YAxis dataKey="status" type="category" tickLine={false} axisLine={false} className="text-xs font-medium fill-gray-500 dark:fill-gray-100" width={100} />
+                                        <XAxis type="number" tickLine={false} axisLine={false} tick={{fill: '#9ca3af', fontSize: 11}} />
+                                        <YAxis dataKey="status" type="category" tickLine={false} axisLine={false} tick={{fill: '#9ca3af', fontSize: 11}} width={100} />
                                         <ChartTooltip content={<ChartTooltipContent />} />
-                                        <Bar dataKey="count" fill="var(--color-count)" radius={[0, 4, 4, 0]} maxBarSize={40} />
+                                        <Bar dataKey="count" fill="#0ea5e9" radius={[0, 4, 4, 0]} maxBarSize={40} />
                                     </BarChart>
                                 </ChartContainer>
                             ) : (
@@ -186,9 +181,13 @@ export default function Index({
                                 <tr>
                                     <th className="px-6 py-3 border-b border-gray-200 dark:border-gray-600 font-medium w-10 text-center">No</th>
                                     <th className="px-6 py-3 border-b border-l border-gray-200 dark:border-gray-600 font-medium">Unit Kerja</th>
-                                    <th className="px-6 py-3 border-b border-l border-gray-200 dark:border-gray-600 font-medium text-center">Status</th>
+                                    <th className="px-6 py-3 border-b border-l border-gray-200 dark:border-gray-600 font-medium text-center">Draft</th>
+                                    <th className="px-6 py-3 border-b border-l border-gray-200 dark:border-gray-600 font-medium text-center">Proses</th>
+                                    <th className="px-6 py-3 border-b border-l border-gray-200 dark:border-gray-600 font-medium text-center">Revisi</th>
+                                    <th className="px-6 py-3 border-b border-l border-gray-200 dark:border-gray-600 font-medium text-center">Final</th>
+                                    <th className="px-6 py-3 border-b border-l border-gray-200 dark:border-gray-600 font-medium text-center">Tolak</th>
                                     <th className="px-6 py-3 border-b border-l border-gray-200 dark:border-gray-600 font-medium text-right">Total Anggaran</th>
-                                    <th className="px-6 py-3 border-b border-l border-gray-200 dark:border-gray-600 font-medium text-center">Aksi</th>
+                                    {isAdmin() && <th className="px-6 py-3 border-b border-l border-gray-200 dark:border-gray-600 font-medium text-center">Aksi</th>}
                                 </tr>
                             </thead>
                             <tbody>
@@ -202,40 +201,57 @@ export default function Index({
                                                 {item.kepala_unit}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 border-b border-l border-gray-200 dark:border-gray-700 text-center">
-                                            <span className={`px-2.5 py-1 inline-flex whitespace-nowrap text-xs leading-5 font-semibold rounded-md 
-                                                ${item.status === 'Belum Mengisi' ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-100' : ''}
-                                                ${item.status.includes('Disetujui') ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : ''}
-                                                ${item.status.includes('Ditolak') ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : ''}
-                                                ${item.status.includes('Review') || item.status.includes('Draft') ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : ''}
-                                            `}>
-                                                {getStatusLabel(item.status)}
+                                        <td className="px-2 py-4 border-b border-l border-gray-200 dark:border-gray-700 text-center">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${item.count_draft > 0 ? 'bg-blue-100 text-blue-800' : 'text-gray-300'}`}>
+                                                {item.count_draft}
+                                            </span>
+                                        </td>
+                                        <td className="px-2 py-4 border-b border-l border-gray-200 dark:border-gray-700 text-center">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${item.count_proses > 0 ? 'bg-indigo-100 text-indigo-800' : 'text-gray-300'}`}>
+                                                {item.count_proses}
+                                            </span>
+                                        </td>
+                                        <td className="px-2 py-4 border-b border-l border-gray-200 dark:border-gray-700 text-center">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${item.count_revisi > 0 ? 'bg-amber-100 text-amber-800' : 'text-gray-300'}`}>
+                                                {item.count_revisi}
+                                            </span>
+                                        </td>
+                                        <td className="px-2 py-4 border-b border-l border-gray-200 dark:border-gray-700 text-center">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${item.count_final > 0 ? 'bg-emerald-100 text-emerald-800' : 'text-gray-300'}`}>
+                                                {item.count_final}
+                                            </span>
+                                        </td>
+                                        <td className="px-2 py-4 border-b border-l border-gray-200 dark:border-gray-700 text-center">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${item.count_tolak > 0 ? 'bg-rose-100 text-rose-800' : 'text-gray-300'}`}>
+                                                {item.count_tolak}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 border-b border-l border-gray-200 dark:border-gray-700 text-right font-bold text-teal-600 dark:text-teal-400">
                                             {item.total_anggaran > 0 ? formatRupiah(item.total_anggaran) : '-'}
                                         </td>
-                                        <td className="px-6 py-4 border-b border-l border-gray-200 dark:border-gray-700 text-center">
-                                            <div className="flex justify-center">
-                                                <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <Link
-                                                                href={route('rkat.index', { unit_id: item.id_unit, tahun: selectedYear })}
-                                                                className="inline-flex items-center justify-center w-8 h-8 border border-indigo-200 dark:border-indigo-900/50 rounded-md shadow-sm text-indigo-700 dark:text-indigo-300 bg-white hover:bg-indigo-50 dark:bg-gray-700 dark:hover:bg-indigo-900/20 transition-colors"
-                                                            >
-                                                                <Eye size={16} />
-                                                            </Link>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>Detail RKAT</TooltipContent>
-                                                    </Tooltip>
-                                                </TooltipProvider>
-                                            </div>
-                                        </td>
+                                        {isAdmin() && (
+                                            <td className="px-6 py-4 border-b border-l border-gray-200 dark:border-gray-700 text-center">
+                                                <div className="flex justify-center">
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Link
+                                                                    href={route('daftar-ajuan.index', { unit_id: item.id_unit, tahun: selectedYear })}
+                                                                    className="inline-flex items-center justify-center w-8 h-8 border border-indigo-200 dark:border-indigo-900/50 rounded-md shadow-sm text-indigo-700 dark:text-indigo-300 bg-white hover:bg-indigo-50 dark:bg-gray-700 dark:hover:bg-indigo-900/20 transition-colors"
+                                                                >
+                                                                    <Eye size={16} />
+                                                                </Link>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>Detail RKAT</TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                </div>
+                                            </td>
+                                        )}
                                     </tr>
                                 )) : (
                                     <tr>
-                                        <td colSpan="5" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400 italic">
+                                        <td colSpan={isAdmin() ? 9 : 8} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400 italic">
                                             Tidak ada data RKAT untuk tahun ini.
                                         </td>
                                     </tr>

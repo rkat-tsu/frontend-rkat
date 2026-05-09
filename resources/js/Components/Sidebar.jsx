@@ -17,8 +17,8 @@ import { usePermission } from '@/hooks/usePermission';
 // MENU BAHASA INDONESIA
 const navItems = [
     { name: 'Dasbor', href: '/dashboard', icon: LayoutDashboard, activePath: '/dashboard' },
-    { name: 'RKAT', href: '/rkat', icon: FileText, activePath: '/rkat' },
-    { name: 'Daftar Ajuan', href: '/daftar-ajuan', icon: LayoutList, activePath: '/daftar-ajuan' },
+    { name: 'RKAT', href: '/rkat', icon: LayoutList, activePath: '/rkat' },
+    { name: 'Daftar Ajuan RKA', href: '/daftar-ajuan', icon: FileText, activePath: '/daftar-ajuan' },
     { name: 'Standar Biaya Operasional', href: '/rincian-anggaran', icon: BookOpenText, activePath: '/rincian-anggaran' },
     { name: 'Indikator Kinerja Utama', href: '/iku', icon: BookPlus, activePath: '/iku' },
     { name: 'Persetujuan', href: '/approval', icon: ListChecks, activePath: '/approval', hideForInputer: true },

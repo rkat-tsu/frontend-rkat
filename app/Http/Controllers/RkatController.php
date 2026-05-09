@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Barryvdh\DomPDF\Facade\Pdf; 
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Inertia\Inertia;
 
@@ -33,7 +33,7 @@ class RkatController extends Controller
             ->get();
 
         if ($tahunAnggarans->isEmpty()) {
-            return redirect()->route('rkat.index')->with('error', 'Maaf, periode penginputan RKAT saat ini sedang ditutup atau sudah melewati batas waktu.');
+            return redirect()->route('daftar-ajuan.index')->with('error', 'Maaf, periode penginputan RKAT saat ini sedang ditutup atau sudah melewati batas waktu.');
         }
 
         $units = Unit::query()->select(['id_unit', 'kode_unit', 'nama_unit'])->orderBy('kode_unit', 'asc')->get();
@@ -57,10 +57,16 @@ class RkatController extends Controller
 
     public function index(Request $request)
     {
-        $query = RkatHeader::query()->with(['unit:id_unit,nama_unit']);
+        $query = RkatHeader::query()
+            ->with([
+                'unit:id_unit,nama_unit',
+                'tahun_obj:id_tahun,tahun_anggaran,status_rkat'
+            ])
+            ->whereNull('parent_id');
 
         // Jika pengguna bukan admin, batasi ke unit sendiri
-        if (Auth::user()->peran !== 'Admin') {
+        // KECUALI jika mencari yang Disetujui_Final (Mode Daftar Ajuan: Semua unit bisa lihat hasil final)
+        if (Auth::user()->peran !== 'Admin' && $request->status !== 'Disetujui_Final') {
             $query->where('id_unit', Auth::user()->id_unit);
         }
 
@@ -225,7 +231,7 @@ class RkatController extends Controller
 
             DB::commit();
 
-            return redirect()->route('rkat.index')->with('success', 'Pengajuan RKAT berhasil disimpan sebagai Draft.');
+            return redirect()->route('daftar-ajuan.index')->with('success', 'Pengajuan RKAT berhasil disimpan sebagai Draft.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('[RKAT] Kesalahan: ' . $e->getMessage());
@@ -237,17 +243,25 @@ class RkatController extends Controller
     public function show(RkatHeader $rkatHeader)
     {
         $rkatHeader->load([
-            'unit:id_unit,nama_unit,kode_unit',
-            'user:id_user,nama_lengkap,nik',
-            'rkatDetails.iku:id_iku,nama_iku',
-            'rkatDetails.ikk:id_ikk,id_iku,nama_ikk',
+            'unit',
+            'tahun_obj',
+            'rkatDetails.iku',
+            'rkatDetails.ikk',
             'rkatDetails.rabItems',
             'rkatDetails.indikators',
             'logPersetujuans.approver:id_user,nama_lengkap,nik',
         ]);
 
+        // Ambil riwayat revisi (dokumen yang diarsipkan dari dokumen ini)
+        $history = RkatHeader::query()
+            ->where('parent_id', $rkatHeader->id_header)
+            ->select(['id_header', 'uuid', 'nomor_dokumen', 'status_persetujuan', 'created_at'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return Inertia::render('Rkat/Show', [
             'rkat' => $rkatHeader,
+            'history' => $history,
         ]);
     }
 
@@ -256,11 +270,11 @@ class RkatController extends Controller
      */
     public function submit(RkatHeader $rkatHeader)
     {
-        $rkatHeader->load('tahunAnggaran');
-
+        $rkatHeader->load('tahun_obj');
+ 
         // Cek status Tahun Anggaran
-        if ($rkatHeader->tahunAnggaran->status_rkat !== 'Submission') {
-            return redirect()->back()->with('error', 'Pengajuan hanya dapat dilakukan pada periode Submission.');
+        if (!in_array($rkatHeader->tahun_obj->status_rkat, ['Submission', 'Approved'])) {
+            return redirect()->back()->with('error', 'Pengajuan hanya dapat dilakukan pada periode Pengajuan atau Review.');
         }
 
         if (!in_array($rkatHeader->status_persetujuan, ['Draft', 'Revisi'])) {
@@ -275,7 +289,7 @@ class RkatController extends Controller
 
             Log::info('[RKAT] Dokumen Berhasil Diajukan', ['id' => $rkatHeader->id_header, 'status' => 'Menunggu_Unit_Kepala']);
 
-            return redirect()->route('rkat.index')->with('success', 'RKAT berhasil diajukan dan sedang menunggu persetujuan Kepala Unit.');
+            return redirect()->route('daftar-ajuan.index')->with('success', 'RKAT berhasil diajukan dan sedang menunggu persetujuan Kepala Unit.');
         } catch (\Exception $e) {
             Log::error('[RKAT] Gagal Submit: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal mengajukan RKAT: ' . $e->getMessage());
@@ -284,8 +298,8 @@ class RkatController extends Controller
 
     public function edit(RkatHeader $rkatHeader)
     {
-        $rkatHeader->load('tahunAnggaran');
-        $taStatus = $rkatHeader->tahunAnggaran->status_rkat;
+        $rkatHeader->load('tahun_obj');
+        $taStatus = $rkatHeader->tahun_obj->status_rkat;
 
         // Aturan Edit:
         // 1. Dokumen harus Draft atau Revisi
@@ -305,7 +319,7 @@ class RkatController extends Controller
         }
 
         if (!$canEdit) {
-            return redirect()->route('rkat.index')->with('error', 'Dokumen ini tidak dapat diubah pada tahap ini.');
+            return redirect()->route('daftar-ajuan.index')->with('error', 'Dokumen ini tidak dapat diubah pada tahap ini.');
         }
 
         $rkatHeader->load([
@@ -336,8 +350,8 @@ class RkatController extends Controller
 
     public function update(Request $request, RkatHeader $rkatHeader)
     {
-        $rkatHeader->load('tahunAnggaran');
-        $taStatus = $rkatHeader->tahunAnggaran->status_rkat;
+        $rkatHeader->load('tahun_obj');
+        $taStatus = $rkatHeader->tahun_obj->status_rkat;
 
         $canUpdate = false;
         if ($taStatus === 'Drafting' || $taStatus === 'Submission') {
@@ -351,7 +365,7 @@ class RkatController extends Controller
         }
 
         if (!$canUpdate) {
-            return redirect()->route('rkat.index')->with('error', 'Dokumen tidak dapat diubah.');
+            return redirect()->route('daftar-ajuan.index')->with('error', 'Dokumen tidak dapat diubah.');
         }
 
         $request->validate([
@@ -483,7 +497,7 @@ class RkatController extends Controller
 
             DB::commit();
 
-            return redirect()->route('rkat.index')->with('success', 'Perubahan RKAT berhasil disimpan.');
+            return redirect()->route('daftar-ajuan.index')->with('success', 'Perubahan RKAT berhasil disimpan.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('[RKAT] Gagal Update: ' . $e->getMessage());

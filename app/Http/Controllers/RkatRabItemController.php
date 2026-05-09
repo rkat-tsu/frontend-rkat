@@ -18,7 +18,9 @@ class RkatRabItemController extends Controller
         $search = $request->input('search');
         
         $query = RkatRabItem::query()
-            // PERBAIKAN: Ubah 'header' menjadi 'rkatHeader' sesuai nama fungsi di model RkatDetail
+            ->whereHas('rkatDetail.rkatHeader', function($q) {
+                $q->where('status_persetujuan', 'Disetujui_Final');
+            })
             ->with(['rkatDetail.rkatHeader.unit', 'rkatDetail.rkatHeader.user']);
 
         // Fitur Pencarian Global
