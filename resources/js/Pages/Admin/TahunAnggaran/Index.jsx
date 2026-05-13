@@ -28,7 +28,7 @@ export default function Index({ tahunAnggarans }) {
                 onClick: () => {
                     const toastId = toast.loading("Sedang menghapus...");
                     router.delete(route('tahun.destroy', tahunAnggaran.uuid), {
-                        onSuccess: () => toast.success("Berhasil Dihapus", { id: toastId, description: "Tahun Anggaran berhasil dihapus." }),
+                        onSuccess: () => toast.success("Berhasil Dihapus", { id: toastId, description: `Tahun Anggaran ${tahunAnggaran.tahun_anggaran} berhasil dihapus.` }),
                         onError: () => toast.error("Gagal Menghapus", { id: toastId, description: "Terdapat kesalahan saat menghapus data." })
                     });
                 }

@@ -7,6 +7,7 @@ import PasswordInput from '@/Components/PasswordInput';
 import { useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import { Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function DeleteUserForm({ className = '' }) {
     const [confirmingUserDeletion, setConfirmingUserDeletion] = useState(false);
@@ -31,10 +32,18 @@ export default function DeleteUserForm({ className = '' }) {
     const deleteUser = (e) => {
         e.preventDefault();
 
+        const toastId = toast.loading("Sedang menghapus akun...");
+
         destroy(route('profile.destroy'), {
             preserveScroll: true,
-            onSuccess: () => closeModal(),
-            onError: () => passwordInput.current.focus(),
+            onSuccess: () => {
+                toast.success("Berhasil", { id: toastId, description: "Akun Anda telah berhasil dihapus." });
+                closeModal();
+            },
+            onError: () => {
+                toast.error("Gagal Menghapus", { id: toastId, description: "Terjadi kesalahan. Pastikan password yang Anda masukkan benar." });
+                passwordInput.current.focus();
+            },
             onFinish: () => reset(),
         });
     };

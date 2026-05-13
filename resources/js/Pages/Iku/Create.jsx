@@ -79,7 +79,7 @@ export default function Create({ auth, ikus }) {
                         onSuccess: () => {
                             toast.success("Berhasil disimpan", { 
                                 id: toastId,
-                                description: "Data IKK berhasil diperbarui."
+                                description: `Data IKK ${data.nama_iku} berhasil diperbarui.`
                             });
                         },
                         onError: () => {

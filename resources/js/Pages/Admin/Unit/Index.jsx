@@ -14,15 +14,6 @@ export default function Index({ auth, units = [], flash = {} }) {
     const [selectedParent, setSelectedParent] = useState('');
     const [selectedJalur, setSelectedJalur] = useState('');
 
-    // Handle flash messages
-    useEffect(() => {
-        if (flash.success) {
-            toast.success(flash.success);
-        }
-        if (flash.error) {
-            toast.error(flash.error);
-        }
-    }, [flash]);
 
     // Extract unique filter values
     const uniqueTipes = [...new Set(units.map(u => u.tipe_unit).filter(Boolean))].sort();

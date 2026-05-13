@@ -88,19 +88,6 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
         });
     };
 
-    // --- LOGIC: HANDLE FLASH MESSAGES WITH TOAST ---
-    useEffect(() => {
-        if (flash.success) {
-            toast.success(flash.success);
-        }
-        if (flash.error) {
-            toast.error(flash.error, {
-                description: "Akses terbatas atau terjadi kesalahan.",
-                duration: 5000
-            });
-        }
-    }, [flash]);
-
     // Cek apakah tombol "Baru" harus dikunci (jika ada error periode ditutup)
     const isLocked = !!flash.error;
 

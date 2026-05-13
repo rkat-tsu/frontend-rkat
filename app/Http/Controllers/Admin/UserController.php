@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Unit;
+
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
@@ -19,7 +21,7 @@ class UserController extends Controller
     public function create()
     {
         return inertia('Admin/User/Create', [
-            'units' => \App\Models\Unit::orderBy('nama_unit')->get(),
+            'units' => Unit::orderBy('nama_unit', 'asc')->get(),
         ]);
     }
 
@@ -27,11 +29,11 @@ class UserController extends Controller
     {
         Log::debug('[User Admin] Viewing Index', ['search' => $request->get('q'), 'unit' => $request->get('unit')]);
 
-        $query = User::with('unit')->orderBy('nama_lengkap');
+        $query = User::with('unit')->orderBy('nama_lengkap', 'asc');
 
         if ($request->filled('q')) {
             $q = $request->get('q');
-            $query->where(function($sub) use ($q) {
+            $query->where(function ($sub) use ($q) {
                 $sub->where('nama_lengkap', 'like', "%{$q}%")
                     ->orWhere('email', 'like', "%{$q}%")
                     ->orWhere('username', 'like', "%{$q}%")
@@ -49,7 +51,7 @@ class UserController extends Controller
         return Inertia::render('Admin/User/Index', [
             'users' => $users,
             'filters' => $request->only(['q', 'unit']),
-            'units' => \App\Models\Unit::orderBy('nama_unit')->get(),
+            'units' => Unit::orderBy('nama_unit', 'asc')->get(),
         ]);
     }
 
@@ -64,14 +66,23 @@ class UserController extends Controller
         $request->validate([
             'nama_lengkap' => 'required|string|max:100',
             'nik' => 'nullable|string|max:30',
-            'username' => ['nullable','string','max:50', Rule::unique(User::class)],
-            'email' => ['required','string','email','max:255', Rule::unique(User::class)],
+            'username' => ['nullable', 'string', 'max:50', Rule::unique(User::class)],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class)],
             'no_telepon' => 'nullable|string|max:20',
-            'password' => ['required','confirmed', Rules\Password::defaults()],
-            'peran' => ['required','string', Rule::in([
-                'Inputer', 'Kaprodi', 'Kepala_Unit', 'Dekan', 'Tim_Renbang', 'WR_1', 'WR_2', 'WR_3', 'Rektor', 'Admin'
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'peran' => ['required', 'string', Rule::in([
+                'Inputer',
+                'Kaprodi',
+                'Kepala_Unit',
+                'Dekan',
+                'Tim_Renbang',
+                'WR_1',
+                'WR_2',
+                'WR_3',
+                'Rektor',
+                'Admin'
             ])],
-            'id_unit' => ['nullable','exists:unit,id_unit'],
+            'id_unit' => ['nullable', 'exists:unit,id_unit'],
         ]);
 
         $user = User::create([
@@ -85,7 +96,12 @@ class UserController extends Controller
             'is_aktif' => true,
         ]);
 
-        event(new Registered($user));
+        try {
+            event(new Registered($user));
+        } catch (\Exception $e) {
+            Log::error('[User Admin] Failed to send registration email: ' . $e->getMessage());
+            return Redirect::route('user.index')->with('success', 'User berhasil dibuat, tetapi email verifikasi gagal dikirim karena masalah server email.');
+        }
         
         Log::info('[User Admin] User created successfully', ['new_user_id' => $user->id_user]);
 
@@ -96,7 +112,7 @@ class UserController extends Controller
     {
         return Inertia::render('Admin/User/Edit', [
             'user' => $user,
-            'units' => \App\Models\Unit::orderBy('nama_unit')->get(),
+            'units' => Unit::orderBy('nama_unit', 'asc')->get(),
         ]);
     }
 
@@ -105,17 +121,26 @@ class UserController extends Controller
         $request->validate([
             'nama_lengkap' => 'required|string|max:100',
             'nik' => 'nullable|string|max:30',
-            'username' => ['nullable','string','max:50', Rule::unique(User::class, 'username')->ignore($user->id_user, 'id_user')],
-            'email' => ['required','string','email','max:255', Rule::unique(User::class, 'email')->ignore($user->id_user, 'id_user')],
+            'username' => ['nullable', 'string', 'max:50', Rule::unique(User::class, 'username')->ignore($user->id_user, 'id_user')],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class, 'email')->ignore($user->id_user, 'id_user')],
             'no_telepon' => 'nullable|string|max:20',
-            'peran' => ['required','string', Rule::in([
-                'Inputer', 'Kaprodi', 'Kepala_Unit', 'Dekan', 'Tim_Renbang', 'WR_1', 'WR_2', 'WR_3', 'Rektor', 'Admin'
+            'peran' => ['required', 'string', Rule::in([
+                'Inputer',
+                'Kaprodi',
+                'Kepala_Unit',
+                'Dekan',
+                'Tim_Renbang',
+                'WR_1',
+                'WR_2',
+                'WR_3',
+                'Rektor',
+                'Admin'
             ])],
-            'id_unit' => ['nullable','exists:unit,id_unit'],
+            'id_unit' => ['nullable', 'exists:unit,id_unit'],
             'is_aktif' => 'required|boolean',
         ]);
 
-        $user->update([
+        $user->fill([
             'nama_lengkap' => $request->nama_lengkap,
             'nik' => $request->nik,
             'username' => $request->username,
@@ -124,7 +149,7 @@ class UserController extends Controller
             'id_unit' => $request->id_unit ?? null,
             'is_aktif' => $request->is_aktif,
             'no_telepon' => $request->no_telepon,
-        ]);
+        ])->save();
 
         return Redirect::route('user.index')->with('success', 'Data user berhasil diperbarui.');
     }
@@ -135,9 +160,9 @@ class UserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user->update([
+        $user->fill([
             'password' => Hash::make($request->password),
-        ]);
+        ])->save();
 
         return Redirect::back()->with('success', 'Password user berhasil diganti paksa.');
     }
@@ -148,7 +173,7 @@ class UserController extends Controller
             return Redirect::back()->with('error', 'Anda tidak bisa menghapus akun Anda sendiri.');
         }
 
-        $user->delete();
+        User::destroy($user->id_user);
 
         return Redirect::route('user.index')->with('success', 'User berhasil dihapus.');
     }

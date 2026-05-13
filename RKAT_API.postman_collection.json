@@ -1,364 +1,1868 @@
 {
-	"info": {
-		"_postman_id": "b8f0f8a1-5d5d-4f5f-9c9c-1234567890ac",
-		"name": "Sistem RKAT - Complete (Happy & Error Paths)",
-		"description": "Collection lengkap dengan skenario Sukses (200) dan Gagal (400/500) untuk testing Controller.",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"item": [
-		{
-			"name": "1. Authentication",
-			"item": [
-				{
-					"name": "Login - Success (200)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200 or 204\", function () {",
-									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 302]);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"password\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"login"
-							]
-						}
-					}
-				},
-				{
-					"name": "Login - Failed (422 Validation)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 422 Unprocessable Entity\", function () {",
-									"    pm.response.to.have.status(422);",
-									"});",
-									"pm.test(\"Has Email Error\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.errors).to.have.property('email');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"\",\n    \"password\": \"\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"login"
-							]
-						}
-					}
-				},
-				{
-					"name": "Logout",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/logout",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"logout"
-							]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "2. Master Data (Admin)",
-			"item": [
-				{
-					"name": "Unit - List",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/unit",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"unit"
-							]
-						}
-					}
-				},
-				{
-					"name": "Unit - Create",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"kode_unit\": \"FTI01\",\n    \"nama_unit\": \"Fakultas Teknologi Informasi\",\n    \"tipe_unit\": \"Fakultas\",\n    \"jalur_persetujuan\": \"akademik\",\n    \"email\": \"fti@univ.ac.id\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/unit",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"unit"
-							]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "6. Error Testing (Negative Cases)",
-			"description": "Request di sini didesain untuk MEMANCING error guna mengetes logging dan error handling.",
-			"item": [
-				{
-					"name": "404 Not Found (Invalid URL)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 404\", function () {",
-									"    pm.response.to.have.status(404);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/halaman-tidak-ada-404",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"halaman-tidak-ada-404"
-							]
-						}
-					}
-				},
-				{
-					"name": "404 Not Found (Model Binding)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 404\", function () {",
-									"    pm.response.to.have.status(404);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/approval/99999999",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"approval",
-								"99999999"
-							],
-							"query": [
-								{
-									"key": "",
-									"value": "",
-									"disabled": true
-								}
-							]
-						},
-						"description": "Mencoba mengakses item approval dengan ID yang tidak ada di database."
-					}
-				},
-				{
-					"name": "401 Unauthenticated",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 401 Unauthorized\", function () {",
-									"    pm.response.to.have.status(401);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/dashboard",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"dashboard"
-							]
-						},
-						"description": "Pastikan logout dulu sebelum run ini, atau gunakan environment tanpa cookie."
-					}
-				},
-				{
-					"name": "422 Validation Error (Create User)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 422\", function () {",
-									"    pm.response.to.have.status(422);",
-									"});",
-									"pm.test(\"Validation errors present\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.message).to.contain(\"The email field is required\");",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"nama_lengkap\": \"\", \n    \"email\": \"bukan-email-valid\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/users",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"users"
-							]
-						},
-						"description": "Mengirim data kosong/invalid untuk memicu validasi Laravel."
-					}
-				},
-				{
-					"name": "500/Conflict Delete (Foreign Key)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 302/500/409\", function () {",
-									"    // Karena di controller ada try-catch yang redirect back with error,",
-									"    // biasanya akan return 302 Found (Redirect) atau 200 (Inertia Error Bag).",
-									"    // Jika kita paksa JSON header, mungkin 500.",
-									"    pm.expect(pm.response.code).to.be.oneOf([302, 500, 200]);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/unit/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"unit",
-								"1"
-							]
-						},
-						"description": "Mencoba menghapus Unit ID 1 (biasanya dipakai user/RKAT). Controller akan catch Exception dan log error."
-					}
-				}
-			]
-		}
-	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		}
-	],
-	"variable": [
-		{
-			"key": "base_url",
-			"value": "http://localhost:8000",
-			"type": "string"
-		}
-	]
+    "info": {
+        "_postman_id": "b8f0f8a1-5d5d-4f5f-9c9c-1234567890ac",
+        "name": "Sistem RKAT - Complete API",
+        "description": "Collection lengkap hasil auto-generate untuk testing Controller Sistem RKAT.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "01. Authentication",
+            "item": [
+                {
+                    "name": "[GET] /login",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "login"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] /login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /forgot-password",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/forgot-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "forgot-password"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] /forgot-password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/forgot-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "forgot-password"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /reset-password/{token}",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/reset-password/:token",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "reset-password",
+                                ":token"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "token",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] /reset-password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/reset-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "reset-password"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /verify-email",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/verify-email",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "verify-email"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /verify-email/{id}/{hash}",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/verify-email/:id/:hash",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "verify-email",
+                                ":id",
+                                ":hash"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "hash",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] /email/verification-notification",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/email/verification-notification",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "email",
+                                "verification-notification"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /confirm-password",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/confirm-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "confirm-password"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] /confirm-password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/confirm-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "confirm-password"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] /logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/logout",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "logout"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "02. Profile",
+            "item": [
+                {
+                    "name": "[GET] /profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/profile",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "profile"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[PATCH] /profile",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/profile",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "profile"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[DELETE] /profile",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/profile",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "profile"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "03. Users (Admin)",
+            "item": [
+                {
+                    "name": "[GET] /user",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/user",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "user"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /user/create",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/user/create",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "user",
+                                "create"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] /user",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/user",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "user"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /user/{user}/edit",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/user/:user/edit",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "user",
+                                ":user",
+                                "edit"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "user",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[PATCH] /user/{user}",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/user/:user",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "user",
+                                ":user"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "user",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[DELETE] /user/{user}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/user/:user",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "user",
+                                ":user"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "user",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[PATCH] /user/{user}/password",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/user/:user/password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "user",
+                                ":user",
+                                "password"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "user",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "04. Master Data - Unit (Admin)",
+            "item": [
+                {
+                    "name": "[GET] /unit",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/unit",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "unit"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /unit/create",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/unit/create",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "unit",
+                                "create"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] /unit",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/unit",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "unit"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /unit/{unit}/edit",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/unit/:unit/edit",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "unit",
+                                ":unit",
+                                "edit"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "unit",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[PATCH] /unit/{unit}",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/unit/:unit",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "unit",
+                                ":unit"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "unit",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[DELETE] /unit/{unit}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/unit/:unit",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "unit",
+                                ":unit"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "unit",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "05. Master Data - Tahun Anggaran (Admin)",
+            "item": [
+                {
+                    "name": "[GET] /tahun",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/tahun",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "tahun"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /tahun/create",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/tahun/create",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "tahun",
+                                "create"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] /tahun",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/tahun",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "tahun"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /tahun/{tahun}/edit",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/tahun/:tahun/edit",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "tahun",
+                                ":tahun",
+                                "edit"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "tahun",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[PATCH] /tahun/{tahun}",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/tahun/:tahun",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "tahun",
+                                ":tahun"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "tahun",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[DELETE] /tahun/{tahun}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/tahun/:tahun",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "tahun",
+                                ":tahun"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "tahun",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "06. IKU & IKK",
+            "item": [
+                {
+                    "name": "[GET] /iku",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/iku",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "iku"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] /iku/master",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/iku/master",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "iku",
+                                "master"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[DELETE] /iku/{iku}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/iku/:iku",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "iku",
+                                ":iku"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "iku",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /iku/input-ikk",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/iku/input-ikk",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "iku",
+                                "input-ikk"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] /iku/sync-ikk",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/iku/sync-ikk",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "iku",
+                                "sync-ikk"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "07. Rincian Anggaran / RAB",
+            "item": [
+                {
+                    "name": "[GET] /rincian-anggaran",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/rincian-anggaran",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "rincian-anggaran"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /rincian-anggaran/create",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/rincian-anggaran/create",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "rincian-anggaran",
+                                "create"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] /rincian-anggaran",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/rincian-anggaran",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "rincian-anggaran"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /rincian-anggaran/{rincian}/edit",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/rincian-anggaran/:rincian/edit",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "rincian-anggaran",
+                                ":rincian",
+                                "edit"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "rincian",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[PATCH] /rincian-anggaran/{rincian}",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/rincian-anggaran/:rincian",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "rincian-anggaran",
+                                ":rincian"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "rincian",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[DELETE] /rincian-anggaran/{rincian}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/rincian-anggaran/:rincian",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "rincian-anggaran",
+                                ":rincian"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "rincian",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "08. RKAT RAB Items",
+            "item": [
+                {
+                    "name": "[GET] /rkat",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/rkat",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "rkat"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /rkat/create",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/rkat/create",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "rkat",
+                                "create"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] /rkat",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/rkat",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "rkat"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "09. Daftar Ajuan RKAT",
+            "item": [
+                {
+                    "name": "[GET] /daftar-ajuan/input",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/daftar-ajuan/input",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "daftar-ajuan",
+                                "input"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] /daftar-ajuan",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/daftar-ajuan",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "daftar-ajuan"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /daftar-ajuan",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/daftar-ajuan",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "daftar-ajuan"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /daftar-ajuan/{rkatHeader}",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/daftar-ajuan/:rkatHeader",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "daftar-ajuan",
+                                ":rkatHeader"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "rkatHeader",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /daftar-ajuan/{rkatHeader}/edit",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/daftar-ajuan/:rkatHeader/edit",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "daftar-ajuan",
+                                ":rkatHeader",
+                                "edit"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "rkatHeader",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[PATCH] /daftar-ajuan/{rkatHeader}",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/daftar-ajuan/:rkatHeader",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "daftar-ajuan",
+                                ":rkatHeader"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "rkatHeader",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] /daftar-ajuan/{rkatHeader}/submit",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/daftar-ajuan/:rkatHeader/submit",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "daftar-ajuan",
+                                ":rkatHeader",
+                                "submit"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "rkatHeader",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] /daftar-ajuan/{rkatHeader}/export",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/daftar-ajuan/:rkatHeader/export",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "daftar-ajuan",
+                                ":rkatHeader",
+                                "export"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "rkatHeader",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "10. Approval / Persetujuan",
+            "item": [
+                {
+                    "name": "[GET] /approval",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/approval",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "approval"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] /approval/approve/{rkatHeader}",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/approval/approve/:rkatHeader",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "approval",
+                                "approve",
+                                ":rkatHeader"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "rkatHeader",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "11. Monitoring",
+            "item": [
+                {
+                    "name": "[GET] /monitoring",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/monitoring",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "monitoring"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "12. Dashboard",
+            "item": [
+                {
+                    "name": "[GET] /dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/dashboard",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "dashboard"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Others",
+            "item": [
+                {
+                    "name": "[PUT] /password",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "password"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "13. Error Testing (Negative Cases)",
+            "description": "Request di sini didesain untuk MEMANCING error guna mengetes logging dan error handling.",
+            "item": [
+                {
+                    "name": "404 Not Found (Invalid URL)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/halaman-tidak-ada-404",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "halaman-tidak-ada-404"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "401 Unauthenticated",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/dashboard",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "dashboard"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8000",
+            "type": "string"
+        }
+    ]
 }

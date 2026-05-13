@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -54,10 +54,31 @@ export default function Edit({ auth, user, units = [] }) {
 
     const submitProfile = (e) => {
         e.preventDefault();
-        const toastId = toast.loading("Memperbarui data user...");
-        patch(route('user.update', user.uuid), {
-            onSuccess: () => toast.success("Berhasil", { id: toastId, description: "Data user berhasil diperbarui." }),
-            onError: () => toast.error("Gagal", { id: toastId, description: "Cek kembali inputan Anda." }),
+        
+        toast.warning("Konfirmasi Simpan", {
+            description: "Apakah Anda yakin ingin menyimpan perubahan profil ini?",
+            action: {
+                label: "Ya, Simpan",
+                onClick: () => {
+                    const toastId = toast.loading("Memperbarui data user...");
+                    patch(route('user.update', user.uuid), {
+                        onSuccess: () => toast.success("Berhasil", { id: toastId, description: `Data user ${data.nama_lengkap} berhasil diperbarui.` }),
+                        onError: () => toast.error("Gagal", { id: toastId, description: "Cek kembali inputan Anda." }),
+                    });
+                }
+            },
+            cancel: { label: "Batal" }
+        });
+    };
+
+    const handleBack = () => {
+        toast.warning("Konfirmasi Batal", {
+            description: "Yakin ingin membatalkan? Perubahan yang belum disimpan akan hilang.",
+            action: {
+                label: "Ya, Batal",
+                onClick: () => router.get(route('user.index'))
+            },
+            cancel: { label: "Lanjut" }
         });
     };
 
@@ -181,9 +202,9 @@ export default function Edit({ auth, user, units = [] }) {
                     </form>
 
                     <div className="flex justify-center">
-                        <Link href={route('user.index')} className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+                        <button onClick={handleBack} type="button" className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
                             <ArrowLeft className="w-4 h-4 mr-1" /> Kembali ke Daftar User
-                        </Link>
+                        </button>
                     </div>
 
                 </div>

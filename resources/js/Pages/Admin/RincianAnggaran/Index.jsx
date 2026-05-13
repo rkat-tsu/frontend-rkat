@@ -27,15 +27,7 @@ export default function Index({ auth, items = {}, filters = {}, letters = [], fl
         return () => clearTimeout(timeoutId);
     }, [searchTerm, letterFilter]);
 
-    // Toast Flash Messages
-    useEffect(() => {
-        if (flash.success) {
-            toast.success(flash.success);
-        }
-        if (flash.error) {
-            toast.error(flash.error);
-        }
-    }, [flash]);
+
 
     // Data dari server
     const filtered = items.data || [];

@@ -1,6 +1,6 @@
 import React from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -30,10 +30,30 @@ export default function Create({ auth, users, units }) {
             return;
         }
 
-        const toastId = toast.loading("Sedang menyimpan data...");
-        post(route('unit.store'), {
-            onSuccess: () => toast.success("Berhasil", { id: toastId, description: "Unit Kerja baru berhasil ditambahkan." }),
-            onError: () => toast.error("Gagal Menyimpan", { id: toastId, description: "Terdapat kesalahan saat menyimpan data." })
+        toast.warning("Konfirmasi Simpan", {
+            description: "Apakah Anda yakin ingin menyimpan unit kerja baru ini?",
+            action: {
+                label: "Ya, Simpan",
+                onClick: () => {
+                    const toastId = toast.loading("Sedang menyimpan data...");
+                    post(route('unit.store'), {
+                        onSuccess: () => toast.success("Berhasil", { id: toastId, description: `Unit Kerja ${data.nama_unit} berhasil ditambahkan.` }),
+                        onError: () => toast.error("Gagal Menyimpan", { id: toastId, description: "Terdapat kesalahan saat menyimpan data." })
+                    });
+                }
+            },
+            cancel: { label: "Batal" }
+        });
+    };
+
+    const handleBack = () => {
+        toast.warning("Konfirmasi Batal", {
+            description: "Yakin ingin membatalkan? Perubahan yang belum disimpan akan hilang.",
+            action: {
+                label: "Ya, Batal",
+                onClick: () => router.get(route('unit.index'))
+            },
+            cancel: { label: "Lanjut" }
         });
     };
 
@@ -224,12 +244,13 @@ export default function Create({ auth, users, units }) {
 
                         {/* --- TOMBOL AKSI --- */}
                         <div className="mt-6 flex items-center justify-end gap-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <Link
-                                href={route('unit.index')}
+                            <button
+                                type="button"
+                                onClick={handleBack}
                                 className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white font-medium text-sm flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                             >
                                 <ArrowLeft size={16} className="mr-2" /> Batal
-                            </Link>
+                            </button>
                             
                             <PrimaryButton disabled={processing} className="shadow-teal-200 hover:shadow-teal-400">
                                 <Save size={16} className="mr-2" /> Simpan Data Unit

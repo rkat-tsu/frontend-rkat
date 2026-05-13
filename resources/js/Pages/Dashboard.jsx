@@ -24,7 +24,15 @@ import {
 
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
-export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new Date().getFullYear(), statusAnggaran = 'Aktif', rawStatus = 'None', summary = {} }) {
+export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new Date().getFullYear(), statusAnggaran = 'Aktif', rawStatus = 'None', summary = {}, kegiatanTerdekat = [] }) {
+    
+    const formatRupiahSingkat = (angka) => {
+        if (!angka) return 'Rp 0';
+        const num = parseFloat(angka);
+        if (num >= 1e9) return `Rp ${(num / 1e9).toFixed(1)}M`;
+        if (num >= 1e6) return `Rp ${(num / 1e6).toFixed(1)}Jt`;
+        return `Rp ${num.toLocaleString('id-ID')}`;
+    };
     
     const getStatusColor = (status) => {
         switch (status) {
@@ -56,22 +64,22 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
 
                     {/* --- BAGIAN 1: KARTU RINGKASAN DENGAN DEFERRED LOADING --- */}
                     <Deferred data="summary" fallback={
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {[1, 2, 3, 4].map((i) => (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                            {[1, 2, 3, 4, 5].map((i) => (
                                 <div key={i} className="h-32 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-2xl border border-gray-100 dark:border-gray-700 flex items-center justify-center">
                                     <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                                 </div>
                             ))}
                         </div>
                     }>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                             <StatCard 
                                 title="Total Dokumen" 
                                 value={summary.total} 
                                 icon={<FileText size={22} />} 
                                 color="blue" 
                                 label="Tahun Ini" 
-                                description="Total Pengajuan Dokumen"
+                                description="Total Pengajuan"
                             />
                             <StatCard 
                                 title="Menunggu" 
@@ -87,14 +95,21 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                                 value={summary.disetujui} 
                                 icon={<CheckCircle size={22} />} 
                                 color="emerald" 
-                                description="Dokumen Disetujui Final"
+                                description="Dokumen Disetujui"
                             />
                             <StatCard 
                                 title="Ditolak" 
                                 value={summary.ditolak} 
                                 icon={<XCircle size={22} />} 
                                 color="rose" 
-                                description="Ditolak / Butuh Revisi"
+                                description="Butuh Revisi"
+                            />
+                            <StatCard 
+                                title="Anggaran Disetujui" 
+                                value={formatRupiahSingkat(summary.total_anggaran_disetujui)} 
+                                icon={<PieChart size={22} />} 
+                                color="emerald" 
+                                description="Total Dana Disetujui"
                             />
                         </div>
                     </Deferred>
@@ -156,8 +171,8 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                     </div>
 
                     {/* --- BAGIAN 3: INFO TERBARU --- */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-between transition-all hover:shadow-md">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-between transition-all hover:shadow-md h-full">
                             <div>
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-3">
@@ -179,7 +194,38 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                             </div>
                         </div>
 
-                        <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-2xl p-6 shadow-md text-white flex flex-col justify-between transition-all hover:shadow-lg hover:scale-[1.01]">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col h-full transition-all hover:shadow-md">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2 bg-teal-100 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400 rounded-lg">
+                                    <Calendar size={20} />
+                                </div>
+                                <h4 className="font-bold text-gray-900 dark:text-white">Kegiatan Terdekat</h4>
+                            </div>
+                            <Deferred data="kegiatanTerdekat" fallback={
+                                <div className="flex-1 flex items-center justify-center min-h-[100px]">
+                                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                                </div>
+                            }>
+                                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
+                                    {kegiatanTerdekat && kegiatanTerdekat.length > 0 ? (
+                                        kegiatanTerdekat.map((kegiatan, idx) => (
+                                            <div key={idx} className="p-3 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700">
+                                                <div className="font-semibold text-sm text-gray-800 dark:text-gray-200 line-clamp-1">{kegiatan.judul}</div>
+                                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1.5 font-medium">
+                                                    <Calendar size={12} className="text-teal-500" />
+                                                    {new Date(kegiatan.mulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} 
+                                                    {kegiatan.mulai !== kegiatan.akhir && ` - ${new Date(kegiatan.akhir).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}`}
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-sm text-gray-500 text-center italic mt-4">Belum ada jadwal terdekat.</div>
+                                    )}
+                                </div>
+                            </Deferred>
+                        </div>
+
+                        <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-2xl p-6 shadow-md text-white flex flex-col justify-between h-full transition-all hover:shadow-lg hover:scale-[1.01]">
                             <div>
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className="p-2 bg-white/20 backdrop-blur-md rounded-lg">

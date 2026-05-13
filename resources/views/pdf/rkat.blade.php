@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <title>TOR - {{ $rkat->nomor_dokumen }}</title>
@@ -7,20 +8,24 @@
         @page {
             margin: 0.8cm;
         }
+
         body {
             font-family: 'Helvetica', 'Arial', sans-serif;
             font-size: 8pt;
             line-height: 1.15;
             color: #000;
         }
+
         .header {
             text-align: center;
             margin-bottom: 15px;
         }
+
         .header img {
             width: 120px;
             margin-bottom: 8px;
         }
+
         .header h1 {
             margin: 0;
             font-size: 10pt;
@@ -28,30 +33,51 @@
             font-weight: bold;
             text-decoration: underline;
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 5px;
         }
-        th, td {
+
+        th,
+        td {
             border: 1px solid #000;
             padding: 3px 5px;
             vertical-align: top;
         }
-        
-        .no-col { width: 25px; text-align: center; }
-        .label-col { width: 140px; font-weight: bold; }
-        
-        .bg-gray { background-color: #f2f2f2; }
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
-        .font-bold { font-weight: bold; }
-        
+
+        .no-col {
+            width: 25px;
+            text-align: center;
+        }
+
+        .label-col {
+            width: 140px;
+            font-weight: bold;
+        }
+
+        .bg-gray {
+            background-color: #f2f2f2;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .font-bold {
+            font-weight: bold;
+        }
+
         .checkbox-group {
             display: inline-block;
             margin-right: 8px;
         }
+
         .checkbox {
             display: inline-block;
             width: 10px;
@@ -63,21 +89,24 @@
             line-height: 9px;
             font-size: 7pt;
         }
-        
+
         .signature-section {
             margin-top: 15px;
             width: 100%;
         }
+
         .sig-box {
             width: 48%;
             display: inline-block;
             vertical-align: top;
             min-height: 80px;
         }
+
         .sig-space {
             height: 45px;
             position: relative;
         }
+
         .sig-status {
             position: absolute;
             top: 5px;
@@ -93,13 +122,13 @@
             z-index: 0;
             text-transform: uppercase;
         }
-        
+
         .indicator-table th {
             font-size: 7pt;
             text-align: center;
             background-color: #fff;
         }
-        
+
         .revision-note {
             margin-top: 8px;
             border: 1px solid #000;
@@ -107,20 +136,23 @@
             background-color: #fffde7;
             font-size: 7.5pt;
         }
-        
+
         .bauk-container {
             width: 150px;
             padding-left: 8px;
         }
+
         .bauk-box {
             border: 1px solid #000;
-            height: 120px; /* Fixed height to prevent stretching */
+            height: 120px;
+            /* Fixed height to prevent stretching */
         }
+
         .bauk-header {
             border-bottom: 1px solid #000;
             font-size: 6.5pt;
         }
-        
+
         /* Specific layout for Program/Kegiatan rows */
         .sub-label {
             width: 50px;
@@ -128,39 +160,46 @@
         }
     </style>
 </head>
+
 <body>
     @php
         \Carbon\Carbon::setLocale('id');
         $detail = $rkat->rkatDetails->first();
         $year = $rkat->tahun_anggaran;
         $logoPath = public_path('img/logo-full-tsu.svg');
-        
+
         // Labels
         $labelPrevYear = 2025;
         $labelCurrYear = 2026;
-        
+
         // Approval logic
-        $isRenbangAcc = $rkat->logPersetujuans->where('level_persetujuan', 'Tim_Renbang')->where('aksi', 'Setuju')->last();
-        $isUnitAcc = $rkat->logPersetujuans->whereIn('level_persetujuan', ['Kepala_Unit', 'Dekan'])->where('aksi', 'Setuju')->last();
-        
+        $isRenbangAcc = $rkat->logPersetujuans
+            ->where('level_persetujuan', 'Tim_Renbang')
+            ->where('aksi', 'Setuju')
+            ->last();
+        $isUnitAcc = $rkat->logPersetujuans
+            ->whereIn('level_persetujuan', ['Kepala_Unit', 'Dekan'])
+            ->where('aksi', 'Setuju')
+            ->last();
+
         // Pilih WR pertama berdasarkan alur (Akademik: WR 1, Non-Akademik: WR 3)
         $jalur = optional($rkat->unit)->jalur_persetujuan ?? 'akademik';
-        $targetWR = ($jalur == 'akademik') ? 'WR_1' : 'WR_3';
-        
+        $targetWR = $jalur == 'akademik' ? 'WR_1' : 'WR_3';
+
         $isWRAcc = $rkat->logPersetujuans->where('level_persetujuan', $targetWR)->where('aksi', 'Setuju')->last();
-        
+
         $renbangApprover = $isRenbangAcc ? $isRenbangAcc->approver : null;
         $unitApprover = $isUnitAcc ? $isUnitAcc->approver : null;
         $wrApprover = $isWRAcc ? $isWRAcc->approver : null;
 
         $revisions = $rkat->logPersetujuans->where('aksi', 'Revisi');
-        
+
         // Calculate real RAB total
         $rabTotal = $detail ? $detail->rabItems->sum('sub_total') : 0;
     @endphp
 
     <div class="header">
-        @if(file_exists($logoPath))
+        @if (file_exists($logoPath))
             <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents($logoPath)) }}" alt="Logo">
         @endif
         <h1>TAHUN ANGGARAN {{ $year }}</h1>
@@ -211,8 +250,8 @@
             <td class="no-col">8</td>
             <td class="label-col">Jadwal Pelaksanaan</td>
             <td colspan="2">
-                {{ \Carbon\Carbon::parse($detail->jadwal_pelaksanaan_mulai)->translatedFormat('d F Y') }} 
-                s.d 
+                {{ \Carbon\Carbon::parse($detail->jadwal_pelaksanaan_mulai)->translatedFormat('d F Y') }}
+                s.d
                 {{ \Carbon\Carbon::parse($detail->jadwal_pelaksanaan_akhir)->translatedFormat('d F Y') }}
             </td>
         </tr>
@@ -243,18 +282,19 @@
                     </thead>
                     <tbody>
                         @forelse($detail->indikators as $ind)
-                        <tr>
-                            <td style="border-left:none;">{{ $ind->nama_indikator }}</td>
-                            <td class="text-center">{{ $ind->capai_2025 ?? '-' }}</td>
-                            <td class="text-center">{{ $ind->target_2026 ?? '-' }}</td>
-                            <td class="text-center">{{ $ind->capai_2026 ?? '-' }}</td>
-                            <td class="text-center">{{ $ind->target_2029 ?? '-' }}</td>
-                            <td class="text-center" style="border-right:none;">{{ $ind->capai_2029 ?? '-' }}</td>
-                        </tr>
+                            <tr>
+                                <td style="border-left:none;">{{ $ind->nama_indikator }}</td>
+                                <td class="text-center">{{ $ind->capai_2025 ?? '-' }}</td>
+                                <td class="text-center">{{ $ind->target_2026 ?? '-' }}</td>
+                                <td class="text-center">{{ $ind->capai_2026 ?? '-' }}</td>
+                                <td class="text-center">{{ $ind->target_2029 ?? '-' }}</td>
+                                <td class="text-center" style="border-right:none;">{{ $ind->capai_2029 ?? '-' }}</td>
+                            </tr>
                         @empty
-                        <tr>
-                            <td colspan="6" class="text-center" style="border-left:none; border-right:none;">Tidak ada indikator</td>
-                        </tr>
+                            <tr>
+                                <td colspan="6" class="text-center" style="border-left:none; border-right:none;">
+                                    Tidak ada indikator</td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -272,7 +312,8 @@
         </tr>
     </table>
 
-    <div style="text-align: center; margin: 10px 0; font-weight: bold; text-decoration: underline; font-size: 9pt;">RENCANA ANGGARAN</div>
+    <div style="text-align: center; margin: 10px 0; font-weight: bold; text-decoration: underline; font-size: 9pt;">
+        RENCANA ANGGARAN</div>
 
     <table>
         <tr>
@@ -286,23 +327,36 @@
         <tr>
             <td class="label-col">Jenis Kegiatan</td>
             <td>
-                <div class="checkbox-group"><div class="checkbox">{{ $detail->jenis_kegiatan == 'Rutin' ? 'v' : '' }}</div> Rutin</div>
-                <div class="checkbox-group"><div class="checkbox">{{ $detail->jenis_kegiatan == 'Inovasi' ? 'v' : '' }}</div> Inovasi</div>
+                <div class="checkbox-group">
+                    <div class="checkbox">{{ $detail->jenis_kegiatan == 'Rutin' ? 'v' : '' }}</div> Rutin
+                </div>
+                <div class="checkbox-group">
+                    <div class="checkbox">{{ $detail->jenis_kegiatan == 'Inovasi' ? 'v' : '' }}</div> Inovasi
+                </div>
             </td>
         </tr>
         <tr>
             <td class="label-col">Dokumen Pendukung</td>
             <td>
                 @php $docs = $detail->dokumen_pendukung ?? []; @endphp
-                <div class="checkbox-group"><div class="checkbox">{{ in_array('Pengajuan Rutin', $docs) ? 'v' : '' }}</div> Pengajuan Rutin</div>
-                <div class="checkbox-group"><div class="checkbox">{{ in_array('Proposal', $docs) ? 'v' : '' }}</div> Proposal</div>
-                <div class="checkbox-group"><div class="checkbox">{{ in_array('TOR', $docs) ? 'v' : '' }}</div> TOR</div>
-                <div class="checkbox-group"><div class="checkbox">{{ in_array('Usulan', $docs) ? 'v' : '' }}</div> Usulan</div>
+                <div class="checkbox-group">
+                    <div class="checkbox">{{ in_array('Pengajuan Rutin', $docs) ? 'v' : '' }}</div> Pengajuan Rutin
+                </div>
+                <div class="checkbox-group">
+                    <div class="checkbox">{{ in_array('Proposal', $docs) ? 'v' : '' }}</div> Proposal
+                </div>
+                <div class="checkbox-group">
+                    <div class="checkbox">{{ in_array('TOR', $docs) ? 'v' : '' }}</div> TOR
+                </div>
+                <div class="checkbox-group">
+                    <div class="checkbox">{{ in_array('Usulan', $docs) ? 'v' : '' }}</div> Usulan
+                </div>
             </td>
         </tr>
         <tr>
             <td class="label-col">Waktu Pelaksanaan</td>
-            <td>{{ \Carbon\Carbon::parse($detail->jadwal_pelaksanaan_mulai)->translatedFormat('d F Y') }} s.d {{ \Carbon\Carbon::parse($detail->jadwal_pelaksanaan_akhir)->translatedFormat('d F Y') }}</td>
+            <td>{{ \Carbon\Carbon::parse($detail->jadwal_pelaksanaan_mulai)->translatedFormat('d F Y') }} s.d
+                {{ \Carbon\Carbon::parse($detail->jadwal_pelaksanaan_akhir)->translatedFormat('d F Y') }}</td>
         </tr>
         <tr>
             <td class="label-col">Anggaran</td>
@@ -311,9 +365,15 @@
         <tr>
             <td class="label-col">Pencairan Dana</td>
             <td>
-                <div class="checkbox-group"><div class="checkbox">{{ $detail->jenis_pencairan == 'Bank' ? 'v' : '' }}</div> Transfer ke Bank : {{ $detail->nama_bank ?? '-' }}</div>
-                <div style="margin-left: 15px;">No Rekening : {{ $detail->nomor_rekening ?? '-' }} (a.n {{ $detail->atas_nama ?? '-' }})</div>
-                <div class="checkbox-group" style="margin-top: 3px;"><div class="checkbox">{{ $detail->jenis_pencairan == 'Tunai' ? 'v' : '' }}</div> Tunai</div>
+                <div class="checkbox-group">
+                    <div class="checkbox">{{ $detail->jenis_pencairan == 'Bank' ? 'v' : '' }}</div> Transfer ke Bank :
+                    {{ $detail->nama_bank ?? '-' }}
+                </div>
+                <div style="margin-left: 15px;">No Rekening : {{ $detail->nomor_rekening ?? '-' }} (a.n
+                    {{ $detail->atas_nama ?? '-' }})</div>
+                <div class="checkbox-group" style="margin-top: 3px;">
+                    <div class="checkbox">{{ $detail->jenis_pencairan == 'Tunai' ? 'v' : '' }}</div> Tunai
+                </div>
             </td>
         </tr>
     </table>
@@ -334,16 +394,16 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($detail->rabItems as $idx => $rab)
-                    <tr>
-                        <td class="text-center">{{ $idx + 1 }}</td>
-                        <td class="text-center">{{ $rab->kode_anggaran }}</td>
-                        <td>{{ $rab->deskripsi_item }}</td>
-                        <td class="text-center">{{ number_format($rab->volume, 2, '.', ',') }}</td>
-                        <td class="text-center">{{ $rab->satuan }}</td>
-                        <td class="text-right">{{ number_format($rab->harga_satuan, 0, ',', '.') }}</td>
-                        <td class="text-right">{{ number_format($rab->sub_total, 0, ',', '.') }}</td>
-                    </tr>
+                    @foreach ($detail->rabItems as $idx => $rab)
+                        <tr>
+                            <td class="text-center">{{ $idx + 1 }}</td>
+                            <td class="text-center">{{ $rab->kode_anggaran }}</td>
+                            <td>{{ $rab->deskripsi_item }}</td>
+                            <td class="text-center">{{ number_format($rab->volume, 2, '.', ',') }}</td>
+                            <td class="text-center">{{ $rab->satuan }}</td>
+                            <td class="text-right">{{ number_format($rab->harga_satuan, 0, ',', '.') }}</td>
+                            <td class="text-right">{{ number_format($rab->sub_total, 0, ',', '.') }}</td>
+                        </tr>
                     @endforeach
                 </tbody>
                 <tfoot>
@@ -359,23 +419,27 @@
                 <div class="bauk-header">
                     <table style="border:none; margin:0; width:100%;">
                         <tr>
-                            <td style="border:none; border-right:1px solid #000; width:50%; text-align:center; padding: 2px;">Verifikasi</td>
+                            <td
+                                style="border:none; border-right:1px solid #000; width:50%; text-align:center; padding: 2px;">
+                                Verifikasi</td>
                             <td style="border:none; text-align:center; padding: 2px;">Note</td>
                         </tr>
                     </table>
-                    <div style="text-align:center; border-top:1px solid #000; padding:1px; font-style:italic;">(diisi oleh BAUK)</div>
+                    <div style="text-align:center; border-top:1px solid #000; padding:1px; font-style:italic;">(diisi
+                        oleh BAUK)</div>
                 </div>
             </div>
         </div>
     </div>
 
-    @if($revisions->count() > 0)
-    <div class="revision-note">
-        <div class="font-bold" style="text-decoration: underline; margin-bottom: 2px;">Catatan Revisi:</div>
-        @foreach($revisions as $rev)
-            <div style="margin-bottom: 2px;">- <strong>{{ $rev->approver->nama_lengkap }} ({{ str_replace('_', ' ', $rev->level_persetujuan) }}):</strong> {{ $rev->catatan }}</div>
-        @endforeach
-    </div>
+    @if ($revisions->count() > 0)
+        <div class="revision-note">
+            <div class="font-bold" style="text-decoration: underline; margin-bottom: 2px;">Catatan Revisi:</div>
+            @foreach ($revisions as $rev)
+                <div style="margin-bottom: 2px;">- <strong>{{ $rev->approver->nama_lengkap }}
+                        ({{ str_replace('_', ' ', $rev->level_persetujuan) }}):</strong> {{ $rev->catatan }}</div>
+            @endforeach
+        </div>
     @endif
 
     <div class="signature-section">
@@ -384,11 +448,12 @@
                 <p>Verifikasi</p>
                 <p>Tim Renbang</p>
                 <div class="sig-space">
-                    @if($isRenbangAcc)
+                    @if ($isRenbangAcc)
                         <div class="sig-status">ACC</div>
                     @endif
                 </div>
-                <p class="font-bold">{{ optional($renbangApprover)->nama_lengkap ?: '............................' }}</p>
+                <p class="font-bold">{{ optional($renbangApprover)->nama_lengkap ?: '............................' }}
+                </p>
                 <p>NIK. {{ optional($renbangApprover)->nik ?: '............................' }}</p>
             </div>
             <div class="sig-box text-right" style="float: right;">
@@ -408,7 +473,7 @@
                 <p>Mengetahui,</p>
                 <p>Kepala Kantor Kemahasiswaan</p>
                 <div class="sig-space">
-                    @if($isUnitAcc)
+                    @if ($isUnitAcc)
                         <div class="sig-status">ACC</div>
                     @endif
                 </div>
@@ -419,7 +484,7 @@
                 <p>Menyetujui,</p>
                 <p>Wakil Rektor</p>
                 <div class="sig-space">
-                    @if($isWRAcc)
+                    @if ($isWRAcc)
                         <div class="sig-status">ACC</div>
                     @endif
                 </div>
@@ -430,4 +495,5 @@
         </div>
     </div>
 </body>
+
 </html>

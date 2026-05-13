@@ -1,13 +1,13 @@
 import Checkbox from '@/Components/Checkbox';
-import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import PasswordInput from '@/Components/PasswordInput';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { toast } from 'sonner';
 
-export default function Login({ status, canResetPassword }) {
-    const { data, setData, post, processing, errors, reset } = useForm({
+export default function Login({ status }) {
+    const { data, setData, post, processing, reset } = useForm({
         login: '',
         password: '',
         remember: false,
@@ -18,6 +18,15 @@ export default function Login({ status, canResetPassword }) {
 
         post(route('login'), {
             onFinish: () => reset('password'),
+            onError: (errs) => {
+                if (errs.login) {
+                    toast.error(errs.login);
+                } else if (errs.password) {
+                    toast.error(errs.password);
+                } else {
+                    toast.error('Terjadi kesalahan, silakan periksa input Anda.');
+                }
+            }
         });
     };
 
@@ -66,7 +75,6 @@ export default function Login({ status, canResetPassword }) {
                             placeholder="Masukkan email atau username"
                             onChange={(e) => setData('login', e.target.value)}
                         />
-                        <InputError message={errors.login} className="mt-2" />
                     </div>
 
                     {/* --- Input Password & Lupa Sandi --- */}
@@ -91,7 +99,6 @@ export default function Login({ status, canResetPassword }) {
                             onChange={(e) => setData('password', e.target.value)}
                             required
                         />
-                        <InputError message={errors.password} className="mt-2" />
 
                         <div className="mt-2 flex justify-end">
                             <Link

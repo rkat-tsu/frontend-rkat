@@ -63,7 +63,7 @@ export default function Edit({ auth, rincian: item }) {
                 onClick: () => {
                     const toastId = toast.loading("Sedang memperbarui data...");
                     patch(route('rincian.update', item.uuid || item.kode_anggaran), {
-                        onSuccess: () => toast.success("Berhasil", { id: toastId, description: "Data SBO berhasil diperbarui." }),
+                        onSuccess: () => toast.success("Berhasil", { id: toastId, description: `Data SBO ${data.nama_anggaran} berhasil diperbarui.` }),
                         onError: () => toast.error("Gagal Memperbarui", { id: toastId, description: "Terdapat kesalahan saat memperbarui data." })
                     });
                 }

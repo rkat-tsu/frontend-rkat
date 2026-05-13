@@ -27,7 +27,7 @@ export default function Create({ auth }) {
 
         const toastId = toast.loading("Sedang menyimpan data...");
         post(route('tahun.store'), {
-            onSuccess: () => toast.success("Berhasil", { id: toastId, description: "Tahun Anggaran baru berhasil ditambahkan." }),
+            onSuccess: () => toast.success("Berhasil", { id: toastId, description: `Tahun Anggaran ${data.tahun_anggaran} berhasil ditambahkan.` }),
             onError: () => toast.error("Gagal Menyimpan", { id: toastId, description: "Terdapat kesalahan saat menyimpan data." })
         });
     };

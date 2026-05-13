@@ -77,7 +77,7 @@ export default function Index({ auth, ikus }) {
         const toastId = toast.loading("Sedang menyimpan data...");
         post(route('iku.master.store'), {
             onSuccess: () => {
-                toast.success("Berhasil", { id: toastId, description: editData ? "Data IKU berhasil diperbarui." : "IKU baru berhasil ditambahkan." });
+                toast.success("Berhasil", { id: toastId, description: editData ? `Data IKU ${data.nama_iku} berhasil diperbarui.` : `IKU baru ${data.nama_iku} berhasil ditambahkan.` });
                 closeModal();
             },
             onError: () => {

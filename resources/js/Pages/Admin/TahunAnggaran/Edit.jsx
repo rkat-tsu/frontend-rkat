@@ -40,7 +40,7 @@ export default function Edit({ auth, tahun, tahunAnggaran, data: propData }) {
 
         const toastId = toast.loading("Sedang memperbarui data...");
         patch(route('tahun.update', id), {
-            onSuccess: () => toast.success("Berhasil", { id: toastId, description: "Data Tahun Anggaran berhasil diperbarui." }),
+            onSuccess: () => toast.success("Berhasil", { id: toastId, description: `Data Tahun Anggaran ${data.tahun_anggaran} berhasil diperbarui.` }),
             onError: () => toast.error("Gagal Memperbarui", { id: toastId, description: "Terdapat kesalahan saat memperbarui data." })
         });
     };

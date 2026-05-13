@@ -67,7 +67,7 @@ export default function Create({ auth }) {
                 onClick: () => {
                     const toastId = toast.loading("Sedang menyimpan data...");
                     post(route('rincian.store'), {
-                        onSuccess: () => toast.success("Berhasil", { id: toastId, description: "Item SBO baru berhasil ditambahkan." }),
+                        onSuccess: () => toast.success("Berhasil", { id: toastId, description: `Item SBO ${data.nama_anggaran} berhasil ditambahkan.` }),
                         onError: () => toast.error("Gagal Menyimpan", { id: toastId, description: "Terdapat kesalahan saat menyimpan data." })
                     });
                 }

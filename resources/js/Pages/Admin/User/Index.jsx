@@ -5,6 +5,7 @@ import CustomSelect from '@/Components/CustomSelect';
 import { Search, Plus, Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { usePermission } from '@/hooks/usePermission';
+import { toast } from 'sonner';
 
 export default function Index({ users, filters = {}, units = [] }) {
     const { isAdmin, user: authUser } = usePermission();
@@ -163,15 +164,27 @@ export default function Index({ users, filters = {}, units = [] }) {
                                                             {authUser?.id_user !== user.id_user && (
                                                                 <Tooltip>
                                                                     <TooltipTrigger asChild>
-                                                                        <Link
-                                                                            as="button"
-                                                                            method="delete"
-                                                                            href={route('user.destroy', user.uuid)}
-                                                                            onBefore={() => confirm('Yakin ingin menghapus user ini?')}
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                toast.warning("Konfirmasi Hapus", {
+                                                                                    description: "Yakin ingin menghapus user ini?",
+                                                                                    action: {
+                                                                                        label: "Ya, Hapus",
+                                                                                        onClick: () => {
+                                                                                            const toastId = toast.loading("Sedang menghapus...");
+                                                                                            router.delete(route('user.destroy', user.uuid), {
+                                                                                                onSuccess: () => toast.success("Berhasil dihapus", { id: toastId }),
+                                                                                                onError: () => toast.error("Gagal menghapus", { id: toastId })
+                                                                                            });
+                                                                                        }
+                                                                                    },
+                                                                                    cancel: { label: "Batal" }
+                                                                                });
+                                                                            }}
                                                                             className="inline-flex items-center justify-center w-8 h-8 border border-red-300 rounded-md shadow-sm text-red-700 bg-white hover:bg-red-50 dark:bg-gray-700 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/20 transition-colors"
                                                                         >
                                                                             <Trash2 size={16} />
-                                                                        </Link>
+                                                                        </button>
                                                                     </TooltipTrigger>
                                                                     <TooltipContent>Hapus User</TooltipContent>
                                                                 </Tooltip>

@@ -3,7 +3,7 @@ import { Link, usePage, router } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
 import { Menu, ChevronDown, User, LogOut, Loader2, Sun, Moon } from 'lucide-react';
 import AutomaticBreadcrumbs from '@/Components/AutomaticBreadcrumbs';
-import { Toaster } from '@/components/ui/sonner';
+import { Toaster, toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
 
 const SIDEBAR_STATE_KEY = 'sidebar_minimized_state';

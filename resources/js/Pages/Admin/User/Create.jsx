@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -55,15 +55,35 @@ export default function Create({ auth, units = [] }) {
             return;
         }
 
-        const toastId = toast.loading("Sedang menyimpan data...");
-        post(route('user.store'), {
-            onSuccess: () => {
-                toast.success("Berhasil", { id: toastId, description: "User baru berhasil ditambahkan." });
+        toast.warning("Konfirmasi Simpan", {
+            description: "Apakah Anda yakin ingin menyimpan user baru ini?",
+            action: {
+                label: "Ya, Simpan",
+                onClick: () => {
+                    const toastId = toast.loading("Sedang menyimpan data...");
+                    post(route('user.store'), {
+                        onSuccess: () => {
+                            toast.success("Berhasil", { id: toastId, description: `User ${data.nama_lengkap} berhasil ditambahkan.` });
+                        },
+                        onError: () => {
+                            toast.error("Gagal Menyimpan", { id: toastId, description: "Terdapat kesalahan saat menyimpan data." });
+                        },
+                        onFinish: () => reset('password', 'password_confirmation'),
+                    });
+                }
             },
-            onError: () => {
-                toast.error("Gagal Menyimpan", { id: toastId, description: "Terdapat kesalahan saat menyimpan data." });
+            cancel: { label: "Batal" }
+        });
+    };
+
+    const handleBack = () => {
+        toast.warning("Konfirmasi Batal", {
+            description: "Yakin ingin membatalkan? Perubahan yang belum disimpan akan hilang.",
+            action: {
+                label: "Ya, Batal",
+                onClick: () => router.get(route('user.index'))
             },
-            onFinish: () => reset('password', 'password_confirmation'),
+            cancel: { label: "Lanjut" }
         });
     };
 
@@ -240,12 +260,13 @@ export default function Create({ auth, units = [] }) {
 
                         {/* --- TOMBOL AKSI (STICKY) --- */}
                         <div className="sticky bottom-4 z-30 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                            <Link
-                                href={route('user.index')}
+                            <button
+                                type="button"
+                                onClick={handleBack}
                                 className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white font-medium text-sm flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                             >
                                 <ArrowLeft size={16} className="mr-2" /> Batal
-                            </Link>
+                            </button>
                             
                             <PrimaryButton disabled={processing} className="shadow-teal-200 hover:shadow-teal-400">
                                 <Save size={16} className="mr-2" /> Simpan User Baru

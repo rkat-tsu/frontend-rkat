@@ -8,8 +8,8 @@ import InputError from '@/Components/InputError';
 import TextArea from '@/Components/TextArea';
 import RupiahInput from '@/Components/RupiahInput';
 import DateInput from '@/Components/DateInput';
-import { Plus, Trash2, Save, ArrowLeft, Calculator } from 'lucide-react';
-//import { cn } from "@/lib/utils";
+import { Plus, Trash2, Save, ArrowLeft, Calculator, Search, ChevronDown, Check } from 'lucide-react';
+import { cn } from "@/lib/utils";
 import CustomSelect from '@/Components/CustomSelect';
 import {
     Combobox,
@@ -25,10 +25,104 @@ import {
 } from "@/components/ui/combobox"
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 
 const formatRupiah = (angka) => {
     const number = Number(angka) || 0;
     return `Rp. ${number.toLocaleString('id-ID', { minimumFractionDigits: 0 })}`;
+};
+
+    const SboSelectPopover = ({ value, onChange, options, placeholder = "Pilih SBO..." }) => {
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState("");
+
+    const selected = options.find(opt => String(opt.value) === String(value));
+
+    const filteredOptions = options.filter(opt =>
+        opt.label.toLowerCase().includes(search.toLowerCase()) ||
+        String(opt.value).toLowerCase().includes(search.toLowerCase())
+    );
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <button
+                    type="button"
+                    className="flex h-9 w-full items-center justify-between rounded-md border border-gray-300/50 bg-white px-3 py-2 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-teal-500 dark:bg-gray-900 dark:border-gray-700/50 dark:text-gray-300 transition-all hover:border-teal-400"
+                >
+                    <span className="truncate mr-2 text-left">
+                        {selected ? selected.label : placeholder}
+                    </span>
+                    <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
+                </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[550px] p-0 shadow-2xl border border-teal-100 dark:border-teal-900 bg-white dark:bg-gray-900 z-[100]" align="start">
+                <div className="flex items-center border-b border-gray-100 dark:border-gray-700 px-3 py-2 bg-gray-50/50 dark:bg-gray-800/50">
+                    <Search className="mr-2 h-4 w-4 shrink-0 opacity-50 text-teal-600" />
+                    <input
+                        className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="Cari Kode atau Nama Anggaran..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        autoFocus
+                    />
+                </div>
+                <div className="max-h-[350px] overflow-y-auto p-1 custom-scrollbar">
+                    {filteredOptions.length > 0 ? (
+                        filteredOptions.map((opt) => (
+                            <div
+                                key={opt.value}
+                                className={cn(
+                                    "relative flex cursor-pointer select-none items-center rounded-md px-3 py-2 text-sm outline-none transition-colors",
+                                    "hover:bg-teal-50 dark:hover:bg-teal-900/30",
+                                    String(value) === String(opt.value) ? "bg-teal-50/80 text-teal-700 dark:bg-teal-900/40 dark:text-teal-200 font-medium" : "text-gray-700 dark:text-gray-300"
+                                )}
+                                onClick={() => {
+                                    onChange({ target: { value: opt.value } });
+                                    setOpen(false);
+                                    setSearch("");
+                                }}
+                            >
+                                <div className="flex-1 flex items-center gap-3 overflow-hidden py-1">
+                                    <Check
+                                        className={cn(
+                                            "h-4 w-4 text-teal-600 shrink-0",
+                                            String(value) === String(opt.value) ? "opacity-100" : "opacity-0"
+                                        )}
+                                    />
+                                    <div className="flex flex-col gap-0.5 overflow-hidden flex-1">
+                                        <div className="flex justify-between items-center w-full">
+                                            <span className="font-bold text-[10px] uppercase tracking-wider text-teal-600 dark:text-teal-400 leading-none">{opt.label.split(' - ')[0]}</span>
+                                            <div className="flex items-center gap-2">
+                                                {opt.satuan && (
+                                                    <span className="text-[10px] font-mono font-bold bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">
+                                                        {opt.satuan}
+                                                    </span>
+                                                )}
+                                                <span className="text-[10px] font-mono font-bold bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 px-1.5 py-0.5 rounded">
+                                                    Pagu: {formatRupiah(opt.nominal)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <span className="text-sm truncate pr-2">{opt.label.split(' - ').slice(1).join(' - ')}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="py-10 text-center flex flex-col items-center justify-center gap-2">
+                            <Search className="h-8 w-8 text-gray-200 dark:text-gray-700" />
+                            <p className="text-sm text-gray-500">Data standar biaya tidak ditemukan.</p>
+                        </div>
+                    )}
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
 };
 export default function Create({ auth, tahunAnggarans, units, akunAnggarans, ikus }) {
     const { user, isAdmin } = usePermission();
@@ -273,7 +367,12 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
     const tahunOptions = tahunAnggarans.map(t => ({ value: t.tahun_anggaran, label: t.tahun_anggaran }));
     const unitOptions = units.map(u => ({ value: u.id_unit, label: `${u.kode_unit} - ${u.nama_unit}` }));
     const ikuOptions = ikus.map(i => ({ value: i.id_iku, label: i.nama_iku }));
-    const akunOptions = akunAnggarans.map(a => ({ value: a.kode_anggaran, label: `${a.kode_anggaran} - ${a.nama_anggaran}` }));
+    const akunOptions = akunAnggarans.map(a => ({
+        value: a.kode_anggaran,
+        label: `${a.kode_anggaran} - ${a.nama_anggaran}`,
+        nominal: a.nominal,
+        satuan: a.satuan
+    }));
 
     const dokumenPendukungList = ['Pengajuan Rutin', 'Proposal', 'TOR', 'Usulan'];
     const anchor = useComboboxAnchor();
@@ -554,13 +653,11 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                             <tr key={item.id} className="bg-white dark:bg-gray-800 hover:bg-yellow-50 dark:hover:bg-yellow-900/30 transition-colors">
                                                 <td className="px-2 py-1 text-center font-medium text-gray-500 dark:text-gray-400 align-middle">{index + 1}</td>
                                                 <td className="px-2 py-1 align-middle">
-                                                    <CustomSelect
+                                                    <SboSelectPopover
                                                         value={item.kode_anggaran}
                                                         onChange={(e) => handleRincianChange(index, 'kode_anggaran', e.target.value)}
                                                         options={akunOptions}
-                                                        placeholder="Pilih "
-                                                        isMarquee={true}
-                                                        className="w-full h-9 text-xs"
+                                                        placeholder="Pilih SBO..."
                                                     />
                                                 </td>
                                                 <td className="px-2 py-1 align-middle">
