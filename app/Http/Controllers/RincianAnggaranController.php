@@ -26,8 +26,8 @@ class RincianAnggaranController extends Controller
             });
         }
 
-        if ($request->filled('letter')) {
-            $query->where('kode_anggaran', 'like', $request->letter . '%');
+        if ($request->filled('kelompok')) {
+            $query->where('kelompok_anggaran', '=', $request->kelompok, 'and');
         }
 
         $items = $query->select(['uuid', 'kode_anggaran', 'nama_anggaran', 'kelompok_anggaran', 'nominal', 'satuan'])
@@ -35,19 +35,19 @@ class RincianAnggaranController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        // Mengambil huruf depan unik dari kode_anggaran untuk dropdown filter
-        $letters = RincianAnggaran::query()
-            ->where('kode_anggaran', '!=', null)
-            ->where('kode_anggaran', '!=', '')
-            ->selectRaw('SUBSTR(kode_anggaran, 1, 1) as letter')
+        // Mengambil kelompok unik dari kelompok_anggaran untuk dropdown filter
+        $kelompoks = RincianAnggaran::query()
+            ->whereNotNull('kelompok_anggaran', 'and')
+            ->where('kelompok_anggaran', '!=', '', 'and')
+            ->select('kelompok_anggaran')
             ->distinct()
-            ->orderBy('letter', 'asc')
-            ->pluck('letter');
+            ->orderBy('kelompok_anggaran', 'asc')
+            ->pluck('kelompok_anggaran', null);
 
         return Inertia::render('Admin/RincianAnggaran/Index', [
             'items' => $items,
-            'filters' => $request->only(['search', 'letter']),
-            'letters' => $letters,
+            'filters' => $request->only(['search', 'kelompok']),
+            'kelompoks' => $kelompoks,
         ]);
     }
 

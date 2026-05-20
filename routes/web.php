@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ApprovalController;
+use App\Http\Controllers\PencairanDanaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IkuController;
 use App\Http\Controllers\MonitoringController;
@@ -56,6 +57,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // monitoring route
     Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
+
+    // Pencairan Dana
+    Route::get('/pencairan', [PencairanDanaController::class, 'index'])->name('pencairan.index');
+    Route::get('/pencairan/create', [PencairanDanaController::class, 'create'])->name('pencairan.create');
+    Route::post('/pencairan', [PencairanDanaController::class, 'store'])->name('pencairan.store');
+    Route::get('/pencairan/approval', [PencairanDanaController::class, 'approvalIndex'])->name('pencairan.approval');
+    Route::get('/pencairan/{pencairan}', [PencairanDanaController::class, 'show'])->name('pencairan.show');
+    Route::post('/pencairan/{pencairan}/submit', [PencairanDanaController::class, 'submit'])->name('pencairan.submit');
+    Route::post('/pencairan/{pencairan}/approve', [PencairanDanaController::class, 'approve'])->name('pencairan.approve');
+    Route::get('/pencairan/{pencairan}/export', [PencairanDanaController::class, 'exportPdf'])->name('pencairan.export');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

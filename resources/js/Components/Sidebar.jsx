@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import {
-    LayoutDashboard, FileText, ListChecks, LayoutList, Monitor, BookPlus, BookOpenText,
+    LayoutDashboard, FileText, Check, LayoutList, Monitor, BookPlus, BookOpenText,
     CalendarCog, ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight,
-    Users, Settings, Building2
+    Users, Settings, Building2, CreditCard
 } from 'lucide-react';
 import {
     Tooltip,
@@ -21,7 +21,9 @@ const navItems = [
     { name: 'Daftar Ajuan RKA', href: '/daftar-ajuan', icon: FileText, activePath: '/daftar-ajuan' },
     { name: 'Standar Biaya Operasional', href: '/rincian-anggaran', icon: BookOpenText, activePath: '/rincian-anggaran' },
     { name: 'Indikator Kinerja Utama', href: '/iku', icon: BookPlus, activePath: '/iku' },
-    { name: 'Persetujuan', href: '/approval', icon: ListChecks, activePath: '/approval', hideForInputer: true },
+    { name: 'Persetujuan RKAT', href: '/approval', icon: Check, activePath: '/approval', hideForInputer: true },
+    { name: 'Pencairan Dana', href: '/pencairan', icon: CreditCard, activePath: '/pencairan' },
+    { name: 'Persetujuan Pencairan', href: '/pencairan/approval', icon: Check, activePath: '/pencairan/approval', hideForInputer: true },
     { name: 'Monitoring', href: '/monitoring', icon: Monitor, activePath: '/monitoring' },
     {
         name: 'Daftar Unit Kerja',
@@ -163,6 +165,7 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
                         // Global visibility check
                         if (item.adminOnly && !isAdmin()) return null;
                         if (item.hideForInputer && role === 'Inputer') return null;
+                        if (item.name === 'Persetujuan Pencairan' && !auth.user?.can_approve_pencairan) return null;
 
                         return <NavItem key={index} item={item} />;
                     })}

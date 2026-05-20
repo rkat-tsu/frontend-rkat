@@ -1,7 +1,7 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { ArrowLeft, Download, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Download, AlertTriangle, Save } from 'lucide-react';
 
 const formatCurrency = (amount) => {
     if (!amount) return 'Rp 0';
@@ -333,6 +333,96 @@ export default function Show({ auth, rkat = {}, history = [] }) {
                         </div>
                     </div>
  
+                    {/* Tracking Status Timeline */}
+                    <div className="mt-8 bg-white dark:bg-gray-800 shadow sm:rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 p-6">
+                        <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
+                            Status Persetujuan
+                        </h4>
+                        
+                        <div className="space-y-4">
+                            {(() => {
+                                let timelineVariant = 'success';
+                                if (dataRkat?.status_persetujuan === 'Revisi') timelineVariant = 'warning';
+                                if (dataRkat?.status_persetujuan === 'Ditolak') timelineVariant = 'error';
+                                
+                                const jalur = dataRkat?.unit?.jalur_persetujuan || 'akademik';
+
+                                return (
+                                    <>
+                                        <TimelineItem 
+                                            label="Pengajuan" 
+                                            date={dataRkat?.tanggal_pengajuan} 
+                                            isActive={dataRkat?.tanggal_pengajuan != null} 
+                                            variant={timelineVariant}
+                                        />
+                                        <TimelineItem 
+                                            label={`Mengetahui ${dataRkat?.unit?.nama_unit || 'Unit'}`} 
+                                            date={dataRkat?.tanggal_disetujui_unit_kepala} 
+                                            isActive={dataRkat?.tanggal_disetujui_unit_kepala != null} 
+                                            variant={timelineVariant}
+                                        />
+                                        
+                                        {jalur === 'akademik' && (
+                                            <TimelineItem 
+                                                label="Mengetahui Dekan" 
+                                                date={dataRkat?.tanggal_disetujui_dekan_kepala} 
+                                                isActive={dataRkat?.tanggal_disetujui_dekan_kepala != null} 
+                                                variant={timelineVariant}
+                                            />
+                                        )}
+
+                                        <TimelineItem 
+                                            label="Validasi Tim Renbang" 
+                                            date={dataRkat?.tanggal_disetujui_tim_renbang} 
+                                            isActive={dataRkat?.tanggal_disetujui_tim_renbang != null} 
+                                            variant={timelineVariant}
+                                        />
+
+                                        {jalur === 'akademik' ? (
+                                            <>
+                                                <TimelineItem 
+                                                    label="Verifikasi WR 1" 
+                                                    date={dataRkat?.tanggal_disetujui_wr1} 
+                                                    isActive={dataRkat?.tanggal_disetujui_wr1 != null} 
+                                                    variant={timelineVariant}
+                                                />
+                                                <TimelineItem 
+                                                    label="Verifikasi WR 3" 
+                                                    date={dataRkat?.tanggal_disetujui_wr3} 
+                                                    isActive={dataRkat?.tanggal_disetujui_wr3 != null} 
+                                                    variant={timelineVariant}
+                                                />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <TimelineItem 
+                                                    label="Verifikasi WR 3" 
+                                                    date={dataRkat?.tanggal_disetujui_wr3} 
+                                                    isActive={dataRkat?.tanggal_disetujui_wr3 != null} 
+                                                    variant={timelineVariant}
+                                                />
+                                                <TimelineItem 
+                                                    label="Verifikasi WR 1" 
+                                                    date={dataRkat?.tanggal_disetujui_wr1} 
+                                                    isActive={dataRkat?.tanggal_disetujui_wr1 != null} 
+                                                    variant={timelineVariant}
+                                                />
+                                            </>
+                                        )}
+
+                                        <TimelineItem 
+                                            label="Disetujui WR 2 (Final)" 
+                                            date={dataRkat?.tanggal_disetujui_wr2} 
+                                            isActive={dataRkat?.tanggal_disetujui_wr2 != null} 
+                                            isFinal={true}
+                                            variant={timelineVariant}
+                                        />
+                                    </>
+                                );
+                            })()}
+                        </div>
+                    </div>
+ 
                     {/* Riwayat Revisi */}
                     {history.length > 0 && (
                         <div className="mt-8 bg-gray-50 dark:bg-gray-800/30 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
@@ -367,5 +457,33 @@ export default function Show({ auth, rkat = {}, history = [] }) {
                 </div>
             </div>
         </AuthenticatedLayout>
+    );
+}
+
+function TimelineItem({ label, date, isActive, isFinal = false, variant = 'success' }) {
+    let colorClass = 'bg-teal-500 border-teal-500';
+    let lineClass = 'bg-teal-500';
+    
+    if (variant === 'warning') {
+        colorClass = 'bg-yellow-500 border-yellow-500';
+        lineClass = 'bg-yellow-500';
+    } else if (variant === 'error') {
+        colorClass = 'bg-red-500 border-red-500';
+        lineClass = 'bg-red-500';
+    }
+
+    return (
+        <div className="flex gap-4 relative">
+            {!isFinal && (
+                <div className={`absolute top-6 bottom-[-16px] left-[11px] w-0.5 ${isActive ? lineClass : 'bg-gray-200 dark:bg-gray-700'}`}></div>
+            )}
+            <div className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center z-10 ${isActive ? colorClass : 'bg-white border-gray-300 dark:bg-gray-800 dark:border-gray-600'}`}>
+                {isActive && <div className="w-2 h-2 bg-white rounded-full"></div>}
+            </div>
+            <div className="-mt-1 pb-4">
+                <p className={`font-semibold text-sm ${isActive ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>{label}</p>
+                {date && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{new Date(date).toLocaleString('id-ID')}</p>}
+            </div>
+        </div>
     );
 }

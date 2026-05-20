@@ -13,27 +13,15 @@ class UserSeeder extends Seeder
     {
         $defaultPassword = Hash::make('password');
 
-        // --- 1. SUPER ADMIN (IT / Administrator) ---
-        User::create([
-            'nama_lengkap' => 'Administrator Sistem',
-            'username'     => 'admin',
-            'email'        => 'admin@tsu.ac.id',
-            'password'     => $defaultPassword, 
-            'peran'        => 'Admin',
-            'id_unit'      => null,
-            'no_telepon'   => '081234567890',
-            'is_aktif'     => true,
-        ]);
-
         // --- AMBIL ID UNIT DARI DATABASE (Hasil UnitSeeder) ---
-        $rektorat     = Unit::where('nama_unit', 'Rektorat')->first();
-        $ft           = Unit::where('nama_unit', 'Fakultas Teknik')->first();
-        $feb          = Unit::where('nama_unit', 'Fakultas Ekonomi & Bisnis')->first();
-        $if           = Unit::where('nama_unit', 'S1 Informatika')->first();
-        $sipil        = Unit::where('nama_unit', 'S1 Teknik Sipil')->first();
-        $manajemen    = Unit::where('nama_unit', 'S1 Manajemen')->first();
-        $biroKeu      = Unit::where('nama_unit', 'Biro Keuangan')->first();
-        $lppm         = Unit::where('nama_unit', 'LPPM (Lembaga Penelitian)')->first();
+        $rektorat     = Unit::query()->where('nama_unit', 'Rektorat')->first();
+        $ft           = Unit::query()->where('nama_unit', 'Fakultas Teknik')->first();
+        $feb          = Unit::query()->where('nama_unit', 'Fakultas Ekonomi & Bisnis')->first();
+        $if           = Unit::query()->where('nama_unit', 'S1 Informatika')->first();
+        $sipil        = Unit::query()->where('nama_unit', 'S1 Teknik Sipil')->first();
+        $manajemen    = Unit::query()->where('nama_unit', 'S1 Manajemen')->first();
+        $biroKeu      = Unit::query()->where('nama_unit', 'Biro Keuangan')->first();
+        $lppm         = Unit::query()->where('nama_unit', 'LPPM (Lembaga Penelitian)')->first();
 
         // --- 2. PIMPINAN TINGGI (REKTORAT) ---
         

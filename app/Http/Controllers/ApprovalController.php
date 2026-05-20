@@ -155,10 +155,27 @@ class ApprovalController extends Controller
                     default  => $rkatHeader->status_persetujuan,
                 };
 
-                // Update Status RKAT menggunakan Query Builder agar IDE paham argumennya (1 Query)
-                RkatHeader::query()->where('id_header', $rkatHeader->id_header)->update([
+                $updateData = [
                     'status_persetujuan' => $newStatus
-                ]);
+                ];
+
+                if ($aksi === 'Setuju') {
+                    $columnMap = [
+                        'Menunggu_Unit_Kepala'  => 'tanggal_disetujui_unit_kepala',
+                        'Menunggu_Dekan_Kepala' => 'tanggal_disetujui_dekan_kepala',
+                        'Menunggu_Tim_Renbang'  => 'tanggal_disetujui_tim_renbang',
+                        'Menunggu_WR1'          => 'tanggal_disetujui_wr1',
+                        'Menunggu_WR3'          => 'tanggal_disetujui_wr3',
+                        'Menunggu_WR2'          => 'tanggal_disetujui_wr2',
+                    ];
+                    $targetColumn = $columnMap[$oldStatus] ?? null;
+                    if ($targetColumn) {
+                        $updateData[$targetColumn] = now();
+                    }
+                }
+
+                // Update Status RKAT menggunakan Query Builder agar IDE paham argumennya (1 Query)
+                RkatHeader::query()->where('id_header', $rkatHeader->id_header)->update($updateData);
                 
                 Log::info("[Approval] Status Berubah: $oldStatus -> $newStatus");
 

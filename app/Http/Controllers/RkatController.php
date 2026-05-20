@@ -285,6 +285,12 @@ class RkatController extends Controller
             RkatHeader::query()->where('id_header', $rkatHeader->id_header)->update([
                 'status_persetujuan' => 'Menunggu_Unit_Kepala',
                 'tanggal_pengajuan' => now(),
+                'tanggal_disetujui_unit_kepala' => null,
+                'tanggal_disetujui_dekan_kepala' => null,
+                'tanggal_disetujui_tim_renbang' => null,
+                'tanggal_disetujui_wr1' => null,
+                'tanggal_disetujui_wr3' => null,
+                'tanggal_disetujui_wr2' => null,
             ]);
 
             Log::info('[RKAT] Dokumen Berhasil Diajukan', ['id' => $rkatHeader->id_header, 'status' => 'Menunggu_Unit_Kepala']);
@@ -406,7 +412,7 @@ class RkatController extends Controller
             // LOGIKA REVISI: Simpan versi lama jika status saat ini adalah Revisi
             if ($rkatHeader->status_persetujuan === 'Revisi') {
                 // 1. Kloning Header (Versi Archive)
-                $archiveHeader = $rkatHeader->replicate();
+                $archiveHeader = $rkatHeader->replicate(['uuid']);
                 $archiveHeader->nomor_dokumen = $rkatHeader->nomor_dokumen . '-REV-' . now()->format('YmdHis');
                 $archiveHeader->status_persetujuan = 'Revisi'; // Tetap catat sbg revisi
                 $archiveHeader->parent_id = $rkatHeader->id_header;
@@ -415,23 +421,30 @@ class RkatController extends Controller
                 // 2. Kloning Detail & Items
                 $oldDetail = $rkatHeader->rkatDetails()->first();
                 if ($oldDetail) {
-                    $archiveDetail = $oldDetail->replicate();
+                    $archiveDetail = $oldDetail->replicate(['uuid']);
                     $archiveDetail->id_header = $archiveHeader->id_header;
                     $archiveDetail->save();
 
                     // Kloning Indikator
                     foreach ($oldDetail->indikators as $ind) {
-                        $newInd = $ind->replicate();
+                        $newInd = $ind->replicate(['uuid']);
                         $newInd->id_rkat_detail = $archiveDetail->id_rkat_detail;
                         $newInd->save();
                     }
 
                     // Kloning RAB
                     foreach ($oldDetail->rabItems as $rab) {
-                        $newRab = $rab->replicate();
+                        $newRab = $rab->replicate(['uuid']);
                         $newRab->id_rkat_detail = $archiveDetail->id_rkat_detail;
                         $newRab->save();
                     }
+                }
+
+                // 3. Kloning Log Persetujuan (Catatan Revisi) ke arsip
+                foreach ($rkatHeader->logPersetujuans as $log) {
+                    $newLog = $log->replicate(['uuid']);
+                    $newLog->id_header = $archiveHeader->id_header;
+                    $newLog->save();
                 }
             }
 

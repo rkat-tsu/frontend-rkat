@@ -7,25 +7,25 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Comp
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
 
-export default function Index({ auth, items = {}, filters = {}, letters = [], flash = {} }) {
+export default function Index({ auth, items = {}, filters = {}, kelompoks = [], flash = {} }) {
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
-    const [letterFilter, setLetterFilter] = useState(filters.letter || '');
+    const [kelompokFilter, setKelompokFilter] = useState(filters.kelompok || '');
 
     const { isAdmin } = usePermission();
 
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            if (searchTerm !== (filters.search || '') || letterFilter !== (filters.letter || '')) {
+            if (searchTerm !== (filters.search || '') || kelompokFilter !== (filters.kelompok || '')) {
                 router.get(
                     route('rincian.index'),
-                    { search: searchTerm, letter: letterFilter },
+                    { search: searchTerm, kelompok: kelompokFilter },
                     { preserveState: true, preserveScroll: true, replace: true }
                 );
             }
         }, 300);
 
         return () => clearTimeout(timeoutId);
-    }, [searchTerm, letterFilter]);
+    }, [searchTerm, kelompokFilter]);
 
 
 
@@ -94,11 +94,11 @@ export default function Index({ auth, items = {}, filters = {}, letters = [], fl
                             <div className="flex items-center gap-3 w-full md:w-auto">
                                 <div className="w-full sm:w-40">
                                     <CustomSelect
-                                        value={letterFilter}
-                                        onChange={(e) => setLetterFilter(e.target.value)}
+                                        value={kelompokFilter}
+                                        onChange={(e) => setKelompokFilter(e.target.value)}
                                         options={[
-                                            { value: '', label: 'Semua Huruf' },
-                                            ...letters.map(l => ({ value: l, label: `Kelompok ${l}` }))
+                                            { value: '', label: 'Semua Kelompok' },
+                                            ...kelompoks.map(k => ({ value: k, label: k }))
                                         ]}
                                         className="h-11 rounded-lg border-transparent bg-gray-200 dark:bg-gray-700 dark:text-gray-300 focus:border-yellow-500 focus:bg-white focus:ring-0 text-sm"
                                     />
@@ -123,7 +123,7 @@ export default function Index({ auth, items = {}, filters = {}, letters = [], fl
                                         <th className="w-8 border-b border-gray-300 dark:border-gray-600"></th>
                                         <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Kode Item</th>
                                         <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Keterangan</th>
-                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Kelompok</th>
+                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Satuan</th>
                                         <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Pagu Anggaran</th>
                                         {isAdmin() && <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>}
                                     </tr>
@@ -154,7 +154,7 @@ export default function Index({ auth, items = {}, filters = {}, letters = [], fl
                                                     {item.nama_anggaran}
                                                 </td>
                                                 <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                    {item.kelompok_anggaran || item.satuan || '-'}
+                                                    {item.satuan}
                                                 </td>
                                                 <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 whitespace-nowrap text-right">
                                                     {formatRupiah(item.nominal)}

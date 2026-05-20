@@ -14,6 +14,7 @@ return new class extends Migration
         // 1. Tabel RKAT Header (Dokumen Utama)
         Schema::create('rkat_headers', function (Blueprint $table) {
             $table->id('id_header');
+            $table->uuid('uuid')->unique()->nullable();
             
             // Relasi logis ke tahun_anggarans
             $table->year('tahun_anggaran'); 
@@ -23,7 +24,7 @@ return new class extends Migration
             
             $table->unsignedBigInteger('diajukan_oleh'); 
             $table->foreign('diajukan_oleh')->references('id_user')->on('users'); 
-
+ 
             $table->string('nomor_dokumen', 50)->unique(); 
             
             $table->enum('status_persetujuan', [
@@ -33,6 +34,7 @@ return new class extends Migration
                 'Menunggu_Dekan_Kepala',
                 'Menunggu_Tim_Renbang',
                 'Revisi', 
+                'Revisi_History',
                 'Ditolak', 
                 'Disetujui_L1',
                 'Menunggu_WR1', 'Menunggu_WR2', 'Menunggu_WR3',
@@ -41,6 +43,12 @@ return new class extends Migration
             ])->default('Draft');
             
             $table->datetime('tanggal_pengajuan')->nullable();
+            $table->dateTime('tanggal_disetujui_unit_kepala')->nullable();
+            $table->dateTime('tanggal_disetujui_dekan_kepala')->nullable();
+            $table->dateTime('tanggal_disetujui_tim_renbang')->nullable();
+            $table->dateTime('tanggal_disetujui_wr1')->nullable();
+            $table->dateTime('tanggal_disetujui_wr3')->nullable();
+            $table->dateTime('tanggal_disetujui_wr2')->nullable();
             $table->text('catatan_revisi')->nullable();
             $table->decimal('total_anggaran', 15, 2)->default(0);
 
@@ -53,6 +61,7 @@ return new class extends Migration
         // 2. Tabel RKAT Detail (Kegiatan)
         Schema::create('rkat_details', function (Blueprint $table) {
             $table->id('id_rkat_detail');
+            $table->uuid('uuid')->unique()->nullable();
             
             $table->unsignedBigInteger('id_header');
             $table->foreign('id_header')->references('id_header')->on('rkat_headers')->onDelete('cascade');
@@ -97,6 +106,7 @@ return new class extends Migration
         // 3. Tabel Indikator Keberhasilan (Multi-row per Kegiatan)
         Schema::create('indikator_keberhasilans', function (Blueprint $table) {
             $table->id('id_indikator');
+            $table->uuid('uuid')->unique()->nullable();
             
             $table->unsignedBigInteger('id_rkat_detail');
             $table->foreign('id_rkat_detail')->references('id_rkat_detail')->on('rkat_details')->onDelete('cascade');
@@ -104,9 +114,9 @@ return new class extends Migration
             $table->string('nama_indikator');
             
             // Kolom Target & Capaian
-            $table->string('capai_2024')->nullable();
-            $table->string('target_2025')->nullable();
             $table->string('capai_2025')->nullable();
+            $table->string('target_2026')->nullable();
+            $table->string('capai_2026')->nullable();
             $table->string('target_2029')->nullable();
             $table->string('capai_2029')->nullable(); 
 
@@ -116,6 +126,7 @@ return new class extends Migration
         // 4. Tabel RAB Item (Rincian Biaya)
         Schema::create('rkat_rab_items', function (Blueprint $table) {
             $table->id('id');
+            $table->uuid('uuid')->unique()->nullable();
             
             $table->unsignedBigInteger('id_rkat_detail');
             $table->foreign('id_rkat_detail')->references('id_rkat_detail')->on('rkat_details')->onDelete('cascade');
@@ -134,6 +145,7 @@ return new class extends Migration
         // 5. Tabel Log Persetujuan
         Schema::create('log_persetujuans', function (Blueprint $table) {
             $table->id('id_log');
+            $table->uuid('uuid')->unique()->nullable();
             
             $table->unsignedBigInteger('id_header');
             $table->foreign('id_header')->references('id_header')->on('rkat_headers')->onDelete('cascade');

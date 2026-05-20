@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('unit', function (Blueprint $table) {
             $table->id('id_unit');
+            $table->uuid('uuid')->unique()->nullable();
             $table->string('kode_unit', 10)->unique();
             $table->string('nama_unit', 100);
             $table->enum('tipe_unit', [
@@ -33,17 +34,20 @@ return new class extends Migration
             $table->unsignedBigInteger('parent_id')->nullable();
             $table->string('no_telepon', 20)->nullable();
             $table->string('email')->nullable();
+            $table->softDeletes();
             $table->timestamps();
             $table->foreign('parent_id')->references('id_unit')->on('unit')->onDelete('cascade');
         });
 
         Schema::create('users', function (Blueprint $table) {
             $table->id('id_user');
+            $table->uuid('uuid')->unique()->nullable();
             $table->string('username', 50)->unique()->nullable();
+            $table->string('nik', 30)->nullable();
             $table->string('nama_lengkap', 100);
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
-            $table->enum('peran', ['Inputer', 'Kaprodi', 'Kepala_Unit', 'Dekan', 'WR_1', 'WR_2', 'WR_3', 'Rektor', 'Admin'])->index('idx_users_peran'); // Indeks ditambahkan
+            $table->enum('peran', ['Inputer', 'Kaprodi', 'Kepala_Unit', 'Dekan', 'Tim_Renbang', 'WR_1', 'WR_2', 'WR_3', 'Rektor', 'Admin'])->index('idx_users_peran'); // Indeks ditambahkan
             $table->unsignedBigInteger('id_unit')->nullable()->index('idx_users_id_unit');
             $table->boolean('is_aktif')->default(true);
             $table->string('password');

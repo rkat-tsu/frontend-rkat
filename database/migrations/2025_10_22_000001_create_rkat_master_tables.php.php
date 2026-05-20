@@ -15,10 +15,12 @@ return new class extends Migration
         if (!Schema::hasTable('tahun_anggarans')) {
             Schema::create('tahun_anggarans', function (Blueprint $table) {
                 $table->id('id_tahun'); 
+                $table->uuid('uuid')->unique()->nullable();
                 $table->year('tahun_anggaran')->unique();
                 $table->date('tanggal_mulai');
                 $table->date('tanggal_akhir');
                 $table->enum('status_rkat', ['Drafting', 'Submission', 'Approved', 'Closed'])->default('Drafting');
+                $table->softDeletes();
                 $table->timestamps();
             });
         }
@@ -27,6 +29,7 @@ return new class extends Migration
         if (!Schema::hasTable('unit')) {
             Schema::create('unit', function (Blueprint $table) {
                 $table->id('id_unit');
+                $table->uuid('uuid')->unique()->nullable();
                 $table->string('kode_unit', 20)->unique(); 
                 $table->string('nama_unit', 100);
                 $table->enum('tipe_unit', ['Fakultas', 'Prodi', 'Unit', 'Lainnya', 'Atasan', 'Admin']);
@@ -39,6 +42,7 @@ return new class extends Migration
                 
                 $table->string('no_telepon', 20)->nullable();
                 $table->string('email', 100)->nullable();
+                $table->softDeletes();
                 $table->timestamps();
             });
         }
@@ -47,11 +51,13 @@ return new class extends Migration
         if (!Schema::hasTable('rincian_anggarans')) {
             Schema::create('rincian_anggarans', function (Blueprint $table) {
                 $table->id('id_rincian_anggaran');
+                $table->uuid('uuid')->unique()->nullable();
                 $table->string('kode_anggaran', 20)->unique(); 
                 $table->string('nama_anggaran', 150);
                 $table->string('satuan', 50)->nullable();
                 $table->decimal('nominal', 15, 2)->default(0);
                 $table->string('kelompok_anggaran', 50)->nullable();
+                $table->softDeletes();
                 $table->timestamps();
             });
         }
@@ -60,7 +66,9 @@ return new class extends Migration
         if (!Schema::hasTable('ikus')) {
             Schema::create('ikus', function (Blueprint $table) {
                 $table->id('id_iku');
+                $table->uuid('uuid')->unique()->nullable();
                 $table->string('nama_iku'); 
+                $table->softDeletes();
                 $table->timestamps();
             });
         }
@@ -69,11 +77,13 @@ return new class extends Migration
         if (!Schema::hasTable('ikks')) {
             Schema::create('ikks', function (Blueprint $table) {
                 $table->id('id_ikk');
+                $table->uuid('uuid')->unique()->nullable();
                 
                 $table->unsignedBigInteger('id_iku');
                 $table->foreign('id_iku')->references('id_iku')->on('ikus')->onDelete('cascade');
                 
                 $table->string('nama_ikk'); 
+                $table->softDeletes();
                 $table->timestamps();
             });
         }

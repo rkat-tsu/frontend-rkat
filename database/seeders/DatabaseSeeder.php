@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
         );
         $AdminEmail = 'admin@gmail.com';
 
-        if (User::where('email', $AdminEmail)->doesntExist()) {
+        if (User::query()->where('email', $AdminEmail)->doesntExist()) {
             $userData = [
                 // Kredensial Login
                 'username' => 'superadmin',

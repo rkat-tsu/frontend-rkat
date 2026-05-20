@@ -62,7 +62,7 @@ class UnitSeeder extends Seeder
             ['TSU.24', 'PIC-UKM-CIT', 'UKM', 'TSU.44'],
             ['TSU.25', 'PIC-UKM-English Club', 'UKM', 'TSU.44'],
             ['TSU.26', 'PIC-UKM-FORVOL', 'UKM', 'TSU.44'],
-            ['TSU.27', 'PIC-UKM-KORTEGAM', 'UKM', 'TSU.44'], // Typo di gambar 'KORTEGA' disesuaikan
+            ['TSU.27', 'PIC-UKM-KORTEGAM', 'UKM', 'TSU.44'], 
             ['TSU.28', 'PIC-UKM-KSR', 'UKM', 'TSU.44'],
             ['TSU.29', 'PIC-UKM-KWU-KSPM', 'UKM', 'TSU.44'],
             ['TSU.30', 'PIC-UKM-LDK', 'UKM', 'TSU.44'],
@@ -130,10 +130,10 @@ class UnitSeeder extends Seeder
             $parentCode = $item[3];
 
             // Cari ID milik Parent berdasarkan Kodenya
-            $parent = Unit::where('kode_unit', $parentCode)->first();
+            $parent = Unit::query()->where('kode_unit', $parentCode)->first();
 
             if ($parent) {
-                Unit::where('kode_unit', $childCode)->update([
+                Unit::query()->where('kode_unit', $childCode)->update([
                     'parent_id' => $parent->id_unit
                 ]);
             }

@@ -130,7 +130,7 @@ export default function Create({ auth }) {
                                     <input
                                         type="text"
                                         id="kelompok_anggaran"
-                                        placeholder="Contoh: pcs, bph, dll"
+                                        placeholder="Contoh: Kelompok A, B, C, dll"
                                         value={data.kelompok_anggaran}
                                         onChange={(e) => setData('kelompok_anggaran', e.target.value)}
                                         className={`w-full bg-gray-50 border ${errors.kelompok_anggaran ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}

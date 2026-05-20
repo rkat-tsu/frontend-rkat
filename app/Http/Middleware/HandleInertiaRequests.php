@@ -29,10 +29,26 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $canApprovePencairan = false;
+        
+        if ($user) {
+            $user->loadMissing('unit');
+            $canApprovePencairan = $user->peran === 'Admin' || 
+                $user->peran === 'WR_2' || 
+                ($user->unit && $user->isUnitHead() && (
+                    stripos($user->unit->nama_unit, 'BAAK') !== false ||
+                    stripos($user->unit->nama_unit, 'BAUK') !== false ||
+                    $user->unit->children()->exists()
+                ));
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user ? array_merge($user->toArray(), [
+                    'can_approve_pencairan' => $canApprovePencairan
+                ]) : null,
             ],
             'flash' => [
                 'success' => $request->session()->get('success'),

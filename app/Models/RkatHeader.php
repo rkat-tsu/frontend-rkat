@@ -22,12 +22,24 @@ class RkatHeader extends Model
         'nomor_dokumen',
         'status_persetujuan',
         'tanggal_pengajuan',
+        'tanggal_disetujui_unit_kepala',
+        'tanggal_disetujui_dekan_kepala',
+        'tanggal_disetujui_tim_renbang',
+        'tanggal_disetujui_wr1',
+        'tanggal_disetujui_wr3',
+        'tanggal_disetujui_wr2',
         'total_anggaran',
         'parent_id',
     ];
 
     protected $casts = [
         'tanggal_pengajuan' => 'datetime',
+        'tanggal_disetujui_unit_kepala' => 'datetime',
+        'tanggal_disetujui_dekan_kepala' => 'datetime',
+        'tanggal_disetujui_tim_renbang' => 'datetime',
+        'tanggal_disetujui_wr1' => 'datetime',
+        'tanggal_disetujui_wr3' => 'datetime',
+        'tanggal_disetujui_wr2' => 'datetime',
     ];
 
     protected static function boot()
