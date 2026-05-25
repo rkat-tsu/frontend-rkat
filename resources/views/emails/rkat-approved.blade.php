@@ -34,7 +34,7 @@
     <div class="wrapper">
         <div class="container">
             <div class="header">
-                <img src="{{ $message->embed(public_path('img/logo-full-tsu.svg')) }}" alt="TSU Logo">
+                <img src="{{ asset('img/logo-full-tsu.svg') }}" alt="TSU Logo">
             </div>
             
             <div class="content-layer">
@@ -79,7 +79,7 @@
                     </table>
                     
                     <div class="btn-wrapper">
-                        <a href="{{ route('rkat.show', $rkatHeader->uuid) }}" class="btn">Lihat Detail Pengajuan</a>
+                        <a href="{{ route('daftar-ajuan.show', $rkatHeader->id_header) }}" class="btn">Lihat Detail Pengajuan</a>
                     </div>
                     
                     <p style="font-size: 13px; color: #64748b;">Silakan pantau status pengajuan Anda secara berkala melalui dashboard sistem.</p>

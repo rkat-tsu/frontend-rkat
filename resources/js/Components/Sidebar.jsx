@@ -4,7 +4,7 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import {
     LayoutDashboard, FileText, Check, LayoutList, Monitor, BookPlus, BookOpenText,
     CalendarCog, ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight,
-    Users, Settings, Building2, CreditCard
+    Users, Settings, Building2, CreditCard, FolderOpen, Database, Wallet
 } from 'lucide-react';
 import {
     Tooltip,
@@ -17,24 +17,47 @@ import { usePermission } from '@/hooks/usePermission';
 // MENU BAHASA INDONESIA
 const navItems = [
     { name: 'Dasbor', href: '/dashboard', icon: LayoutDashboard, activePath: '/dashboard' },
-    { name: 'RKAT', href: '/rkat', icon: LayoutList, activePath: '/rkat' },
-    { name: 'Daftar Ajuan RKA', href: '/daftar-ajuan', icon: FileText, activePath: '/daftar-ajuan' },
-    { name: 'Standar Biaya Operasional', href: '/rincian-anggaran', icon: BookOpenText, activePath: '/rincian-anggaran' },
-    { name: 'Indikator Kinerja Utama', href: '/iku', icon: BookPlus, activePath: '/iku' },
-    { name: 'Persetujuan RKAT', href: '/approval', icon: Check, activePath: '/approval', hideForInputer: true },
-    { name: 'Pencairan Dana', href: '/pencairan', icon: CreditCard, activePath: '/pencairan' },
-    { name: 'Persetujuan Pencairan', href: '/pencairan/approval', icon: Check, activePath: '/pencairan/approval', hideForInputer: true },
     { name: 'Monitoring', href: '/monitoring', icon: Monitor, activePath: '/monitoring' },
     {
-        name: 'Daftar Unit Kerja',
-        icon: Building2,
-        activePath: '/unit', // Trigger aktif jika anak-anaknya aktif
+        name: 'Manajemen RKA',
+        icon: FolderOpen,
+        activePath: '/rkat',
         children: [
-            { name: 'Pengaturan Akun', href: '/user', icon: Settings, activePath: '/user', adminOnly: true },
-            { name: 'Daftar Unit Kerja', href: '/unit', icon: Users, activePath: '/unit' },
+            { name: 'RKAT', href: '/rkat', icon: LayoutList, activePath: '/rkat' },
+            { name: 'Daftar Ajuan RKA', href: '/daftar-ajuan', icon: FileText, activePath: '/daftar-ajuan' },
+            { name: 'Persetujuan RKAT', href: '/approval', icon: Check, activePath: '/approval', hideForInputer: true },
         ],
     },
-    { name: 'Tahun Anggaran', href: '/tahun', icon: CalendarCog, activePath: '/tahun', adminOnly: true }
+    {
+        name: 'Keuangan',
+        icon: Wallet,
+        activePath: '/pencairan',
+        children: [
+            { name: 'Pencairan Dana', href: '/pencairan', icon: CreditCard, activePath: '/pencairan' },
+            { name: 'Persetujuan Pencairan', href: '/pencairan/approval', icon: Check, activePath: '/pencairan/approval', hideForInputer: true },
+        ],
+    },
+    {
+        name: 'Data Master',
+        icon: Database,
+        activePath: '/master',
+        children: [
+            { name: 'Standar Biaya Operasional', href: '/rincian-anggaran', icon: BookOpenText, activePath: '/rincian-anggaran' },
+            { name: 'Indikator Kinerja Utama', href: '/iku', icon: BookPlus, activePath: '/iku' },
+            { name: 'Daftar Unit Kerja', href: '/unit', icon: Building2, activePath: '/unit' }
+        ],
+    },
+    {
+        name: 'Pengaturan',
+        icon: Settings,
+        activePath: '/pengaturan',
+        adminOnly: true,
+        children: [
+            { name: 'Tahun Anggaran', href: '/tahun', icon: CalendarCog, activePath: '/tahun', adminOnly: true },
+            { name: 'Pengaturan Akun', href: '/user', icon: Users, activePath: '/user', adminOnly: true },
+            { name: 'Alur Persetujuan', href: '/approval-path', icon: Check, activePath: '/approval-path', adminOnly: true },
+        ],
+    }
 ];
 
 function Sidebar({ auth, isMinimized, toggleMinimize }) {
@@ -53,16 +76,32 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
         const hasChildren = item.children && item.children.length > 0;
 
         // Cek status aktif
-        const isActive = item.href
-            ? currentPath.startsWith(item.activePath) && item.activePath !== '/'
-            : hasChildren && item.children.some(ch => currentPath.startsWith(ch.activePath));
+        let isActive = false;
+        if (item.href) {
+            isActive = currentPath === item.activePath || currentPath.startsWith(item.activePath + '/');
+            if (item.activePath === '/pencairan' && currentPath.startsWith('/pencairan/approval')) {
+                isActive = false;
+            }
+        } else if (hasChildren) {
+            isActive = item.children.some(ch => {
+                let childActive = currentPath === ch.activePath || currentPath.startsWith(ch.activePath + '/');
+                if (ch.activePath === '/pencairan' && currentPath.startsWith('/pencairan/approval')) {
+                    childActive = false;
+                }
+                return childActive;
+            });
+        }
 
         // Logic buka/tutup otomatis
         const isOpen = openMenus[item.name] || (isActive && !openMenus.hasOwnProperty(item.name) && !isMinimized);
 
         const baseClasses = "rounded-xl flex items-center transition-all duration-200 ease-in-out w-full whitespace-nowrap overflow-hidden relative cursor-pointer outline-none focus:outline-none";
         const padding = isChild ? 'pl-11 pr-3 py-2 text-sm' : 'px-4 py-3 my-1';
-        const activeClasses = 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 font-bold shadow-sm ring-1 ring-teal-100 dark:ring-teal-800';
+        
+        const activeClasses = isChild
+            ? 'bg-teal-50/50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 font-semibold'
+            : 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 font-bold shadow-sm ring-1 ring-teal-100 dark:ring-teal-800';
+            
         const inactiveClasses = "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200";
 
         const content = (
@@ -106,7 +145,7 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
                         {content}
                     </button>
                     {isOpen && !isMinimized && (
-                        <div className="mt-1 space-y-1 relative before:absolute before:left-6 before:top-0 before:bottom-0 before:w-px before:bg-gray-200 dark:before:bg-gray-700 animate-in slide-in-from-top-1">
+                        <div className="mt-1 space-y-1 relative before:absolute before:left-6 before:top-0 before:bottom-0 before:w-px before:bg-gray-200 dark:before:bg-gray-700">
                             {item.children.map((child, idx) => {
                                 if (child.adminOnly && !isAdmin()) return null;
                                 return <NavItem key={idx} item={child} isChild={true} />;
@@ -142,11 +181,11 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
             <div className={`fixed inset-0 bg-gray-900/50 dark:bg-gray-900/50 backdrop-blur-sm z-[90] sm:hidden transition-opacity ${!isMinimized ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={toggleMinimize}></div>
 
             {/* Sidebar Container */}
-            <div className={`fixed top-0 left-0 h-screen bg-white dark:bg-gray-900 shadow-lg border-r border-gray-100 dark:border-gray-800 transition-all duration-300 z-[100] ${isMinimized ? 'sm:w-20 w-0' : 'w-64'}`}>
+            <div className={`fixed top-0 left-0 h-screen bg-white dark:bg-gray-900 shadow-lg z-[100] flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${isMinimized ? 'w-0 sm:w-20 border-r-0 sm:border-r sm:border-gray-100 dark:sm:border-gray-800' : 'w-64 border-r border-gray-100 dark:border-gray-800'}`}>
                 {/* Header */}
                 <div className={`flex items-center ${isMinimized ? 'justify-center flex-col gap-2' : 'justify-between'} h-20 px-4 mb-2 mt-2 relative`}>
                     <Link href="/dashboard" className="flex items-center gap-2 overflow-hidden">
-                        <ApplicationLogo className={`text-teal-600 transition-all ${isMinimized ? 'h-8 w-8' : 'h-9 w-auto'}`} />
+                        <ApplicationLogo className={`text-teal-600 transition-all duration-300 ease-in-out ${isMinimized ? 'h-8 w-8' : 'h-9 w-auto'}`} />
                         {!isMinimized && (
                             <div className="flex flex-col">
                                 <span className="font-bold text-lg text-gray-800 dark:text-white">ReKAT</span>

@@ -42,7 +42,7 @@ export default function Index({
             .sort((a, b) => b.total_anggaran - a.total_anggaran)
             .slice(0, 10) // Top 10 Unit dengan Anggaran Tertinggi
             .map(item => ({
-                unit: item.kode_unit || item.nama_unit.substring(0, 10),
+                unit: item.nama_unit,
                 anggaran: item.total_anggaran,
             }));
     }, [data]);
@@ -133,8 +133,20 @@ export default function Index({
                                     <BarChart data={chartDataBudget} margin={{ top: 0, right: 0, left: 0, bottom: 20 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-gray-200 dark:stroke-gray-700" />
                                         <XAxis dataKey="unit" tickLine={false} axisLine={false} tick={{fill: '#9ca3af', fontSize: 11}} />
-                                        <YAxis tickFormatter={(val) => `Rp${(val / 1000000).toFixed(0)}M`} tickLine={false} axisLine={false} tick={{fill: '#9ca3af', fontSize: 11}} width={60} />
-                                        <ChartTooltip content={<ChartTooltipContent />} />
+                                        <YAxis tickFormatter={(val) => `Rp ${(val / 1000000).toFixed(0)}Jt`} tickLine={false} axisLine={false} tick={{fill: '#9ca3af', fontSize: 11}} width={70} />
+                                        <ChartTooltip 
+                                            content={
+                                                <ChartTooltipContent 
+                                                    formatter={(value) => (
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-2.5 h-2.5 rounded-[2px] bg-indigo-500"></div>
+                                                            <span className="text-gray-500 dark:text-gray-400">Total Anggaran</span>
+                                                            <span className="font-mono font-medium text-gray-900 dark:text-gray-50">{new Intl.NumberFormat('id-ID').format(value)}</span>
+                                                        </div>
+                                                    )}
+                                                />
+                                            } 
+                                        />
                                         <Bar dataKey="anggaran" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={50} />
                                     </BarChart>
                                 </ChartContainer>

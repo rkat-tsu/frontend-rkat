@@ -1,240 +1,144 @@
 import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { ArrowLeft, FileDown, Calendar, MapPin, Target, Wallet, Send, AlertTriangle } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
+import { ArrowLeft, CheckCircle2, Clock, XCircle, AlertCircle, Printer, Send } from 'lucide-react';
+import PrimaryButton from '@/Components/PrimaryButton';
+import { toast } from 'sonner';
 
-const formatCurrency = (amount) => {
-    if (!amount) return 'Rp 0';
-    try {
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0
-        }).format(amount);
-    } catch (e) {
-        return 'Rp ' + amount;
-    }
-};
 export default function Show({ auth, pencairan }) {
-    const detail = pencairan.rkat_header?.rkat_details?.[0];
+    const rkat = pencairan.rkat_header;
+    const items = pencairan.items;
+
+    const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+
+    const getStatusBadge = (status) => {
+        const badges = {
+            'Draft': 'bg-gray-100 text-gray-800 border-gray-200',
+            'Menunggu_BAAK': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+            'Menunggu_Unit_Menaungi': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+            'Menunggu_BAUK': 'bg-blue-100 text-blue-800 border-blue-200',
+            'Menunggu_WR2': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+            'Disetujui_Final': 'bg-green-100 text-green-800 border-green-200',
+            'Revisi': 'bg-orange-100 text-orange-800 border-orange-200',
+            'Ditolak': 'bg-red-100 text-red-800 border-red-200',
+        };
+        return badges[status] || 'bg-gray-100 text-gray-800 border-gray-200';
+    };
+
+    const totalCair = items.reduce((sum, item) => sum + parseFloat(item.sub_total_pencairan), 0);
+
+    const handleSubmit = () => {
+        if (!confirm('Apakah Anda yakin ingin mengajukan pencairan ini?')) return;
+        const toastId = toast.loading('Sedang mengajukan...');
+        router.post(route('pencairan.submit', pencairan.uuid), {}, {
+            onSuccess: () => toast.success('Berhasil diajukan', { id: toastId }),
+            onError: () => toast.error('Gagal mengajukan', { id: toastId })
+        });
+    };
 
     return (
-        <AuthenticatedLayout
-            user={auth.user}
-            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Detail Pencairan Dana</h2>}
-        >
-            <Head title={`Pencairan - ${pencairan.rkat_header?.nomor_dokumen}`} />
+        <AuthenticatedLayout user={auth.user} header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Detail Pencairan Dana</h2>}>
+            <Head title={`Detail Pencairan - ${rkat.nomor_dokumen}`} />
 
             <div className="py-6">
-                <div className="max-w-5xl mx-auto sm:px-6 lg:px-8">
-                    
-                    <div className="mb-4 flex items-center justify-between">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <Link href={route('pencairan.index')} className="text-teal-600 hover:text-teal-700 flex items-center gap-2 font-medium">
-                            <ArrowLeft size={16} /> Kembali
+                            <ArrowLeft size={16} /> Kembali ke Daftar
                         </Link>
-
-                        <a 
-                            href={route('pencairan.export', pencairan.uuid)}
-                            target="_blank"
-                            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-lg font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white transition"
-                        >
-                            <FileDown size={16} /> Export PDF
-                        </a>
+                        
+                        <div className="flex gap-2">
+                            {pencairan.status_pencairan === 'Disetujui_Final' && (
+                                <a href={route('pencairan.export-pdf', pencairan.uuid)} target="_blank" className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50">
+                                    <Printer size={16} /> Export PDF
+                                </a>
+                            )}
+                            {(pencairan.status_pencairan === 'Draft' || pencairan.status_pencairan === 'Revisi') && auth.user.id_user === pencairan.diajukan_oleh && (
+                                <PrimaryButton onClick={handleSubmit} className="bg-teal-600 hover:bg-teal-700">
+                                    <Send size={16} className="mr-2" /> Ajukan Pencairan
+                                </PrimaryButton>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Catatan Revisi / Tolak */}
-                    {pencairan.catatan && (pencairan.status_pencairan === 'Revisi' || pencairan.status_pencairan === 'Ditolak') && (
-                        <div className="mb-6 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-850 rounded-lg p-5 shadow-sm">
-                            <h3 className="flex items-center gap-2 text-amber-800 dark:text-amber-400 font-bold text-lg mb-3">
-                                <AlertTriangle size={20} />
-                                Catatan Revisi / Penolakan Pencairan
-                            </h3>
-                            <div className="bg-white dark:bg-gray-800 p-4 rounded-md border border-amber-100 dark:border-amber-900/50 shadow-sm">
-                                <p className="text-gray-700 dark:text-gray-300 text-sm italic border-l-4 border-amber-300 pl-3 py-1">
-                                    "{pencairan.catatan}"
-                                </p>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="bg-white dark:bg-gray-800 shadow sm:rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
-                        {/* Header Banner */}
-                        <div className="px-6 py-5 bg-gradient-to-r from-teal-500 to-teal-700 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                            <div>
-                                <h3 className="text-xl font-bold mb-1">Pengajuan Pencairan Dana</h3>
-                                <p className="text-teal-100 opacity-90">{pencairan.rkat_header?.nomor_dokumen} • Unit: {pencairan.rkat_header?.unit?.nama_unit}</p>
-                            </div>
-                            <span className="px-3 py-1 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full text-sm font-bold shadow-sm whitespace-nowrap">
-                                Status: {pencairan.status_pencairan.replace(/_/g, ' ')}
-                            </span>
-                        </div>
-
-                        {/* Content Area */}
-                        <div className="p-6 md:p-8 space-y-8">
-                            
-                            {/* TOR Section */}
-                            <section>
-                                <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-                                    <FileDown className="text-teal-500" size={20} />
-                                    Isi TOR / Detail Kegiatan
-                                </h4>
-
-                                {detail ? (
-                                    <div className="grid grid-cols-1 gap-6 text-sm">
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-1 gap-x-4">
-                                            <div className="text-gray-500 dark:text-gray-400 font-medium">Judul Kegiatan</div>
-                                            <div className="md:col-span-2 text-gray-900 dark:text-gray-200 font-semibold text-base">{detail.judul_kegiatan}</div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-1 gap-x-4">
-                                            <div className="text-gray-500 dark:text-gray-400 font-medium">Deskripsi Kegiatan</div>
-                                            <div className="md:col-span-2 text-gray-900 dark:text-gray-200">{detail.deskripsi_kegiatan}</div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-1 gap-x-4">
-                                            <div className="text-gray-500 dark:text-gray-400 font-medium">Latar Belakang</div>
-                                            <div className="md:col-span-2 text-gray-900 dark:text-gray-200 whitespace-pre-wrap">{detail.latar_belakang}</div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-1 gap-x-4">
-                                            <div className="text-gray-500 dark:text-gray-400 font-medium">Rasional</div>
-                                            <div className="md:col-span-2 text-gray-900 dark:text-gray-200 whitespace-pre-wrap">{detail.rasional}</div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-1 gap-x-4">
-                                            <div className="text-gray-500 dark:text-gray-400 font-medium">Tujuan</div>
-                                            <div className="md:col-span-2 text-gray-900 dark:text-gray-200 whitespace-pre-wrap">{detail.tujuan}</div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-1 gap-x-4">
-                                            <div className="text-gray-500 dark:text-gray-400 font-medium">Mekanisme</div>
-                                            <div className="md:col-span-2 text-gray-900 dark:text-gray-200 whitespace-pre-wrap">{detail.mekanisme}</div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
-                                            <div>
-                                                <div className="text-gray-500 dark:text-gray-400 font-medium mb-1 flex items-center gap-1"><Calendar size={14}/> Jadwal Pelaksanaan</div>
-                                                <div className="text-gray-900 dark:text-gray-200 font-medium">
-                                                    {new Date(detail.jadwal_pelaksanaan_mulai).toLocaleDateString('id-ID')} - {new Date(detail.jadwal_pelaksanaan_akhir).toLocaleDateString('id-ID')}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <div className="text-gray-500 dark:text-gray-400 font-medium mb-1 flex items-center gap-1"><MapPin size={14}/> Lokasi</div>
-                                                <div className="text-gray-900 dark:text-gray-200 font-medium">{detail.lokasi_pelaksanaan}</div>
-                                            </div>
-                                            <div>
-                                                <div className="text-gray-500 dark:text-gray-400 font-medium mb-1 flex items-center gap-1"><Target size={14}/> Target / Luaran</div>
-                                                <div className="text-gray-900 dark:text-gray-200 font-medium">{detail.target}</div>
-                                            </div>
-                                            <div>
-                                                <div className="text-gray-500 dark:text-gray-400 font-medium mb-1 flex items-center gap-1"><Wallet size={14}/> Total Anggaran</div>
-                                                <div className="font-bold text-lg text-teal-600 dark:text-teal-400">
-                                                    {formatCurrency(pencairan.rkat_header?.total_anggaran)}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-1 gap-x-4">
-                                            <div className="text-gray-500 dark:text-gray-400 font-medium">Jenis Pencairan</div>
-                                            <div className="md:col-span-2 text-gray-900 dark:text-gray-200">
-                                                <span className="font-semibold">{detail.jenis_pencairan}</span>
-                                                {detail.jenis_pencairan === 'Bank' && (
-                                                    <ul className="mt-2 text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                                                        <li>Bank: {detail.nama_bank}</li>
-                                                        <li>Rekening: {detail.nomor_rekening}</li>
-                                                        <li>A.N: {detail.atas_nama}</li>
-                                                    </ul>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="text-gray-500 italic">Data Detail RKAT tidak ditemukan.</div>
-                                )}
-                            </section>
-
-                            <section>
-                                <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-                                    Status Persetujuan
-                                </h4>
-                                
-                                <div className="space-y-4">
-                                    {(() => {
-                                        let timelineVariant = 'success';
-                                        if (pencairan.status_pencairan === 'Revisi') timelineVariant = 'warning';
-                                        if (pencairan.status_pencairan === 'Ditolak') timelineVariant = 'error';
-
-                                        return (
-                                            <>
-                                                <TimelineItem 
-                                                    label="Pengajuan" 
-                                                    date={pencairan.tanggal_pengajuan} 
-                                                    isActive={pencairan.tanggal_pengajuan != null} 
-                                                    variant={timelineVariant}
-                                                />
-                                                <TimelineItem 
-                                                    label="Validasi BAAK" 
-                                                    date={pencairan.tanggal_divalidasi_baak} 
-                                                    isActive={pencairan.tanggal_divalidasi_baak != null} 
-                                                    variant={timelineVariant}
-                                                />
-                                                <TimelineItem 
-                                                    label={`Mengetahui ${pencairan.rkat_header?.unit?.nama_unit || 'Unit'}`} 
-                                                    date={pencairan.tanggal_diketahui_unit} 
-                                                    isActive={pencairan.tanggal_diketahui_unit != null} 
-                                                    variant={timelineVariant}
-                                                />
-                                                <TimelineItem 
-                                                    label="Verifikasi BAUK" 
-                                                    date={pencairan.tanggal_diverifikasi_bauk} 
-                                                    isActive={pencairan.tanggal_diverifikasi_bauk != null} 
-                                                    variant={timelineVariant}
-                                                />
-                                                <TimelineItem 
-                                                    label="Disetujui WR 2" 
-                                                    date={pencairan.tanggal_disetujui_wr2} 
-                                                    isActive={pencairan.tanggal_disetujui_wr2 != null} 
-                                                    isFinal={true}
-                                                    variant={timelineVariant}
-                                                />
-                                            </>
-                                        );
-                                    })()}
+                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Informasi Pencairan</h3>
+                                    <p className="text-sm text-gray-500 mt-1">Nama/Keterangan: <span className="font-semibold">{pencairan.nama_pencairan || 'Tidak ada'}</span></p>
                                 </div>
-                            </section>
+                                <span className={`px-3 py-1 rounded-full border text-sm font-semibold ${getStatusBadge(pencairan.status_pencairan)}`}>
+                                    {pencairan.status_pencairan.replace(/_/g, ' ')}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-gray-50 dark:bg-gray-800/50">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">RKAT Referensi</p>
+                                    <p className="font-medium text-gray-900 dark:text-gray-100">{rkat.nomor_dokumen}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Unit Pengaju</p>
+                                    <p className="font-medium text-gray-900 dark:text-gray-100">{rkat.unit?.nama_unit}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Tanggal Pengajuan</p>
+                                    <p className="font-medium text-gray-900 dark:text-gray-100">{pencairan.tanggal_pengajuan ? new Date(pencairan.tanggal_pengajuan).toLocaleDateString('id-ID', {day: 'numeric', month:'long', year:'numeric'}) : '-'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Total Pencairan Tahap Ini</p>
+                                    <p className="font-bold text-teal-600 dark:text-teal-400 text-lg">{formatCurrency(totalCair)}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {pencairan.catatan && (
+                            <div className="p-4 m-6 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                                <AlertCircle className="text-red-600 shrink-0 mt-0.5" size={20} />
+                                <div>
+                                    <p className="font-semibold text-red-800">Catatan Revisi / Penolakan</p>
+                                    <p className="text-red-700 text-sm mt-1">{pencairan.catatan}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="p-6">
+                            <h4 className="font-bold text-gray-900 dark:text-white mb-4">Rincian Item yang Dicairkan</h4>
+                            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                                    <thead className="bg-gray-50 dark:bg-gray-700">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase">Item RAB</th>
+                                            <th className="px-4 py-3 text-right font-medium text-gray-500 uppercase">Vol</th>
+                                            <th className="px-4 py-3 text-right font-medium text-gray-500 uppercase">Harga Satuan</th>
+                                            <th className="px-4 py-3 text-right font-medium text-gray-500 uppercase">Sub Total Cair</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                        {items.map((item, idx) => (
+                                            <tr key={idx}>
+                                                <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{item.rkat_rab_item?.deskripsi_item}</td>
+                                                <td className="px-4 py-3 text-right">{item.volume_pencairan}</td>
+                                                <td className="px-4 py-3 text-right">{formatCurrency(item.nominal_pencairan)}</td>
+                                                <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-gray-100">{formatCurrency(item.sub_total_pencairan)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                    <tfoot className="bg-gray-50 dark:bg-gray-700/50">
+                                        <tr>
+                                            <td colSpan="3" className="px-4 py-3 text-right font-bold text-gray-700">Total:</td>
+                                            <td className="px-4 py-3 text-right font-bold text-teal-600 text-base">{formatCurrency(totalCair)}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </AuthenticatedLayout>
-    );
-}
-
-function TimelineItem({ label, date, isActive, isFinal = false, variant = 'success' }) {
-    let colorClass = 'bg-teal-500 border-teal-500';
-    let lineClass = 'bg-teal-500';
-    
-    if (variant === 'warning') {
-        colorClass = 'bg-yellow-500 border-yellow-500';
-        lineClass = 'bg-yellow-500';
-    } else if (variant === 'error') {
-        colorClass = 'bg-red-500 border-red-500';
-        lineClass = 'bg-red-500';
-    }
-
-    return (
-        <div className="flex gap-4 relative">
-            {!isFinal && (
-                <div className={`absolute top-6 bottom-[-16px] left-[11px] w-0.5 ${isActive ? lineClass : 'bg-gray-200 dark:bg-gray-700'}`}></div>
-            )}
-            <div className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center z-10 ${isActive ? colorClass : 'bg-white border-gray-300 dark:bg-gray-800 dark:border-gray-600'}`}>
-                {isActive && <div className="w-2 h-2 bg-white rounded-full"></div>}
-            </div>
-            <div className="-mt-1 pb-4">
-                <p className={`font-semibold text-sm ${isActive ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>{label}</p>
-                {date && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{new Date(date).toLocaleString('id-ID')}</p>}
-            </div>
-        </div>
     );
 }

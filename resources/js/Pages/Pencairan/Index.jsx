@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Plus, Search, Send, Edit2, FileDown, Eye } from 'lucide-react';
+import CustomSelect from '@/Components/CustomSelect';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
@@ -15,14 +16,17 @@ const formatDate = (value) => {
     }
 };
 
-export default function Index({ auth, pencairans, filters, flash = {} }) {
+export default function Index({ auth, pencairans, filters, tahunAnggarans, units = [], flash = {}, statuses = [] }) {
     const { isAdmin } = usePermission();
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
+    const [tahun, setTahun] = useState(filters?.tahun || '');
+    const [status, setStatus] = useState(filters?.status || '');
+    const [unitId, setUnitId] = useState(filters?.unit_id || '');
 
-    const applyFilters = (newSearch) => {
+    const applyFilters = (newSearch, newTahun, newStatus, newUnitId) => {
         router.get(
             route('pencairan.index'),
-            { search: newSearch },
+            { search: newSearch, tahun: newTahun, status: newStatus, unit_id: newUnitId },
             { preserveState: true, preserveScroll: true, replace: true }
         );
     };
@@ -34,12 +38,30 @@ export default function Index({ auth, pencairans, filters, flash = {} }) {
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             if (searchTerm !== (filters?.search || '')) {
-                applyFilters(searchTerm);
+                applyFilters(searchTerm, tahun, status, unitId);
             }
         }, 300);
 
         return () => clearTimeout(timeoutId);
     }, [searchTerm]);
+
+    const handleTahunChange = (e) => {
+        const val = e.target.value;
+        setTahun(val);
+        applyFilters(searchTerm, val, status, unitId);
+    };
+
+    const handleStatusChange = (e) => {
+        const val = e.target.value;
+        setStatus(val);
+        applyFilters(searchTerm, tahun, val, unitId);
+    };
+
+    const handleUnitChange = (e) => {
+        const val = e.target.value;
+        setUnitId(val);
+        applyFilters(searchTerm, tahun, status, val);
+    };
 
     const handleAjukan = (item) => {
         toast("Konfirmasi Pengajuan", {
@@ -60,6 +82,8 @@ export default function Index({ auth, pencairans, filters, flash = {} }) {
             }
         });
     };
+
+    const isLocked = !!flash.error;
 
     return (
         <AuthenticatedLayout
@@ -90,12 +114,57 @@ export default function Index({ auth, pencairans, filters, flash = {} }) {
                             </div>
 
                             <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                                <div className="flex-1 min-w-[140px] lg:w-36">
+                                    <CustomSelect
+                                        value={tahun}
+                                        onChange={handleTahunChange}
+                                        className="h-11"
+                                        options={[
+                                            { value: '', label: 'Semua Tahun' },
+                                            ...(tahunAnggarans || []).map(th => ({ value: th, label: th }))
+                                        ]}
+                                    />
+                                </div>
+
+                                {isAdmin() && units.length > 0 && (
+                                    <div className="flex-1 min-w-[200px] lg:w-56">
+                                        <CustomSelect
+                                            value={unitId}
+                                            onChange={handleUnitChange}
+                                            className="h-11"
+                                            options={[
+                                                { value: '', label: 'Semua Unit Kerja' },
+                                                ...units.map(u => ({ value: u.id_unit, label: u.nama_unit }))
+                                            ]}
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="flex-1 min-w-[160px] lg:w-44">
+                                    <CustomSelect
+                                        value={status}
+                                        onChange={handleStatusChange}
+                                        className="h-11"
+                                        options={[
+                                            { value: '', label: 'Semua Status' },
+                                            ...(statuses || []).map(s => ({
+                                                value: s,
+                                                label: s.replace(/_/g, ' ')
+                                            }))
+                                        ]}
+                                    />
+                                </div>
+
                                 <Link
-                                    href={route('pencairan.create')}
-                                    className="h-11 inline-flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md bg-teal-600 hover:bg-teal-700 text-white active:scale-95"
+                                    href={isLocked ? '#' : route('pencairan.create')}
+                                    onClick={(e) => isLocked && e.preventDefault()}
+                                    className={`h-11 inline-flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md ${isLocked
+                                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                                        : 'bg-teal-600 hover:bg-teal-700 text-white active:scale-95'
+                                        }`}
                                 >
                                     <Plus size={18} />
-                                    Pengajuan Baru
+                                    Baru
                                 </Link>
                             </div>
                         </div>

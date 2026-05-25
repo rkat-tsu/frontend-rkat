@@ -9,13 +9,13 @@ import CustomSelect from '@/Components/CustomSelect';
 import { Building2, Save, ArrowLeft, Settings2, UserCircle, Phone, Mail, PencilLine } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function Edit({ auth, unit, users, units }) {
+export default function Edit({ auth, unit, users, units, approvalPaths }) {
     // 1. SETUP FORM: Ganti 'put' menjadi 'patch'
-    const { data, setData, patch, processing, errors } = useForm({
+    const { data, setData, patch, processing, errors, reset } = useForm({
         kode_unit: unit.kode_unit || '',
         nama_unit: unit.nama_unit || '',
         tipe_unit: unit.tipe_unit || 'Unit',
-        jalur_persetujuan: unit.jalur_persetujuan || 'non-akademik',
+        approval_path_id: unit.approval_path_id || '',
         id_kepala: unit.id_kepala || '',
         parent_id: unit.parent_id || '',
         no_telepon: unit.no_telepon || '',
@@ -25,7 +25,7 @@ export default function Edit({ auth, unit, users, units }) {
     const submit = (e) => {
         e.preventDefault();
 
-        if (!data.kode_unit || !data.nama_unit || !data.tipe_unit || !data.jalur_persetujuan) {
+        if (!data.kode_unit || !data.nama_unit || !data.tipe_unit || !data.approval_path_id) {
             toast.error("Peringatan", { description: "Semua form bertanda * wajib diisi." });
             return;
         }
@@ -59,12 +59,17 @@ export default function Edit({ auth, unit, users, units }) {
 
     // 2. OPSI DROPDOWN
     const tipeOptions = [
+        { value: 'Rektorat', label: 'Rektorat' },
         { value: 'Fakultas', label: 'Fakultas' },
         { value: 'Prodi', label: 'Program Studi (Prodi)' },
+        { value: 'Biro', label: 'Biro' },
+        { value: 'Lembaga', label: 'Lembaga' },
+        { value: 'UPT', label: 'Unit Pelaksana Teknis (UPT)' },
+        { value: 'Satuan', label: 'Satuan' },
+        { value: 'UKM', label: 'Unit Kegiatan Mahasiswa (UKM)' },
         { value: 'Unit', label: 'Unit Kerja' },
-        { value: 'Lainnya', label: 'Lainnya' },
-        { value: 'Atasan', label: 'Pimpinan / Atasan' },
         { value: 'Admin', label: 'Administrator' },
+        { value: 'Lainnya', label: 'Lainnya' },
     ];
 
     const jalurOptions = [
@@ -229,15 +234,17 @@ export default function Edit({ auth, unit, users, units }) {
                                 </div>
 
                                 <div>
-                                    <InputLabel value="Jalur Persetujuan" required />
+                                    <InputLabel htmlFor="approval_path_id">
+                                        Alur Persetujuan <span className="text-red-500">*</span>
+                                    </InputLabel>
                                     <CustomSelect
-                                        value={data.jalur_persetujuan}
-                                        onChange={(e) => setData('jalur_persetujuan', e.target.value)}
-                                        options={jalurOptions}
-                                        placeholder="Pilih Jalur"
+                                        value={data.approval_path_id}
+                                        onChange={(e) => setData('approval_path_id', e.target.value)}
+                                        options={approvalPaths ? approvalPaths.map((path) => ({ value: path.id, label: path.name })) : []}
+                                        placeholder="Pilih Alur Persetujuan"
                                         className="mt-1"
                                     />
-                                    <InputError message={errors.jalur_persetujuan} className="mt-2" />
+                                    <InputError message={errors.approval_path_id} className="mt-2" />
                                 </div>
                             </div>
                         </div>

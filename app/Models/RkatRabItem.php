@@ -32,6 +32,11 @@ class RkatRabItem extends Model
         return $this->belongsTo(RincianAnggaran::class, 'kode_anggaran', 'kode_anggaran')->withTrashed();
     }
 
+    public function pencairanDanaItems()
+    {
+        return $this->hasMany(PencairanDanaItem::class, 'id_rkat_rab_item', 'id');
+    }
+
     protected static function boot()
     {
         parent::boot();

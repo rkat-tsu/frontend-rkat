@@ -16,20 +16,16 @@ class PencairanDana extends Model
     protected $fillable = [
         'id_header',
         'diajukan_oleh',
+        'nama_pencairan',
         'status_pencairan',
+        'current_step_id',
         'tanggal_pengajuan',
-        'tanggal_divalidasi_baak',
-        'tanggal_diketahui_unit',
-        'tanggal_diverifikasi_bauk',
-        'tanggal_disetujui_wr2',
+        'approval_dates',
     ];
 
     protected $casts = [
         'tanggal_pengajuan' => 'datetime',
-        'tanggal_divalidasi_baak' => 'datetime',
-        'tanggal_diketahui_unit' => 'datetime',
-        'tanggal_diverifikasi_bauk' => 'datetime',
-        'tanggal_disetujui_wr2' => 'datetime',
+        'approval_dates' => 'array',
     ];
 
     protected static function boot()
@@ -57,4 +53,15 @@ class PencairanDana extends Model
     {
         return $this->belongsTo(User::class, 'diajukan_oleh', 'id_user');
     }
+
+    public function currentStep()
+    {
+        return $this->belongsTo(ApprovalPathStep::class, 'current_step_id');
+    }
+
+    public function items()
+    {
+        return $this->hasMany(PencairanDanaItem::class, 'id_pencairan', 'id_pencairan');
+    }
+
 }

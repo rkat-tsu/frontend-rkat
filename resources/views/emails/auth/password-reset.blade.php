@@ -31,7 +31,7 @@
     <div class="wrapper">
         <div class="container">
             <div class="header">
-                <img src="{{ $message->embed(public_path('img/logo-full-tsu.svg')) }}" alt="TSU Logo">
+                <img src="{{ asset('img/logo-full-tsu.svg') }}" alt="TSU Logo">
             </div>
             
             <div class="content-layer">

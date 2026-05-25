@@ -17,7 +17,7 @@ const formatDate = (value) => {
 };
 
 // Tambahkan prop 'flash' untuk menangkap pesan error/success dari Controller
-export default function Index({ auth, rkats, filters, tahunAnggarans, units = [], flash = {} }) {
+export default function Index({ auth, rkats, filters, tahunAnggarans, units = [], flash = {}, statuses = [] }) {
     const { isAdmin } = usePermission();
     // State untuk menyimpan nilai filter
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
@@ -160,17 +160,10 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                         className="h-11"
                                         options={[
                                             { value: '', label: 'Semua Status' },
-                                            { value: 'Draft', label: 'Draft' },
-                                            { value: 'Menunggu_Unit_Kepala', label: 'Menunggu Unit Kepala' },
-                                            { value: 'Menunggu_Dekan_Kepala', label: 'Menunggu Dekan' },
-                                            { value: 'Menunggu_Tim_Renbang', label: 'Menunggu Tim Renbang' },
-                                            { value: 'Menunggu_WR1', label: 'Menunggu WR 1' },
-                                            { value: 'Menunggu_WR2', label: 'Menunggu WR 2' },
-                                            { value: 'Menunggu_WR3', label: 'Menunggu WR 3' },
-                                            { value: 'Menunggu_Rektor', label: 'Menunggu Rektor' },
-                                            { value: 'Revisi', label: 'Revisi' },
-                                            { value: 'Disetujui_Final', label: 'Disetujui Final' },
-                                            { value: 'Ditolak', label: 'Ditolak' }
+                                            ...(statuses || []).map(s => ({
+                                                value: s,
+                                                label: s.replace(/_/g, ' ')
+                                            }))
                                         ]}
                                     />
                                 </div>

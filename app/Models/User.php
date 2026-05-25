@@ -28,6 +28,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'id_unit',
         'is_aktif',
         'no_telepon',
+        'signature_path',
     ];
 
     /**

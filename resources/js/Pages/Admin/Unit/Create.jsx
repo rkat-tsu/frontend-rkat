@@ -9,13 +9,13 @@ import CustomSelect from '@/Components/CustomSelect';
 import { Building2, Save, ArrowLeft, Settings2, UserCircle, Phone, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function Create({ auth, users, units }) {
+export default function Create({ auth, users, units, approvalPaths }) {
     // 1. SETUP FORM: Sesuai Controller Store Method
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, reset } = useForm({
         kode_unit: '',
         nama_unit: '',
         tipe_unit: 'Unit',              // Default sesuai validasi
-        jalur_persetujuan: 'non-akademik', // Default sesuai validasi
+        approval_path_id: '',
         id_kepala: '',
         parent_id: '',
         no_telepon: '',
@@ -25,7 +25,7 @@ export default function Create({ auth, users, units }) {
     const submit = (e) => {
         e.preventDefault();
 
-        if (!data.kode_unit || !data.nama_unit || !data.tipe_unit || !data.jalur_persetujuan) {
+        if (!data.kode_unit || !data.nama_unit || !data.tipe_unit || !data.approval_path_id) {
             toast.error("Peringatan", { description: "Semua form bertanda * wajib diisi." });
             return;
         }
@@ -59,17 +59,17 @@ export default function Create({ auth, users, units }) {
 
     // 2. OPSI DROPDOWN (Sesuai Validasi Controller)
     const tipeOptions = [
+        { value: 'Rektorat', label: 'Rektorat' },
         { value: 'Fakultas', label: 'Fakultas' },
         { value: 'Prodi', label: 'Program Studi (Prodi)' },
+        { value: 'Biro', label: 'Biro' },
+        { value: 'Lembaga', label: 'Lembaga' },
+        { value: 'UPT', label: 'Unit Pelaksana Teknis (UPT)' },
+        { value: 'Satuan', label: 'Satuan' },
+        { value: 'UKM', label: 'Unit Kegiatan Mahasiswa (UKM)' },
         { value: 'Unit', label: 'Unit Kerja' },
-        { value: 'Lainnya', label: 'Lainnya' },
-        { value: 'Atasan', label: 'Pimpinan / Atasan' },
         { value: 'Admin', label: 'Administrator' },
-    ];
-
-    const jalurOptions = [
-        { value: 'akademik', label: 'Akademik' },
-        { value: 'non-akademik', label: 'Non-Akademik' },
+        { value: 'Lainnya', label: 'Lainnya' },
     ];
 
     // Mapping Data dari Controller (Users & Units) ke format Select
@@ -184,7 +184,7 @@ export default function Create({ auth, users, units }) {
                                     </div>
 
                                     <div>
-                                        <InputLabel value="Email Resmi" />
+                                        <InputLabel value="Email Resmi" required />
                                         <div className="relative mt-1">
                                             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                                 <Mail className="w-4 h-4 text-gray-400" />
@@ -229,15 +229,15 @@ export default function Create({ auth, users, units }) {
                                 </div>
 
                                 <div>
-                                    <InputLabel value="Jalur Persetujuan" required />
+                                    <InputLabel value="Alur Persetujuan" required />
                                     <CustomSelect
-                                        value={data.jalur_persetujuan}
-                                        onChange={(e) => setData('jalur_persetujuan', e.target.value)}
-                                        options={jalurOptions}
-                                        placeholder="Pilih Jalur"
+                                        value={data.approval_path_id}
+                                        onChange={(e) => setData('approval_path_id', e.target.value)}
+                                        options={approvalPaths ? approvalPaths.map((path) => ({ value: path.id, label: path.name })) : []}
+                                        placeholder="Pilih Alur Persetujuan"
                                         className="mt-1"
                                     />
-                                    <InputError message={errors.jalur_persetujuan} className="mt-2" />
+                                    <InputError message={errors.approval_path_id} className="mt-2" />
                                 </div>
                             </div>
                         </div>

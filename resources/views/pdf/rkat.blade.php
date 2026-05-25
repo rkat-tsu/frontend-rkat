@@ -177,22 +177,40 @@
             ->where('level_persetujuan', 'Tim_Renbang')
             ->where('aksi', 'Setuju')
             ->last();
+            
+        // Get any unit head level approval
         $isUnitAcc = $rkat->logPersetujuans
-            ->whereIn('level_persetujuan', ['Kepala_Unit', 'Dekan'])
+            ->whereNotIn('level_persetujuan', ['Admin', 'Tim_Renbang', 'WR_1', 'WR_2', 'WR_3', 'Rektor'])
             ->where('aksi', 'Setuju')
             ->last();
 
-        // Pilih WR pertama berdasarkan alur (Akademik: WR 1, Non-Akademik: WR 3)
-        $jalur = optional($rkat->unit)->jalur_persetujuan ?? 'akademik';
-        $targetWR = $jalur == 'akademik' ? 'WR_1' : 'WR_3';
-
-        $isWRAcc = $rkat->logPersetujuans->where('level_persetujuan', $targetWR)->where('aksi', 'Setuju')->last();
+        // Get any WR approval
+        $isWRAcc = $rkat->logPersetujuans
+            ->filter(function ($log) {
+                return str_starts_with($log->level_persetujuan, 'WR_');
+            })
+            ->where('aksi', 'Setuju')
+            ->last();
 
         $renbangApprover = $isRenbangAcc ? $isRenbangAcc->approver : null;
         $unitApprover = $isUnitAcc ? $isUnitAcc->approver : null;
         $wrApprover = $isWRAcc ? $isWRAcc->approver : null;
 
         $revisions = $rkat->logPersetujuans->where('aksi', 'Revisi');
+
+        if (!function_exists('getSignatureImage')) {
+            function getSignatureImage($user) {
+                if ($user && $user->signature_path) {
+                    $path = public_path('storage/' . $user->signature_path);
+                    if (file_exists($path)) {
+                        $type = pathinfo($path, PATHINFO_EXTENSION);
+                        $data = file_get_contents($path);
+                        return 'data:image/' . $type . ';base64,' . base64_encode($data);
+                    }
+                }
+                return null;
+            }
+        }
 
         // Calculate real RAB total
         $rabTotal = $detail ? $detail->rabItems->sum('sub_total') : 0;
@@ -448,7 +466,10 @@
                 <p>Verifikasi</p>
                 <p>Tim Renbang</p>
                 <div class="sig-space">
-                    @if ($isRenbangAcc)
+                    @php $sigRenbang = getSignatureImage($renbangApprover); @endphp
+                    @if ($sigRenbang)
+                        <img src="{{ $sigRenbang }}" style="max-height: 40px; margin-top: 5px;">
+                    @elseif ($isRenbangAcc)
                         <div class="sig-status">ACC</div>
                     @endif
                 </div>
@@ -460,7 +481,12 @@
                 <p>Surakarta, {{ \Carbon\Carbon::now()->isoFormat('D MMMM YYYY') }}</p>
                 <p>PIC Kegiatan / Pembina UKM</p>
                 <div class="sig-space">
-                    <div class="sig-status" style="border: none; opacity: 0.1; color: #eee;">DRAFT</div>
+                    @php $sigPengaju = getSignatureImage($rkat->user); @endphp
+                    @if ($sigPengaju)
+                        <img src="{{ $sigPengaju }}" style="max-height: 40px; margin-top: 5px;">
+                    @else
+                        <div class="sig-status" style="border: none; opacity: 0.1; color: #eee;">DRAFT</div>
+                    @endif
                 </div>
                 <p class="font-bold">{{ optional($rkat->user)->nama_lengkap ?? '............................' }}</p>
                 <p>NIK. {{ optional($rkat->user)->nik ?: '............................' }}</p>
@@ -473,7 +499,10 @@
                 <p>Mengetahui,</p>
                 <p>Kepala Kantor Kemahasiswaan</p>
                 <div class="sig-space">
-                    @if ($isUnitAcc)
+                    @php $sigUnit = getSignatureImage($unitApprover); @endphp
+                    @if ($sigUnit)
+                        <img src="{{ $sigUnit }}" style="max-height: 40px; margin-top: 5px;">
+                    @elseif ($isUnitAcc)
                         <div class="sig-status">ACC</div>
                     @endif
                 </div>
@@ -484,7 +513,10 @@
                 <p>Menyetujui,</p>
                 <p>Wakil Rektor</p>
                 <div class="sig-space">
-                    @if ($isWRAcc)
+                    @php $sigWR = getSignatureImage($wrApprover); @endphp
+                    @if ($sigWR)
+                        <img src="{{ $sigWR }}" style="max-height: 40px; margin-top: 5px;">
+                    @elseif ($isWRAcc)
                         <div class="sig-status">ACC</div>
                     @endif
                 </div>

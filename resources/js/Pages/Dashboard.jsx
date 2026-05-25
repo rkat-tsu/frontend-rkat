@@ -25,7 +25,7 @@ import {
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
 export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new Date().getFullYear(), statusAnggaran = 'Aktif', rawStatus = 'None', summary = {}, kegiatanTerdekat = [] }) {
-    
+
     const formatRupiahSingkat = (angka) => {
         if (!angka) return 'Rp 0';
         const num = parseFloat(angka);
@@ -33,7 +33,7 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
         if (num >= 1e6) return `Rp ${(num / 1e6).toFixed(1)}Jt`;
         return `Rp ${num.toLocaleString('id-ID')}`;
     };
-    
+
     const getStatusColor = (status) => {
         switch (status) {
             case 'Drafting': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200 dark:border-blue-800';
@@ -59,58 +59,133 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
             <Head title="Dashboard" />
 
             <div className="py-8">
-                
+
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
 
                     {/* --- BAGIAN 1: KARTU RINGKASAN DENGAN DEFERRED LOADING --- */}
                     <Deferred data="summary" fallback={
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-                            {[1, 2, 3, 4, 5].map((i) => (
-                                <div key={i} className="h-32 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-2xl border border-gray-100 dark:border-gray-700 flex items-center justify-center">
-                                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                                </div>
-                            ))}
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {[1, 2, 3, 4].map((i) => (
+                                    <div key={i} className="h-32 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-2xl border border-gray-100 dark:border-gray-700 flex items-center justify-center">
+                                        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="h-32 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-2xl border border-gray-100 dark:border-gray-700 flex items-center justify-center">
+                                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {[1, 2, 3, 4].map((i) => (
+                                    <div key={i} className="h-32 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-2xl border border-gray-100 dark:border-gray-700 flex items-center justify-center">
+                                        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     }>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-                            <StatCard 
-                                title="Total Dokumen" 
-                                value={summary.total} 
-                                icon={<FileText size={22} />} 
-                                color="blue" 
-                                label="Tahun Ini" 
-                                description="Total Pengajuan"
-                            />
-                            <StatCard 
-                                title="Menunggu" 
-                                value={summary.review} 
-                                icon={<Clock size={22} />} 
-                                color="amber" 
-                                label="Review" 
-                                description="Menunggu Persetujuan"
-                                isLive={true}
-                            />
-                            <StatCard 
-                                title="Disetujui" 
-                                value={summary.disetujui} 
-                                icon={<CheckCircle size={22} />} 
-                                color="emerald" 
-                                description="Dokumen Disetujui"
-                            />
-                            <StatCard 
-                                title="Ditolak" 
-                                value={summary.ditolak} 
-                                icon={<XCircle size={22} />} 
-                                color="rose" 
-                                description="Butuh Revisi"
-                            />
-                            <StatCard 
-                                title="Anggaran Disetujui" 
-                                value={formatRupiahSingkat(summary.total_anggaran_disetujui)} 
-                                icon={<PieChart size={22} />} 
-                                color="emerald" 
-                                description="Total Dana Disetujui"
-                            />
+                        <div className="space-y-6">
+                            {/* Baris Atas: 4 Kotak Status RKA */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <StatCard 
+                                    title="Total Dokumen" 
+                                    value={summary.total} 
+                                    icon={<FileText size={22} />} 
+                                    color="blue" 
+                                    label="Tahun Ini" 
+                                    description="Total Pengajuan RKA"
+                                />
+                                <StatCard 
+                                    title="Menunggu" 
+                                    value={summary.review} 
+                                    icon={<Clock size={22} />} 
+                                    color="amber" 
+                                    label="Review" 
+                                    description="Menunggu Persetujuan"
+                                    isLive={true}
+                                />
+                                <StatCard 
+                                    title="Disetujui" 
+                                    value={summary.disetujui} 
+                                    icon={<CheckCircle size={22} />} 
+                                    color="emerald" 
+                                    description="Dokumen Disetujui"
+                                />
+                                <StatCard 
+                                    title="Ditolak" 
+                                    value={summary.ditolak} 
+                                    icon={<XCircle size={22} />} 
+                                    color="rose" 
+                                    description="Butuh Revisi"
+                                />
+                            </div>
+
+                            {/* Kotak Group untuk Memisah Nominal RKA dan Pencairan */}
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 md:p-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 relative">
+                                    {/* Pemisah visual vertikal (tengah) untuk layar md ke atas */}
+                                    <div className="hidden md:block absolute top-0 bottom-0 left-1/2 w-px bg-gray-100 dark:bg-gray-700"></div>
+                                    
+                                    {/* Bagian Anggaran RKA */}
+                                    <div className="flex items-start gap-5">
+                                        <div className="p-4 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-2xl shadow-inner shrink-0">
+                                            <PieChart size={28} strokeWidth={2.5} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Anggaran RKA</p>
+                                            <h3 className="text-3xl lg:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">{formatRupiahSingkat(summary.total_anggaran_disetujui)}</h3>
+                                            <p className="text-sm font-medium text-gray-400 dark:text-gray-500 mt-2">Total Dana Disetujui</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Bagian Pencairan Dana */}
+                                    <div className="flex items-start gap-5">
+                                        <div className="p-4 bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 rounded-2xl shadow-inner shrink-0">
+                                            <TrendingUp size={28} strokeWidth={2.5} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Pencairan Dana</p>
+                                            <h3 className="text-3xl lg:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">{formatRupiahSingkat(summary.total_pencairan_disetujui)}</h3>
+                                            <p className="text-sm font-medium text-gray-400 dark:text-gray-500 mt-2">Total Dana Dicairkan</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Baris Bawah: 4 Kotak Status Pencairan */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <StatCard 
+                                    title="Total Dokumen" 
+                                    value={summary.total_pencairan_dokumen} 
+                                    icon={<FileText size={22} />} 
+                                    color="blue" 
+                                    label="Pencairan" 
+                                    description="Total Pengajuan Pencairan"
+                                />
+                                <StatCard 
+                                    title="Menunggu" 
+                                    value={summary.pencairan_review} 
+                                    icon={<Clock size={22} />} 
+                                    color="amber" 
+                                    label="Review" 
+                                    description="Menunggu Persetujuan"
+                                    isLive={true}
+                                />
+                                <StatCard 
+                                    title="Disetujui" 
+                                    value={summary.pencairan_disetujui} 
+                                    icon={<CheckCircle size={22} />} 
+                                    color="emerald" 
+                                    description="Pencairan Disetujui"
+                                />
+                                <StatCard 
+                                    title="Ditolak" 
+                                    value={summary.pencairan_ditolak} 
+                                    icon={<XCircle size={22} />} 
+                                    color="rose" 
+                                    description="Butuh Revisi"
+                                />
+                            </div>
                         </div>
                     </Deferred>
 
@@ -213,7 +288,7 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                                                 <div className="font-semibold text-sm text-gray-800 dark:text-gray-200 line-clamp-1">{kegiatan.judul}</div>
                                                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1.5 font-medium">
                                                     <Calendar size={12} className="text-teal-500" />
-                                                    {new Date(kegiatan.mulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} 
+                                                    {new Date(kegiatan.mulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                                                     {kegiatan.mulai !== kegiatan.akhir && ` - ${new Date(kegiatan.akhir).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}`}
                                                 </div>
                                             </div>
@@ -263,7 +338,7 @@ function StatCard({ title, value, icon, color, label, description, isLive }) {
 
     return (
         <div className="relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1 group">
-            <div className={`absolute -right-6 -top-6 ${colorParts[colorParts.length-1]} w-24 h-24 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500 ease-in-out`}></div>
+            <div className={`absolute -right-6 -top-6 ${colorParts[colorParts.length - 1]} w-24 h-24 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500 ease-in-out`}></div>
             <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
                     <div className={`p-3 ${colorParts[0]} ${colorParts[1]} ${colorParts[2]} ${colorParts[3]} rounded-xl shadow-inner`}>

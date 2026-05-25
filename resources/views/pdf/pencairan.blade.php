@@ -162,6 +162,30 @@
         $detail = $rkat->rkatDetails->first();
         $year = $rkat->tahun_anggaran;
         $logoPath = public_path('img/logo-full-tsu.svg');
+
+        if (!function_exists('getSignatureImage')) {
+            function getSignatureImage($user) {
+                if ($user && $user->signature_path) {
+                    $path = public_path('storage/' . $user->signature_path);
+                    if (file_exists($path)) {
+                        $type = pathinfo($path, PATHINFO_EXTENSION);
+                        $data = file_get_contents($path);
+                        return 'data:image/' . $type . ';base64,' . base64_encode($data);
+                    }
+                }
+                return null;
+            }
+        }
+
+        $userBaak = \App\Models\User::where('nama_lengkap', 'Wahyu Catur Hastuti, S.Kom')->first();
+        
+        // Fetch parent unit and its head for the unit signature
+        $unit = $rkat->unit;
+        $parentUnit = $unit ? $unit->parent : null;
+        $userUnit = $parentUnit ? $parentUnit->kepala : null;
+
+        $userBauk = \App\Models\User::where('nama_lengkap', 'Tri Irawati, S.E, M.Si')->first();
+        $userWr2 = \App\Models\User::where('nama_lengkap', 'Drs. Santoso Tri Hananto, M.Acc, Ak')->first();
     @endphp
 
     <div class="header">
@@ -239,10 +263,42 @@
         <tr>
             <td class="no-col">12</td>
             <td class="label-col">Anggaran Dicairkan</td>
-            <td colspan="2" class="font-bold text-teal-600" style="font-size: 9pt;">Rp {{ number_format($rkat->total_anggaran, 0, ',', '.') }}</td>
+            @php $totalCair = $pencairan->items->sum('sub_total_pencairan'); @endphp
+            <td colspan="2" class="font-bold text-teal-600" style="font-size: 9pt;">
+                Rp {{ number_format($totalCair, 0, ',', '.') }}
+                @if($pencairan->nama_pencairan)
+                   <br><span style="font-size: 8pt; color: #666; font-weight: normal;">(Keterangan: {{ $pencairan->nama_pencairan }})</span>
+                @endif
+            </td>
         </tr>
         <tr>
             <td class="no-col">13</td>
+            <td class="label-col">Rincian Item Pencairan</td>
+            <td colspan="2">
+                <table style="width: 100%; border: 1px solid #ccc; border-collapse: collapse; margin-top: 5px;">
+                    <thead>
+                        <tr style="background-color: #f9fafb;">
+                            <th style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: left;">Deskripsi</th>
+                            <th style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: right;">Volume</th>
+                            <th style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: right;">Harga Satuan</th>
+                            <th style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: right;">Sub Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($pencairan->items as $item)
+                            <tr>
+                                <td style="border: 1px solid #ccc; padding: 4px; font-size: 8pt;">{{ $item->rkatRabItem->deskripsi_item ?? '-' }}</td>
+                                <td style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: right;">{{ $item->volume_pencairan }}</td>
+                                <td style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: right;">{{ number_format($item->nominal_pencairan, 0, ',', '.') }}</td>
+                                <td style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: right;">{{ number_format($item->sub_total_pencairan, 0, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td class="no-col">14</td>
             <td class="label-col">Metode Pencairan</td>
             <td colspan="2">
                 <div class="checkbox-group">
@@ -263,9 +319,12 @@
         <tr>
             <td>
                 <div class="sig-title">Diajukan Oleh</div>
-                <div class="sig-role">PIC Kegiatan dan atau Pembina UKM</div>
+                <div class="sig-role">Pengaju / Penanggung Jawab</div>
                 
-                @if($pencairan->tanggal_pengajuan)
+                @php $sigPengaju = getSignatureImage($pencairan->pengaju); @endphp
+                @if($sigPengaju)
+                    <img src="{{ $sigPengaju }}" style="max-height: 40px; margin-top: 5px;">
+                @elseif($pencairan->tanggal_pengajuan)
                     <div class="sig-status">SUBMITTED</div>
                 @endif
                 
@@ -276,7 +335,10 @@
                 <div class="sig-title">Divalidasi Oleh</div>
                 <div class="sig-role">Kepala BAAK</div>
                 
-                @if($pencairan->tanggal_divalidasi_baak)
+                @php $sigBaak = getSignatureImage($userBaak); @endphp
+                @if($pencairan->tanggal_divalidasi_baak && $sigBaak)
+                    <img src="{{ $sigBaak }}" style="max-height: 40px; margin-top: 5px;">
+                @elseif($pencairan->tanggal_divalidasi_baak)
                     <div class="sig-status">VALIDATED</div>
                 @endif
                 
@@ -285,14 +347,20 @@
             </td>
             <td>
                 <div class="sig-title">Mengetahui</div>
-                <div class="sig-role">Kepala Kantor Urusan Kemahasiswaan</div>
+                <div class="sig-role">Kepala {{ $parentUnit ? $parentUnit->nama_unit : 'Unit Menaungi' }}</div>
                 
-                @if($pencairan->tanggal_diketahui_unit)
+                @php 
+                    $sigUnit = getSignatureImage($userUnit); 
+                    $tglUnit = $pencairan->approval_dates['Menunggu_Unit_Menaungi'] ?? null;
+                @endphp
+                @if($tglUnit && $sigUnit)
+                    <img src="{{ $sigUnit }}" style="max-height: 40px; margin-top: 5px;">
+                @elseif($tglUnit)
                     <div class="sig-status">ACKNOWLEDGED</div>
                 @endif
                 
-                <div class="sig-name">Gege Noby Priohananto, S.Sn., M.Sn</div>
-                <div class="sig-date">Tgl: {{ $pencairan->tanggal_diketahui_unit ? \Carbon\Carbon::parse($pencairan->tanggal_diketahui_unit)->translatedFormat('d F Y') : '........................' }}</div>
+                <div class="sig-name">{{ $userUnit ? $userUnit->nama_lengkap : '........................' }}</div>
+                <div class="sig-date">Tgl: {{ $tglUnit ? \Carbon\Carbon::parse($tglUnit)->translatedFormat('d F Y') : '........................' }}</div>
             </td>
         </tr>
     </table>
@@ -304,23 +372,35 @@
                 <div class="sig-title">Diverifikasi Oleh</div>
                 <div class="sig-role">Kepala BAUK</div>
                 
-                @if($pencairan->tanggal_diverifikasi_bauk)
+                @php 
+                    $sigBauk = getSignatureImage($userBauk); 
+                    $tglBauk = $pencairan->approval_dates['Menunggu_BAUK'] ?? null;
+                @endphp
+                @if($tglBauk && $sigBauk)
+                    <img src="{{ $sigBauk }}" style="max-height: 40px; margin-top: 5px;">
+                @elseif($tglBauk)
                     <div class="sig-status">VERIFIED</div>
                 @endif
                 
                 <div class="sig-name">Tri Irawati, S.E, M.Si</div>
-                <div class="sig-date">Tgl: {{ $pencairan->tanggal_diverifikasi_bauk ? \Carbon\Carbon::parse($pencairan->tanggal_diverifikasi_bauk)->translatedFormat('d F Y') : '........................' }}</div>
+                <div class="sig-date">Tgl: {{ $tglBauk ? \Carbon\Carbon::parse($tglBauk)->translatedFormat('d F Y') : '........................' }}</div>
             </td>
             <td style="width: 50%;">
                 <div class="sig-title">Disetujui Oleh</div>
                 <div class="sig-role">Wakil Rektor Bidang Sumber Daya & Kepemimpinan</div>
                 
-                @if($pencairan->tanggal_disetujui_wr2)
+                @php 
+                    $sigWr2 = getSignatureImage($userWr2); 
+                    $tglWr2 = $pencairan->approval_dates['Menunggu_WR2'] ?? null;
+                @endphp
+                @if($tglWr2 && $sigWr2)
+                    <img src="{{ $sigWr2 }}" style="max-height: 40px; margin-top: 5px;">
+                @elseif($tglWr2)
                     <div class="sig-status">APPROVED</div>
                 @endif
                 
                 <div class="sig-name">Drs. Santoso Tri Hananto, M.Acc, Ak</div>
-                <div class="sig-date">Tgl: {{ $pencairan->tanggal_disetujui_wr2 ? \Carbon\Carbon::parse($pencairan->tanggal_disetujui_wr2)->translatedFormat('d F Y') : '........................' }}</div>
+                <div class="sig-date">Tgl: {{ $tglWr2 ? \Carbon\Carbon::parse($tglWr2)->translatedFormat('d F Y') : '........................' }}</div>
             </td>
         </tr>
     </table>

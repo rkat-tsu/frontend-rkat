@@ -59,7 +59,11 @@ class ProfileUpdateRequest extends FormRequest
                 // Jika Admin yang mengirim (atau jika field disertakan), validasi Rule::in diterapkan
                 'nullable', // Izinkan null jika admin tidak ingin mengubahnya
                 Rule::in($validRoles), // <-- PERBAIKAN: Menggunakan daftar peran yang valid
-            ]
+            ],
+
+            // 6. Tanda Tangan
+            'signature_file' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'], // Maks 2MB
+            'signature_base64' => ['nullable', 'string'],
         ];
     }
 }

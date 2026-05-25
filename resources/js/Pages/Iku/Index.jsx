@@ -52,6 +52,7 @@ export default function Index({ auth, ikus }) {
     const handleCloseModal = () => {
         if (isDirty) {
             toast.warning("Konfirmasi Batal", {
+                id: 'cancel-iku-modal',
                 description: "Anda memiliki perubahan yang belum disimpan. Yakin ingin membatalkan?",
                 action: {
                     label: "Ya, Batal",
@@ -108,41 +109,43 @@ export default function Index({ auth, ikus }) {
     return (
         <AuthenticatedLayout
             user={auth.user}
-            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Master Indikator Kinerja Utama (IKU)</h2>}
+            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Indikator Kinerja Utama (IKU)</h2>}
         >
             <Head title="Daftar IKU & IKK" />
 
             <div className="py-6 pb-24">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-                    <div className="mb-6 flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div>
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Daftar IKU & Rincian Kegiatan</h3>
-                            <p className="text-sm text-gray-500 mt-1">Klik ikon panah pada tabel untuk melihat rincian IKK di dalam setiap IKU.</p>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <div className="flex-1">
+                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white leading-tight">
+                                Daftar IKU & Rincian Kegiatan
+                            </h1>
+                            <p className="text-sm text-gray-500 mt-1 sm:mt-2">Klik ikon panah pada tabel untuk melihat rincian IKK di dalam setiap IKU.</p>
                         </div>
 
                         {/* HANYA TAMPILKAN TOMBOL KELOLA JIKA ADMIN */}
                         {isAdmin() && (
-                            <div className="flex gap-3">
+                            <div className="flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
                                 <Link
                                     href={route('iku.create')}
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-md text-sm font-medium transition"
+                                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium transition shadow-sm h-11 whitespace-nowrap"
                                 >
-                                    <ListChecks size={16} />
+                                    <ListChecks size={18} className="shrink-0" />
                                     Kelola Rincian IKK
                                 </Link>
                                 <button
                                     onClick={() => openModal()}
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-md text-sm font-medium shadow-sm shadow-teal-200 transition"
+                                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-md text-sm font-medium shadow-sm transition h-11 whitespace-nowrap"
                                 >
-                                    <Plus size={16} />
+                                    <Plus size={18} className="shrink-0" />
                                     Tambah IKU Baru
                                 </button>
                             </div>
                         )}
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow sm:rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="bg-white dark:bg-gray-800 overflow-x-auto shadow sm:rounded-lg border border-gray-200 dark:border-gray-700">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead className="bg-gray-50 dark:bg-gray-700">
                                 <tr>

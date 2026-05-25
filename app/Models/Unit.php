@@ -21,6 +21,7 @@ class Unit extends Model
         'nama_unit',
         'tipe_unit',
         'jalur_persetujuan',
+        'approval_path_id',
         'id_kepala',
         'parent_id',
         'no_telepon',
@@ -29,6 +30,12 @@ class Unit extends Model
 
     // Enum values for tipe_unit: 'Fakultas', 'Prodi', 'Unit', 'Lainnya', 'Atasan', 'Admin'
     // Enum values for jalur_persetujuan: 'akademik', 'non-akademik'
+    
+    // Relasi ke ApprovalPath
+    public function approvalPath()
+    {
+        return $this->belongsTo(ApprovalPath::class, 'approval_path_id');
+    }
     
     // Relasi ke RkatHeader
     public function parent()

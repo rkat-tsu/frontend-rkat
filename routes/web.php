@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ApprovalController;
+use App\Http\Controllers\ApprovalPathController;
 use App\Http\Controllers\PencairanDanaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IkuController;
@@ -113,6 +114,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // IKK Management
         Route::get('/iku/input-ikk', [IkuController::class, 'create'])->name('iku.create');
         Route::post('/iku/sync-ikk', [IkuController::class, 'store'])->name('iku.store');
+        // Approval Paths Settings
+        Route::get('approval-path', [ApprovalPathController::class, 'index'])->name('approval-path.index');
+        Route::post('approval-path', [ApprovalPathController::class, 'store'])->name('approval-path.store');
+        Route::patch('approval-path/{approvalPath}', [ApprovalPathController::class, 'update'])->name('approval-path.update');
+        Route::delete('approval-path/{approvalPath}', [ApprovalPathController::class, 'destroy'])->name('approval-path.destroy');
+
     });
 });
 

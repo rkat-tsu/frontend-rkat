@@ -26,9 +26,6 @@ class ApprovalController extends Controller
         'WR_3'        => 'Menunggu_WR3',
     ];
 
-    /**
-     * Menampilkan Halaman Daftar RKAT yang butuh persetujuan
-     */
     public function index(Request $request): Response
     {
         $user = $request->user();
@@ -36,17 +33,13 @@ class ApprovalController extends Controller
         
         Log::debug('[Approval] Akses Index oleh: ' . $user->username . ' Peran: ' . $peran);
 
-        // Otorisasi: Hanya approver dan Admin yang boleh masuk
         if (! $user->isApprover() && ! $user->isAdmin()) {
             Log::warning('[Approval] Akses Ditolak untuk: ' . $user->username);
             abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
         }
 
-        // Eager load unit.children untuk menghindari N+1 query pada hierarki workflow
         $user->loadMissing('unit.children');
 
-        // === CEK STATUS TAHUN ANGGARAN ===
-        // Hanya izinkan review jika ada Tahun Anggaran dengan status 'Approved'
         $activeTahun = TahunAnggaran::query()->where('status_rkat', 'Approved')->exists();
         if (!$activeTahun && !$user->isAdmin()) {
              return Inertia::render('Approval/Index', [
@@ -57,38 +50,74 @@ class ApprovalController extends Controller
         }
 
         $query = RkatHeader::with([
-            'unit:id_unit,nama_unit,jalur_persetujuan',
+            'unit:id_unit,nama_unit,approval_path_id,parent_id',
+            'currentStep'
         ]);
 
-        $targetStatus = $this->roleStatusMap[$peran] ?? null;
-        Log::debug('[Approval] Status Target untuk peran: ' . ($targetStatus ?? 'Tidak Ada/Admin'));
-
-        // === LOGIKA FILTER AKSES ===
         if (in_array($peran, ['Admin', 'Rektor'])) {
-            // ADMIN & REKTOR: Bisa melihat semua dokumen yang sedang berada di proses approval (semua lini)
-            $validStatuses = array_values($this->roleStatusMap);
-            $query->whereIn('status_persetujuan', $validStatuses);
-        } 
-        elseif ($targetStatus) {
-            // USER BIASA (Kepala Unit, Dekan, WR): Hanya melihat yang sesuai target statusnya
-            $query->where('status_persetujuan', $targetStatus);
+            $query->whereNotNull('current_step_id');
+        } else {
+            $query->whereHas('currentStep', function ($q) use ($user, $peran) {
+                $q->where(function ($sub) use ($user, $peran) {
+                    // Berdasarkan role
+                    $sub->where('approver_type', 'role')
+                        ->where('role_name', $peran);
+
+                    if ($user->isUnitHead()) {
+                        // Berdasarkan unit spesifik
+                        $sub->orWhere(function ($unitSub) use ($user) {
+                            $unitSub->where('approver_type', 'unit')
+                                    ->where('unit_id', $user->id_unit);
+                        });
+
+                        // Berdasarkan atasan unit (parent_unit)
+                        // Harus cross check parent_id dari rkat_headers.id_unit == user.id_unit
+                        $sub->orWhere(function ($parentSub) use ($user) {
+                            $parentSub->where('approver_type', 'parent_unit')
+                                      ->whereIn('id_unit', function ($query) use ($user) {
+                                          $query->select('id_unit')->from('unit')->where('parent_id', $user->id_unit);
+                                      }, 'and', false); // Note: that subquery might need raw expression if it references the current header's unit
+                        });
+
+                        // Berdasarkan kepala unit pemohon (self_unit_head)
+                        $sub->orWhere(function ($selfSub) use ($user) {
+                            $selfSub->where('approver_type', 'self_unit_head');
+                        });
+                    }
+                });
+            });
 
             if ($user->isUnitHead()) {
-                if ($user->unit) {
-                    $childUnitIds = $user->unit->children->pluck('id_unit')->toArray();
-                    $unitAksesIds = array_merge([$user->id_unit], $childUnitIds);
-                    $query->whereIn('id_unit', $unitAksesIds);
-                } else {
-                    $query->whereRaw('1 = 0'); // Fallback jika tidak punya unit
-                }
+                // Untuk parent_unit atau self_unit_head, kita filter parent_id / id_unit di query level
+                $childUnitIds = $user->unit ? $user->unit->children->pluck('id_unit')->toArray() : [];
+                $unitAksesIds = array_merge([$user->id_unit], $childUnitIds);
+                
+                $query->where(function ($q) use ($unitAksesIds) {
+                    $q->whereIn('id_unit', $unitAksesIds)
+                      ->orWhereHas('currentStep', function ($stepQuery) {
+                          $stepQuery->where('approver_type', 'role')->orWhere('approver_type', 'unit');
+                      });
+                });
             }
-        } 
-        else {
-            // Jika role tidak dikenali, jangan tampilkan apa-apa
-            $query->whereRaw('1 = 0');
         }
 
         $rkatList = $query->latest('updated_at')->get();
+        
+        // Filter di memory untuk keamanan ganda jika relasi query kurang presisi
+        if (!in_array($peran, ['Admin', 'Rektor'])) {
+            $rkatList = $rkatList->filter(function ($rkat) use ($user, $peran) {
+                $step = $rkat->currentStep;
+                if (!$step) return false;
+                
+                if ($step->approver_type === 'role') return $step->role_name === $peran;
+                if ($step->approver_type === 'unit') return $user->isUnitHead() && $step->unit_id === $user->id_unit;
+                if ($step->approver_type === 'self_unit_head') return $user->isUnitHead() && $rkat->id_unit === $user->id_unit;
+                if ($step->approver_type === 'parent_unit') return $user->isUnitHead() && $rkat->unit && $rkat->unit->parent_id === $user->id_unit;
+                
+                return false;
+            })->values();
+        }
+
         Log::debug('[Approval] Memuat ' . $rkatList->count() . ' item untuk persetujuan.');
 
         return Inertia::render('Approval/Index', [
@@ -97,9 +126,6 @@ class ApprovalController extends Controller
         ]);
     }
 
-    /**
-     * Memproses Aksi (Setuju, Revisi, Tolak)
-     */
     public function approve(Request $request, RkatHeader $rkatHeader): RedirectResponse
     {
         $user = $request->user();
@@ -109,7 +135,6 @@ class ApprovalController extends Controller
             'action'  => $request->aksi
         ]);
 
-        // 1. Validasi Input
         $request->validate([
             'aksi'    => ['required', 'string', Rule::in(['Setuju', 'Revisi', 'Tolak'])],
             'catatan' => [
@@ -120,70 +145,83 @@ class ApprovalController extends Controller
             ],
         ]);
 
-        $rkatHeader->load('tahun_obj');
+        $rkatHeader->load('tahun_obj', 'currentStep', 'unit.approvalPath.steps');
         if ($rkatHeader->tahun_obj->status_rkat !== 'Approved' && !$user->isAdmin()) {
             return Redirect::back()->withErrors([
                 'error' => 'Persetujuan hanya dapat dilakukan pada tahap Approved (Review).',
             ]);
         }
 
-        $currentStatus = $rkatHeader->status_persetujuan;
-        $expectedStatus = $this->roleStatusMap[$user->peran] ?? null;
-        
-        // 2. Cek Hak Akses Eksekusi (Bypass Khusus Admin/Rektor)
+        $currentStep = $rkatHeader->currentStep;
         $isAdminOrRektor = in_array($user->peran, ['Admin', 'Rektor']);
 
-        if (!$isAdminOrRektor && $currentStatus !== $expectedStatus) {
-            Log::error('[Approval] Ketidakcocokan Status', ['saat_ini' => $currentStatus, 'diharapkan' => $expectedStatus]);
-            return Redirect::back()->withErrors([
-                'error' => 'RKAT ini tidak berada pada status persetujuan Anda atau statusnya telah berubah.',
-            ]);
+        if (!$isAdminOrRektor) {
+            $hasAccess = false;
+            if ($currentStep) {
+                if ($currentStep->approver_type === 'role' && $currentStep->role_name === $user->peran) $hasAccess = true;
+                if ($currentStep->approver_type === 'unit' && $user->isUnitHead() && $currentStep->unit_id === $user->id_unit) $hasAccess = true;
+                if ($currentStep->approver_type === 'self_unit_head' && $user->isUnitHead() && $rkatHeader->id_unit === $user->id_unit) $hasAccess = true;
+                if ($currentStep->approver_type === 'parent_unit' && $user->isUnitHead() && $rkatHeader->unit && $rkatHeader->unit->parent_id === $user->id_unit) $hasAccess = true;
+            }
+
+            if (!$hasAccess) {
+                Log::error('[Approval] Ketidakcocokan Status/Hak Akses', ['step_sekarang' => $currentStep ? $currentStep->step_name : 'null']);
+                return Redirect::back()->withErrors([
+                    'error' => 'RKAT ini tidak berada pada tahap persetujuan Anda atau Anda tidak memiliki akses.',
+                ]);
+            }
         }
         
         $aksi = $request->aksi;
 
         try {
-            // 3. Proses Transaksi Database
-            DB::transaction(function () use ($rkatHeader, $user, $aksi, $request) {
+            DB::transaction(function () use ($rkatHeader, $user, $aksi, $request, $currentStep) {
                 $oldStatus = $rkatHeader->status_persetujuan;
-                
-                // Tentukan status berikutnya berdasarkan aksi
-                $newStatus = match ($aksi) {
-                    'Setuju' => $this->getNextStatus($rkatHeader), // Lanjut ke step berikutnya
-                    'Revisi' => 'Revisi', // Mundur ke Inputer
-                    'Tolak'  => 'Ditolak', // Berhenti total
-                    default  => $rkatHeader->status_persetujuan,
-                };
-
-                $updateData = [
-                    'status_persetujuan' => $newStatus
-                ];
+                $updateData = [];
 
                 if ($aksi === 'Setuju') {
-                    $columnMap = [
-                        'Menunggu_Unit_Kepala'  => 'tanggal_disetujui_unit_kepala',
-                        'Menunggu_Dekan_Kepala' => 'tanggal_disetujui_dekan_kepala',
-                        'Menunggu_Tim_Renbang'  => 'tanggal_disetujui_tim_renbang',
-                        'Menunggu_WR1'          => 'tanggal_disetujui_wr1',
-                        'Menunggu_WR3'          => 'tanggal_disetujui_wr3',
-                        'Menunggu_WR2'          => 'tanggal_disetujui_wr2',
-                    ];
-                    $targetColumn = $columnMap[$oldStatus] ?? null;
-                    if ($targetColumn) {
-                        $updateData[$targetColumn] = now();
+                    // Simpan tanggal persetujuan ke kolom JSON
+                    if ($currentStep) {
+                        $approvalDates = $rkatHeader->approval_dates ?? [];
+                        $approvalDates[$currentStep->step_name] = now()->toDateTimeString();
+                        $updateData['approval_dates'] = $approvalDates;
                     }
+
+                    // Cari step berikutnya
+                    $nextStep = null;
+                    if ($currentStep && $rkatHeader->unit && $rkatHeader->unit->approvalPath) {
+                        $nextStep = $rkatHeader->unit->approvalPath->steps
+                            ->where('order', '>', $currentStep->order)
+                            ->sortBy('order')
+                            ->first();
+                    }
+
+                    if ($nextStep) {
+                        $updateData['status_persetujuan'] = $nextStep->step_name;
+                        $updateData['current_step_id'] = $nextStep->id;
+                    } else {
+                        // Jika tidak ada step berikutnya, maka selesai
+                        $updateData['status_persetujuan'] = 'Disetujui_Final';
+                        $updateData['current_step_id'] = null; // Selesai
+                    }
+
+                } elseif ($aksi === 'Revisi') {
+                    $updateData['status_persetujuan'] = 'Revisi';
+                    $updateData['current_step_id'] = null;
+                } elseif ($aksi === 'Tolak') {
+                    $updateData['status_persetujuan'] = 'Ditolak';
+                    $updateData['current_step_id'] = null;
                 }
 
-                // Update Status RKAT menggunakan Query Builder agar IDE paham argumennya (1 Query)
                 RkatHeader::query()->where('id_header', $rkatHeader->id_header)->update($updateData);
                 
+                $newStatus = $updateData['status_persetujuan'];
                 Log::info("[Approval] Status Berubah: $oldStatus -> $newStatus");
 
-                // Catat Riwayat Persetujuan (Audit Trail)
                 LogPersetujuan::create([
                     'id_header'         => $rkatHeader->id_header,
                     'id_approver'       => $user->id_user,
-                    'level_persetujuan' => $user->peran, 
+                    'level_persetujuan' => $currentStep ? $currentStep->step_name : $user->peran, 
                     'aksi'              => $aksi,
                     'catatan'           => $request->catatan,
                 ]);
@@ -191,55 +229,10 @@ class ApprovalController extends Controller
 
             return Redirect::route('approval.index')->with('success', "RKAT #{$rkatHeader->id_header} berhasil di{$aksi}.");
         } catch (\Exception $e) {
-            Log::error('[Approval] Gagal memproses aksi: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
-            
+            Log::error('[Approval] Gagal memproses aksi: ' . $e->getMessage());
             return Redirect::back()->withErrors([
                 'error' => 'Gagal memproses persetujuan: ' . $e->getMessage(),
             ])->with('error', 'Gagal memproses persetujuan: ' . $e->getMessage());
         }
-    }
-
-    /**
-     * Menentukan Status Selanjutnya (State Machine Alur Persetujuan)
-     */
-    protected function getNextStatus(RkatHeader $rkat): string
-    {
-        $currentStatus = $rkat->status_persetujuan;
-        $rkat->loadMissing('unit');
-
-        if (! $rkat->unit) {
-            Log::warning('[Approval] Unit hilang untuk RKAT ID: ' . $rkat->id_header);
-            return $currentStatus;
-        }
-
-        $jalur = $rkat->unit->jalur_persetujuan ?? 'akademik';
-        Log::debug('[Approval] Menghitung status berikutnya melalui jalur: ' . $jalur);
-
-        // State Machine Flow
-        $flows = [
-            'akademik' => [
-                'Menunggu_Unit_Kepala'  => 'Menunggu_Dekan_Kepala',
-                'Menunggu_Dekan_Kepala' => 'Menunggu_Tim_Renbang',
-                'Menunggu_Tim_Renbang'  => 'Menunggu_WR1',
-                'Menunggu_WR1'          => 'Menunggu_WR3',
-                'Menunggu_WR3'          => 'Menunggu_WR2',
-                'Menunggu_WR2'          => 'Disetujui_Final',
-            ],
-            'non-akademik' => [
-                'Menunggu_Unit_Kepala'  => 'Menunggu_Tim_Renbang',
-                'Menunggu_Tim_Renbang'  => 'Menunggu_WR3',
-                'Menunggu_WR3'          => 'Menunggu_WR1',
-                'Menunggu_WR1'          => 'Menunggu_WR2',
-                'Menunggu_WR2'          => 'Disetujui_Final',
-            ],
-        ];
-
-        $activeFlow = $flows[$jalur] ?? $flows['akademik'];
-
-        // Jika status saat ini ada di dalam alur, majukan ke status selanjutnya.
-        // Jika tidak ada (atau sudah di ujung), kembalikan status saat ini.
-        return $activeFlow[$currentStatus] ?? $currentStatus;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Unit;
 use App\Models\User;
+use App\Models\ApprovalPath;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Redirect;
@@ -17,8 +18,8 @@ class UnitController extends Controller
     {
         Log::debug('[Unit] Melihat Index');
         $units = Unit::query()
-            ->select(['id_unit', 'uuid', 'kode_unit', 'nama_unit', 'tipe_unit', 'jalur_persetujuan', 'id_kepala', 'parent_id', 'no_telepon', 'email'])
-            ->with(['kepala:id_user,nama_lengkap'])
+            ->select(['id_unit', 'uuid', 'kode_unit', 'nama_unit', 'tipe_unit', 'jalur_persetujuan', 'approval_path_id', 'id_kepala', 'parent_id', 'no_telepon', 'email'])
+            ->with(['kepala:id_user,nama_lengkap', 'approvalPath:id,name'])
             ->orderBy('nama_unit', 'asc')
             ->get();
 
@@ -30,11 +31,13 @@ class UnitController extends Controller
     public function create()
     {
         $users = User::query()->select(['id_user', 'nama_lengkap'])->orderBy('nama_lengkap', 'asc')->get();
-        $units = Unit::query()->select(['id_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get();
+        $units = Unit::query()->select(['id_unit', 'kode_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get();
+        $approvalPaths = ApprovalPath::select(['id', 'name'])->get();
 
         return Inertia::render('Admin/Unit/Create', [
             'users' => $users,
             'units' => $units,
+            'approvalPaths' => $approvalPaths,
         ]);
     }
 
@@ -46,7 +49,7 @@ class UnitController extends Controller
             'kode_unit' => 'required|string|unique:unit,kode_unit',
             'nama_unit' => 'required|string',
             'tipe_unit' => ['required', Rule::in(['Fakultas', 'Prodi', 'Unit', 'Lainnya', 'Atasan', 'Admin'])],
-            'jalur_persetujuan' => ['required', Rule::in(['akademik', 'non-akademik'])],
+            'approval_path_id' => 'required|exists:approval_paths,id',
             'id_kepala' => 'nullable|exists:users,id_user',
             'parent_id' => 'nullable|exists:unit,id_unit',
             'no_telepon' => 'nullable|string',
@@ -64,7 +67,8 @@ class UnitController extends Controller
         return Inertia::render('Admin/Unit/Edit', [
             'unit' => $unit,
             'users' => User::query()->select(['id_user', 'nama_lengkap'])->orderBy('nama_lengkap', 'asc')->get(),
-            'units' => Unit::query()->select(['id_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get(),
+            'units' => Unit::query()->select(['id_unit', 'kode_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get(),
+            'approvalPaths' => ApprovalPath::select(['id', 'name'])->get(),
         ]);
     }
 
@@ -76,7 +80,7 @@ class UnitController extends Controller
             'kode_unit' => ['required', 'string', Rule::unique('unit', 'kode_unit')->ignore($unit->id_unit, 'id_unit')],
             'nama_unit' => 'required|string',
             'tipe_unit' => ['required', Rule::in(['Fakultas', 'Prodi', 'Unit', 'Lainnya', 'Atasan', 'Admin'])],
-            'jalur_persetujuan' => ['required', Rule::in(['akademik', 'non-akademik'])],
+            'approval_path_id' => 'required|exists:approval_paths,id',
             'id_kepala' => 'nullable|exists:users,id_user',
             'parent_id' => 'nullable|exists:unit,id_unit',
             'no_telepon' => 'nullable|string',

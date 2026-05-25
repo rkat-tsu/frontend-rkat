@@ -21,25 +21,16 @@ class RkatHeader extends Model
         'diajukan_oleh',
         'nomor_dokumen',
         'status_persetujuan',
+        'current_step_id',
         'tanggal_pengajuan',
-        'tanggal_disetujui_unit_kepala',
-        'tanggal_disetujui_dekan_kepala',
-        'tanggal_disetujui_tim_renbang',
-        'tanggal_disetujui_wr1',
-        'tanggal_disetujui_wr3',
-        'tanggal_disetujui_wr2',
+        'approval_dates',
         'total_anggaran',
         'parent_id',
     ];
 
     protected $casts = [
         'tanggal_pengajuan' => 'datetime',
-        'tanggal_disetujui_unit_kepala' => 'datetime',
-        'tanggal_disetujui_dekan_kepala' => 'datetime',
-        'tanggal_disetujui_tim_renbang' => 'datetime',
-        'tanggal_disetujui_wr1' => 'datetime',
-        'tanggal_disetujui_wr3' => 'datetime',
-        'tanggal_disetujui_wr2' => 'datetime',
+        'approval_dates' => 'array',
     ];
 
     protected static function boot()
@@ -69,6 +60,11 @@ class RkatHeader extends Model
     {
         // Asumsi model User Anda ada di App\Models\User dan primary key-nya id_user
         return $this->belongsTo(User::class, 'diajukan_oleh', 'id_user');
+    }
+
+    public function currentStep()
+    {
+        return $this->belongsTo(ApprovalPathStep::class, 'current_step_id');
     }
 
     // Fungsi ini sekarang sudah benar karena 'use' statement di atas

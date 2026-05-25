@@ -12,7 +12,7 @@ export default function Index({ auth, units = [], flash = {} }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTipe, setSelectedTipe] = useState('');
     const [selectedParent, setSelectedParent] = useState('');
-    const [selectedJalur, setSelectedJalur] = useState('');
+    const [selectedPath, setSelectedPath] = useState('');
 
 
     // Extract unique filter values
@@ -22,10 +22,10 @@ export default function Index({ auth, units = [], flash = {} }) {
         ...uniqueTipes.map(t => ({ value: t, label: t }))
     ];
 
-    const uniqueJalurs = [...new Set(units.map(u => u.jalur_persetujuan).filter(Boolean))].sort();
-    const jalurOptions = [
-        { value: '', label: 'Semua Jalur Persetujuan' },
-        ...uniqueJalurs.map(j => ({ value: j, label: j === 'akademik' ? 'Akademik' : j === 'non-akademik' ? 'Non-Akademik' : j }))
+    const uniquePaths = [...new Map(units.map(u => [u.approval_path_id, u.approval_path])).values()].filter(Boolean);
+    const pathOptions = [
+        { value: '', label: 'Semua Alur Persetujuan' },
+        ...uniquePaths.map(p => ({ value: p.id, label: p.name }))
     ];
     
     // Parent unit mapping
@@ -47,9 +47,9 @@ export default function Index({ auth, units = [], flash = {} }) {
             
         const matchesTipe = selectedTipe === '' || unit.tipe_unit === selectedTipe;
         const matchesParent = selectedParent === '' || String(unit.parent_id) === String(selectedParent);
-        const matchesJalur = selectedJalur === '' || unit.jalur_persetujuan === selectedJalur;
+        const matchesPath = selectedPath === '' || String(unit.approval_path_id) === String(selectedPath);
         
-        return matchesSearch && matchesTipe && matchesParent && matchesJalur;
+        return matchesSearch && matchesTipe && matchesParent && matchesPath;
     }).sort((a, b) => (a.kode_unit || '').localeCompare(b.kode_unit || '', undefined, { numeric: true, sensitivity: 'base' }));
 
     const handleDelete = (id) => {
@@ -125,10 +125,10 @@ export default function Index({ auth, units = [], flash = {} }) {
 
                                 <div className="w-[140px]">
                                     <CustomSelect
-                                        value={selectedJalur}
-                                        onChange={(e) => setSelectedJalur(e.target.value)}
-                                        options={jalurOptions}
-                                        placeholder="Jalur" 
+                                        value={selectedPath}
+                                        onChange={(e) => setSelectedPath(e.target.value)}
+                                        options={pathOptions}
+                                        placeholder="Alur" 
                                         className="h-11 rounded-lg border-transparent bg-gray-200 dark:bg-gray-700 dark:text-gray-300 focus:border-yellow-500 focus:bg-white focus:ring-0 text-sm w-full"
                                     />
                                 </div>

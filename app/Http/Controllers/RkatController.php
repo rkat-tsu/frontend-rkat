@@ -11,6 +11,7 @@ use App\Models\RkatHeader;
 use App\Models\RkatRabItem;
 use App\Models\TahunAnggaran;
 use App\Models\Unit;
+use App\Models\ApprovalPathStep;    
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -94,12 +95,16 @@ class RkatController extends Controller
 
         $tahunAnggarans = TahunAnggaran::query()->orderBy('tahun_anggaran', 'desc')->pluck('tahun_anggaran');
         $units = Unit::query()->select(['id_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get();
+        
+        $dynamicSteps = ApprovalPathStep::select('step_name')->distinct()->pluck('step_name')->toArray();
+        $statuses = array_values(array_unique(array_merge(['Draft', 'Revisi', 'Disetujui_Final', 'Ditolak'], $dynamicSteps)));
 
         return Inertia::render('Rkat/Index', [
             'rkats' => $rkats,
             'filters' => $request->only(['search', 'tahun', 'status', 'unit_id']),
             'tahunAnggarans' => $tahunAnggarans,
             'units' => $units,
+            'statuses' => $statuses,
         ]);
     }
 
@@ -243,7 +248,7 @@ class RkatController extends Controller
     public function show(RkatHeader $rkatHeader)
     {
         $rkatHeader->load([
-            'unit',
+            'unit.approvalPath.steps',
             'tahun_obj',
             'rkatDetails.iku',
             'rkatDetails.ikk',
@@ -282,8 +287,17 @@ class RkatController extends Controller
         }
 
         try {
+            $rkatHeader->load('unit.approvalPath.steps');
+            $approvalPath = $rkatHeader->unit->approvalPath;
+            if (!$approvalPath || $approvalPath->steps->isEmpty()) {
+                return redirect()->back()->with('error', 'Unit tidak memiliki alur persetujuan. Silakan hubungi admin.');
+            }
+
+            $firstStep = $approvalPath->steps->sortBy('order')->first();
+
             RkatHeader::query()->where('id_header', $rkatHeader->id_header)->update([
-                'status_persetujuan' => 'Menunggu_Unit_Kepala',
+                'status_persetujuan' => $firstStep->step_name, // Map step name to status
+                'current_step_id' => $firstStep->id,
                 'tanggal_pengajuan' => now(),
                 'tanggal_disetujui_unit_kepala' => null,
                 'tanggal_disetujui_dekan_kepala' => null,
@@ -293,7 +307,7 @@ class RkatController extends Controller
                 'tanggal_disetujui_wr2' => null,
             ]);
 
-            Log::info('[RKAT] Dokumen Berhasil Diajukan', ['id' => $rkatHeader->id_header, 'status' => 'Menunggu_Unit_Kepala']);
+            Log::info('[RKAT] Dokumen Berhasil Diajukan', ['id' => $rkatHeader->id_header, 'status' => $firstStep->step_name]);
 
             return redirect()->route('daftar-ajuan.index')->with('success', 'RKAT berhasil diajukan dan sedang menunggu persetujuan Kepala Unit.');
         } catch (\Exception $e) {

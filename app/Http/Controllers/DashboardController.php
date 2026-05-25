@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\RkatHeader;
 use App\Models\TahunAnggaran;
+use App\Models\RkatDetail;
+use App\Models\PencairanDana;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -17,7 +20,7 @@ class DashboardController extends Controller
 
         // 1. Data Ringan (Initial Load)
         $activeBudget = TahunAnggaran::query()->where('tahun_anggaran', '=', $tahunSekarang, 'and')->first();
-        
+
         $statusMap = [
             'Drafting'   => 'Penyusunan',
             'Submission' => 'Pengajuan',
@@ -34,16 +37,16 @@ class DashboardController extends Controller
             'rawStatus' => $rawStatus,
 
             // OPTIMASI: Memuat data berat di latar belakang (Deferred)
-            'summary' => Inertia::defer(fn () => $this->getOptimizedSummary($user, $tahunSekarang)),
-            'grafikRkat' => Inertia::defer(fn () => $this->getOptimizedGrafik($user, $tahunSekarang)),
-            'kegiatanTerdekat' => Inertia::defer(fn () => $this->getJadwalKegiatan($user, $tahunSekarang)),
+            'summary' => Inertia::defer(fn() => $this->getOptimizedSummary($user, $tahunSekarang)),
+            'grafikRkat' => Inertia::defer(fn() => $this->getOptimizedGrafik($user, $tahunSekarang)),
+            'kegiatanTerdekat' => Inertia::defer(fn() => $this->getJadwalKegiatan($user, $tahunSekarang)),
         ]);
     }
 
     /**
      * Optimasi: Mengambil semua statistik dalam SATU kueri database saja
      */
-    private function getOptimizedSummary(\App\Models\User $user, int $tahunSekarang): array
+    private function getOptimizedSummary(User $user, int $tahunSekarang): array
     {
         $query = RkatHeader::query()->where('tahun_anggaran', $tahunSekarang);
 
@@ -61,19 +64,43 @@ class DashboardController extends Controller
             ")
             ->first();
 
+        $pencairanQuery = PencairanDana::query()
+            ->join('rkat_headers', 'pencairan_danas.id_header', '=', 'rkat_headers.id_header', 'inner', false)
+            ->where('rkat_headers.tahun_anggaran', $tahunSekarang);
+
+        if (!$user->isAdmin()) {
+            $pencairanQuery->where('rkat_headers.id_unit', $user->id_unit);
+        }
+
+        $pencairanStats = $pencairanQuery
+            ->selectRaw("
+                COUNT(pencairan_danas.id_pencairan) as total_pencairan_dokumen,
+                SUM(CASE WHEN pencairan_danas.status_pencairan = 'Disetujui_Final' THEN 1 ELSE 0 END) as pencairan_disetujui,
+                SUM(CASE WHEN pencairan_danas.status_pencairan = 'Ditolak' THEN 1 ELSE 0 END) as pencairan_ditolak,
+                SUM(CASE WHEN pencairan_danas.status_pencairan NOT IN ('Draft', 'Disetujui_Final', 'Ditolak') THEN 1 ELSE 0 END) as pencairan_review,
+                SUM(CASE WHEN pencairan_danas.status_pencairan = 'Disetujui_Final' THEN rkat_headers.total_anggaran ELSE 0 END) as total_pencairan_disetujui
+            ")
+            ->first();
+
         return [
             'total'     => (int) ($stats->total ?? 0),
             'disetujui' => (int) ($stats->disetujui ?? 0),
             'review'    => (int) ($stats->review ?? 0),
             'ditolak'   => (int) ($stats->ditolak ?? 0),
             'total_anggaran_disetujui' => (float) ($stats->total_anggaran_disetujui ?? 0),
+            
+            'total_pencairan_dokumen'  => (int) ($pencairanStats->total_pencairan_dokumen ?? 0),
+            'pencairan_disetujui'      => (int) ($pencairanStats->pencairan_disetujui ?? 0),
+            'pencairan_ditolak'        => (int) ($pencairanStats->pencairan_ditolak ?? 0),
+            'pencairan_review'         => (int) ($pencairanStats->pencairan_review ?? 0),
+            'total_pencairan_disetujui'=> (float) ($pencairanStats->total_pencairan_disetujui ?? 0),
         ];
     }
 
     /**
      * Optimasi: Mengambil data grafik
      */
-    private function getOptimizedGrafik(\App\Models\User $user, int $tahunSekarang): array
+    private function getOptimizedGrafik(User $user, int $tahunSekarang): array
     {
         $query = RkatHeader::query()->whereYear('tanggal_pengajuan', '=', $tahunSekarang, 'and');
 
@@ -102,9 +129,9 @@ class DashboardController extends Controller
     /**
      * Optimasi: Mengambil jadwal kegiatan terdekat dari RKAT yang disetujui
      */
-    private function getJadwalKegiatan(\App\Models\User $user, int $tahunSekarang): array
+    private function getJadwalKegiatan(User $user, int $tahunSekarang): array
     {
-        $query = \App\Models\RkatDetail::query()
+        $query = RkatDetail::query()
             ->join('rkat_headers', 'rkat_details.id_header', '=', 'rkat_headers.id_header', 'inner', false)
             ->where('rkat_headers.status_persetujuan', '=', 'Disetujui_Final', 'and')
             ->where('rkat_headers.tahun_anggaran', '=', $tahunSekarang, 'and')
