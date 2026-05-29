@@ -332,20 +332,6 @@
                 <div class="sig-date">Tgl: {{ $pencairan->tanggal_pengajuan ? \Carbon\Carbon::parse($pencairan->tanggal_pengajuan)->translatedFormat('d F Y') : '........................' }}</div>
             </td>
             <td>
-                <div class="sig-title">Divalidasi Oleh</div>
-                <div class="sig-role">Kepala BAAK</div>
-                
-                @php $sigBaak = getSignatureImage($userBaak); @endphp
-                @if($pencairan->tanggal_divalidasi_baak && $sigBaak)
-                    <img src="{{ $sigBaak }}" style="max-height: 40px; margin-top: 5px;">
-                @elseif($pencairan->tanggal_divalidasi_baak)
-                    <div class="sig-status">VALIDATED</div>
-                @endif
-                
-                <div class="sig-name">Wahyu Catur Hastuti, S.Kom</div>
-                <div class="sig-date">Tgl: {{ $pencairan->tanggal_divalidasi_baak ? \Carbon\Carbon::parse($pencairan->tanggal_divalidasi_baak)->translatedFormat('d F Y') : '........................' }}</div>
-            </td>
-            <td>
                 <div class="sig-title">Mengetahui</div>
                 <div class="sig-role">Kepala {{ $parentUnit ? $parentUnit->nama_unit : 'Unit Menaungi' }}</div>
                 
@@ -362,30 +348,7 @@
                 <div class="sig-name">{{ $userUnit ? $userUnit->nama_lengkap : '........................' }}</div>
                 <div class="sig-date">Tgl: {{ $tglUnit ? \Carbon\Carbon::parse($tglUnit)->translatedFormat('d F Y') : '........................' }}</div>
             </td>
-        </tr>
-    </table>
-
-    <!-- SIGNATURE SECTION 2 -->
-    <table class="signature-table" style="margin-top: 10px; width: 100%;">
-        <tr>
-            <td style="width: 50%;">
-                <div class="sig-title">Diverifikasi Oleh</div>
-                <div class="sig-role">Kepala BAUK</div>
-                
-                @php 
-                    $sigBauk = getSignatureImage($userBauk); 
-                    $tglBauk = $pencairan->approval_dates['Menunggu_BAUK'] ?? null;
-                @endphp
-                @if($tglBauk && $sigBauk)
-                    <img src="{{ $sigBauk }}" style="max-height: 40px; margin-top: 5px;">
-                @elseif($tglBauk)
-                    <div class="sig-status">VERIFIED</div>
-                @endif
-                
-                <div class="sig-name">Tri Irawati, S.E, M.Si</div>
-                <div class="sig-date">Tgl: {{ $tglBauk ? \Carbon\Carbon::parse($tglBauk)->translatedFormat('d F Y') : '........................' }}</div>
-            </td>
-            <td style="width: 50%;">
+            <td>
                 <div class="sig-title">Disetujui Oleh</div>
                 <div class="sig-role">Wakil Rektor Bidang Sumber Daya & Kepemimpinan</div>
                 

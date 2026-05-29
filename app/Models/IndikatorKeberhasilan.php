@@ -19,11 +19,11 @@ class IndikatorKeberhasilan extends Model
     protected $fillable = [
         'id_rkat_detail',
         'nama_indikator',
-        'capai_2025',
-        'target_2026',
-        'capai_2026',
-        'target_2029',
-        'capai_2029',
+        'past_capaian',
+        'current_target',
+        'current_capaian',
+        'future_target',
+        'future_capaian',
     ];
 
     // Relasi ke RkatDetail

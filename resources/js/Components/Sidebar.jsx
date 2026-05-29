@@ -107,7 +107,7 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
         const content = (
             <>
                 {!isChild && isActive && !isMinimized && (
-                    <div className="absolute left-0 h-6 w-1 bg-teal-500" />
+                    <div className="absolute left-0 h-6 w-1.5 bg-teal-500 rounded-r-full" />
                 )}
                 <item.icon size={isChild ? 18 : 22} className={`${isMinimized ? 'mx-auto' : 'mr-3'} flex-shrink-0 transition-colors duration-200`} />
                 {!isMinimized && (

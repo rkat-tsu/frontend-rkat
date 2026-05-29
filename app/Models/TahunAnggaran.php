@@ -24,11 +24,13 @@ class TahunAnggaran extends Model
         'tanggal_mulai',
         'tanggal_akhir',
         'status_rkat',
+        'indikator_labels',
     ];
 
     protected $casts = [
         'tanggal_mulai' => 'date',
         'tanggal_akhir' => 'date',
+        'indikator_labels' => 'array',
     ];
     
     // Relasi ke RkatHeader

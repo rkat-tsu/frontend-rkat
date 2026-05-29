@@ -16,16 +16,6 @@ use Inertia\Response;
 
 class ApprovalController extends Controller
 {
-    // Pemetaan Role ke Status Dokumen yang sedang menunggu
-    protected array $roleStatusMap = [
-        'Kepala_Unit' => 'Menunggu_Unit_Kepala',
-        'Dekan'       => 'Menunggu_Dekan_Kepala',
-        'Tim_Renbang' => 'Menunggu_Tim_Renbang',
-        'WR_1'        => 'Menunggu_WR1',
-        'WR_2'        => 'Menunggu_WR2',
-        'WR_3'        => 'Menunggu_WR3',
-    ];
-
     public function index(Request $request): Response
     {
         $user = $request->user();
@@ -57,48 +47,34 @@ class ApprovalController extends Controller
         if (in_array($peran, ['Admin', 'Rektor'])) {
             $query->whereNotNull('current_step_id');
         } else {
-            $query->whereHas('currentStep', function ($q) use ($user, $peran) {
-                $q->where(function ($sub) use ($user, $peran) {
-                    // Berdasarkan role
-                    $sub->where('approver_type', 'role')
-                        ->where('role_name', $peran);
-
-                    if ($user->isUnitHead()) {
-                        // Berdasarkan unit spesifik
-                        $sub->orWhere(function ($unitSub) use ($user) {
-                            $unitSub->where('approver_type', 'unit')
-                                    ->where('unit_id', $user->id_unit);
-                        });
-
-                        // Berdasarkan atasan unit (parent_unit)
-                        // Harus cross check parent_id dari rkat_headers.id_unit == user.id_unit
-                        $sub->orWhere(function ($parentSub) use ($user) {
-                            $parentSub->where('approver_type', 'parent_unit')
-                                      ->whereIn('id_unit', function ($query) use ($user) {
-                                          $query->select('id_unit')->from('unit')->where('parent_id', $user->id_unit);
-                                      }, 'and', false); // Note: that subquery might need raw expression if it references the current header's unit
-                        });
-
-                        // Berdasarkan kepala unit pemohon (self_unit_head)
-                        $sub->orWhere(function ($selfSub) use ($user) {
-                            $selfSub->where('approver_type', 'self_unit_head');
-                        });
-                    }
+            $query->whereNotNull('current_step_id');
+            $query->where(function ($q) use ($user, $peran) {
+                $q->orWhereHas('currentStep', function ($stepQ) use ($peran) {
+                    $stepQ->where('approver_type', 'role')
+                          ->where('role_name', $peran);
                 });
+
+                if ($user->isUnitHead()) {
+                    $q->orWhereHas('currentStep', function ($stepQ) use ($user) {
+                        $stepQ->where('approver_type', 'unit')
+                              ->where('unit_id', $user->id_unit);
+                    });
+
+                    $q->orWhere(function ($selfQ) use ($user) {
+                        $selfQ->whereHas('currentStep', function ($stepQ) {
+                            $stepQ->where('approver_type', 'self_unit_head');
+                        })->where('id_unit', $user->id_unit);
+                    });
+
+                    $q->orWhere(function ($parentQ) use ($user) {
+                        $parentQ->whereHas('currentStep', function ($stepQ) {
+                            $stepQ->where('approver_type', 'parent_unit');
+                        })->whereHas('unit', function ($unitQ) use ($user) {
+                            $unitQ->where('parent_id', $user->id_unit);
+                        });
+                    });
+                }
             });
-
-            if ($user->isUnitHead()) {
-                // Untuk parent_unit atau self_unit_head, kita filter parent_id / id_unit di query level
-                $childUnitIds = $user->unit ? $user->unit->children->pluck('id_unit')->toArray() : [];
-                $unitAksesIds = array_merge([$user->id_unit], $childUnitIds);
-                
-                $query->where(function ($q) use ($unitAksesIds) {
-                    $q->whereIn('id_unit', $unitAksesIds)
-                      ->orWhereHas('currentStep', function ($stepQuery) {
-                          $stepQuery->where('approver_type', 'role')->orWhere('approver_type', 'unit');
-                      });
-                });
-            }
         }
 
         $rkatList = $query->latest('updated_at')->get();

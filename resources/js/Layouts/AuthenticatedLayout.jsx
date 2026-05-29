@@ -73,7 +73,7 @@ export default function AuthenticatedLayout({ header, children }) {
     const mainContentMarginClass = isMinimized ? 'sm:ml-20' : 'sm:ml-64';
 
     return (
-        <div className="min-h-screen flex bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 transition-colors duration-300">
+        <div className="min-h-screen flex bg-gray-200 dark:bg-gray-900 font-sans text-gray-800 transition-colors duration-300">
 
 
             <Toaster position="top-center" richColors />

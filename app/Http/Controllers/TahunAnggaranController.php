@@ -42,6 +42,10 @@ class TahunAnggaranController extends Controller
             'tanggal_mulai' => 'required|date',
             'tanggal_akhir' => 'required|date|after_or_equal:tanggal_mulai',
             'status_rkat' => ['required', Rule::in(['Drafting', 'Submission', 'Approved', 'Closed'])],
+            'indikator_labels' => 'nullable|array',
+            'indikator_labels.past' => 'nullable|string|max:100',
+            'indikator_labels.current' => 'nullable|string|max:100',
+            'indikator_labels.future' => 'nullable|string|max:100',
         ]);
 
         TahunAnggaran::create($validated);
@@ -64,11 +68,13 @@ class TahunAnggaranController extends Controller
             'tanggal_mulai' => 'required|date',
             'tanggal_akhir' => 'required|date|after_or_equal:tanggal_mulai',
             'status_rkat' => ['required', Rule::in(['Drafting', 'Submission', 'Approved', 'Closed'])],
+            'indikator_labels' => 'nullable|array',
+            'indikator_labels.past' => 'nullable|string|max:100',
+            'indikator_labels.current' => 'nullable|string|max:100',
+            'indikator_labels.future' => 'nullable|string|max:100',
         ]);
 
-        TahunAnggaran::query()
-            ->where('id_tahun', $tahun->id_tahun)
-            ->update($validated);
+        $tahun->update($validated);
 
         Log::info('[TahunAnggaran] Berhasil update data.');
 

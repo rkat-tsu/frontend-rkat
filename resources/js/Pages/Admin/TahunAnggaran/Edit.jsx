@@ -28,6 +28,11 @@ export default function Edit({ auth, tahun, tahunAnggaran, data: propData }) {
         status_rkat: sourceData.status_rkat || 'Drafting',
         tanggal_mulai: formatDate(sourceData.tanggal_mulai),
         tanggal_akhir: formatDate(sourceData.tanggal_akhir),
+        indikator_labels: sourceData.indikator_labels || {
+            past: '2025',
+            current: 'Tahun 2026',
+            future: 'Akhir 2029'
+        }
     });
 
     const submit = (e) => {
@@ -156,6 +161,54 @@ export default function Edit({ auth, tahun, tahunAnggaran, data: propData }) {
                                                 />
                                             </div>
                                             <InputError message={errors.tanggal_akhir} className="mt-2" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Divider Visual */}
+                                <div className="border-t border-gray-100 dark:border-gray-700/50 pt-6 mt-4">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <CalendarClock className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                                        <span className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Pengaturan Tahun Indikator Keberhasilan</span>
+                                    </div>
+
+                                    {/* Baris 3: Indikator Labels */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div className="flex flex-col h-full">
+                                            <InputLabel value="Tahun Lalu (Capaian)" />
+                                            <div className="mt-auto pt-1">
+                                                <TextInput
+                                                    type="text"
+                                                    value={data.indikator_labels?.past || ''}
+                                                    onChange={(e) => setData('indikator_labels', { ...data.indikator_labels, past: e.target.value })}
+                                                    className="block w-full"
+                                                    placeholder="Contoh: 2025"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col h-full">
+                                            <InputLabel value="Tahun Berjalan (Target & Capaian)" />
+                                            <div className="mt-auto pt-1">
+                                                <TextInput
+                                                    type="text"
+                                                    value={data.indikator_labels?.current || ''}
+                                                    onChange={(e) => setData('indikator_labels', { ...data.indikator_labels, current: e.target.value })}
+                                                    className="block w-full"
+                                                    placeholder="Contoh: Tahun 2026"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col h-full">
+                                            <InputLabel value="Tahun Mendatang (Target & Capaian)" />
+                                            <div className="mt-auto pt-1">
+                                                <TextInput
+                                                    type="text"
+                                                    value={data.indikator_labels?.future || ''}
+                                                    onChange={(e) => setData('indikator_labels', { ...data.indikator_labels, future: e.target.value })}
+                                                    className="block w-full"
+                                                    placeholder="Contoh: Akhir 2029"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

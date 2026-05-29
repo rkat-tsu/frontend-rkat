@@ -206,16 +206,23 @@ class PencairanDanaController extends Controller
         ]);
 
         if ($user->peran !== 'Admin' && $pencairan->rkatHeader->id_unit !== $user->id_unit) {
-            $isBaak = $user->unit && stripos($user->unit->nama_unit, 'BAAK') !== false && $user->isUnitHead();
-            $isBauk = $user->unit && stripos($user->unit->nama_unit, 'BAUK') !== false && $user->isUnitHead();
-            $isWr2 = $user->peran === 'WR_2';
-            
             $isParentUnit = false;
             if ($user->unit && $user->isUnitHead()) {
                 $isParentUnit = $user->unit->children()->where('id_unit', $pencairan->rkatHeader->id_unit)->exists();
             }
 
-            if (!$isBaak && !$isBauk && !$isWr2 && !$isParentUnit) {
+            $hasAccess = $isParentUnit;
+
+            // Check if user is in any step of the dynamic approval path
+            if (!$hasAccess && $pencairan->rkatHeader->unit && $pencairan->rkatHeader->unit->pencairanApprovalPath) {
+                $steps = $pencairan->rkatHeader->unit->pencairanApprovalPath->steps;
+                foreach ($steps as $step) {
+                    if ($step->approver_type === 'role' && $step->role_name === $user->peran) $hasAccess = true;
+                    if ($step->approver_type === 'unit' && $user->isUnitHead() && $step->unit_id === $user->id_unit) $hasAccess = true;
+                }
+            }
+
+            if (!$hasAccess) {
                 abort(403, 'Anda tidak memiliki hak akses untuk melihat dokumen pencairan ini.');
             }
         }
@@ -231,18 +238,27 @@ class PencairanDanaController extends Controller
             return redirect()->back()->with('error', 'Hanya dokumen Draft atau Revisi yang dapat diajukan.');
         }
 
+        $pencairan->load('rkatHeader.unit.pencairanApprovalPath.steps');
+        $unit = $pencairan->rkatHeader->unit;
+        
+        if (!$unit || !$unit->pencairanApprovalPath || $unit->pencairanApprovalPath->steps->isEmpty()) {
+            return redirect()->back()->with('error', 'Unit ini tidak memiliki alur persetujuan pencairan yang dikonfigurasi.');
+        }
+
+        $firstStep = $unit->pencairanApprovalPath->steps->sortBy('order')->first();
+
         $pencairan->fill([
-            'status_pencairan' => 'Menunggu_BAAK',
+            'status_pencairan' => $firstStep->step_name,
+            'current_step_id' => $firstStep->id,
             'tanggal_pengajuan' => now()
         ])->save();
 
-        return redirect()->route('pencairan.index')->with('success', 'Pencairan Dana berhasil diajukan ke BAAK.');
+        return redirect()->route('pencairan.index')->with('success', 'Pencairan Dana berhasil diajukan.');
     }
 
     // Fungsi Approval
     public function approve(Request $request, PencairanDana $pencairan)
     {
-        // Validasi akses user
         $user = Auth::user();
         
         $request->validate([
@@ -255,10 +271,29 @@ class PencairanDanaController extends Controller
                 'catatan' => 'required|string'
             ]);
         }
+        
+        $pencairan->load('currentStep', 'rkatHeader.unit.pencairanApprovalPath.steps');
+        $currentStep = $pencairan->currentStep;
+        $isAdminOrRektor = in_array($user->peran, ['Admin', 'Rektor']);
+
+        if (!$isAdminOrRektor) {
+            $hasAccess = false;
+            if ($currentStep) {
+                if ($currentStep->approver_type === 'role' && $currentStep->role_name === $user->peran) $hasAccess = true;
+                if ($currentStep->approver_type === 'unit' && $user->isUnitHead() && $currentStep->unit_id === $user->id_unit) $hasAccess = true;
+                if ($currentStep->approver_type === 'self_unit_head' && $user->isUnitHead() && $pencairan->rkatHeader->id_unit === $user->id_unit) $hasAccess = true;
+                if ($currentStep->approver_type === 'parent_unit' && $user->isUnitHead() && $pencairan->rkatHeader->unit && $pencairan->rkatHeader->unit->parent_id === $user->id_unit) $hasAccess = true;
+            }
+
+            if (!$hasAccess) {
+                return redirect()->back()->with('error', 'Pencairan ini tidak berada pada tahap persetujuan Anda atau Anda tidak memiliki akses.');
+            }
+        }
 
         if ($request->aksi === 'Tolak') {
             $pencairan->fill([
                 'status_pencairan' => 'Ditolak',
+                'current_step_id' => null,
                 'catatan' => $request->catatan
             ])->save();
             return redirect()->back()->with('success', 'Pencairan Dana ditolak.');
@@ -267,48 +302,39 @@ class PencairanDanaController extends Controller
         if ($request->aksi === 'Revisi') {
             $pencairan->fill([
                 'status_pencairan' => 'Revisi',
+                'current_step_id' => null,
                 'catatan' => $request->catatan
             ])->save();
             return redirect()->back()->with('success', 'Pencairan Dana dikembalikan untuk revisi.');
         }
 
-        // Simpan catatan jika ada (meskipun disetujui)
-        $pencairan->fill([
-            'catatan' => $request->catatan ?? null
-        ])->save();
-
-        // Logic Setuju (Maju ke step berikutnya)
         $approvalDates = $pencairan->approval_dates ?? [];
-        
-        switch ($pencairan->status_pencairan) {
-            case 'Menunggu_BAAK':
-                $approvalDates['Menunggu_BAAK'] = now()->toDateTimeString();
-                $pencairan->fill([
-                    'status_pencairan' => 'Menunggu_Unit_Menaungi',
-                    'approval_dates' => $approvalDates
-                ])->save();
-                break;
-            case 'Menunggu_Unit_Menaungi':
-                $approvalDates['Menunggu_Unit_Menaungi'] = now()->toDateTimeString();
-                $pencairan->fill([
-                    'status_pencairan' => 'Menunggu_BAUK',
-                    'approval_dates' => $approvalDates
-                ])->save();
-                break;
-            case 'Menunggu_BAUK':
-                $approvalDates['Menunggu_BAUK'] = now()->toDateTimeString();
-                $pencairan->fill([
-                    'status_pencairan' => 'Menunggu_WR2',
-                    'approval_dates' => $approvalDates
-                ])->save();
-                break;
-            case 'Menunggu_WR2':
-                $approvalDates['Menunggu_WR2'] = now()->toDateTimeString();
-                $pencairan->fill([
-                    'status_pencairan' => 'Disetujui_Final',
-                    'approval_dates' => $approvalDates
-                ])->save();
-                break;
+        if ($currentStep) {
+            $approvalDates[$currentStep->step_name] = now()->toDateTimeString();
+        }
+
+        $nextStep = null;
+        if ($currentStep && $pencairan->rkatHeader->unit && $pencairan->rkatHeader->unit->pencairanApprovalPath) {
+            $nextStep = $pencairan->rkatHeader->unit->pencairanApprovalPath->steps
+                ->where('order', '>', $currentStep->order)
+                ->sortBy('order')
+                ->first();
+        }
+
+        if ($nextStep) {
+            $pencairan->fill([
+                'status_pencairan' => $nextStep->step_name,
+                'current_step_id' => $nextStep->id,
+                'approval_dates' => $approvalDates,
+                'catatan' => $request->catatan ?? null
+            ])->save();
+        } else {
+            $pencairan->fill([
+                'status_pencairan' => 'Disetujui_Final',
+                'current_step_id' => null,
+                'approval_dates' => $approvalDates,
+                'catatan' => $request->catatan ?? null
+            ])->save();
         }
 
         return redirect()->back()->with('success', 'Pencairan Dana berhasil disetujui.');
@@ -317,53 +343,73 @@ class PencairanDanaController extends Controller
     // Approval khusus Pencairan
     public function approvalIndex()
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
-        
-        // Cek otorisasi akses menu persetujuan
-        $isBaak = $user->unit && stripos($user->unit->nama_unit, 'BAAK') !== false && $user->isUnitHead();
-        $isBauk = $user->unit && stripos($user->unit->nama_unit, 'BAUK') !== false && $user->isUnitHead();
-        $isWr2 = $user->peran === 'WR_2';
-        $isParentUnit = $user->unit && $user->isUnitHead() && $user->unit->children()->exists();
+        $peran = $user->peran;
 
-        if ($user->peran !== 'Admin' && !$isBaak && !$isBauk && !$isWr2 && !$isParentUnit) {
-            abort(403, 'Anda tidak memiliki hak akses ke halaman persetujuan pencairan.');
+        if (! $user->isApprover() && ! $user->isAdmin()) {
+            abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
         }
 
-        $query = PencairanDana::with(['rkatHeader.unit', 'pengaju']);
+        $user->loadMissing('unit.children');
+
+        $query = PencairanDana::with([
+            'rkatHeader.unit',
+            'pengaju',
+            'currentStep'
+        ]);
         
-        // Logika melihat data yang perlu di-approve sesuai peran/unit user.
-        if ($user->peran === 'Admin') {
-            $query->whereIn('status_pencairan', [
-                'Menunggu_BAAK', 'Menunggu_Unit_Menaungi', 'Menunggu_BAUK', 'Menunggu_WR2'
-            ]);
+        if (in_array($peran, ['Admin', 'Rektor'])) {
+            $query->whereNotNull('current_step_id');
         } else {
-            $statusFilters = [];
-            if ($isBaak) $statusFilters[] = 'Menunggu_BAAK';
-            if ($isBauk) $statusFilters[] = 'Menunggu_BAUK';
-            if ($isWr2) $statusFilters[] = 'Menunggu_WR2';
-            
-            if ($isParentUnit) {
-                // Bisa approve Menunggu_Unit_Menaungi jika dia adalah kepala dari parent_id unit RKAT.
-                $childUnitIds = $user->unit ? $user->unit->children->pluck('id_unit')->toArray() : [];
-                $unitAksesIds = array_merge([$user->id_unit], $childUnitIds);
-                
-                $query->where(function($q) use ($statusFilters, $unitAksesIds) {
-                    if (!empty($statusFilters)) {
-                        $q->whereIn('status_pencairan', $statusFilters);
-                    }
-                    $q->orWhere(function($subQ) use ($unitAksesIds) {
-                        $subQ->where('status_pencairan', 'Menunggu_Unit_Menaungi')
-                             ->whereHas('rkatHeader', function($rkatQ) use ($unitAksesIds) {
-                                 $rkatQ->whereIn('id_unit', $unitAksesIds);
-                             });
-                    });
+            $query->whereNotNull('current_step_id');
+            $query->where(function ($q) use ($user, $peran) {
+                $q->orWhereHas('currentStep', function ($stepQ) use ($peran) {
+                    $stepQ->where('approver_type', 'role')
+                          ->where('role_name', $peran);
                 });
-            } else {
-                 $query->whereIn('status_pencairan', empty($statusFilters) ? ['none'] : $statusFilters);
-            }
+
+                if ($user->isUnitHead()) {
+                    $q->orWhereHas('currentStep', function ($stepQ) use ($user) {
+                        $stepQ->where('approver_type', 'unit')
+                              ->where('unit_id', $user->id_unit);
+                    });
+
+                    $q->orWhere(function ($selfQ) use ($user) {
+                        $selfQ->whereHas('currentStep', function ($stepQ) {
+                            $stepQ->where('approver_type', 'self_unit_head');
+                        })->whereHas('rkatHeader', function ($headerQ) use ($user) {
+                            $headerQ->where('id_unit', $user->id_unit);
+                        });
+                    });
+
+                    $q->orWhere(function ($parentQ) use ($user) {
+                        $parentQ->whereHas('currentStep', function ($stepQ) {
+                            $stepQ->where('approver_type', 'parent_unit');
+                        })->whereHas('rkatHeader.unit', function ($unitQ) use ($user) {
+                            $unitQ->where('parent_id', $user->id_unit);
+                        });
+                    });
+                }
+            });
         }
         
-        $pencairans = $query->latest()->get();
+        $pencairans = $query->latest('updated_at')->get();
+        
+        // Filter di memory
+        if (!in_array($peran, ['Admin', 'Rektor'])) {
+            $pencairans = $pencairans->filter(function ($pencairan) use ($user, $peran) {
+                $step = $pencairan->currentStep;
+                if (!$step) return false;
+                
+                if ($step->approver_type === 'role') return $step->role_name === $peran;
+                if ($step->approver_type === 'unit') return $user->isUnitHead() && $step->unit_id === $user->id_unit;
+                if ($step->approver_type === 'self_unit_head') return $user->isUnitHead() && $pencairan->rkatHeader->id_unit === $user->id_unit;
+                if ($step->approver_type === 'parent_unit') return $user->isUnitHead() && $pencairan->rkatHeader->unit && $pencairan->rkatHeader->unit->parent_id === $user->id_unit;
+                
+                return false;
+            })->values();
+        }
         
         return Inertia::render('Pencairan/Approval', [
             'pencairans' => $pencairans

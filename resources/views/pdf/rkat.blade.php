@@ -169,8 +169,10 @@
         $logoPath = public_path('img/logo-full-tsu.svg');
 
         // Labels
-        $labelPrevYear = 2025;
-        $labelCurrYear = 2026;
+        $labels = $rkat->tahun_obj->indikator_labels ?? ['past' => '2025', 'current' => 'Tahun 2026', 'future' => 'Akhir 2029'];
+        $labelPrevYear = $labels['past'] ?? '2025';
+        $labelCurrYear = $labels['current'] ?? 'Tahun 2026';
+        $labelFutureYear = $labels['future'] ?? 'Akhir 2029';
 
         // Approval logic
         $isRenbangAcc = $rkat->logPersetujuans
@@ -286,9 +288,9 @@
                     <thead>
                         <tr>
                             <th rowspan="2" style="border-top:none; border-left:none;">Indikator</th>
-                            <th style="width: 80px;">Kondisi Akhir {{ $labelPrevYear }}</th>
-                            <th colspan="2">Tahun {{ $labelCurrYear }}</th>
-                            <th colspan="2" style="border-right:none;">Akhir 2029</th>
+                            <th style="width: 80px;">Kondisi {{ $labelPrevYear }}</th>
+                            <th colspan="2">Target {{ $labelCurrYear }}</th>
+                            <th colspan="2" style="border-right:none;">Target {{ $labelFutureYear }}</th>
                         </tr>
                         <tr>
                             <th>Capaian</th>
@@ -302,11 +304,11 @@
                         @forelse($detail->indikators as $ind)
                             <tr>
                                 <td style="border-left:none;">{{ $ind->nama_indikator }}</td>
-                                <td class="text-center">{{ $ind->capai_2025 ?? '-' }}</td>
-                                <td class="text-center">{{ $ind->target_2026 ?? '-' }}</td>
-                                <td class="text-center">{{ $ind->capai_2026 ?? '-' }}</td>
-                                <td class="text-center">{{ $ind->target_2029 ?? '-' }}</td>
-                                <td class="text-center" style="border-right:none;">{{ $ind->capai_2029 ?? '-' }}</td>
+                                <td class="text-center">{{ $ind->past_capaian ?? '-' }}</td>
+                                <td class="text-center">{{ $ind->current_target ?? '-' }}</td>
+                                <td class="text-center">{{ $ind->current_capaian ?? '-' }}</td>
+                                <td class="text-center">{{ $ind->future_target ?? '-' }}</td>
+                                <td class="text-center" style="border-right:none;">{{ $ind->future_capaian ?? '-' }}</td>
                             </tr>
                         @empty
                             <tr>

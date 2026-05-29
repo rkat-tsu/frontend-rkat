@@ -22,6 +22,7 @@ class Unit extends Model
         'tipe_unit',
         'jalur_persetujuan',
         'approval_path_id',
+        'pencairan_approval_path_id',
         'id_kepala',
         'parent_id',
         'no_telepon',
@@ -35,6 +36,11 @@ class Unit extends Model
     public function approvalPath()
     {
         return $this->belongsTo(ApprovalPath::class, 'approval_path_id');
+    }
+    
+    public function pencairanApprovalPath()
+    {
+        return $this->belongsTo(ApprovalPath::class, 'pencairan_approval_path_id');
     }
     
     // Relasi ke RkatHeader

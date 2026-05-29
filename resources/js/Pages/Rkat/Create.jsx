@@ -131,11 +131,11 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
     const initialIndikator = {
         id: Date.now(),
         indikator: '',
-        capai_2025: '',
-        target_2026: '',
-        capai_2026: '',
-        target_2029: '',
-        capai_2029: ''
+        past_capaian: '',
+        current_target: '',
+        current_capaian: '',
+        future_target: '',
+        future_capaian: ''
     };
 
     const initialRAB = {
@@ -599,34 +599,41 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                 <div><InputLabel value="IKK" required /><CustomSelect value={data.ikk_id} onChange={(e) => setData('ikk_id', e.target.value)} options={filteredIkks} placeholder="Pilih IKK" disabled={!data.iku_id} isMarquee={true} className="mt-1" /><InputError message={errors.ikk_id} className="mt-2" /></div>
                             </div>
                             <div className="overflow-x-auto rounded-lg mb-4">
-                                <table className="min-w-full">
-                                    <thead className="bg-gray-50 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300">
-                                        <tr>
-                                            <th className="px-2 py-3 text-xs text-center">No</th>
-                                            <th className="px-4 py-3 text-xs text-left min-w-[200px]">Indikator</th>
-                                            <th className="px-4 py-3 text-xs text-center min-w-[100px]">Kondisi 2025</th>
-                                            <th className="px-4 py-3 text-xs text-center">Target 2026</th>
-                                            <th className="px-4 py-3 text-xs text-center">Capaian 2026</th>
-                                            <th className="px-4 py-3 text-xs text-center">Target 2029</th>
-                                            <th className="px-4 py-3 text-xs text-center">Capaian 2029</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white dark:bg-gray-800">
-                                        {data.indikator_kinerja.map((item, index) => (
-                                            <tr key={item.id} className="hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors">
-                                                <td className="px-2 py-3 text-sm text-center align-top pt-4">{index + 1}</td>
-                                                <td className="p-2 align-top"><TextArea value={item.indikator} onChange={(e) => handleIndikatorChange(index, 'indikator', e.target.value)} className="w-full text-sm min-h-[80px]" rows="3" placeholder="Indikator..." /></td>
-                                                <td className="p-2 align-top"><TextArea value={item.capai_2025} onChange={(e) => handleIndikatorChange(index, 'capai_2025', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                <td className="p-2 align-top"><TextArea value={item.target_2026} onChange={(e) => handleIndikatorChange(index, 'target_2026', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                <td className="p-2 align-top"><TextArea value={item.capai_2026} onChange={(e) => handleIndikatorChange(index, 'capai_2026', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                <td className="p-2 align-top"><TextArea value={item.target_2029} onChange={(e) => handleIndikatorChange(index, 'target_2029', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                <td className="p-2 align-top"><TextArea value={item.capai_2029} onChange={(e) => handleIndikatorChange(index, 'capai_2029', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                <td className="p-2 pt-4 align-top"><button type="button" onClick={() => removeIndikatorRow(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"><Trash2 size={16} /></button></td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                {(() => {
+                                    const selectedTahunData = tahunAnggarans.find(t => String(t.tahun_anggaran) === String(data.tahun_anggaran));
+                                    const labels = selectedTahunData?.indikator_labels || { past: '2025', current: 'Tahun 2026', future: 'Akhir 2029' };
+                                    
+                                    return (
+                                        <table className="min-w-full">
+                                            <thead className="bg-gray-50 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300">
+                                                <tr>
+                                                    <th className="px-2 py-3 text-xs text-center">No</th>
+                                                    <th className="px-4 py-3 text-xs text-left min-w-[200px]">Indikator</th>
+                                                    <th className="px-4 py-3 text-xs text-center min-w-[100px]">Kondisi {labels.past}</th>
+                                                    <th className="px-4 py-3 text-xs text-center">Target {labels.current}</th>
+                                                    <th className="px-4 py-3 text-xs text-center">Capaian {labels.current}</th>
+                                                    <th className="px-4 py-3 text-xs text-center">Target {labels.future}</th>
+                                                    <th className="px-4 py-3 text-xs text-center">Capaian {labels.future}</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white dark:bg-gray-800">
+                                                {data.indikator_kinerja.map((item, index) => (
+                                                    <tr key={item.id} className="hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors">
+                                                        <td className="px-2 py-3 text-sm text-center align-top pt-4">{index + 1}</td>
+                                                        <td className="p-2 align-top"><TextArea value={item.indikator} onChange={(e) => handleIndikatorChange(index, 'indikator', e.target.value)} className="w-full text-sm min-h-[80px]" rows="3" placeholder="Indikator..." /></td>
+                                                        <td className="p-2 align-top"><TextArea value={item.past_capaian} onChange={(e) => handleIndikatorChange(index, 'past_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                        <td className="p-2 align-top"><TextArea value={item.current_target} onChange={(e) => handleIndikatorChange(index, 'current_target', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                        <td className="p-2 align-top"><TextArea value={item.current_capaian} onChange={(e) => handleIndikatorChange(index, 'current_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                        <td className="p-2 align-top"><TextArea value={item.future_target} onChange={(e) => handleIndikatorChange(index, 'future_target', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                        <td className="p-2 align-top"><TextArea value={item.future_capaian} onChange={(e) => handleIndikatorChange(index, 'future_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                        <td className="p-2 pt-4 align-top"><button type="button" onClick={() => removeIndikatorRow(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"><Trash2 size={16} /></button></td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    );
+                                })()}
                             </div>
                             <button type="button" onClick={addIndikatorRow} className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"><Plus size={16} className="mr-1" /> Tambah Indikator</button>
                         </div>

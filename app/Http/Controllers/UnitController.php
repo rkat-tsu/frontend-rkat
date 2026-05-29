@@ -18,8 +18,8 @@ class UnitController extends Controller
     {
         Log::debug('[Unit] Melihat Index');
         $units = Unit::query()
-            ->select(['id_unit', 'uuid', 'kode_unit', 'nama_unit', 'tipe_unit', 'jalur_persetujuan', 'approval_path_id', 'id_kepala', 'parent_id', 'no_telepon', 'email'])
-            ->with(['kepala:id_user,nama_lengkap', 'approvalPath:id,name'])
+            ->select(['id_unit', 'uuid', 'kode_unit', 'nama_unit', 'tipe_unit', 'jalur_persetujuan', 'approval_path_id', 'pencairan_approval_path_id', 'id_kepala', 'parent_id', 'no_telepon', 'email'])
+            ->with(['kepala:id_user,nama_lengkap', 'approvalPath:id,name', 'pencairanApprovalPath:id,name'])
             ->orderBy('nama_unit', 'asc')
             ->get();
 
@@ -45,11 +45,18 @@ class UnitController extends Controller
     {
         Log::info('[Unit] Membuat Unit', ['by_user' => Auth::id(), 'data' => $request->all()]);
 
+        // Ubah string kosong menjadi null agar lolos validasi exists
+        $request->merge([
+            'parent_id' => $request->parent_id ?: null,
+            'id_kepala' => $request->id_kepala ?: null,
+        ]);
+
         $validated = $request->validate([
             'kode_unit' => 'required|string|unique:unit,kode_unit',
             'nama_unit' => 'required|string',
-            'tipe_unit' => ['required', Rule::in(['Fakultas', 'Prodi', 'Unit', 'Lainnya', 'Atasan', 'Admin'])],
+            'tipe_unit' => ['required', Rule::in(['Rektorat', 'Fakultas', 'Prodi', 'Biro', 'Lembaga', 'UPT', 'Satuan', 'UKM', 'Unit', 'Admin', 'Lainnya', 'Atasan'])],
             'approval_path_id' => 'required|exists:approval_paths,id',
+            'pencairan_approval_path_id' => 'required|exists:approval_paths,id',
             'id_kepala' => 'nullable|exists:users,id_user',
             'parent_id' => 'nullable|exists:unit,id_unit',
             'no_telepon' => 'nullable|string',
@@ -76,11 +83,18 @@ class UnitController extends Controller
     {
         Log::info('[Unit] Memperbarui Unit: ' . $unit->kode_unit, $request->all());
 
+        // Ubah string kosong menjadi null agar lolos validasi exists
+        $request->merge([
+            'parent_id' => $request->parent_id ?: null,
+            'id_kepala' => $request->id_kepala ?: null,
+        ]);
+
         $validated = $request->validate([
             'kode_unit' => ['required', 'string', Rule::unique('unit', 'kode_unit')->ignore($unit->id_unit, 'id_unit')],
             'nama_unit' => 'required|string',
-            'tipe_unit' => ['required', Rule::in(['Fakultas', 'Prodi', 'Unit', 'Lainnya', 'Atasan', 'Admin'])],
+            'tipe_unit' => ['required', Rule::in(['Rektorat', 'Fakultas', 'Prodi', 'Biro', 'Lembaga', 'UPT', 'Satuan', 'UKM', 'Unit', 'Admin', 'Lainnya', 'Atasan'])],
             'approval_path_id' => 'required|exists:approval_paths,id',
+            'pencairan_approval_path_id' => 'required|exists:approval_paths,id',
             'id_kepala' => 'nullable|exists:users,id_user',
             'parent_id' => 'nullable|exists:unit,id_unit',
             'no_telepon' => 'nullable|string',

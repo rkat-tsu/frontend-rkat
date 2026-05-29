@@ -24,8 +24,14 @@ export default function Index({ auth, units = [], flash = {} }) {
 
     const uniquePaths = [...new Map(units.map(u => [u.approval_path_id, u.approval_path])).values()].filter(Boolean);
     const pathOptions = [
-        { value: '', label: 'Semua Alur Persetujuan' },
+        { value: '', label: 'Semua Alur RKAT' },
         ...uniquePaths.map(p => ({ value: p.id, label: p.name }))
+    ];
+
+    const uniquePencairanPaths = [...new Map(units.map(u => [u.pencairan_approval_path_id, u.pencairan_approval_path])).values()].filter(Boolean);
+    const pencairanPathOptions = [
+        { value: '', label: 'Semua Alur Pencairan' },
+        ...uniquePencairanPaths.map(p => ({ value: p.id, label: p.name }))
     ];
     
     // Parent unit mapping
@@ -158,6 +164,7 @@ export default function Index({ auth, units = [], flash = {} }) {
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Biro Unit</th>
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Nama Unit</th>
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Kepala Unit</th>
+                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Alur Pencairan</th>
                                         {isAdmin() && <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>}
                                     </tr>
                                 </thead>
@@ -176,6 +183,9 @@ export default function Index({ auth, units = [], flash = {} }) {
                                                 </td>
                                                 <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">
                                                     {unit.kepala?.nama_lengkap || '-'}
+                                                </td>
+                                                <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">
+                                                    {unit.pencairan_approval_path?.name || '-'}
                                                 </td>
                                                 
                                                 {/* Kolom Aksi Icon Saja */}

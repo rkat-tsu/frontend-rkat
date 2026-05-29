@@ -49,6 +49,15 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
         return () => clearTimeout(timeoutId);
     }, [searchTerm]);
 
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success(flash.success);
+        }
+        if (flash?.error) {
+            toast.error(flash.error);
+        }
+    }, [flash]);
+
     const handleTahunChange = (e) => {
         const val = e.target.value;
         setTahun(val);

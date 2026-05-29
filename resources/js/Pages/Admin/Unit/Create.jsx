@@ -16,6 +16,7 @@ export default function Create({ auth, users, units, approvalPaths }) {
         nama_unit: '',
         tipe_unit: 'Unit',              // Default sesuai validasi
         approval_path_id: '',
+        pencairan_approval_path_id: '',
         id_kepala: '',
         parent_id: '',
         no_telepon: '',
@@ -25,7 +26,7 @@ export default function Create({ auth, users, units, approvalPaths }) {
     const submit = (e) => {
         e.preventDefault();
 
-        if (!data.kode_unit || !data.nama_unit || !data.tipe_unit || !data.approval_path_id) {
+        if (!data.kode_unit || !data.nama_unit || !data.tipe_unit || !data.approval_path_id || !data.pencairan_approval_path_id) {
             toast.error("Peringatan", { description: "Semua form bertanda * wajib diisi." });
             return;
         }
@@ -73,8 +74,14 @@ export default function Create({ auth, users, units, approvalPaths }) {
     ];
 
     // Mapping Data dari Controller (Users & Units) ke format Select
-    const userOptions = users.map(u => ({ value: u.id_user, label: u.nama_lengkap }));
-    const parentOptions = units.map(u => ({ value: u.id_unit, label: `${u.kode_unit} - ${u.nama_unit}` }));
+    const userOptions = [
+        { value: '', label: 'Tanpa Kepala Unit (Kosong)' },
+        ...users.map(u => ({ value: u.id_user, label: u.nama_lengkap }))
+    ];
+    const parentOptions = [
+        { value: '', label: 'Tanpa Unit Induk (Top Level / Kosong)' },
+        ...units.map(u => ({ value: u.id_unit, label: `${u.kode_unit} - ${u.nama_unit}` }))
+    ];
 
     return (
         <AuthenticatedLayout
@@ -229,16 +236,28 @@ export default function Create({ auth, users, units, approvalPaths }) {
                                 </div>
 
                                 <div>
-                                    <InputLabel value="Alur Persetujuan" required />
+                                    <InputLabel value="Alur Persetujuan RKAT" required />
                                     <CustomSelect
                                         value={data.approval_path_id}
                                         onChange={(e) => setData('approval_path_id', e.target.value)}
                                         options={approvalPaths ? approvalPaths.map((path) => ({ value: path.id, label: path.name })) : []}
-                                        placeholder="Pilih Alur Persetujuan"
+                                        placeholder="Pilih Alur Persetujuan RKAT"
                                         className="mt-1"
                                     />
                                     <InputError message={errors.approval_path_id} className="mt-2" />
                                 </div>
+                                
+                                 <div>
+                                     <InputLabel value="Alur Persetujuan Pencairan Dana" required />
+                                     <CustomSelect
+                                         value={data.pencairan_approval_path_id}
+                                         onChange={(e) => setData('pencairan_approval_path_id', e.target.value)}
+                                         options={approvalPaths ? approvalPaths.map((path) => ({ value: path.id, label: path.name })) : []}
+                                         placeholder="Pilih Alur Persetujuan Pencairan"
+                                         className="mt-1"
+                                     />
+                                     <InputError message={errors.pencairan_approval_path_id} className="mt-2" />
+                                 </div>
                             </div>
                         </div>
 

@@ -28,7 +28,7 @@ class RkatController extends Controller
 
         // JIKA TIDAK ADA TAHUN YANG DIBUKA (Drafting atau Submission):
         $tahunAnggarans = TahunAnggaran::query()
-            ->select(['id_tahun', 'tahun_anggaran', 'status_rkat'])
+            ->select(['id_tahun', 'tahun_anggaran', 'status_rkat', 'indikator_labels'])
             ->whereIn('status_rkat', ['Drafting', 'Submission'], 'and', false)
             ->orderBy('tahun_anggaran', 'desc')
             ->get();
@@ -213,11 +213,11 @@ class RkatController extends Controller
                     'nama_indikator' => $item['indikator'],
 
                     // Mapping field Form -> Database (Standardized)
-                    'capai_2025'  => $item['capai_2025'] ?? null,
-                    'target_2026' => $item['target_2026'] ?? null,
-                    'capai_2026'  => $item['capai_2026'] ?? null,
-                    'target_2029' => $item['target_2029'] ?? null,
-                    'capai_2029'  => $item['capai_2029'] ?? null,
+                    'past_capaian'  => $item['past_capaian'] ?? null,
+                    'current_target' => $item['current_target'] ?? null,
+                    'current_capaian'  => $item['current_capaian'] ?? null,
+                    'future_target' => $item['future_target'] ?? null,
+                    'future_capaian'  => $item['future_capaian'] ?? null,
                 ]);
             }
 
@@ -257,12 +257,19 @@ class RkatController extends Controller
             'logPersetujuans.approver:id_user,nama_lengkap,nik',
         ]);
 
-        // Ambil riwayat revisi (dokumen yang diarsipkan dari dokumen ini)
+        // Ambil seluruh riwayat dokumen dalam satu silsilah (lineage)
+        $rootId = $rkatHeader->parent_id ?? $rkatHeader->id_header;
         $history = RkatHeader::query()
-            ->where('parent_id', $rkatHeader->id_header)
+            ->where('id_header', $rootId)
+            ->orWhere('parent_id', $rootId)
             ->select(['id_header', 'uuid', 'nomor_dokumen', 'status_persetujuan', 'created_at'])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->filter(function ($item) use ($rkatHeader) {
+                // Sembunyikan dokumen yang sedang dilihat saat ini dari daftar riwayat
+                return $item->id_header !== $rkatHeader->id_header;
+            })
+            ->values();
 
         return Inertia::render('Rkat/Show', [
             'rkat' => $rkatHeader,
@@ -299,12 +306,7 @@ class RkatController extends Controller
                 'status_persetujuan' => $firstStep->step_name, // Map step name to status
                 'current_step_id' => $firstStep->id,
                 'tanggal_pengajuan' => now(),
-                'tanggal_disetujui_unit_kepala' => null,
-                'tanggal_disetujui_dekan_kepala' => null,
-                'tanggal_disetujui_tim_renbang' => null,
-                'tanggal_disetujui_wr1' => null,
-                'tanggal_disetujui_wr3' => null,
-                'tanggal_disetujui_wr2' => null,
+                'approval_dates' => null,
             ]);
 
             Log::info('[RKAT] Dokumen Berhasil Diajukan', ['id' => $rkatHeader->id_header, 'status' => $firstStep->step_name]);
@@ -350,7 +352,7 @@ class RkatController extends Controller
         ]);
 
         $tahunAnggarans = TahunAnggaran::query()
-            ->select(['id_tahun', 'tahun_anggaran', 'status_rkat'])
+            ->select(['id_tahun', 'tahun_anggaran', 'status_rkat', 'indikator_labels'])
             ->where('status_rkat', '!=', 'Closed')
             ->orderBy('tahun_anggaran', 'desc')
             ->get();
@@ -501,11 +503,11 @@ class RkatController extends Controller
                 IndikatorKeberhasilan::create([
                     'id_rkat_detail' => $rkatDetail->id_rkat_detail,
                     'nama_indikator' => $item['indikator'],
-                    'capai_2025'  => $item['capai_2025'] ?? null,
-                    'target_2026' => $item['target_2026'] ?? null,
-                    'capai_2026'  => $item['capai_2026'] ?? null,
-                    'target_2029' => $item['target_2029'] ?? null,
-                    'capai_2029'  => $item['capai_2029'] ?? null,
+                    'past_capaian'  => $item['past_capaian'] ?? null,
+                    'current_target' => $item['current_target'] ?? null,
+                    'current_capaian'  => $item['current_capaian'] ?? null,
+                    'future_target' => $item['future_target'] ?? null,
+                    'future_capaian'  => $item['future_capaian'] ?? null,
                 ]);
             }
 
