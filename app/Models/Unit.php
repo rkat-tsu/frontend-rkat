@@ -20,7 +20,6 @@ class Unit extends Model
         'kode_unit',
         'nama_unit',
         'tipe_unit',
-        'jalur_persetujuan',
         'approval_path_id',
         'pencairan_approval_path_id',
         'id_kepala',
@@ -58,6 +57,12 @@ class Unit extends Model
     public function kepala()
     {
         return $this->belongsTo(User::class, 'id_kepala', 'id_user'); // Asumsi model User ada dan PK-nya id_user
+    }
+
+    public function requiresParentApproval()
+    {
+        // Unit level atas (Fakultas, Biro, Lembaga, dll) tidak perlu step 'parent_unit'
+        return in_array($this->tipe_unit, ['Prodi', 'Unit', 'UKM', 'Lainnya']);
     }
     
     // Relasi ke RKAT

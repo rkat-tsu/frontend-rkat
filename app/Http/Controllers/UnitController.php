@@ -18,7 +18,7 @@ class UnitController extends Controller
     {
         Log::debug('[Unit] Melihat Index');
         $units = Unit::query()
-            ->select(['id_unit', 'uuid', 'kode_unit', 'nama_unit', 'tipe_unit', 'jalur_persetujuan', 'approval_path_id', 'pencairan_approval_path_id', 'id_kepala', 'parent_id', 'no_telepon', 'email'])
+            ->select(['id_unit', 'uuid', 'kode_unit', 'nama_unit', 'tipe_unit', 'approval_path_id', 'pencairan_approval_path_id', 'id_kepala', 'parent_id', 'no_telepon', 'email'])
             ->with(['kepala:id_user,nama_lengkap', 'approvalPath:id,name', 'pencairanApprovalPath:id,name'])
             ->orderBy('nama_unit', 'asc')
             ->get();

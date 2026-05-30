@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\TahunAnggaran;
 use App\Models\Unit;
 use App\Models\RkatHeader;
+use App\Models\Iku;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class MonitoringController extends Controller
@@ -77,6 +79,66 @@ class MonitoringController extends Controller
 
         return Inertia::render('Monitoring/Index', [
             'data' => $monitoringData,
+            'tahunOptions' => $tahunOptions,
+            'selectedYear' => $selectedYear,
+            'stats' => $stats
+        ]);
+    }
+
+    /**
+     * Menampilkan Dashboard Monitoring RKAT Berdasarkan IKU & IKK
+     */
+    public function ikuIkk(Request $request)
+    {
+        $tahunOptions = TahunAnggaran::query()->select(['id_tahun', 'tahun_anggaran', 'status_rkat'])->orderBy('tahun_anggaran', 'desc')->get();
+        
+        $activeYear = $tahunOptions->first(fn($t) => $t->status_rkat !== 'Closed')?->tahun_anggaran ?? date('Y');
+        $selectedYear = $request->input('tahun', $activeYear);
+
+        $ikus = Iku::with(['ikks' => function ($query) use ($selectedYear) {
+            $query->withCount(['rkatDetails as total_anggaran' => function ($q) use ($selectedYear) {
+                $q->whereHas('rkatHeader', function ($qHeader) use ($selectedYear) {
+                    $qHeader->where('tahun_anggaran', $selectedYear)
+                            ->whereNotIn('status_persetujuan', ['Ditolak']);
+                })->select(DB::raw('SUM(anggaran)'));
+            }]);
+            
+            $query->withCount(['rkatDetails as count_kegiatan' => function ($q) use ($selectedYear) {
+                $q->whereHas('rkatHeader', function ($qHeader) use ($selectedYear) {
+                    $qHeader->where('tahun_anggaran', $selectedYear)
+                            ->whereNotIn('status_persetujuan', ['Ditolak']);
+                });
+            }]);
+        }])->get();
+
+        $data = $ikus->map(function ($iku) {
+            $ikks = $iku->ikks->map(function ($ikk) {
+                return [
+                    'id_ikk' => $ikk->id_ikk,
+                    'nama_ikk' => $ikk->nama_ikk,
+                    'total_anggaran' => $ikk->total_anggaran ?? 0,
+                    'count_kegiatan' => $ikk->count_kegiatan ?? 0,
+                ];
+            });
+
+            return [
+                'id_iku' => $iku->id_iku,
+                'nama_iku' => $iku->nama_iku,
+                'ikks' => $ikks,
+                'total_anggaran_iku' => $ikks->sum('total_anggaran'),
+                'count_kegiatan_iku' => $ikks->sum('count_kegiatan'),
+            ];
+        });
+
+        $stats = [
+            'total_iku' => $ikus->count(),
+            'total_ikk' => $ikus->sum(fn($iku) => $iku->ikks->count()),
+            'total_anggaran_terserap' => $data->sum('total_anggaran_iku'),
+            'total_kegiatan' => $data->sum('count_kegiatan_iku'),
+        ];
+
+        return Inertia::render('Monitoring/IkuIkk', [
+            'data' => $data,
             'tahunOptions' => $tahunOptions,
             'selectedYear' => $selectedYear,
             'stats' => $stats

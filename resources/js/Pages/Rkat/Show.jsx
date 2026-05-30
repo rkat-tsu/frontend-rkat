@@ -111,7 +111,7 @@ export default function Show({ auth, rkat = {}, history = [] }) {
                     )}
 
                     {/* Dokumen Utama (Kertas) */}
-                    <div className="bg-white dark:bg-gray-900 shadow-lg sm:rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div className="bg-white dark:bg-gray-900 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                         
                         {/* Header Dokumen */}
                         <div className="text-center py-8 border-b border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
@@ -339,7 +339,7 @@ export default function Show({ auth, rkat = {}, history = [] }) {
                     </div>
  
                     {/* Tracking Status Timeline */}
-                    <div className="mt-8 bg-white dark:bg-gray-800 shadow sm:rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 p-6">
+                    <div className="mt-8 bg-white dark:bg-gray-800 shadow rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 p-6">
                         <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
                             Status Persetujuan
                         </h4>
@@ -388,7 +388,7 @@ export default function Show({ auth, rkat = {}, history = [] }) {
  
                     {/* Log Aktivitas / Persetujuan */}
                     {logs.length > 0 && (
-                        <div className="mt-8 bg-white dark:bg-gray-800 shadow sm:rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 p-6">
+                        <div className="mt-8 bg-white dark:bg-gray-800 shadow rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 p-6">
                             <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
                                 Riwayat Log Persetujuan
                             </h4>

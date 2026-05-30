@@ -2,8 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema; // Diperlukan untuk DB::raw()
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -17,7 +16,7 @@ return new class extends Migration
 
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index()->constrained('users', 'id_user')->onDelete('cascade');
+            $table->foreignId('user_id')->nullable()->index();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->longText('payload');
@@ -29,7 +28,7 @@ return new class extends Migration
             $table->mediumText('value');
             $table->integer('expiration');
         });
-        }
+    }
 
     public function down(): void
     {

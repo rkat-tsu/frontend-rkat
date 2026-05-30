@@ -113,7 +113,7 @@ export default function ApprovalPathIndex({ paths, units }) {
             <Head title="Pengaturan Alur Persetujuan" />
 
             <div className="py-8">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
 
                     <div className="flex justify-between items-center mb-6">
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -124,7 +124,7 @@ export default function ApprovalPathIndex({ paths, units }) {
                         </PrimaryButton>
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-indigo-500">
+                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-indigo-500">
                         <div className="space-y-4">
                             {paths.map(path => (
                                 <div key={path.id} className="border border-slate-300 dark:border-slate-700 rounded-xl p-6 bg-white dark:bg-gray-800">

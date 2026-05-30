@@ -245,7 +245,16 @@ class PencairanDanaController extends Controller
             return redirect()->back()->with('error', 'Unit ini tidak memiliki alur persetujuan pencairan yang dikonfigurasi.');
         }
 
-        $firstStep = $unit->pencairanApprovalPath->steps->sortBy('order')->first();
+        $firstStep = null;
+        foreach ($unit->pencairanApprovalPath->steps->sortBy('order') as $step) {
+             if ($step->approver_type === 'parent_unit' && !$unit->requiresParentApproval()) continue;
+             $firstStep = $step;
+             break;
+        }
+
+        if (!$firstStep) {
+            return redirect()->back()->with('error', 'Alur persetujuan pencairan tidak valid.');
+        }
 
         $pencairan->fill([
             'status_pencairan' => $firstStep->step_name,
@@ -282,7 +291,13 @@ class PencairanDanaController extends Controller
                 if ($currentStep->approver_type === 'role' && $currentStep->role_name === $user->peran) $hasAccess = true;
                 if ($currentStep->approver_type === 'unit' && $user->isUnitHead() && $currentStep->unit_id === $user->id_unit) $hasAccess = true;
                 if ($currentStep->approver_type === 'self_unit_head' && $user->isUnitHead() && $pencairan->rkatHeader->id_unit === $user->id_unit) $hasAccess = true;
-                if ($currentStep->approver_type === 'parent_unit' && $user->isUnitHead() && $pencairan->rkatHeader->unit && $pencairan->rkatHeader->unit->parent_id === $user->id_unit) $hasAccess = true;
+                if ($currentStep->approver_type === 'parent_unit' && $user->isUnitHead() && $pencairan->rkatHeader->unit) {
+                    // Normal: prodi/sub-unit mengajukan, unit-induk (kepala) menyetujui
+                    if ($pencairan->rkatHeader->unit->parent_id === $user->id_unit) $hasAccess = true;
+                    // Edge case: unit itu sendiri yang mengajukan (misal F. Vokasi mengajukan),
+                    // maka Dekan F. Vokasi tetap menyetujui step parent_unit sebelum naik ke WR
+                    if ($pencairan->rkatHeader->unit->id_unit === $user->id_unit) $hasAccess = true;
+                }
             }
 
             if (!$hasAccess) {
@@ -315,10 +330,15 @@ class PencairanDanaController extends Controller
 
         $nextStep = null;
         if ($currentStep && $pencairan->rkatHeader->unit && $pencairan->rkatHeader->unit->pencairanApprovalPath) {
-            $nextStep = $pencairan->rkatHeader->unit->pencairanApprovalPath->steps
+            $remainingSteps = $pencairan->rkatHeader->unit->pencairanApprovalPath->steps
                 ->where('order', '>', $currentStep->order)
-                ->sortBy('order')
-                ->first();
+                ->sortBy('order');
+            
+            foreach ($remainingSteps as $step) {
+                 if ($step->approver_type === 'parent_unit' && !$pencairan->rkatHeader->unit->requiresParentApproval()) continue;
+                 $nextStep = $step;
+                 break;
+            }
         }
 
         if ($nextStep) {
@@ -387,7 +407,10 @@ class PencairanDanaController extends Controller
                         $parentQ->whereHas('currentStep', function ($stepQ) {
                             $stepQ->where('approver_type', 'parent_unit');
                         })->whereHas('rkatHeader.unit', function ($unitQ) use ($user) {
-                            $unitQ->where('parent_id', $user->id_unit);
+                            // Normal: unit anak mengajukan, kepala unit-induk menyetujui
+                            // Edge case: unit itu sendiri yang mengajukan (F. Vokasi mengajukan sendiri)
+                            $unitQ->where('parent_id', $user->id_unit)
+                                  ->orWhere('id_unit', $user->id_unit);
                         });
                     });
                 }
@@ -405,7 +428,13 @@ class PencairanDanaController extends Controller
                 if ($step->approver_type === 'role') return $step->role_name === $peran;
                 if ($step->approver_type === 'unit') return $user->isUnitHead() && $step->unit_id === $user->id_unit;
                 if ($step->approver_type === 'self_unit_head') return $user->isUnitHead() && $pencairan->rkatHeader->id_unit === $user->id_unit;
-                if ($step->approver_type === 'parent_unit') return $user->isUnitHead() && $pencairan->rkatHeader->unit && $pencairan->rkatHeader->unit->parent_id === $user->id_unit;
+                if ($step->approver_type === 'parent_unit' && $pencairan->rkatHeader->unit) {
+                    // Normal: prodi/sub-unit mengajukan, kepala unit-induk menyetujui
+                    if ($user->isUnitHead() && $pencairan->rkatHeader->unit->parent_id === $user->id_unit) return true;
+                    // Edge case: unit itu sendiri yang mengajukan (F. Vokasi submit sendiri)
+                    if ($user->isUnitHead() && $pencairan->rkatHeader->unit->id_unit === $user->id_unit) return true;
+                    return false;
+                }
                 
                 return false;
             })->values();

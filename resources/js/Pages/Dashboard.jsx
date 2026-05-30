@@ -54,13 +54,13 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
     return (
         <AuthenticatedLayout
             user={auth.user}
-            header={<h2 className="font-semibold text-2xl text-gray-800 dark:text-gray-100 leading-tight tracking-tight">Ringkasan Dashboard</h2>}
+            header={<h2 className="font-semibold text-2xl text-gray-800 dark:text-gray-100 leading-tight tracking-tight">Dashboard</h2>}
         >
             <Head title="Dashboard" />
 
             <div className="py-8">
 
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
+                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 space-y-8">
 
                     {/* --- BAGIAN 1: KARTU RINGKASAN DENGAN DEFERRED LOADING --- */}
                     <Deferred data="summary" fallback={
@@ -121,7 +121,7 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                             </div>
 
                             {/* Kotak Group untuk Memisah Nominal RKA dan Pencairan */}
-                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 md:p-8">
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 md:p-8 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 relative">
                                     {/* Pemisah visual vertikal (tengah) untuk layar md ke atas */}
                                     <div className="hidden md:block absolute top-0 bottom-0 left-1/2 w-px bg-gray-100 dark:bg-gray-700"></div>
@@ -201,7 +201,7 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                                     </div>
                                 </Card>
                             }>
-                                <Card className="shadow-sm border-gray-100 dark:border-gray-700 h-full flex flex-col bg-white dark:bg-gray-800">
+                                <Card className="shadow-sm border-gray-100 dark:border-gray-700 h-full flex flex-col bg-white dark:bg-gray-800 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
                                     <CardHeader className="pb-2">
                                         <CardTitle className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white">
                                             <Activity className="h-6 w-6 text-indigo-500" />
@@ -247,7 +247,7 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
 
                     {/* --- BAGIAN 3: INFO TERBARU --- */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-between transition-all hover:shadow-md h-full">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-between transition-all duration-300 hover:shadow-md hover:-translate-y-1 h-full">
                             <div>
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-3">
@@ -269,7 +269,7 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                             </div>
                         </div>
 
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col h-full transition-all hover:shadow-md">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col h-full transition-all duration-300 hover:shadow-md hover:-translate-y-1">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2 bg-teal-100 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400 rounded-lg">
                                     <Calendar size={20} />
@@ -300,7 +300,7 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                             </Deferred>
                         </div>
 
-                        <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-2xl p-6 shadow-md text-white flex flex-col justify-between h-full transition-all hover:shadow-lg hover:scale-[1.01]">
+                        <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-2xl p-6 shadow-md text-white flex flex-col justify-between h-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                             <div>
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className="p-2 bg-white/20 backdrop-blur-md rounded-lg">

@@ -385,11 +385,11 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
             <Head title="Input RKAT" />
 
             <div className="py-6">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
                     <form onSubmit={submit} className="space-y-6">
 
                         {/* --- 1. DATA DASAR --- */}
-                        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-teal-500">
+                        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-teal-500">
                             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">1. Data Dasar Pengajuan</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
@@ -425,7 +425,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                         </div>
 
                         {/* --- 2. DETAIL PELAKSANAAN --- */}
-                        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-indigo-500">
+                        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-indigo-500">
                             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">2. Detail Pelaksanaan</h3>
                             <div className="space-y-6">
                                 <div className="space-y-4">
@@ -592,7 +592,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                         </div>
 
                         {/* --- 3. INDIKATOR KINERJA --- */}
-                        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-blue-500">
+                        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-blue-500">
                             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">3. Indikator Kinerja</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div><InputLabel value="IKU" required /><CustomSelect value={data.iku_id} onChange={(e) => setData(prev => ({ ...prev, iku_id: e.target.value, ikk_id: '' }))} options={ikuOptions} placeholder="Pilih IKU" isMarquee={true} className="mt-1" /><InputError message={errors.iku_id} className="mt-2" /></div>
@@ -639,7 +639,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                         </div>
 
                         {/* --- 4. RAB --- */}
-                        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-yellow-500">
+                        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-yellow-500">
                             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">4. Rincian Anggaran Belanja (RAB)</h3>
                             <div className="overflow-x-auto rounded-lg mb-4">
                                 <table className="w-full text-xs text-left">
@@ -722,7 +722,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                         </div>
 
                         {/* --- 5. PENCAIRAN --- */}
-                        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-green-500">
+                        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-green-500">
                             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">5. Metode Pencairan Dana</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 dark:bg-gray-700/50 p-5 rounded-xl">
                                 <div>

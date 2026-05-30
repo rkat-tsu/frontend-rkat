@@ -58,6 +58,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // monitoring route
     Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
+    Route::get('/monitoring/iku-ikk', [MonitoringController::class, 'ikuIkk'])->name('monitoring.iku_ikk');
 
     // Pencairan Dana
     Route::get('/pencairan', [PencairanDanaController::class, 'index'])->name('pencairan.index');

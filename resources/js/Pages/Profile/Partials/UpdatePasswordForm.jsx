@@ -4,6 +4,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import PasswordInput from '@/Components/PasswordInput';
 import { Transition } from '@headlessui/react';
 import { useForm } from '@inertiajs/react';
+import { Save } from 'lucide-react';
 import { useRef } from 'react';
 import { toast } from 'sonner';
 
@@ -142,7 +143,7 @@ export default function UpdatePasswordForm({ className = '' }) {
                         leaveTo="opacity-0"
                     >
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Simpan.
+                            <Save className="w-4 h-4" /> Simpan.
                         </p>
                     </Transition>
                 </div>

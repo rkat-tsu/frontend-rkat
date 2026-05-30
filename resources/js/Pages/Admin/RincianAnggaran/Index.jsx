@@ -67,14 +67,14 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
             <Head title="Standar Biaya Operasional" />
 
             <div className="py-8">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
 
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
                         Standar Biaya Operasional
                     </h1>
 
                     {/* Penyesuaian class container dengan border kuning */}
-                    <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-yellow-500">
+                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-yellow-500">
 
                         {/* Top Bar: Search, Filter, & Tambah Button */}
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
@@ -91,7 +91,7 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                                 />
                             </div>
 
-                            <div className="flex items-center gap-3 w-full md:w-auto">
+                            <div className="flex flex-wrap items-center justify-start md:justify-end gap-3 w-full md:w-auto mt-2 md:mt-0">
                                 <div className="w-full sm:w-40">
                                     <CustomSelect
                                         value={kelompokFilter}
@@ -139,9 +139,9 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                                             <tr key={item.kode_anggaran} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
 
                                                 {/* Sel Grup (A, B, dst) */}
-                                                <td className="w-8 relative p-0 align-middle">
+                                                <td className="w-10 px-1 py-3 border-b border-gray-300 dark:border-gray-700 align-middle">
                                                     {isNewGroup && currentLetter && (
-                                                        <div className="absolute top-1/2 -translate-y-1/2 -right-4 w-8 h-6 bg-yellow-500 text-white font-bold flex items-center justify-center text-xs rounded-sm z-10">
+                                                        <div className="w-6 h-6 mx-auto bg-yellow-500 text-white font-bold flex items-center justify-center text-xs rounded-sm">
                                                             {currentLetter}
                                                         </div>
                                                     )}

@@ -91,7 +91,7 @@ export default function DeleteUserForm({ className = '' }) {
                             className="sr-only"
                         />
 
-                        <PasswordInput // <-- GANTI DARI TextInput MENJADI PasswordInput
+                        <PasswordInput
                             id="password"
                             name="password"
                             value={data.password}

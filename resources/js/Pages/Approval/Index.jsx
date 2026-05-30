@@ -24,14 +24,14 @@ export default function ApproverDashboard({ auth, rkatMenunggu, currentRole, fla
     return (
         <AuthenticatedLayout
             user={auth.user}
-            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Dashboard Persetujuan ({currentRole})</h2>}
+            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Persetujuan ({currentRole})</h2>}
         >
             <Head title="Persetujuan RKAT" />
 
             <div className="py-8">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
                     
-                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
                         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
                             <div>
                                 <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">

@@ -90,6 +90,21 @@ export default function Index({
             <Head title="Monitoring RKAT" />
 
             <div className="py-6 max-w-7xl mx-auto space-y-6">
+                {/* TABS */}
+                <div className="flex space-x-1 p-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl max-w-md mx-auto border border-gray-200 dark:border-gray-700">
+                    <Link
+                        href={route('monitoring.index')}
+                        className="w-full py-2.5 text-sm font-bold leading-5 rounded-lg text-indigo-700 dark:text-indigo-400 bg-white dark:bg-gray-800 shadow ring-1 ring-black/5 flex items-center justify-center gap-2"
+                    >
+                        Berdasarkan Unit
+                    </Link>
+                    <Link
+                        href={route('monitoring.iku_ikk')}
+                        className="w-full py-2.5 text-sm font-medium leading-5 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/50 transition flex items-center justify-center gap-2"
+                    >
+                        Berdasarkan IKU & IKK
+                    </Link>
+                </div>
 
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-indigo-500 flex flex-col md:flex-row items-center justify-between gap-4">
                     <div>
@@ -280,12 +295,12 @@ export default function Index({
 
 function Stat({ title, value, icon, colorClass = "text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400" }) {
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-100 dark:border-gray-700 flex justify-between items-center transition-all hover:shadow-md">
-            <div>
-                <p className="text-xs uppercase text-gray-500 dark:text-gray-400 font-bold mb-1">{title}</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-100 dark:border-gray-700 flex justify-between items-center transition-all hover:shadow-md gap-4">
+            <div className="min-w-0 flex-1">
+                <p className="text-xs uppercase text-gray-500 dark:text-gray-400 font-bold mb-1 truncate">{title}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white truncate" title={value}>{value}</p>
             </div>
-            <div className={`p-3 rounded-full ${colorClass}`}>
+            <div className={`p-3 rounded-full shrink-0 ${colorClass}`}>
                 {icon}
             </div>
         </div>

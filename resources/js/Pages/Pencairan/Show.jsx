@@ -39,7 +39,7 @@ export default function Show({ auth, pencairan }) {
             <Head title={`Detail Pencairan - ${rkat.nomor_dokumen}`} />
 
             <div className="py-6">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 space-y-6">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <Link href={route('pencairan.index')} className="text-teal-600 hover:text-teal-700 flex items-center gap-2 font-medium">
                             <ArrowLeft size={16} /> Kembali ke Daftar
@@ -59,7 +59,7 @@ export default function Show({ auth, pencairan }) {
                         </div>
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg">
                         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                             <div className="flex justify-between items-start">
                                 <div>

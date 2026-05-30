@@ -104,6 +104,26 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(Unit::class, 'id_unit', 'id_unit');
     }
 
+    public function getEffectiveRoles(): array
+    {
+        $roles = [$this->peran];
+        
+        if ($this->isUnitHead() && $this->unit) {
+            $unitName = $this->unit->nama_unit;
+            if (stripos($unitName, 'BAUK') !== false) {
+                $roles[] = 'BAUK';
+            }
+            if (stripos($unitName, 'BAAK') !== false) {
+                $roles[] = 'BAAK';
+            }
+            if (stripos($unitName, 'Sekretaris') !== false) {
+                $roles[] = 'Sekretaris_Univ';
+            }
+        }
+        
+        return array_unique($roles);
+    }
+
     protected static function boot()
     {
         parent::boot();

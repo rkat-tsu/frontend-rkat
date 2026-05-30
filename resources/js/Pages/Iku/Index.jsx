@@ -114,7 +114,7 @@ export default function Index({ auth, ikus }) {
             <Head title="Daftar IKU & IKK" />
 
             <div className="py-6 pb-24">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
 
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                         <div className="flex-1">
@@ -145,7 +145,7 @@ export default function Index({ auth, ikus }) {
                         )}
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 overflow-x-auto shadow sm:rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="bg-white dark:bg-gray-800 overflow-x-auto shadow rounded-lg border border-gray-200 dark:border-gray-700">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead className="bg-gray-50 dark:bg-gray-700">
                                 <tr>

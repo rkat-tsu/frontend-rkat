@@ -96,7 +96,7 @@ export default function Create({ auth, users, units, approvalPaths }) {
                     <form onSubmit={submit} className="space-y-6">
                         
                         {/* --- KONTAINER 1: IDENTITAS UTAMA --- */}
-                        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-teal-500">
+                        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-teal-500">
                             <div className="flex items-center gap-3 mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
                                 <div className="p-2 bg-teal-50 dark:bg-teal-900/30 rounded-lg">
                                     <Building2 className="w-6 h-6 text-teal-600 dark:text-teal-400" />
@@ -148,7 +148,7 @@ export default function Create({ auth, users, units, approvalPaths }) {
                         </div>
 
                         {/* --- KONTAINER 2: STRUKTUR & KONTAK --- */}
-                        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-indigo-500">
+                        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-indigo-500">
                             <div className="flex items-center gap-3 mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
                                 <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
                                     <UserCircle className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
@@ -211,7 +211,7 @@ export default function Create({ auth, users, units, approvalPaths }) {
                         </div>
 
                         {/* --- KONTAINER 3: KONFIGURASI SISTEM --- */}
-                        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-gray-500">
+                        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-gray-500">
                             <div className="flex items-center gap-3 mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
                                 <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
                                     <Settings2 className="w-6 h-6 text-gray-600 dark:text-gray-300" />

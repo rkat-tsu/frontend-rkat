@@ -93,12 +93,12 @@ export default function Index({ auth, pencairans, filters, tahunAnggarans, units
             <Head title="Daftar Pencairan Dana" />
 
             <div className="py-6">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
                         Pencairan Dana
                     </h1>
 
-                    <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-teal-500 mb-6">
+                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-teal-500 mb-6">
                         <div className="flex flex-col lg:flex-row items-center gap-4 w-full">
                             <div className="relative w-full lg:flex-1">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -174,7 +174,7 @@ export default function Index({ auth, pencairans, filters, tahunAnggarans, units
                         Menampilkan <span className="font-semibold text-gray-900 dark:text-white">{pencairans.total || (pencairans.data && pencairans.data.length) || 0}</span> data
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                                 <thead className="bg-gray-50 dark:bg-gray-700">

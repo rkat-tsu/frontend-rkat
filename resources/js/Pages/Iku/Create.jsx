@@ -108,8 +108,8 @@ export default function Create({ auth, ikus }) {
             <AuthenticatedLayout user={auth.user} header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Akses Ditolak</h2>}>
                 <Head title="Akses Ditolak" />
                 <div className="py-12">
-                    <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 text-center text-red-500 font-medium">
+                    <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+                        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg p-6 text-center text-red-500 font-medium">
                             Anda tidak memiliki izin untuk mengakses halaman ini.
                         </div>
                     </div>
@@ -130,7 +130,7 @@ export default function Create({ auth, ikus }) {
                     <form onSubmit={submit} className="space-y-6">
                         
                         {/* --- KONTAINER 1: PILIH IKU --- */}
-                        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-teal-500">
+                        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-teal-500">
                             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">
                                 1. Pilih Indikator Utama
                             </h3>
@@ -154,7 +154,7 @@ export default function Create({ auth, ikus }) {
 
                         {/* --- KONTAINER 2: DAFTAR KEGIATAN (IKK) --- */}
                         {data.uuid_iku && (
-                            <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-indigo-500 animate-in slide-in-from-bottom-2 duration-300">
+                            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-indigo-500 animate-in slide-in-from-bottom-2 duration-300">
                                 <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">
                                     <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                                         2. Daftar Kegiatan (IKK)

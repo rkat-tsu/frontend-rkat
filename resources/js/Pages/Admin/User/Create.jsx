@@ -100,7 +100,7 @@ export default function Create({ auth, units = [] }) {
                     <form onSubmit={submit} className="space-y-6">
                         
                         {/* --- KONTAINER UTAMA --- */}
-                        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-teal-500">
+                        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-teal-500">
                             
                             {/* Header Kecil */}
                             <div className="flex items-center gap-3 mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">

@@ -20,8 +20,9 @@ class ApprovalController extends Controller
     {
         $user = $request->user();
         $peran = $user->peran;
+        $effectiveRoles = $user->getEffectiveRoles();
         
-        Log::debug('[Approval] Akses Index oleh: ' . $user->username . ' Peran: ' . $peran);
+        Log::debug('[Approval] Akses Index oleh: ' . $user->username . ' Peran: ' . implode(',', $effectiveRoles));
 
         if (! $user->isApprover() && ! $user->isAdmin()) {
             Log::warning('[Approval] Akses Ditolak untuk: ' . $user->username);
@@ -48,10 +49,10 @@ class ApprovalController extends Controller
             $query->whereNotNull('current_step_id');
         } else {
             $query->whereNotNull('current_step_id');
-            $query->where(function ($q) use ($user, $peran) {
-                $q->orWhereHas('currentStep', function ($stepQ) use ($peran) {
+            $query->where(function ($q) use ($user, $peran, $effectiveRoles) {
+                $q->orWhereHas('currentStep', function ($stepQ) use ($effectiveRoles) {
                     $stepQ->where('approver_type', 'role')
-                          ->where('role_name', $peran);
+                          ->whereIn('role_name', $effectiveRoles);
                 });
 
                 if ($user->isUnitHead()) {
@@ -70,7 +71,10 @@ class ApprovalController extends Controller
                         $parentQ->whereHas('currentStep', function ($stepQ) {
                             $stepQ->where('approver_type', 'parent_unit');
                         })->whereHas('unit', function ($unitQ) use ($user) {
-                            $unitQ->where('parent_id', $user->id_unit);
+                            // Normal: unit anak mengajukan, kepala unit-induk menyetujui
+                            // Edge case: unit itu sendiri yang mengajukan (F. Vokasi submit sendiri)
+                            $unitQ->where('parent_id', $user->id_unit)
+                                  ->orWhere('id_unit', $user->id_unit);
                         });
                     });
                 }
@@ -81,14 +85,20 @@ class ApprovalController extends Controller
         
         // Filter di memory untuk keamanan ganda jika relasi query kurang presisi
         if (!in_array($peran, ['Admin', 'Rektor'])) {
-            $rkatList = $rkatList->filter(function ($rkat) use ($user, $peran) {
+            $rkatList = $rkatList->filter(function ($rkat) use ($user, $peran, $effectiveRoles) {
                 $step = $rkat->currentStep;
                 if (!$step) return false;
                 
-                if ($step->approver_type === 'role') return $step->role_name === $peran;
+                if ($step->approver_type === 'role') return in_array($step->role_name, $effectiveRoles);
                 if ($step->approver_type === 'unit') return $user->isUnitHead() && $step->unit_id === $user->id_unit;
                 if ($step->approver_type === 'self_unit_head') return $user->isUnitHead() && $rkat->id_unit === $user->id_unit;
-                if ($step->approver_type === 'parent_unit') return $user->isUnitHead() && $rkat->unit && $rkat->unit->parent_id === $user->id_unit;
+                if ($step->approver_type === 'parent_unit' && $rkat->unit) {
+                    // Normal: prodi/sub-unit mengajukan, kepala unit-induk menyetujui
+                    if ($user->isUnitHead() && $rkat->unit->parent_id === $user->id_unit) return true;
+                    // Edge case: unit itu sendiri yang mengajukan (F. Vokasi submit sendiri)
+                    if ($user->isUnitHead() && $rkat->unit->id_unit === $user->id_unit) return true;
+                    return false;
+                }
                 
                 return false;
             })->values();
@@ -130,11 +140,12 @@ class ApprovalController extends Controller
 
         $currentStep = $rkatHeader->currentStep;
         $isAdminOrRektor = in_array($user->peran, ['Admin', 'Rektor']);
+        $effectiveRoles = $user->getEffectiveRoles();
 
         if (!$isAdminOrRektor) {
             $hasAccess = false;
             if ($currentStep) {
-                if ($currentStep->approver_type === 'role' && $currentStep->role_name === $user->peran) $hasAccess = true;
+                if ($currentStep->approver_type === 'role' && in_array($currentStep->role_name, $effectiveRoles)) $hasAccess = true;
                 if ($currentStep->approver_type === 'unit' && $user->isUnitHead() && $currentStep->unit_id === $user->id_unit) $hasAccess = true;
                 if ($currentStep->approver_type === 'self_unit_head' && $user->isUnitHead() && $rkatHeader->id_unit === $user->id_unit) $hasAccess = true;
                 if ($currentStep->approver_type === 'parent_unit' && $user->isUnitHead() && $rkatHeader->unit && $rkatHeader->unit->parent_id === $user->id_unit) $hasAccess = true;
@@ -166,10 +177,18 @@ class ApprovalController extends Controller
                     // Cari step berikutnya
                     $nextStep = null;
                     if ($currentStep && $rkatHeader->unit && $rkatHeader->unit->approvalPath) {
-                        $nextStep = $rkatHeader->unit->approvalPath->steps
+                        $remainingSteps = $rkatHeader->unit->approvalPath->steps
                             ->where('order', '>', $currentStep->order)
-                            ->sortBy('order')
-                            ->first();
+                            ->sortBy('order');
+
+                        foreach ($remainingSteps as $step) {
+                             if ($step->approver_type === 'parent_unit' && !$rkatHeader->unit->requiresParentApproval()) {
+                                 // Auto-skip step ini karena unit atas tidak butuh parent_unit
+                                 continue;
+                             }
+                             $nextStep = $step;
+                             break;
+                        }
                     }
 
                     if ($nextStep) {

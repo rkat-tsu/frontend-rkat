@@ -4,7 +4,7 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import {
     LayoutDashboard, FileText, Check, LayoutList, Monitor, BookPlus, BookOpenText,
     CalendarCog, ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight,
-    Users, Settings, Building2, CreditCard, FolderOpen, Database, Wallet
+    Users, Settings, Building2, CreditCard, FolderOpen, Database, Wallet, Route, CheckCheck
 } from 'lucide-react';
 import {
     Tooltip,
@@ -34,7 +34,7 @@ const navItems = [
         activePath: '/pencairan',
         children: [
             { name: 'Pencairan Dana', href: '/pencairan', icon: CreditCard, activePath: '/pencairan' },
-            { name: 'Persetujuan Pencairan', href: '/pencairan/approval', icon: Check, activePath: '/pencairan/approval', hideForInputer: true },
+            { name: 'Persetujuan Pencairan', href: '/pencairan/approval', icon: CheckCheck, activePath: '/pencairan/approval', hideForInputer: true },
         ],
     },
     {
@@ -43,8 +43,7 @@ const navItems = [
         activePath: '/master',
         children: [
             { name: 'Standar Biaya Operasional', href: '/rincian-anggaran', icon: BookOpenText, activePath: '/rincian-anggaran' },
-            { name: 'Indikator Kinerja Utama', href: '/iku', icon: BookPlus, activePath: '/iku' },
-            { name: 'Daftar Unit Kerja', href: '/unit', icon: Building2, activePath: '/unit' }
+            { name: 'Indikator Kinerja Utama', href: '/iku', icon: BookPlus, activePath: '/iku' }
         ],
     },
     {
@@ -55,7 +54,8 @@ const navItems = [
         children: [
             { name: 'Tahun Anggaran', href: '/tahun', icon: CalendarCog, activePath: '/tahun', adminOnly: true },
             { name: 'Pengaturan Akun', href: '/user', icon: Users, activePath: '/user', adminOnly: true },
-            { name: 'Alur Persetujuan', href: '/approval-path', icon: Check, activePath: '/approval-path', adminOnly: true },
+            { name: 'Daftar Unit Kerja', href: '/unit', icon: Building2, activePath: '/unit', adminOnly: true },
+            { name: 'Alur Persetujuan', href: '/approval-path', icon: Route, activePath: '/approval-path', adminOnly: true },
         ],
     }
 ];
@@ -156,8 +156,14 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
             );
         }
 
+        const handleLinkClick = () => {
+            if (typeof window !== 'undefined' && window.innerWidth < 640) {
+                toggleMinimize();
+            }
+        };
+
         const linkEl = (
-            <Link href={item.href} className={`${baseClasses} ${padding} ${isActive ? activeClasses : inactiveClasses}`}>
+            <Link href={item.href} onClick={handleLinkClick} className={`${baseClasses} ${padding} ${isActive ? activeClasses : inactiveClasses}`}>
                 {content}
             </Link>
         );

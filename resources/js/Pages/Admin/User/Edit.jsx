@@ -105,7 +105,7 @@ export default function Edit({ auth, user, units = [] }) {
                 <div className="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
                     
                     {/* --- FORM 1: DATA PROFIL --- */}
-                    <form onSubmit={submitProfile} className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-blue-500">
+                    <form onSubmit={submitProfile} className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-blue-500">
                         <div className="flex items-center gap-3 mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
                             <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                                 <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -166,7 +166,7 @@ export default function Edit({ auth, user, units = [] }) {
                     </form>
 
                     {/* --- FORM 2: GANTI PASSWORD PAKSA --- */}
-                    <form onSubmit={submitPassword} className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-amber-500">
+                    <form onSubmit={submitPassword} className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-amber-500">
                         <div className="flex items-center gap-3 mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
                             <div className="p-2 bg-amber-50 dark:bg-amber-900/30 rounded-lg">
                                 <Lock className="w-6 h-6 text-amber-600 dark:text-amber-400" />

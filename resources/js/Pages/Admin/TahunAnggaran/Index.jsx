@@ -72,13 +72,13 @@ export default function Index({ tahunAnggarans }) {
             <Head title="Tahun Anggaran" />
 
             <div className="py-8">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
                     
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
                         Tahun Anggaran
                     </h1>
 
-                    <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-teal-500">
+                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-teal-500">
                         
                         {/* Top Bar: Search, Filter, & Tambah Button */}
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">

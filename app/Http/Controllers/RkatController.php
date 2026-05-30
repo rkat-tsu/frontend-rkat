@@ -300,7 +300,16 @@ class RkatController extends Controller
                 return redirect()->back()->with('error', 'Unit tidak memiliki alur persetujuan. Silakan hubungi admin.');
             }
 
-            $firstStep = $approvalPath->steps->sortBy('order')->first();
+            $firstStep = null;
+            foreach ($approvalPath->steps->sortBy('order') as $step) {
+                if ($step->approver_type === 'parent_unit' && !$rkatHeader->unit->requiresParentApproval()) continue;
+                $firstStep = $step;
+                break;
+            }
+
+            if (!$firstStep) {
+                return redirect()->back()->with('error', 'Alur persetujuan tidak valid.');
+            }
 
             RkatHeader::query()->where('id_header', $rkatHeader->id_header)->update([
                 'status_persetujuan' => $firstStep->step_name, // Map step name to status

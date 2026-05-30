@@ -43,7 +43,7 @@ export default function Index({ auth, items, filters }) {
             <Head title="RKAT" />
 
             <div className="py-8 pb-24">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
 
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
                         <Package className="w-8 h-8 text-indigo-500" />
@@ -51,7 +51,7 @@ export default function Index({ auth, items, filters }) {
                     </h1>
 
                     {/* --- KONTAINER: FILTER & TABLE --- */}
-                    <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 border-l-4 border-indigo-500 mb-6">
+                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-indigo-500 mb-6">
 
                         {/* Top Bar: Search */}
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
