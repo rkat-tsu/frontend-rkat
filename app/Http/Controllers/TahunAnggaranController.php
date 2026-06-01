@@ -20,7 +20,12 @@ class TahunAnggaranController extends Controller
         }
 
         // Urutkan berdasarkan tahun terbaru
-        $tahunAnggarans = $query->select(['id_tahun', 'uuid', 'tahun_anggaran', 'tanggal_mulai', 'tanggal_akhir', 'status_rkat'])->orderBy('tahun_anggaran', 'desc')->paginate(10);
+        $perPage = request()->get('per_page', 10);
+        $perPage = $perPage === 'all' ? 10000 : (int) $perPage;
+
+        $tahunAnggarans = $query->select(['id_tahun', 'uuid', 'tahun_anggaran', 'tanggal_mulai', 'tanggal_akhir', 'status_rkat'])
+            ->orderBy('tahun_anggaran', 'desc')
+            ->paginate($perPage)->withQueryString();
 
         return Inertia::render('Admin/TahunAnggaran/Index', [
             'tahunAnggarans' => $tahunAnggarans,

@@ -19,17 +19,29 @@ const formatDate = (value) => {
 // Tambahkan prop 'flash' untuk menangkap pesan error/success dari Controller
 export default function Index({ auth, rkats, filters, tahunAnggarans, units = [], flash = {}, statuses = [] }) {
     const { isAdmin } = usePermission();
+
+    const getStatusColor = (status) => {
+        if (!status) return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+        const s = status.toLowerCase();
+        if (s.includes('disetujui_final') || s.includes('disetujui final')) return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+        if (s.includes('ditolak')) return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+        if (s.includes('revisi')) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+        if (s.includes('draft')) return 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+    };
+
     // State untuk menyimpan nilai filter
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [tahun, setTahun] = useState(filters?.tahun || '');
     const [status, setStatus] = useState(filters?.status || '');
     const [unitId, setUnitId] = useState(filters?.unit_id || '');
+    const [perPage, setPerPage] = useState(filters?.per_page || '15');
 
     // Fungsi untuk menerapkan filter ke backend
-    const applyFilters = (newSearch, newTahun, newStatus, newUnitId) => {
+    const applyFilters = (newSearch, newTahun, newStatus, newUnitId, newPerPage) => {
         router.get(
             route('daftar-ajuan.index'),
-            { search: newSearch, tahun: newTahun, status: newStatus, unit_id: newUnitId },
+            { search: newSearch, tahun: newTahun, status: newStatus, unit_id: newUnitId, per_page: newPerPage },
             { preserveState: true, preserveScroll: true, replace: true }
         );
     };
@@ -41,13 +53,13 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
 
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            if (searchTerm !== (filters?.search || '')) {
-                applyFilters(searchTerm, tahun, status, unitId);
+            if (searchTerm !== (filters?.search || '') || perPage !== (filters?.per_page || '15')) {
+                applyFilters(searchTerm, tahun, status, unitId, perPage);
             }
         }, 300); // 300ms delay
 
         return () => clearTimeout(timeoutId);
-    }, [searchTerm]);
+    }, [searchTerm, perPage]);
 
     useEffect(() => {
         if (flash?.success) {
@@ -58,25 +70,18 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
         }
     }, [flash]);
 
-    const handleTahunChange = (e) => {
-        const val = e.target.value;
-        setTahun(val);
-        applyFilters(searchTerm, val, status, unitId);
-    };
-
-    const handleStatusChange = (e) => {
-        const val = e.target.value;
-        setStatus(val);
-        applyFilters(searchTerm, tahun, val, unitId);
-    };
-
-    const handleUnitChange = (e) => {
-        const val = e.target.value;
-        setUnitId(val);
-        applyFilters(searchTerm, tahun, status, val);
-    };
-
-    // Fungsi untuk mengirim dokumen (Submit)
+    const handleFilterChange = (filterType, value) => {
+        if (filterType === 'tahun') {
+            setTahun(value);
+            applyFilters(searchTerm, value, status, unitId, perPage);
+        } else if (filterType === 'status') {
+            setStatus(value);
+            applyFilters(searchTerm, tahun, value, unitId, perPage);
+        } else if (filterType === 'unit_id') {
+            setUnitId(value);
+            applyFilters(searchTerm, tahun, status, value, perPage);
+        }
+    };// Fungsi untuk mengirim dokumen (Submit)
     const handleAjukan = (item) => {
         toast("Konfirmasi Pengajuan", {
             description: "Apakah Anda yakin ingin mengajukan RKAT ini? Setelah diajukan, data tidak dapat diubah kecuali dikembalikan untuk revisi.",
@@ -139,7 +144,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                 <div className="flex-1 min-w-[140px] lg:w-36">
                                     <CustomSelect
                                         value={tahun}
-                                        onChange={handleTahunChange}
+                                        onChange={(e) => handleFilterChange('tahun', e.target.value)}
                                         className="h-11"
                                         options={[
                                             { value: '', label: 'Semua Tahun' },
@@ -152,7 +157,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                     <div className="flex-1 min-w-[200px] lg:w-56">
                                         <CustomSelect
                                             value={unitId}
-                                            onChange={handleUnitChange}
+                                            onChange={(e) => handleFilterChange('unit_id', e.target.value)}
                                             className="h-11"
                                             options={[
                                                 { value: '', label: 'Semua Unit Kerja' },
@@ -165,7 +170,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                 <div className="flex-1 min-w-[160px] lg:w-44">
                                     <CustomSelect
                                         value={status}
-                                        onChange={handleStatusChange}
+                                        onChange={(e) => handleFilterChange('status', e.target.value)}
                                         className="h-11"
                                         options={[
                                             { value: '', label: 'Semua Status' },
@@ -219,13 +224,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">{item.unit?.nama_unit || '-'}</td>
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">{item.tahun_anggaran}</td>
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">
-                                            <span className={`px-2.5 py-1 inline-flex whitespace-nowrap text-xs leading-5 font-bold rounded-md 
-                                                    ${item.status_persetujuan === 'Draft' ? 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300' : ''}
-                                                    ${item.status_persetujuan === 'Disetujui_Final' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : ''}
-                                                    ${item.status_persetujuan === 'Ditolak' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : ''}
-                                                    ${item.status_persetujuan === 'Revisi' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' : ''}
-                                                    ${item.status_persetujuan.includes('Menunggu') || item.status_persetujuan === 'Review' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : ''}
-                                                `}>
+                                            <span className={`px-2.5 py-1 inline-flex whitespace-nowrap text-xs leading-5 font-bold rounded-md ${getStatusColor(item.status_persetujuan)}`}>
                                                 {item.status_persetujuan.replace(/_/g, ' ')}
                                             </span>
                                         </td>
@@ -307,12 +306,32 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                         </table>
                     </div>
 
-                    {/* Pagination */}
-                    {rkats.links && rkats.links.length > 3 && (
-                        <div className="mt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                                Menampilkan <span className="font-medium text-gray-900 dark:text-white">{rkats.from || 0}</span> sampai <span className="font-medium text-gray-900 dark:text-white">{rkats.to || 0}</span> dari <span className="font-medium text-gray-900 dark:text-white">{rkats.total || 0}</span> data
-                            </div>
+                        {/* Pagination Links */}
+                        {rkats.links && rkats.links.length > 3 && (
+                            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div className="flex flex-col sm:flex-row items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Tampilkan</span>
+                                        <div className="w-20">
+                                            <CustomSelect
+                                                value={perPage}
+                                                onChange={(e) => setPerPage(e.target.value)}
+                                                options={[
+                                                    { value: '10', label: '10' },
+                                                    { value: '15', label: '15' },
+                                                    { value: '25', label: '25' },
+                                                    { value: '50', label: '50' },
+                                                    { value: '100', label: '100' },
+                                                    { value: 'all', label: 'Semua' }
+                                                ]}
+                                                className="h-8 text-xs py-1 px-2"
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        Menampilkan <span className="font-medium text-gray-900 dark:text-white">{rkats.from || 0}</span> sampai <span className="font-medium text-gray-900 dark:text-white">{rkats.to || 0}</span> dari <span className="font-medium text-gray-900 dark:text-white">{rkats.total || 0}</span> data
+                                    </p>
+                                </div>
                             <div className="flex flex-wrap shadow-sm rounded-md">
                                 {rkats.links.map((link, index) => (
                                     <Link

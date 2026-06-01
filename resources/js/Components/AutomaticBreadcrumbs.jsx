@@ -16,7 +16,7 @@ export default function AutomaticBreadcrumbs() {
         'dashboard': 'Dashboard',
         'rkat': 'RKAT',
         'daftar-ajuan': 'Daftar Ajuan RKA',
-        'rincian-anggaran': 'SBO',
+        'sbo': 'SBO',
         'iku': 'IKU',
         'approval': 'Persetujuan',
         'monitoring': 'Monitoring',

@@ -43,7 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/iku', [IkuController::class, 'index'])->name('iku.index');
 
     // Standar Biaya Operasional (Public view)
-    Route::get('/rincian-anggaran', [RincianAnggaranController::class, 'index'])->name('rincian.index');
+    Route::get('/sbo', [RincianAnggaranController::class, 'index'])->name('sbo.index');
 
     // Routes for RKAT (RAB items)
     Route::get('/rkat', [RkatRabItemController::class, 'index'])->name('rkat.index');
@@ -66,6 +66,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/pencairan', [PencairanDanaController::class, 'store'])->name('pencairan.store');
     Route::get('/pencairan/approval', [PencairanDanaController::class, 'approvalIndex'])->name('pencairan.approval');
     Route::get('/pencairan/{pencairan}', [PencairanDanaController::class, 'show'])->name('pencairan.show');
+    Route::put('/pencairan/{pencairan}', [PencairanDanaController::class, 'update'])->name('pencairan.update');
     Route::post('/pencairan/{pencairan}/submit', [PencairanDanaController::class, 'submit'])->name('pencairan.submit');
     Route::post('/pencairan/{pencairan}/approve', [PencairanDanaController::class, 'approve'])->name('pencairan.approve');
     Route::get('/pencairan/{pencairan}/export', [PencairanDanaController::class, 'exportPdf'])->name('pencairan.export');
@@ -86,11 +87,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/tahun/{tahun}', [TahunAnggaranController::class, 'destroy'])->name('tahun.destroy');
 
         // Rincian Anggaran (master akun anggaran)
-        Route::get('/rincian-anggaran/create', [RincianAnggaranController::class, 'create'])->name('rincian.create');
-        Route::post('/rincian-anggaran', [RincianAnggaranController::class, 'store'])->name('rincian.store');
-        Route::get('/rincian-anggaran/{rincian}/edit', [RincianAnggaranController::class, 'edit'])->name('rincian.edit');
-        Route::patch('/rincian-anggaran/{rincian}', [RincianAnggaranController::class, 'update'])->name('rincian.update');
-        Route::delete('/rincian-anggaran/{rincian}', [RincianAnggaranController::class, 'destroy'])->name('rincian.destroy');
+        Route::get('/sbo/create', [RincianAnggaranController::class, 'create'])->name('sbo.create');
+        Route::post('/sbo', [RincianAnggaranController::class, 'store'])->name('sbo.store');
+        Route::get('/sbo/{rincian}/edit', [RincianAnggaranController::class, 'edit'])->name('sbo.edit');
+        Route::patch('/sbo/{rincian}', [RincianAnggaranController::class, 'update'])->name('sbo.update');
+        Route::delete('/sbo/{rincian}', [RincianAnggaranController::class, 'destroy'])->name('sbo.destroy');
 
         // Admin-only user management
         Route::get('/user', [UserController::class, 'index'])->name('user.index');

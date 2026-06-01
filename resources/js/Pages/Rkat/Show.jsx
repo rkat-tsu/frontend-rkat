@@ -1,7 +1,8 @@
 import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { ArrowLeft, Download, AlertTriangle, Save } from 'lucide-react';
+import { ArrowLeft, Download, AlertTriangle, Save, Send } from 'lucide-react';
+import { toast } from 'sonner';
 
 const formatCurrency = (amount) => {
     if (!amount) return 'Rp 0';
@@ -40,6 +41,16 @@ const TableRow = ({ no, label, children, colSpan = 1 }) => (
     </tr>
 );
 
+const getStatusColor = (status) => {
+    if (!status) return 'bg-blue-100 text-blue-800 border-blue-200';
+    const s = status.toLowerCase();
+    if (s.includes('disetujui_final') || s.includes('disetujui final')) return 'bg-green-100 text-green-800 border-green-200';
+    if (s.includes('ditolak')) return 'bg-red-100 text-red-800 border-red-200';
+    if (s.includes('revisi')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    if (s.includes('draft')) return 'bg-gray-200 text-gray-800 border-gray-300';
+    return 'bg-blue-100 text-blue-800 border-blue-200';
+};
+
 export default function Show({ auth, rkat = {}, history = [] }) {
     const dataRkat = rkat.data || rkat;
     const rawDetail = dataRkat?.rkat_details || dataRkat?.rkatDetails || dataRkat?.detail;
@@ -59,26 +70,7 @@ export default function Show({ auth, rkat = {}, history = [] }) {
             <Head title={`Detail RKAT - ${dataRkat?.nomor_dokumen || 'Baru'}`} />
 
             <div className="py-6">
-                <div className="max-w-5xl mx-auto sm:px-6 lg:px-8">
-                    
-                    {/* Toolbar */}
-                    <div className="flex justify-between items-center mb-6">
-                        <Link
-                            href={route('daftar-ajuan.index')}
-                            className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 text-sm font-medium transition-colors"
-                        >
-                            <ArrowLeft size={16} />
-                            Kembali ke Daftar
-                        </Link>
-
-                        <a 
-                            href={dataRkat?.uuid ? route('daftar-ajuan.export', dataRkat.uuid) : '#'}
-                            target="_blank"
-                            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-lg font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white transition"
-                        >
-                            <Download size={16} /> Export PDF
-                        </a>
-                    </div>
+                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 space-y-6">
 
                     {/* Catatan Revisi / Tolak */}
                     {notes.length > 0 && (
@@ -120,11 +112,7 @@ export default function Show({ auth, rkat = {}, history = [] }) {
                             </h1>
                             <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium">Nomor Dokumen: {dataRkat?.nomor_dokumen}</p>
                             <div className="mt-2 inline-block">
-                                <span className={`px-3 py-1 text-xs font-bold rounded-full border 
-                                    ${dataRkat.status_persetujuan === 'Disetujui_Final' ? 'bg-green-100 text-green-800 border-green-200' : 
-                                      dataRkat?.status_persetujuan === 'Ditolak' ? 'bg-red-100 text-red-800 border-red-200' : 
-                                      dataRkat?.status_persetujuan === 'Revisi' ? 'bg-amber-100 text-amber-800 border-amber-200' : 
-                                      'bg-blue-100 text-blue-800 border-blue-200'}`}>
+                                <span className={`px-3 py-1 text-xs font-bold rounded-full border ${getStatusColor(dataRkat?.status_persetujuan)}`}>
                                     Status: {typeof dataRkat?.status_persetujuan === 'string' ? dataRkat.status_persetujuan.replace(/_/g, ' ') : '-'}
                                 </span>
                             </div>
@@ -461,6 +449,35 @@ export default function Show({ auth, rkat = {}, history = [] }) {
                         </div>
                     )}
  
+                    {/* --- STICKY FOOTER --- */}
+                    <div className="sticky bottom-4 z-30 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md p-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center mt-6">
+                        <Link
+                            href={route('daftar-ajuan.index')}
+                            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm flex items-center px-4 py-2 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                            <ArrowLeft size={16} className="mr-2" /> Kembali
+                        </Link>
+                        
+                        <div className="flex items-center gap-4">
+                            <a 
+                                href={dataRkat?.uuid ? route('daftar-ajuan.export', dataRkat.uuid) : '#'}
+                                target="_blank"
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-sm text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            >
+                                <Download size={18} /> Export PDF
+                            </a>
+
+                            {(dataRkat?.status_persetujuan === 'Draft' || dataRkat?.status_persetujuan === 'Revisi') && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleAjukan(dataRkat)}
+                                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm rounded-md shadow-lg shadow-teal-200/50 dark:shadow-teal-900/50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                                >
+                                    <Send size={18} /> Ajukan RKAT
+                                </button>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>

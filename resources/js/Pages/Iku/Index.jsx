@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Plus, Edit2, Trash2, ListChecks, ChevronDown, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, ListChecks, ChevronDown, ChevronRight, CheckCircle2, Save } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -275,7 +275,7 @@ export default function Index({ auth, ikus }) {
             {/* Modal Input/Edit IKU */}
             <Modal show={isModalOpen} onClose={handleCloseModal}>
                 <form onSubmit={submit} className="p-6 bg-white dark:bg-gray-800">
-                    <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 border-b dark:border-gray-700 pb-2 mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
                         {editData ? 'Ubah Nama IKU' : 'Tambah IKU Baru'}
                     </h2>
 
@@ -288,15 +288,16 @@ export default function Index({ auth, ikus }) {
                             value={data.nama_iku}
                             onChange={(e) => setData('nama_iku', e.target.value)}
                             className="mt-1 block w-full"
-                            placeholder="Contoh: Meningkatkan kualitas SDM"
+                            placeholder="Contoh: IKU XX: Meningkatkan kualitas SDM"
                             isFocused
                         />
                         <InputError message={errors.nama_iku} className="mt-2" />
                     </div>
 
-                    <div className="mt-6 flex justify-end gap-3 bg-gray-50 dark:bg-gray-800/50 -mx-6 -mb-6 p-4 border-t dark:border-gray-700">
+                    <div className="mt-6 flex justify-end gap-3 bg-white dark:bg-gray-800 -mx-6 -mb-6 p-4">
                         <SecondaryButton type="button" className="px-5 py-2 text-sm font-medium text-red-700 dark:text-red-400 bg-white dark:bg-gray-700 border border-red-300  dark:border-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-200 dark:focus:ring-red-600 transition-colors" onClick={handleCloseModal}>Batal</SecondaryButton>
                         <PrimaryButton disabled={processing} className="bg-teal-600 flex items-center justify-center gap-2 px-5 py-2 text-sm font-medium text-white rounded-lg hover:bg-teal-700 focus:ring-4 focus:outline-none focus:ring-teal-300 transition-colors disabled:opacity-70 disabled:cursor-not-allowed" >
+                            <Save size={18} />
                             {editData ? 'Simpan Perubahan' : 'Simpan IKU'}
                         </PrimaryButton>
                     </div>

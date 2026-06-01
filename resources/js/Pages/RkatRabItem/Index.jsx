@@ -2,25 +2,27 @@ import React, { useState, useEffect } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { Search, Package, ArrowLeft, ArrowRight, FileSpreadsheet, Plus } from 'lucide-react';
+import CustomSelect from '@/Components/CustomSelect';
 
 export default function Index({ auth, items, filters }) {
     // State untuk pencarian
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
+    const [perPage, setPerPage] = useState(filters.per_page || '15');
 
     // Handle Search dengan Delay (Debounce) via useEffect
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            if (searchTerm !== (filters.search || '')) {
+            if (searchTerm !== (filters.search || '') || perPage !== (filters.per_page || '15')) {
                 router.get(
                     route('rkat.index'),
-                    { search: searchTerm },
+                    { search: searchTerm, per_page: perPage },
                     { preserveState: true, replace: true, preserveScroll: true }
                 );
             }
         }, 500); // 500ms delay
 
         return () => clearTimeout(timeoutId);
-    }, [searchTerm]);
+    }, [searchTerm, perPage]);
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
@@ -113,7 +115,7 @@ export default function Index({ auth, items, filters }) {
                                                         <span className="text-gray-500 text-xs line-clamp-1" title={item.rkat_detail?.judul_kegiatan}>
                                                             {item.rkat_detail?.judul_kegiatan || '-'}
                                                         </span>
-                                                        <span className="text-[10px] text-indigo-500 dark:text-indigo-100 bg-indigo-100 dark:bg-indigo-800 w-fit px-1.5 py-0.5 rounded mt-1">
+                                                        <span className="text-[10px] text-indigo-500 dark:text-indigo-100 bg-indigo-100 dark:bg-indigo-800 w-fit px-1.5 py-0.5 rounded mt-2">
                                                             {item.kode_anggaran || 'Tanpa Kode'}
                                                         </span>
                                                     </div>
@@ -151,8 +153,28 @@ export default function Index({ auth, items, filters }) {
 
                         {/* PAGINATION */}
                         <div className="mt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                                Menampilkan <span className="font-medium text-gray-900 dark:text-white">{items.from || 0}</span> sampai <span className="font-medium text-gray-900 dark:text-white">{items.to || 0}</span> dari <span className="font-medium text-gray-900 dark:text-white">{items.total || 0}</span> data
+                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">Tampilkan</span>
+                                    <div className="w-20">
+                                        <CustomSelect
+                                            value={perPage}
+                                            onChange={(e) => setPerPage(e.target.value)}
+                                            options={[
+                                                { value: '10', label: '10' },
+                                                { value: '15', label: '15' },
+                                                { value: '25', label: '25' },
+                                                { value: '50', label: '50' },
+                                                { value: '100', label: '100' },
+                                                { value: 'all', label: 'Semua' }
+                                            ]}
+                                            className="h-8 text-xs py-1 px-2"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                    Menampilkan <span className="font-medium text-gray-900 dark:text-white">{items.from || 0}</span> sampai <span className="font-medium text-gray-900 dark:text-white">{items.to || 0}</span> dari <span className="font-medium text-gray-900 dark:text-white">{items.total || 0}</span> data
+                                </div>
                             </div>
 
                             <div className="flex flex-wrap gap-2">

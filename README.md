@@ -11,7 +11,8 @@ Sistem ini dikembangkan untuk mengoptimalkan efisiensi dan transparansi perencan
 | Fitur Kunci | Deskripsi |
 | :--- | :--- |
 | **Header-Detail Budgeting** | Satu dokumen pengajuan RKAT (`rkat_headers`) dapat memuat banyak item kegiatan dan anggaran detail (`rkat_details`), mempermudah agregasi dan input. |
-| **Workflow Approval Bertingkat** | Mendukung alur persetujuan hierarkis dan ketat: **Kaprodi/Kepala Biro** $\rightarrow$ **Dekan/Kepala BPUK** $\rightarrow$ **WR 1** $\rightarrow$ **WR 3** $\rightarrow$ **WR 2 (Final)**. |
+| **Workflow Approval Bertingkat** | Mendukung alur persetujuan hierarkis dan ketat pada RKAT dan Pencairan Dana berdasarkan konfigurasi unit masing-masing. |
+| **Manajemen Pencairan Dana** | Pengajuan pencairan anggaran berdasarkan RKAT yang disetujui, dilengkapi manajemen draft, mode edit revisi, kalkulasi sisa volume/anggaran, dan approval dinamis. |
 | **Role-Based Access Control (RBAC)** | Pemisahan peran yang tegas (*Inputer* vs *Approver*) untuk menjaga integritas data dan mencegah *self-approval*. |
 | **Audit Trail (Log Persetujuan)** | Pencatatan riwayat persetujuan yang detail di tabel `log_persetujuans`, merekam setiap aksi, catatan peninjau, dan waktu persetujuan. |
 
@@ -81,6 +82,7 @@ Skema ini adalah inti dari Sistem RKAT dan relasi antar tabelnya:
 | :--- | :--- | :--- |
 | `rkat_headers` | **Dokumen Pengajuan Utama**. Menyimpan status persetujuan dan data unit. | **PK** `id_header` |
 | `rkat_details` | **Item Baris Anggaran/Kegiatan** (dapat banyak). | **FK** `id_header` (One-to-Many ke `rkat_headers`) |
+| `pencairan_danas` | **Dokumen Pencairan Dana**. Menyimpan data pencairan dari RKA yang disetujui. | **FK** `id_header`, `diajukan_oleh` |
 | `penggunas` | Menyimpan **data user dan peran** (Inputer, Kaprodi, WR, dll.). | **FK** ke tabel `departemens` (Relasi dibuat terpisah) |
 | `log_persetujuans` | Mencatat **riwayat persetujuan** dan catatan reviewer. | **FK** `id_header` (ke `rkat_headers`), **FK** `id_approver` (ke `penggunas`) |
 

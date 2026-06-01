@@ -79,7 +79,7 @@ export default function Edit({ auth, tahun, tahunAnggaran, data: propData }) {
                     
                     <form onSubmit={submit} className="space-y-6">
                         
-                        {/* --- KONTAINER UTAMA --- */}
+                        {/* --- KARTU 1: PERIODE ANGGARAN --- */}
                         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-teal-500">
                             
                             <div className="flex items-center gap-3 mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
@@ -96,130 +96,141 @@ export default function Edit({ auth, tahun, tahunAnggaran, data: propData }) {
                                 </div>
                             </div>
 
-                            <div className="space-y-6">
-                                {/* Baris 1: Tahun & Status */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="relative z-0">
-                                        <InputLabel htmlFor="tahun_anggaran" value="Tahun Anggaran" required />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="relative z-0">
+                                    <InputLabel htmlFor="tahun_anggaran" value="Tahun Anggaran" required />
+                                    <TextInput
+                                        id="tahun_anggaran"
+                                        type="text"
+                                        value={data.tahun_anggaran}
+                                        onChange={(e) => setData('tahun_anggaran', e.target.value)}
+                                        className="mt-1 block w-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 cursor-not-allowed focus:ring-0"
+                                        placeholder="Cth: 2026"
+                                        readOnly 
+                                    />
+                                    <InputError message={errors.tahun_anggaran} className="mt-2" />
+                                </div>
+
+                                <div className="relative z-0">
+                                    <InputLabel value="Status RKAT" required />
+                                    <CustomSelect
+                                        value={data.status_rkat}
+                                        onChange={(e) => setData('status_rkat', e.target.value)}
+                                        options={statusOptions}
+                                        placeholder="Pilih Status"
+                                        className="mt-1"
+                                    />
+                                    <InputError message={errors.status_rkat} className="mt-2" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* --- KARTU 2: DURASI PELAKSANAAN --- */}
+                        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                            <div className="flex items-center gap-3 mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
+                                <div className="p-2 bg-teal-50 dark:bg-teal-900/40 rounded-lg">
+                                    <CalendarClock className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                                        Durasi Pelaksanaan
+                                    </h3>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        Tentukan tanggal mulai dan berakhirnya periode RKAT ini.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <InputLabel value="Tanggal Mulai" required />
+                                    <div className="mt-1 relative z-50"> 
+                                        <DateInput
+                                            value={data.tanggal_mulai}
+                                            onChange={(val) => setData('tanggal_mulai', val)}
+                                            placeholder="Pilih tanggal mulai..."
+                                            position="right"
+                                        />
+                                    </div>
+                                    <InputError message={errors.tanggal_mulai} className="mt-2" />
+                                </div>
+
+                                <div>
+                                    <InputLabel value="Tanggal Selesai" required />
+                                    <div className="mt-1 relative z-40">
+                                        <DateInput
+                                            value={data.tanggal_akhir}
+                                            onChange={(val) => setData('tanggal_akhir', val)}
+                                            placeholder="Pilih tanggal selesai..."
+                                            position="left"
+                                        />
+                                    </div>
+                                    <InputError message={errors.tanggal_akhir} className="mt-2" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* --- KARTU 3: INDIKATOR KEBERHASILAN --- */}
+                        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                            <div className="flex items-center gap-3 mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
+                                <div className="p-2 bg-teal-50 dark:bg-teal-900/40 rounded-lg">
+                                    <CalendarClock className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                                        Pengaturan Tahun Indikator Keberhasilan
+                                    </h3>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        Atur label tahun yang akan ditampilkan pada format laporan IKU/IKK.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="flex flex-col h-full">
+                                    <InputLabel value="Tahun Lalu (Capaian)" />
+                                    <div className="mt-auto pt-1">
                                         <TextInput
-                                            id="tahun_anggaran"
                                             type="text"
-                                            value={data.tahun_anggaran}
-                                            onChange={(e) => setData('tahun_anggaran', e.target.value)}
-                                            className="mt-1 block w-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 cursor-not-allowed focus:ring-0"
-                                            placeholder="Cth: 2026"
-                                            readOnly 
+                                            value={data.indikator_labels?.past || ''}
+                                            onChange={(e) => setData('indikator_labels', { ...data.indikator_labels, past: e.target.value })}
+                                            className="block w-full"
+                                            placeholder="Contoh: 2025"
                                         />
-                                        <InputError message={errors.tahun_anggaran} className="mt-2" />
-                                    </div>
-
-                                    <div className="relative z-0">
-                                        <InputLabel value="Status RKAT" required />
-                                        <CustomSelect
-                                            value={data.status_rkat}
-                                            onChange={(e) => setData('status_rkat', e.target.value)}
-                                            options={statusOptions}
-                                            placeholder="Pilih Status"
-                                            className="mt-1"
-                                        />
-                                        <InputError message={errors.status_rkat} className="mt-2" />
                                     </div>
                                 </div>
-
-                                {/* Divider Visual: Durasi */}
-                                <div className="border-t border-gray-100 dark:border-gray-700/50 pt-6 mt-4">
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <CalendarClock className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-                                        <span className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Durasi Pelaksanaan</span>
-                                    </div>
-
-                                    {/* Baris 2: Tanggal Mulai & Akhir */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <InputLabel value="Tanggal Mulai" required />
-                                            {/* Z-INDEX FIX: z-50 agar di atas footer */}
-                                            <div className="mt-1 relative z-50"> 
-                                                <DateInput
-                                                    value={data.tanggal_mulai}
-                                                    onChange={(val) => setData('tanggal_mulai', val)}
-                                                    placeholder="Pilih tanggal mulai..."
-                                                    position="right"
-                                                />
-                                            </div>
-                                            <InputError message={errors.tanggal_mulai} className="mt-2" />
-                                        </div>
-
-                                        <div>
-                                            <InputLabel value="Tanggal Selesai" required />
-                                            {/* Z-INDEX FIX: z-40 agar di atas footer */}
-                                            <div className="mt-1 relative z-40">
-                                                <DateInput
-                                                    value={data.tanggal_akhir}
-                                                    onChange={(val) => setData('tanggal_akhir', val)}
-                                                    placeholder="Pilih tanggal selesai..."
-                                                    position="left"
-                                                />
-                                            </div>
-                                            <InputError message={errors.tanggal_akhir} className="mt-2" />
-                                        </div>
+                                <div className="flex flex-col h-full">
+                                    <InputLabel value="Tahun Berjalan (Target & Capaian)" />
+                                    <div className="mt-auto pt-1">
+                                        <TextInput
+                                            type="text"
+                                            value={data.indikator_labels?.current || ''}
+                                            onChange={(e) => setData('indikator_labels', { ...data.indikator_labels, current: e.target.value })}
+                                            className="block w-full"
+                                            placeholder="Contoh: Tahun 2026"
+                                        />
                                     </div>
                                 </div>
-
-                                {/* Divider Visual */}
-                                <div className="border-t border-gray-100 dark:border-gray-700/50 pt-6 mt-4">
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <CalendarClock className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-                                        <span className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Pengaturan Tahun Indikator Keberhasilan</span>
-                                    </div>
-
-                                    {/* Baris 3: Indikator Labels */}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div className="flex flex-col h-full">
-                                            <InputLabel value="Tahun Lalu (Capaian)" />
-                                            <div className="mt-auto pt-1">
-                                                <TextInput
-                                                    type="text"
-                                                    value={data.indikator_labels?.past || ''}
-                                                    onChange={(e) => setData('indikator_labels', { ...data.indikator_labels, past: e.target.value })}
-                                                    className="block w-full"
-                                                    placeholder="Contoh: 2025"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col h-full">
-                                            <InputLabel value="Tahun Berjalan (Target & Capaian)" />
-                                            <div className="mt-auto pt-1">
-                                                <TextInput
-                                                    type="text"
-                                                    value={data.indikator_labels?.current || ''}
-                                                    onChange={(e) => setData('indikator_labels', { ...data.indikator_labels, current: e.target.value })}
-                                                    className="block w-full"
-                                                    placeholder="Contoh: Tahun 2026"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col h-full">
-                                            <InputLabel value="Tahun Mendatang (Target & Capaian)" />
-                                            <div className="mt-auto pt-1">
-                                                <TextInput
-                                                    type="text"
-                                                    value={data.indikator_labels?.future || ''}
-                                                    onChange={(e) => setData('indikator_labels', { ...data.indikator_labels, future: e.target.value })}
-                                                    className="block w-full"
-                                                    placeholder="Contoh: Akhir 2029"
-                                                />
-                                            </div>
-                                        </div>
+                                <div className="flex flex-col h-full">
+                                    <InputLabel value="Tahun Mendatang (Target & Capaian)" />
+                                    <div className="mt-auto pt-1">
+                                        <TextInput
+                                            type="text"
+                                            value={data.indikator_labels?.future || ''}
+                                            onChange={(e) => setData('indikator_labels', { ...data.indikator_labels, future: e.target.value })}
+                                            className="block w-full"
+                                            placeholder="Contoh: Akhir 2029"
+                                        />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* --- TOMBOL AKSI (STICKY) --- */}
-                        <div className="sticky bottom-4 z-10 bg-white/90 dark:bg-gray-900 backdrop-blur-sm p-4 rounded-xl shadow-lg flex justify-between items-center">
+                        <div className="sticky bottom-4 z-30 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md p-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center">
                             <Link
                                 href={route('tahun.index')}
-                                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 text-sm flex items-center px-4 py-2"
+                                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium text-sm flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                             >
                                 <ArrowLeft size={16} className="mr-2" /> Kembali
                             </Link>

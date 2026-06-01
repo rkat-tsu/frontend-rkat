@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save } from 'lucide-react';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import DangerButton from '@/Components/DangerButton';
@@ -317,7 +317,9 @@ export default function ApprovalPathIndex({ paths, units }) {
 
                         <div className="flex justify-end gap-2 pt-4">
                             <SecondaryButton type="button" onClick={() => setIsDialogOpen(false)}>Batal</SecondaryButton>
-                            <PrimaryButton type="submit">Simpan Alur</PrimaryButton>
+                            <PrimaryButton type="submit">
+                                <Save size={16} className="mr-2" /> Simpan Alur
+                            </PrimaryButton>
                         </div>
                     </form>
                 </div>

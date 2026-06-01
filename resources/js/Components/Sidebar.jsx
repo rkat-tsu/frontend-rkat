@@ -42,7 +42,7 @@ const navItems = [
         icon: Database,
         activePath: '/master',
         children: [
-            { name: 'Standar Biaya Operasional', href: '/rincian-anggaran', icon: BookOpenText, activePath: '/rincian-anggaran' },
+            { name: 'Standar Biaya Operasional', href: '/sbo', icon: BookOpenText, activePath: '/sbo' },
             { name: 'Indikator Kinerja Utama', href: '/iku', icon: BookPlus, activePath: '/iku' }
         ],
     },

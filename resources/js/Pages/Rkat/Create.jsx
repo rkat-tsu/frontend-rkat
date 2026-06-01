@@ -769,11 +769,11 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                         </div>
 
                         {/* --- STICKY FOOTER --- */}
-                        <div className="sticky bottom-4 z-10 bg-white/90 dark:bg-gray-900 backdrop-blur-sm p-4 rounded-xl shadow-lg flex justify-between items-center">
+                        <div className="sticky bottom-4 z-30 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md p-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center">
                             <button
                                 type="button"
                                 onClick={handleBack}
-                                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 text-sm flex items-center px-4 py-2 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm flex items-center px-4 py-2 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                             >
                                 <ArrowLeft size={16} className="mr-2" /> Kembali
                             </button>

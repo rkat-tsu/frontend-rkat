@@ -30,9 +30,12 @@ class RincianAnggaranController extends Controller
             $query->where('kelompok_anggaran', '=', $request->kelompok, 'and');
         }
 
+        $perPage = request()->get('per_page', 20);
+        $perPage = $perPage === 'all' ? 10000 : (int) $perPage;
+
         $items = $query->select(['uuid', 'kode_anggaran', 'nama_anggaran', 'kelompok_anggaran', 'nominal', 'satuan'])
             ->orderBy('kode_anggaran', 'asc')
-            ->paginate(20)
+            ->paginate($perPage)
             ->withQueryString();
 
         // Mengambil kelompok unik dari kelompok_anggaran untuk dropdown filter
@@ -51,11 +54,7 @@ class RincianAnggaranController extends Controller
         ]);
     }
 
-    public function create()
-    {
-        return Inertia::render('Admin/RincianAnggaran/Create');
-    }
-
+    // Modal handles create
     public function store(Request $request)
     {
         Log::debug('[RincianAnggaran] Payload Simpan', $request->all());
@@ -71,16 +70,10 @@ class RincianAnggaranController extends Controller
         RincianAnggaran::create($validated);
         Log::info('[RincianAnggaran] Dibuat: ' . $validated['kode_anggaran']);
 
-        return Redirect::route('rincian.index')->with('success', 'Rincian Anggaran berhasil ditambahkan.');
+        return Redirect::route('sbo.index')->with('success', 'SBO berhasil ditambahkan.');
     }
 
-    public function edit(RincianAnggaran $rincian)
-    {
-        return Inertia::render('Admin/RincianAnggaran/Edit', [
-            'rincian' => $rincian,
-        ]);
-    }
-
+    // Modal handles edit
     public function update(Request $request, RincianAnggaran $rincian)
     {
         Log::debug('[RincianAnggaran] Payload Pembaruan', $request->all());
@@ -98,7 +91,7 @@ class RincianAnggaranController extends Controller
             
         Log::info('[RincianAnggaran] Diperbarui: ' . $rincian->kode_anggaran);
 
-        return Redirect::route('rincian.index')->with('success', 'Rincian Anggaran berhasil diperbarui.');
+        return Redirect::route('sbo.index')->with('success', 'SBO berhasil diperbarui.');
     }
 
     public function destroy(RincianAnggaran $rincian)
@@ -106,10 +99,10 @@ class RincianAnggaranController extends Controller
         Log::warning('[RincianAnggaran] Menghapus: ' . $rincian->kode_anggaran);
         try {
             RincianAnggaran::destroy($rincian->kode_anggaran);
-            return Redirect::route('rincian.index')->with('success', 'Rincian Anggaran berhasil dihapus.');
+            return Redirect::route('sbo.index')->with('success', 'SBO berhasil dihapus.');
         } catch (\Exception $e) {
             Log::error('[RincianAnggaran] Kesalahan Hapus: ' . $e->getMessage());
-            return Redirect::route('rincian.index')->with('error', 'Gagal menghapus Rincian Anggaran.');
+            return Redirect::route('sbo.index')->with('error', 'Gagal menghapus SBO.');
         }
     }
 }

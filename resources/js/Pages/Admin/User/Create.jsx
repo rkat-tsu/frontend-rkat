@@ -259,7 +259,7 @@ export default function Create({ auth, units = [] }) {
                         </div>
 
                         {/* --- TOMBOL AKSI (STICKY) --- */}
-                        <div className="sticky bottom-4 z-30 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                        <div className="sticky bottom-4 z-30 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md p-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center">
                             <button
                                 type="button"
                                 onClick={handleBack}

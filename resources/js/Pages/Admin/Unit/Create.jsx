@@ -131,8 +131,20 @@ export default function Create({ auth, users, units, approvalPaths }) {
                                     <InputError message={errors.nama_unit} className="mt-2" />
                                 </div>
 
+                                <div>
+                                    <InputLabel value="Tipe Unit" required />
+                                    <CustomSelect
+                                        value={data.tipe_unit}
+                                        onChange={(e) => setData('tipe_unit', e.target.value)}
+                                        options={tipeOptions}
+                                        placeholder="Pilih Tipe"
+                                        className="mt-1"
+                                    />
+                                    <InputError message={errors.tipe_unit} className="mt-2" />
+                                </div>
+
                                 {/* Parent Unit (Induk) */}
-                                <div className="md:col-span-2">
+                                <div>
                                     <InputLabel value="Unit Induk (Parent)" />
                                     <CustomSelect
                                         value={data.parent_id}
@@ -224,18 +236,6 @@ export default function Create({ auth, users, units, approvalPaths }) {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <InputLabel value="Tipe Unit" required />
-                                    <CustomSelect
-                                        value={data.tipe_unit}
-                                        onChange={(e) => setData('tipe_unit', e.target.value)}
-                                        options={tipeOptions}
-                                        placeholder="Pilih Tipe"
-                                        className="mt-1"
-                                    />
-                                    <InputError message={errors.tipe_unit} className="mt-2" />
-                                </div>
-
-                                <div>
                                     <InputLabel value="Alur Persetujuan RKAT" required />
                                     <CustomSelect
                                         value={data.approval_path_id}
@@ -262,7 +262,7 @@ export default function Create({ auth, users, units, approvalPaths }) {
                         </div>
 
                         {/* --- TOMBOL AKSI --- */}
-                        <div className="mt-6 flex items-center justify-end gap-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <div className="sticky bottom-4 z-30 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md p-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center">
                             <button
                                 type="button"
                                 onClick={handleBack}
@@ -275,6 +275,7 @@ export default function Create({ auth, users, units, approvalPaths }) {
                                 <Save size={16} className="mr-2" /> Simpan Data Unit
                             </PrimaryButton>
                         </div>
+                        
 
                     </form>
                 </div>

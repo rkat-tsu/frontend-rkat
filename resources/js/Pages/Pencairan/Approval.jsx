@@ -10,6 +10,16 @@ export default function Approval({ auth, pencairans }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedPencairan, setSelectedPencairan] = useState(null);
 
+    const getStatusColor = (status) => {
+        if (!status) return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+        const s = status.toLowerCase();
+        if (s.includes('disetujui_final') || s.includes('disetujui final')) return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+        if (s.includes('ditolak')) return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+        if (s.includes('revisi')) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+        if (s.includes('draft')) return 'bg-gray-200 text-gray-800 dark:bg-gray-700/50 dark:text-gray-300';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+    };
+
     const openModal = (pencairan) => {
         setSelectedPencairan(pencairan);
         setIsModalOpen(true);
@@ -78,7 +88,7 @@ export default function Approval({ auth, pencairans }) {
                                                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{item.rkat_header?.unit?.nama_unit || 'Unit Tidak Diketahui'}</div>
                                                  </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
+                                                    <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-bold whitespace-nowrap rounded-md ${getStatusColor(item.status_pencairan)}`}>
                                                         {item.status_pencairan.replace(/_/g, ' ')}
                                                     </span>
                                                 </td>

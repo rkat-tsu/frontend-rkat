@@ -20,7 +20,8 @@ class PencairanDanaController extends Controller
         
         $query = PencairanDana::with([
             'rkatHeader.unit',
-            'pengaju'
+            'pengaju',
+            'items'
         ]);
 
         if ($user->peran !== 'Admin') {
@@ -57,19 +58,73 @@ class PencairanDanaController extends Controller
             });
         }
 
-        $pencairans = $query->orderBy('created_at', 'desc')->paginate(15);
+        $perPage = request()->get('per_page', 15);
+        $perPage = $perPage === 'all' ? 10000 : (int) $perPage;
+
+        $pencairans = $query->orderBy('created_at', 'desc')->paginate($perPage)->withQueryString();
         $tahunAnggarans = TahunAnggaran::pluck('tahun_anggaran', null)->toArray();
         $units = Unit::select(['id_unit', 'nama_unit'])->get();
 
         $dynamicSteps = ApprovalPathStep::select('step_name')->distinct()->pluck('step_name')->toArray();
         $statuses = array_values(array_unique(array_merge(['Draft', 'Revisi', 'Disetujui_Final', 'Ditolak'], $dynamicSteps)));
 
+        // --- Fetch RKAT List for Modal ---
+        $rkatQuery = RkatHeader::with(['unit', 'rkatDetails.rabItems.pencairanDanaItems' => function($q) {
+            $q->whereHas('pencairanDana', function($q2) {
+                $q2->where('status_pencairan', '!=', 'Ditolak');
+            });
+        }])->where('status_persetujuan', 'Disetujui_Final');
+
+        if ($user->peran !== 'Admin') {
+            $rkatQuery->where('id_unit', $user->id_unit);
+        }
+
+        $rkatList = $rkatQuery->get()->map(function($rkat) {
+            $total_anggaran = 0;
+            $total_tercairkan = 0;
+            $items = [];
+            foreach ($rkat->rkatDetails as $detail) {
+                foreach ($detail->rabItems as $item) {
+                    $usedVolume = $item->pencairanDanaItems->sum('volume_pencairan');
+                    $usedNominal = $item->pencairanDanaItems->sum('sub_total_pencairan');
+                    $total_anggaran += $item->sub_total;
+                    $total_tercairkan += $usedNominal;
+                    
+                    if (($item->sub_total > $usedNominal) && (($item->volume - $usedVolume) > 0)) {
+                        $items[] = [
+                            'id' => $item->id,
+                            'deskripsi_item' => $item->deskripsi_item,
+                            'harga_satuan' => $item->harga_satuan,
+                            'volume' => $item->volume,
+                            'sub_total' => $item->sub_total,
+                            'used_volume' => $usedVolume,
+                            'used_nominal' => $usedNominal,
+                            'remaining_volume' => $item->volume - $usedVolume,
+                            'remaining_nominal' => $item->sub_total - $usedNominal,
+                        ];
+                    }
+                }
+            }
+            return [
+                'id_header' => $rkat->id_header,
+                'nomor_dokumen' => $rkat->nomor_dokumen,
+                'unit' => $rkat->unit,
+                'total_anggaran' => $total_anggaran,
+                'total_tercairkan' => $total_tercairkan,
+                'sisa_anggaran' => $total_anggaran - $total_tercairkan,
+                'rab_items' => $items
+            ];
+        })->filter(function($rkat) {
+            return count($rkat['rab_items']) > 0;
+        })->values();
+
         return Inertia::render('Pencairan/Index', [
             'pencairans' => $pencairans,
-            'filters' => $request->only(['search', 'tahun', 'status', 'unit_id']),
+            'filters' => $request->only(['search', 'tahun', 'status', 'unit_id', 'per_page']),
             'tahunAnggarans' => $tahunAnggarans,
             'units' => $units,
             'statuses' => $statuses,
+            'rkatList' => $rkatList,
         ]);
     }
 
@@ -98,7 +153,7 @@ class PencairanDanaController extends Controller
                     $total_anggaran += $item->sub_total;
                     $total_tercairkan += $usedNominal;
                     
-                    if ($item->sub_total > $usedNominal) {
+                    if (($item->sub_total > $usedNominal) && (($item->volume - $usedVolume) > 0)) {
                         $items[] = [
                             'id' => $item->id,
                             'deskripsi_item' => $item->deskripsi_item,
@@ -190,6 +245,80 @@ class PencairanDanaController extends Controller
         }
 
         return redirect()->route('pencairan.index')->with('success', 'Pencairan Dana berhasil dibuat sebagai Draft.');
+    }
+
+    public function update(Request $request, PencairanDana $pencairan)
+    {
+        $user = Auth::user();
+
+        if ($pencairan->status_pencairan !== 'Draft' && $pencairan->status_pencairan !== 'Revisi') {
+            return redirect()->back()->with('error', 'Hanya dokumen Draft atau Revisi yang dapat diedit.');
+        }
+
+        if ($user->peran !== 'Admin' && $pencairan->diajukan_oleh !== $user->id_user) {
+            abort(403, 'Anda tidak memiliki wewenang untuk mengedit pencairan ini.');
+        }
+
+        $request->validate([
+            'id_header' => 'required|exists:rkat_headers,id_header',
+            'nama_pencairan' => 'required|string|max:255',
+            'items' => 'required|array|min:1',
+            'items.*.id' => 'required|exists:rkat_rab_items,id',
+            'items.*.volume_pencairan' => 'required|numeric|min:1',
+            'items.*.nominal_pencairan' => 'required|numeric|min:0',
+        ]);
+
+        $rkat = RkatHeader::findOrFail($request->id_header);
+
+        if ($user->peran !== 'Admin' && $rkat->id_unit !== $user->id_unit) {
+            abort(403, 'Anda tidak memiliki wewenang untuk mengajukan pencairan untuk unit ini.');
+        }
+
+        // Validate items remaining budget
+        foreach ($request->items as $reqItem) {
+            $rabItem = \App\Models\RkatRabItem::findOrFail($reqItem['id']);
+            $usedVolume = $rabItem->pencairanDanaItems()->whereHas('pencairanDana', function($q) use ($pencairan) {
+                $q->where('status_pencairan', '!=', 'Ditolak')
+                  ->where('id_pencairan', '!=', $pencairan->id_pencairan);
+            })->sum('volume_pencairan');
+            $usedSubTotal = $rabItem->pencairanDanaItems()->whereHas('pencairanDana', function($q) use ($pencairan) {
+                $q->where('status_pencairan', '!=', 'Ditolak')
+                  ->where('id_pencairan', '!=', $pencairan->id_pencairan);
+            })->sum('sub_total_pencairan');
+            
+            $remainingVolume = $rabItem->volume - $usedVolume;
+            $remainingSubTotal = $rabItem->sub_total - $usedSubTotal;
+            $reqSubTotal = $reqItem['volume_pencairan'] * $reqItem['nominal_pencairan'];
+            
+            if ($reqItem['volume_pencairan'] > $remainingVolume) {
+                return redirect()->back()->with('error', 'Volume pencairan untuk "' . $rabItem->deskripsi_item . '" melebihi sisa volume (Sisa: ' . $remainingVolume . ').');
+            }
+            if ($reqSubTotal > $remainingSubTotal) {
+                return redirect()->back()->with('error', 'Sub total pencairan untuk "' . $rabItem->deskripsi_item . '" melebihi sisa anggaran.');
+            }
+        }
+
+        $pencairan->update([
+            'id_header' => $request->id_header,
+            'nama_pencairan' => $request->nama_pencairan,
+        ]);
+
+        // Remove old items
+        $pencairan->items()->delete();
+
+        // Add new items
+        foreach ($request->items as $reqItem) {
+            $subTotal = $reqItem['volume_pencairan'] * $reqItem['nominal_pencairan'];
+            \App\Models\PencairanDanaItem::create([
+                'id_pencairan' => $pencairan->id_pencairan,
+                'id_rkat_rab_item' => $reqItem['id'],
+                'volume_pencairan' => $reqItem['volume_pencairan'],
+                'nominal_pencairan' => $reqItem['nominal_pencairan'],
+                'sub_total_pencairan' => $subTotal,
+            ]);
+        }
+
+        return redirect()->route('pencairan.index')->with('success', 'Pencairan Dana berhasil diperbarui.');
     }
 
     public function show(PencairanDana $pencairan)

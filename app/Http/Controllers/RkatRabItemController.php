@@ -36,8 +36,11 @@ class RkatRabItemController extends Controller
         }
 
         // Urutkan dari yang terbaru
-        $items = $query->latest()
-            ->paginate(15)
+        $perPage = request()->get('per_page', 15);
+        $perPage = $perPage === 'all' ? 10000 : (int) $perPage;
+
+        $items = $query->orderBy('created_at', 'asc')
+            ->paginate($perPage)
             ->withQueryString(); // Agar parameter search tidak hilang saat ganti halaman
 
         return Inertia::render('RkatRabItem/Index', [

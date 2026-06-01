@@ -12,21 +12,22 @@ export default function Index({ users, filters = {}, units = [] }) {
     
     const [searchTerm, setSearchTerm] = useState(filters.q || '');
     const [selectedUnit, setSelectedUnit] = useState(filters.unit || '');
+    const [perPage, setPerPage] = useState(filters.per_page || '15');
 
     // Debounced Search & Filter
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            if (searchTerm !== (filters.q || '') || selectedUnit !== (filters.unit || '')) {
+            if (searchTerm !== (filters.q || '') || selectedUnit !== (filters.unit || '') || perPage !== (filters.per_page || '15')) {
                 router.get(
                     route('user.index'),
-                    { q: searchTerm, unit: selectedUnit },
+                    { q: searchTerm, unit: selectedUnit, per_page: perPage },
                     { preserveState: true, preserveScroll: true, replace: true }
                 );
             }
         }, 300);
 
         return () => clearTimeout(timeoutId);
-    }, [searchTerm, selectedUnit]);
+    }, [searchTerm, selectedUnit, perPage]);
 
     const unitOptions = [
         { value: '', label: 'Semua Unit' },
@@ -208,9 +209,29 @@ export default function Index({ users, filters = {}, units = [] }) {
                         {/* PAGINATION SECTION */}
                         {users.links && Array.isArray(users.links) && (
                             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    Menampilkan <span className="font-medium">{users.from || 0}</span> sampai <span className="font-medium">{users.to || 0}</span> dari <span className="font-medium">{users.total || 0}</span> akun
-                                </p>
+                                <div className="flex flex-col sm:flex-row items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Tampilkan</span>
+                                        <div className="w-20">
+                                            <CustomSelect
+                                                value={perPage}
+                                                onChange={(e) => setPerPage(e.target.value)}
+                                                options={[
+                                                    { value: '10', label: '10' },
+                                                    { value: '15', label: '15' },
+                                                    { value: '25', label: '25' },
+                                                    { value: '50', label: '50' },
+                                                    { value: '100', label: '100' },
+                                                    { value: 'all', label: 'Semua' }
+                                                ]}
+                                                className="h-8 text-xs py-1 px-2"
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        Menampilkan <span className="font-medium text-gray-900 dark:text-white">{users.from || 0}</span> sampai <span className="font-medium text-gray-900 dark:text-white">{users.to || 0}</span> dari <span className="font-medium text-gray-900 dark:text-white">{users.total || 0}</span> akun
+                                    </p>
+                                </div>
                                 
                                 <div className="flex flex-wrap gap-2">
                                     {users.links.map((link, k) => (

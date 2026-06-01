@@ -46,7 +46,10 @@ class UserController extends Controller
             $query->where('id_unit', $unitId);
         }
 
-        $users = $query->paginate(20)->withQueryString();
+        $perPage = request()->get('per_page', 20);
+        $perPage = $perPage === 'all' ? 10000 : (int) $perPage;
+
+        $users = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('Admin/User/Index', [
             'users' => $users,
