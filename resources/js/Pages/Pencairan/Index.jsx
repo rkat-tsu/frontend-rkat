@@ -461,7 +461,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                                             <TooltipContent>Export PDF</TooltipContent>
                                                         </Tooltip>
  
-                                                        {(item.status_pencairan === 'Draft' || item.status_pencairan === 'Revisi') && auth.user.id_user === item.diajukan_oleh && (
+                                                        {(item.status_pencairan === 'Draft' || item.status_pencairan === 'Revisi') && (isAdmin() || auth.user.id_user == item.diajukan_oleh) && (
                                                             <>
                                                                 <Tooltip>
                                                                     <TooltipTrigger asChild>
@@ -556,7 +556,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                     value={namaPencairan}
                                     onChange={(e) => setNamaPencairan(e.target.value)}
                                     placeholder="Contoh: Pencairan Tahap 1"
-                                    className="h-11 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
+                                    className="h-11 w-full rounded-md text-gray-900 dark:text-white border-gray-300 dark:border-gray-700 dark:bg-gray-900 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
                                     required
                                 />
                             </div>
@@ -569,12 +569,12 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                                         <thead className="bg-gray-50 dark:bg-gray-700">
                                             <tr>
-                                                <th className="px-4 py-3 text-left w-12 text-xs font-medium text-gray-500 uppercase tracking-wider">Pilih</th>
-                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item & Harga Satuan Asli</th>
-                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sisa Volume (Max)</th>
-                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Volume Dicairkan</th>
-                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga Satuan Pencairan</th>
-                                                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Sub Total Cair</th>
+                                                <th className="px-4 py-3 text-left w-12 text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Pilih</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Item & Harga Satuan Asli</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Sisa Volume (Max)</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Volume Dicairkan</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Harga Satuan Pencairan</th>
+                                                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Sub Total Cair</th>
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -604,7 +604,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                                             value={item.volume_pencairan}
                                                             onChange={(e) => handleItemChange(item.id, 'volume_pencairan', e.target.value)}
                                                             disabled={!item.is_selected}
-                                                            className="w-24 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm disabled:opacity-50"
+                                                            className="w-24 rounded-md text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm disabled:opacity-50"
                                                         />
                                                     </td>
                                                     <td className="px-4 py-4 whitespace-nowrap">
@@ -614,7 +614,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                                             value={item.nominal_pencairan}
                                                             onChange={(e) => handleItemChange(item.id, 'nominal_pencairan', e.target.value)}
                                                             disabled={!item.is_selected}
-                                                            className="w-32 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm disabled:opacity-50"
+                                                            className="w-32 rounded-md text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm disabled:opacity-50"
                                                         />
                                                     </td>
                                                     <td className="px-4 py-4 whitespace-nowrap text-right font-bold text-gray-900 dark:text-white">

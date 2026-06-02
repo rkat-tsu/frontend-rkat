@@ -197,11 +197,6 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                             </div>
                         </div>
                     </div>
-                    {/* Record Count */}
-                    <div className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                        Menampilkan <span className="font-semibold text-gray-900 dark:text-white">{rkats.total || (rkats.data && rkats.data.length) || 0}</span> data RKAT
-                    </div>
-
                     {/* Tabel Data */}
                     <div className="overflow-x-auto rounded-lg border border-gray-300 dark:border-gray-700">
                         <table className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
@@ -332,19 +327,25 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                         Menampilkan <span className="font-medium text-gray-900 dark:text-white">{rkats.from || 0}</span> sampai <span className="font-medium text-gray-900 dark:text-white">{rkats.to || 0}</span> dari <span className="font-medium text-gray-900 dark:text-white">{rkats.total || 0}</span> data
                                     </p>
                                 </div>
-                            <div className="flex flex-wrap shadow-sm rounded-md">
+                            <div className="flex flex-wrap gap-2">
                                 {rkats.links.map((link, index) => (
-                                    <Link
-                                        key={index}
-                                        href={link.url || '#'}
-                                        className={`px-3 py-2 border border-gray-200 dark:border-gray-700 text-sm ${link.active
-                                            ? 'bg-teal-600 text-white border-teal-600 z-10'
-                                            : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                                            } ${!link.url ? 'opacity-50 cursor-not-allowed' : ''} ${index === 0 ? 'rounded-l-md' : ''
-                                            } ${index === rkats.links.length - 1 ? 'rounded-r-md' : ''}`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                        onClick={(e) => !link.url && e.preventDefault()}
-                                    />
+                                    link.url ? (
+                                        <Link
+                                            key={index}
+                                            href={link.url}
+                                            className={`px-3 py-1 text-sm border rounded-md transition-colors ${link.active
+                                                ? 'bg-teal-600 text-white border-teal-600'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
+                                                }`}
+                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                        />
+                                    ) : (
+                                        <span
+                                            key={index}
+                                            className="px-3 py-1 text-sm border rounded-md bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600"
+                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                        />
+                                    )
                                 ))}
                             </div>
                         </div>

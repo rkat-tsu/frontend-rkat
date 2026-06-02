@@ -35,7 +35,7 @@ class RincianAnggaranController extends Controller
 
         $items = $query->select(['uuid', 'kode_anggaran', 'nama_anggaran', 'kelompok_anggaran', 'nominal', 'satuan'])
             ->orderBy('kode_anggaran', 'asc')
-            ->paginate($perPage)
+            ->paginate($perPage)->onEachSide(0)
             ->withQueryString();
 
         // Mengambil kelompok unik dari kelompok_anggaran untuk dropdown filter

@@ -94,7 +94,7 @@ class RkatController extends Controller
         $perPage = request()->get('per_page', 15);
         $perPage = $perPage === 'all' ? 10000 : (int) $perPage;
 
-        $rkats = $query->orderBy('tanggal_pengajuan', 'desc')->paginate($perPage)->withQueryString();
+        $rkats = $query->orderBy('tanggal_pengajuan', 'desc')->paginate($perPage)->onEachSide(0)->withQueryString();
 
         $tahunAnggarans = TahunAnggaran::query()->orderBy('tahun_anggaran', 'desc')->pluck('tahun_anggaran');
         $units = Unit::query()->select(['id_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get();

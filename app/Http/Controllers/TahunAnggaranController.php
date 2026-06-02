@@ -25,7 +25,7 @@ class TahunAnggaranController extends Controller
 
         $tahunAnggarans = $query->select(['id_tahun', 'uuid', 'tahun_anggaran', 'tanggal_mulai', 'tanggal_akhir', 'status_rkat'])
             ->orderBy('tahun_anggaran', 'desc')
-            ->paginate($perPage)->withQueryString();
+            ->paginate($perPage)->onEachSide(0)->withQueryString();
 
         return Inertia::render('Admin/TahunAnggaran/Index', [
             'tahunAnggarans' => $tahunAnggarans,

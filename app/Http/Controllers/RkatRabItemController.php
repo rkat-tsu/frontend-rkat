@@ -40,7 +40,7 @@ class RkatRabItemController extends Controller
         $perPage = $perPage === 'all' ? 10000 : (int) $perPage;
 
         $items = $query->orderBy('created_at', 'asc')
-            ->paginate($perPage)
+            ->paginate($perPage)->onEachSide(0)
             ->withQueryString(); // Agar parameter search tidak hilang saat ganti halaman
 
         return Inertia::render('RkatRabItem/Index', [

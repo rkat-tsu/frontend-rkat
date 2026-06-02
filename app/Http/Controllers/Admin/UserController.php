@@ -5,11 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Unit;
-
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log; // Added Log
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Redirect;
@@ -49,7 +48,7 @@ class UserController extends Controller
         $perPage = request()->get('per_page', 20);
         $perPage = $perPage === 'all' ? 10000 : (int) $perPage;
 
-        $users = $query->paginate($perPage)->withQueryString();
+        $users = $query->paginate($perPage)->onEachSide(0)->withQueryString();
 
         return Inertia::render('Admin/User/Index', [
             'users' => $users,

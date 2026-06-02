@@ -61,7 +61,7 @@ class PencairanDanaController extends Controller
         $perPage = request()->get('per_page', 15);
         $perPage = $perPage === 'all' ? 10000 : (int) $perPage;
 
-        $pencairans = $query->orderBy('created_at', 'desc')->paginate($perPage)->withQueryString();
+        $pencairans = $query->orderBy('created_at', 'desc')->paginate($perPage)->onEachSide(0)->withQueryString();
         $tahunAnggarans = TahunAnggaran::pluck('tahun_anggaran', null)->toArray();
         $units = Unit::select(['id_unit', 'nama_unit'])->get();
 
