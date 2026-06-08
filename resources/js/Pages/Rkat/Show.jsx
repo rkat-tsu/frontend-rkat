@@ -62,6 +62,26 @@ export default function Show({ auth, rkat = {}, history = [] }) {
     const logs = Array.isArray(dataRkat?.log_persetujuans) ? dataRkat.log_persetujuans : (Array.isArray(dataRkat?.logPersetujuans) ? dataRkat.logPersetujuans : []);
     const notes = logs.filter(l => l?.aksi === 'Revisi' || l?.aksi === 'Tolak');
 
+    const handleAjukan = (item) => {
+        toast("Konfirmasi Pengajuan", {
+            description: "Apakah Anda yakin ingin mengajukan RKAT ini? Setelah diajukan, data tidak dapat diubah kecuali dikembalikan untuk revisi.",
+            action: {
+                label: "Ya, Ajukan",
+                onClick: () => {
+                    const toastId = toast.loading("Sedang mengirim pengajuan...");
+                    router.post(route('daftar-ajuan.submit', item.uuid), {}, {
+                        onFinish: () => {
+                            toast.dismiss(toastId);
+                        }
+                    });
+                }
+            },
+            cancel: {
+                label: "Batal"
+            }
+        });
+    };
+
     return (
         <AuthenticatedLayout
             user={auth.user}

@@ -7,6 +7,8 @@ use App\Models\RkatHeader;
 use App\Models\TahunAnggaran;
 use App\Models\Unit;
 use App\Models\ApprovalPathStep;
+use App\Models\RkatRabItem;
+use App\Models\PencairanDanaItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -17,16 +19,46 @@ class PencairanDanaController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        
+
         $query = PencairanDana::with([
             'rkatHeader.unit',
             'pengaju',
             'items'
         ]);
 
+        $effectiveRoles = $user->getEffectiveRoles();
+
         if ($user->peran !== 'Admin') {
-            $query->whereHas('rkatHeader', function ($q) use ($user) {
-                $q->where('id_unit', $user->id_unit);
+            $query->where(function ($q) use ($user, $effectiveRoles) {
+                // 1. Yang diajukan oleh unitnya sendiri
+                $q->whereHas('rkatHeader', function ($hq) use ($user) {
+                    $hq->where('id_unit', $user->id_unit);
+                });
+
+                // 2. Yang mana unitnya adalah parent_unit dari unit pengaju
+                if ($user->isUnitHead()) {
+                    $q->orWhereHas('rkatHeader.unit', function ($uq) use ($user) {
+                        $uq->where('parent_id', $user->id_unit)
+                            ->whereHas('pencairanApprovalPath.steps', function ($stepQ) {
+                                $stepQ->where('approver_type', 'parent_unit');
+                            });
+                    });
+                }
+
+                // 3. Yang mana unit/role-nya ada di dalam approval path
+                $q->orWhereHas('rkatHeader.unit.pencairanApprovalPath.steps', function ($stepQ) use ($user, $effectiveRoles) {
+                    $stepQ->where(function ($sq) use ($effectiveRoles) {
+                        $sq->where('approver_type', 'role')
+                            ->whereIn('role_name', $effectiveRoles);
+                    });
+
+                    if ($user->isUnitHead()) {
+                        $stepQ->orWhere(function ($sq) use ($user) {
+                            $sq->where('approver_type', 'unit')
+                                ->where('unit_id', $user->id_unit);
+                        });
+                    }
+                });
             });
         }
 
@@ -34,9 +66,9 @@ class PencairanDanaController extends Controller
             $search = $request->search;
             $query->whereHas('rkatHeader', function ($q) use ($search) {
                 $q->where('nomor_dokumen', 'like', "%{$search}%")
-                  ->orWhereHas('unit', function ($qu) use ($search) {
-                      $qu->where('nama_unit', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('unit', function ($qu) use ($search) {
+                        $qu->where('nama_unit', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -69,8 +101,8 @@ class PencairanDanaController extends Controller
         $statuses = array_values(array_unique(array_merge(['Draft', 'Revisi', 'Disetujui_Final', 'Ditolak'], $dynamicSteps)));
 
         // --- Fetch RKAT List for Modal ---
-        $rkatQuery = RkatHeader::with(['unit', 'rkatDetails.rabItems.pencairanDanaItems' => function($q) {
-            $q->whereHas('pencairanDana', function($q2) {
+        $rkatQuery = RkatHeader::with(['unit', 'rkatDetails.rabItems.pencairanDanaItems' => function ($q) {
+            $q->whereHas('pencairanDana', function ($q2) {
                 $q2->where('status_pencairan', '!=', 'Ditolak');
             });
         }])->where('status_persetujuan', 'Disetujui_Final');
@@ -79,7 +111,7 @@ class PencairanDanaController extends Controller
             $rkatQuery->where('id_unit', $user->id_unit);
         }
 
-        $rkatList = $rkatQuery->get()->map(function($rkat) {
+        $rkatList = $rkatQuery->get()->map(function ($rkat) {
             $total_anggaran = 0;
             $total_tercairkan = 0;
             $items = [];
@@ -89,7 +121,7 @@ class PencairanDanaController extends Controller
                     $usedNominal = $item->pencairanDanaItems->sum('sub_total_pencairan');
                     $total_anggaran += $item->sub_total;
                     $total_tercairkan += $usedNominal;
-                    
+
                     if (($item->sub_total > $usedNominal) && (($item->volume - $usedVolume) > 0)) {
                         $items[] = [
                             'id' => $item->id,
@@ -114,7 +146,7 @@ class PencairanDanaController extends Controller
                 'sisa_anggaran' => $total_anggaran - $total_tercairkan,
                 'rab_items' => $items
             ];
-        })->filter(function($rkat) {
+        })->filter(function ($rkat) {
             return count($rkat['rab_items']) > 0;
         })->values();
 
@@ -128,63 +160,6 @@ class PencairanDanaController extends Controller
         ]);
     }
 
-    public function create()
-    {
-        $user = Auth::user();
-        
-        $query = RkatHeader::with(['unit', 'rkatDetails.rabItems.pencairanDanaItems' => function($q) {
-            $q->whereHas('pencairanDana', function($q2) {
-                $q2->where('status_pencairan', '!=', 'Ditolak');
-            });
-        }])->where('status_persetujuan', 'Disetujui_Final');
-
-        if ($user->peran !== 'Admin') {
-            $query->where('id_unit', $user->id_unit);
-        }
-
-        $rkatList = $query->get()->map(function($rkat) {
-            $total_anggaran = 0;
-            $total_tercairkan = 0;
-            $items = [];
-            foreach ($rkat->rkatDetails as $detail) {
-                foreach ($detail->rabItems as $item) {
-                    $usedVolume = $item->pencairanDanaItems->sum('volume_pencairan');
-                    $usedNominal = $item->pencairanDanaItems->sum('sub_total_pencairan');
-                    $total_anggaran += $item->sub_total;
-                    $total_tercairkan += $usedNominal;
-                    
-                    if (($item->sub_total > $usedNominal) && (($item->volume - $usedVolume) > 0)) {
-                        $items[] = [
-                            'id' => $item->id,
-                            'deskripsi_item' => $item->deskripsi_item,
-                            'harga_satuan' => $item->harga_satuan,
-                            'volume' => $item->volume,
-                            'sub_total' => $item->sub_total,
-                            'used_volume' => $usedVolume,
-                            'used_nominal' => $usedNominal,
-                            'remaining_volume' => $item->volume - $usedVolume,
-                            'remaining_nominal' => $item->sub_total - $usedNominal,
-                        ];
-                    }
-                }
-            }
-            return [
-                'id_header' => $rkat->id_header,
-                'nomor_dokumen' => $rkat->nomor_dokumen,
-                'unit' => $rkat->unit,
-                'total_anggaran' => $total_anggaran,
-                'total_tercairkan' => $total_tercairkan,
-                'sisa_anggaran' => $total_anggaran - $total_tercairkan,
-                'rab_items' => $items
-            ];
-        })->filter(function($rkat) {
-            return count($rkat['rab_items']) > 0;
-        })->values();
-
-        return Inertia::render('Pencairan/Create', [
-            'rkatList' => $rkatList
-        ]);
-    }
 
     public function store(Request $request)
     {
@@ -206,18 +181,18 @@ class PencairanDanaController extends Controller
 
         // Validate items remaining budget
         foreach ($request->items as $reqItem) {
-            $rabItem = \App\Models\RkatRabItem::findOrFail($reqItem['id']);
-            $usedVolume = $rabItem->pencairanDanaItems()->whereHas('pencairanDana', function($q){
+            $rabItem = RkatRabItem::findOrFail($reqItem['id']);
+            $usedVolume = $rabItem->pencairanDanaItems()->whereHas('pencairanDana', function ($q) {
                 $q->where('status_pencairan', '!=', 'Ditolak');
             })->sum('volume_pencairan');
-            $usedSubTotal = $rabItem->pencairanDanaItems()->whereHas('pencairanDana', function($q){
+            $usedSubTotal = $rabItem->pencairanDanaItems()->whereHas('pencairanDana', function ($q) {
                 $q->where('status_pencairan', '!=', 'Ditolak');
             })->sum('sub_total_pencairan');
-            
+
             $remainingVolume = $rabItem->volume - $usedVolume;
             $remainingSubTotal = $rabItem->sub_total - $usedSubTotal;
             $reqSubTotal = $reqItem['volume_pencairan'] * $reqItem['nominal_pencairan'];
-            
+
             if ($reqItem['volume_pencairan'] > $remainingVolume) {
                 return redirect()->back()->with('error', 'Volume pencairan untuk "' . $rabItem->deskripsi_item . '" melebihi sisa volume (Sisa: ' . $remainingVolume . ').');
             }
@@ -235,7 +210,7 @@ class PencairanDanaController extends Controller
 
         foreach ($request->items as $reqItem) {
             $subTotal = $reqItem['volume_pencairan'] * $reqItem['nominal_pencairan'];
-            \App\Models\PencairanDanaItem::create([
+            PencairanDanaItem::create([
                 'id_pencairan' => $pencairan->id_pencairan,
                 'id_rkat_rab_item' => $reqItem['id'],
                 'volume_pencairan' => $reqItem['volume_pencairan'],
@@ -276,20 +251,20 @@ class PencairanDanaController extends Controller
 
         // Validate items remaining budget
         foreach ($request->items as $reqItem) {
-            $rabItem = \App\Models\RkatRabItem::findOrFail($reqItem['id']);
-            $usedVolume = $rabItem->pencairanDanaItems()->whereHas('pencairanDana', function($q) use ($pencairan) {
+            $rabItem = RkatRabItem::findOrFail($reqItem['id']);
+            $usedVolume = $rabItem->pencairanDanaItems()->whereHas('pencairanDana', function ($q) use ($pencairan) {
                 $q->where('status_pencairan', '!=', 'Ditolak')
-                  ->where('id_pencairan', '!=', $pencairan->id_pencairan);
+                    ->where('id_pencairan', '!=', $pencairan->id_pencairan);
             })->sum('volume_pencairan');
-            $usedSubTotal = $rabItem->pencairanDanaItems()->whereHas('pencairanDana', function($q) use ($pencairan) {
+            $usedSubTotal = $rabItem->pencairanDanaItems()->whereHas('pencairanDana', function ($q) use ($pencairan) {
                 $q->where('status_pencairan', '!=', 'Ditolak')
-                  ->where('id_pencairan', '!=', $pencairan->id_pencairan);
+                    ->where('id_pencairan', '!=', $pencairan->id_pencairan);
             })->sum('sub_total_pencairan');
-            
+
             $remainingVolume = $rabItem->volume - $usedVolume;
             $remainingSubTotal = $rabItem->sub_total - $usedSubTotal;
             $reqSubTotal = $reqItem['volume_pencairan'] * $reqItem['nominal_pencairan'];
-            
+
             if ($reqItem['volume_pencairan'] > $remainingVolume) {
                 return redirect()->back()->with('error', 'Volume pencairan untuk "' . $rabItem->deskripsi_item . '" melebihi sisa volume (Sisa: ' . $remainingVolume . ').');
             }
@@ -298,10 +273,10 @@ class PencairanDanaController extends Controller
             }
         }
 
-        $pencairan->update([
+        $pencairan->fill([
             'id_header' => $request->id_header,
             'nama_pencairan' => $request->nama_pencairan,
-        ]);
+        ])->save();
 
         // Remove old items
         $pencairan->items()->delete();
@@ -309,7 +284,7 @@ class PencairanDanaController extends Controller
         // Add new items
         foreach ($request->items as $reqItem) {
             $subTotal = $reqItem['volume_pencairan'] * $reqItem['nominal_pencairan'];
-            \App\Models\PencairanDanaItem::create([
+            PencairanDanaItem::create([
                 'id_pencairan' => $pencairan->id_pencairan,
                 'id_rkat_rab_item' => $reqItem['id'],
                 'volume_pencairan' => $reqItem['volume_pencairan'],
@@ -345,8 +320,9 @@ class PencairanDanaController extends Controller
             // Check if user is in any step of the dynamic approval path
             if (!$hasAccess && $pencairan->rkatHeader->unit && $pencairan->rkatHeader->unit->pencairanApprovalPath) {
                 $steps = $pencairan->rkatHeader->unit->pencairanApprovalPath->steps;
+                $effectiveRoles = $user->getEffectiveRoles();
                 foreach ($steps as $step) {
-                    if ($step->approver_type === 'role' && $step->role_name === $user->peran) $hasAccess = true;
+                    if ($step->approver_type === 'role' && in_array($step->role_name, $effectiveRoles)) $hasAccess = true;
                     if ($step->approver_type === 'unit' && $user->isUnitHead() && $step->unit_id === $user->id_unit) $hasAccess = true;
                 }
             }
@@ -369,16 +345,16 @@ class PencairanDanaController extends Controller
 
         $pencairan->load('rkatHeader.unit.pencairanApprovalPath.steps');
         $unit = $pencairan->rkatHeader->unit;
-        
+
         if (!$unit || !$unit->pencairanApprovalPath || $unit->pencairanApprovalPath->steps->isEmpty()) {
             return redirect()->back()->with('error', 'Unit ini tidak memiliki alur persetujuan pencairan yang dikonfigurasi.');
         }
 
         $firstStep = null;
         foreach ($unit->pencairanApprovalPath->steps->sortBy('order') as $step) {
-             if ($step->approver_type === 'parent_unit' && !$unit->requiresParentApproval()) continue;
-             $firstStep = $step;
-             break;
+            if ($step->approver_type === 'parent_unit' && !$unit->requiresParentApproval()) continue;
+            $firstStep = $step;
+            break;
         }
 
         if (!$firstStep) {
@@ -398,7 +374,7 @@ class PencairanDanaController extends Controller
     public function approve(Request $request, PencairanDana $pencairan)
     {
         $user = Auth::user();
-        
+
         $request->validate([
             'aksi' => 'required|in:Setuju,Tolak,Revisi',
             'catatan' => 'nullable|string'
@@ -409,15 +385,16 @@ class PencairanDanaController extends Controller
                 'catatan' => 'required|string'
             ]);
         }
-        
+
         $pencairan->load('currentStep', 'rkatHeader.unit.pencairanApprovalPath.steps');
         $currentStep = $pencairan->currentStep;
         $isAdminOrRektor = in_array($user->peran, ['Admin', 'Rektor']);
+        $effectiveRoles = $user->getEffectiveRoles();
 
         if (!$isAdminOrRektor) {
             $hasAccess = false;
             if ($currentStep) {
-                if ($currentStep->approver_type === 'role' && $currentStep->role_name === $user->peran) $hasAccess = true;
+                if ($currentStep->approver_type === 'role' && in_array($currentStep->role_name, $effectiveRoles)) $hasAccess = true;
                 if ($currentStep->approver_type === 'unit' && $user->isUnitHead() && $currentStep->unit_id === $user->id_unit) $hasAccess = true;
                 if ($currentStep->approver_type === 'self_unit_head' && $user->isUnitHead() && $pencairan->rkatHeader->id_unit === $user->id_unit) $hasAccess = true;
                 if ($currentStep->approver_type === 'parent_unit' && $user->isUnitHead() && $pencairan->rkatHeader->unit) {
@@ -462,11 +439,11 @@ class PencairanDanaController extends Controller
             $remainingSteps = $pencairan->rkatHeader->unit->pencairanApprovalPath->steps
                 ->where('order', '>', $currentStep->order)
                 ->sortBy('order');
-            
+
             foreach ($remainingSteps as $step) {
-                 if ($step->approver_type === 'parent_unit' && !$pencairan->rkatHeader->unit->requiresParentApproval()) continue;
-                 $nextStep = $step;
-                 break;
+                if ($step->approver_type === 'parent_unit' && !$pencairan->rkatHeader->unit->requiresParentApproval()) continue;
+                $nextStep = $step;
+                break;
             }
         }
 
@@ -488,13 +465,14 @@ class PencairanDanaController extends Controller
 
         return redirect()->back()->with('success', 'Pencairan Dana berhasil disetujui.');
     }
-    
+
     // Approval khusus Pencairan
     public function approvalIndex()
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
         $peran = $user->peran;
+        $effectiveRoles = $user->getEffectiveRoles();
 
         if (! $user->isApprover() && ! $user->isAdmin()) {
             abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
@@ -504,24 +482,25 @@ class PencairanDanaController extends Controller
 
         $query = PencairanDana::with([
             'rkatHeader.unit',
+            'rkatHeader.rkatDetails',
             'pengaju',
             'currentStep'
         ]);
-        
+
         if (in_array($peran, ['Admin', 'Rektor'])) {
             $query->whereNotNull('current_step_id');
         } else {
             $query->whereNotNull('current_step_id');
-            $query->where(function ($q) use ($user, $peran) {
-                $q->orWhereHas('currentStep', function ($stepQ) use ($peran) {
+            $query->where(function ($q) use ($user, $peran, $effectiveRoles) {
+                $q->orWhereHas('currentStep', function ($stepQ) use ($effectiveRoles) {
                     $stepQ->where('approver_type', 'role')
-                          ->where('role_name', $peran);
+                        ->whereIn('role_name', $effectiveRoles);
                 });
 
                 if ($user->isUnitHead()) {
                     $q->orWhereHas('currentStep', function ($stepQ) use ($user) {
                         $stepQ->where('approver_type', 'unit')
-                              ->where('unit_id', $user->id_unit);
+                            ->where('unit_id', $user->id_unit);
                     });
 
                     $q->orWhere(function ($selfQ) use ($user) {
@@ -539,22 +518,22 @@ class PencairanDanaController extends Controller
                             // Normal: unit anak mengajukan, kepala unit-induk menyetujui
                             // Edge case: unit itu sendiri yang mengajukan (F. Vokasi mengajukan sendiri)
                             $unitQ->where('parent_id', $user->id_unit)
-                                  ->orWhere('id_unit', $user->id_unit);
+                                ->orWhere('id_unit', $user->id_unit);
                         });
                     });
                 }
             });
         }
-        
+
         $pencairans = $query->latest('updated_at')->get();
-        
+
         // Filter di memory
         if (!in_array($peran, ['Admin', 'Rektor'])) {
-            $pencairans = $pencairans->filter(function ($pencairan) use ($user, $peran) {
+            $pencairans = $pencairans->filter(function ($pencairan) use ($user, $peran, $effectiveRoles) {
                 $step = $pencairan->currentStep;
                 if (!$step) return false;
-                
-                if ($step->approver_type === 'role') return $step->role_name === $peran;
+
+                if ($step->approver_type === 'role') return in_array($step->role_name, $effectiveRoles);
                 if ($step->approver_type === 'unit') return $user->isUnitHead() && $step->unit_id === $user->id_unit;
                 if ($step->approver_type === 'self_unit_head') return $user->isUnitHead() && $pencairan->rkatHeader->id_unit === $user->id_unit;
                 if ($step->approver_type === 'parent_unit' && $pencairan->rkatHeader->unit) {
@@ -564,16 +543,16 @@ class PencairanDanaController extends Controller
                     if ($user->isUnitHead() && $pencairan->rkatHeader->unit->id_unit === $user->id_unit) return true;
                     return false;
                 }
-                
+
                 return false;
             })->values();
         }
-        
+
         return Inertia::render('Pencairan/Approval', [
             'pencairans' => $pencairans
         ]);
     }
-    
+
     public function exportPdf(PencairanDana $pencairan)
     {
         try {

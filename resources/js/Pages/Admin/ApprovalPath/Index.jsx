@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Head, router } from '@inertiajs/react';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { router } from '@inertiajs/react';
 import { Plus, Edit2, Trash2, Save } from 'lucide-react';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -13,7 +12,10 @@ import CustomSelect from '@/Components/CustomSelect';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
 
-export default function ApprovalPathIndex({ paths, units }) {
+import { Head } from '@inertiajs/react';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+
+export default function Index({ auth, paths, units }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingPath, setEditingPath] = useState(null);
     const [formData, setFormData] = useState({
@@ -108,9 +110,10 @@ export default function ApprovalPathIndex({ paths, units }) {
 
     return (
         <AuthenticatedLayout
-            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Pengaturan Alur Persetujuan</h2>}
+            user={auth?.user}
+            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Daftar Alur Persetujuan</h2>}
         >
-            <Head title="Pengaturan Alur Persetujuan" />
+            <Head title="Daftar Alur Persetujuan" />
 
             <div className="py-8">
                 <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
@@ -141,12 +144,12 @@ export default function ApprovalPathIndex({ paths, units }) {
                                                             onClick={() => openDialog(path)}
                                                             className="inline-flex items-center justify-center w-8 h-8 border border-blue-200 rounded-lg text-blue-500 hover:bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-900/30 transition-colors"
                                                         >
-                                                            <Edit2 size={16} /> 
+                                                            <Edit2 size={16} />
                                                         </button>
                                                     </TooltipTrigger>
                                                     <TooltipContent>Edit Alur</TooltipContent>
                                                 </Tooltip>
-                                                
+
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
                                                         <button
@@ -168,7 +171,7 @@ export default function ApprovalPathIndex({ paths, units }) {
                                             {path.steps.map((step, index) => (
                                                 <div key={step.id} className="flex items-center">
                                                     <span className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 shadow-sm transition-all hover:shadow-md">
-                                                        {index + 1}. {step.step_name} 
+                                                        {index + 1}. {step.step_name}
                                                         <span className="text-slate-400 font-normal ml-1.5">
                                                             ({step.approver_type === 'role' ? step.role_name : step.approver_type === 'unit' ? step.unit?.nama_unit : step.approver_type === 'parent_unit' ? 'Atasan Unit' : 'Kepala Unit Pemohon'})
                                                         </span>
@@ -291,9 +294,9 @@ export default function ApprovalPathIndex({ paths, units }) {
                                                 </div>
                                             )}
                                         </div>
-                                        <button 
-                                            type="button" 
-                                            className="mt-7 flex items-center justify-center w-10 h-10 bg-[#dc2626] hover:bg-[#b91c1c] text-white rounded-lg shadow-sm transition-colors" 
+                                        <button
+                                            type="button"
+                                            className="mt-7 flex items-center justify-center w-10 h-10 bg-[#dc2626] hover:bg-[#b91c1c] text-white rounded-lg shadow-sm transition-colors"
                                             onClick={() => removeStep(index)}
                                             title="Hapus Tahap"
                                         >
@@ -306,9 +309,9 @@ export default function ApprovalPathIndex({ paths, units }) {
                                 )}
                             </div>
 
-                            <button 
-                                type="button" 
-                                onClick={addStep} 
+                            <button
+                                type="button"
+                                onClick={addStep}
                                 className="mt-4 w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-400 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-center font-medium text-sm"
                             >
                                 <Plus className="w-5 h-5 mr-2" /> Tambah Tahap

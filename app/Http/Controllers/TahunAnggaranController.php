@@ -33,10 +33,6 @@ class TahunAnggaranController extends Controller
         ]);
     }
 
-    public function create()
-    {
-        return Inertia::render('Admin/TahunAnggaran/Create');
-    }
 
     public function store(Request $request)
     {
@@ -58,12 +54,6 @@ class TahunAnggaranController extends Controller
         return Redirect::route('tahun.index')->with('success', 'Tahun Anggaran berhasil ditambahkan.');
     }
 
-    public function edit(TahunAnggaran $tahun)
-    {
-        return Inertia::render('Admin/TahunAnggaran/Edit', [
-            'tahun' => $tahun,
-        ]);
-    }
 
     public function update(Request $request, TahunAnggaran $tahun)
     {
@@ -79,7 +69,7 @@ class TahunAnggaranController extends Controller
             'indikator_labels.future' => 'nullable|string|max:100',
         ]);
 
-        $tahun->update($validated);
+        $tahun->fill($validated)->save();
 
         Log::info('[TahunAnggaran] Berhasil update data.');
 

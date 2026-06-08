@@ -105,6 +105,19 @@
         .sig-space {
             height: 45px;
             position: relative;
+            text-align: center;
+        }
+
+        .watermark-tsu {
+            position: absolute;
+            top: -5px;
+            left: 0;
+            right: 0;
+            margin-left: auto;
+            margin-right: auto;
+            height: 55px;
+            opacity: 0.15;
+            z-index: -1;
         }
 
         .sig-status {
@@ -468,9 +481,12 @@
                 <p>Verifikasi</p>
                 <p>Tim Renbang</p>
                 <div class="sig-space">
+                    @if (file_exists(public_path('img/logo-tsu.svg')))
+                        <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/logo-tsu.svg'))) }}" class="watermark-tsu">
+                    @endif
                     @php $sigRenbang = getSignatureImage($renbangApprover); @endphp
                     @if ($sigRenbang)
-                        <img src="{{ $sigRenbang }}" style="max-height: 40px; margin-top: 5px;">
+                        <img src="{{ $sigRenbang }}" style="max-height: 40px; margin-top: 5px; position: relative; z-index: 1;">
                     @elseif ($isRenbangAcc)
                         <div class="sig-status">ACC</div>
                     @endif
@@ -483,9 +499,12 @@
                 <p>Surakarta, {{ \Carbon\Carbon::now()->isoFormat('D MMMM YYYY') }}</p>
                 <p>PIC Kegiatan / Pembina UKM</p>
                 <div class="sig-space">
+                    @if (file_exists(public_path('img/logo-tsu.svg')))
+                        <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/logo-tsu.svg'))) }}" class="watermark-tsu">
+                    @endif
                     @php $sigPengaju = getSignatureImage($rkat->user); @endphp
                     @if ($sigPengaju)
-                        <img src="{{ $sigPengaju }}" style="max-height: 40px; margin-top: 5px;">
+                        <img src="{{ $sigPengaju }}" style="max-height: 40px; margin-top: 5px; position: relative; z-index: 1;">
                     @else
                         <div class="sig-status" style="border: none; opacity: 0.1; color: #eee;">DRAFT</div>
                     @endif
@@ -501,9 +520,12 @@
                 <p>Mengetahui,</p>
                 <p>Kepala Kantor Kemahasiswaan</p>
                 <div class="sig-space">
+                    @if (file_exists(public_path('img/logo-tsu.svg')))
+                        <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/logo-tsu.svg'))) }}" class="watermark-tsu">
+                    @endif
                     @php $sigUnit = getSignatureImage($unitApprover); @endphp
                     @if ($sigUnit)
-                        <img src="{{ $sigUnit }}" style="max-height: 40px; margin-top: 5px;">
+                        <img src="{{ $sigUnit }}" style="max-height: 40px; margin-top: 5px; position: relative; z-index: 1;">
                     @elseif ($isUnitAcc)
                         <div class="sig-status">ACC</div>
                     @endif
@@ -515,9 +537,12 @@
                 <p>Menyetujui,</p>
                 <p>Wakil Rektor</p>
                 <div class="sig-space">
+                    @if (file_exists(public_path('img/logo-tsu.svg')))
+                        <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/logo-tsu.svg'))) }}" class="watermark-tsu">
+                    @endif
                     @php $sigWR = getSignatureImage($wrApprover); @endphp
                     @if ($sigWR)
-                        <img src="{{ $sigWR }}" style="max-height: 40px; margin-top: 5px;">
+                        <img src="{{ $sigWR }}" style="max-height: 40px; margin-top: 5px; position: relative; z-index: 1;">
                     @elseif ($isWRAcc)
                         <div class="sig-status">ACC</div>
                     @endif

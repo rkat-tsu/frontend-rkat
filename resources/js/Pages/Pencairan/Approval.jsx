@@ -20,6 +20,12 @@ export default function Approval({ auth, pencairans }) {
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
     };
 
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
+
     const openModal = (pencairan) => {
         setSelectedPencairan(pencairan);
         setIsModalOpen(true);
@@ -64,9 +70,10 @@ export default function Approval({ auth, pencairans }) {
                                     <thead className="bg-gray-50 dark:bg-gray-700">
                                         <tr>
                                             <th className="px-6 py-4 text-left font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">No. Dokumen RKAT / Unit</th>
-                                            <th className="px-6 py-4 text-left font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Status Saat Ini</th>
-                                            <th className="px-6 py-4 text-left font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Tgl Pengajuan</th>
-                                            <th className="px-6 py-4 text-right font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Aksi</th>
+                                            <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Status Saat Ini</th>
+                                            <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Tgl Pengajuan</th>
+                                            <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Tanggal Pelaksanaan</th>
+                                            <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -87,16 +94,23 @@ export default function Approval({ auth, pencairans }) {
                                                      </div>
                                                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{item.rkat_header?.unit?.nama_unit || 'Unit Tidak Diketahui'}</div>
                                                  </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                <td className="px-6 py-4 whitespace-nowrap text-center">
                                                     <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-bold whitespace-nowrap rounded-md ${getStatusColor(item.status_pencairan)}`}>
                                                         {item.status_pencairan.replace(/_/g, ' ')}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
+                                                <td className="px-6 py-4 whitespace-nowrap text-center text-gray-700 dark:text-gray-300">
                                                     {new Date(item.tanggal_pengajuan).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right font-medium">
-                                                    <div className="flex justify-end gap-2">
+                                                <td className="px-6 py-4 whitespace-nowrap text-center text-gray-700 dark:text-gray-300">
+                                                    {(item.rkat_header?.rkat_details?.length > 0 || item.rkat_header?.rkatDetails?.length > 0) ? (
+                                                        <div className="text-xs whitespace-nowrap inline-block text-center">
+                                                            {formatDate((item.rkat_header.rkat_details || item.rkat_header.rkatDetails)[0].jadwal_pelaksanaan_mulai)} <br/> s.d <br/> {formatDate((item.rkat_header.rkat_details || item.rkat_header.rkatDetails)[0].jadwal_pelaksanaan_akhir)}
+                                                        </div>
+                                                    ) : '-'}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center font-medium">
+                                                    <div className="flex justify-center gap-2">
                                                         {/* Tombol Lihat Detail */}
                                                         <SecondaryButton 
                                                             onClick={() => router.get(route('pencairan.show', item.uuid))}

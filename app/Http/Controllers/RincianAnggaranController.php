@@ -27,7 +27,8 @@ class RincianAnggaranController extends Controller
         }
 
         if ($request->filled('kelompok')) {
-            $query->where('kelompok_anggaran', '=', $request->kelompok, 'and');
+            $query->where('kode_anggaran', 'like', $request->kelompok . '.%')
+                ->orWhere('kode_anggaran', 'like', $request->kelompok . '%');
         }
 
         $perPage = request()->get('per_page', 20);
@@ -38,18 +39,18 @@ class RincianAnggaranController extends Controller
             ->paginate($perPage)->onEachSide(0)
             ->withQueryString();
 
-        // Mengambil kelompok unik dari kelompok_anggaran untuk dropdown filter
+        // Mengambil huruf pertama unik dari kode_anggaran sebagai kelompok filter
         $kelompoks = RincianAnggaran::query()
-            ->whereNotNull('kelompok_anggaran', 'and')
-            ->where('kelompok_anggaran', '!=', '', 'and')
-            ->select('kelompok_anggaran')
+            ->whereNotNull('kode_anggaran', 'and')
+            ->where('kode_anggaran', '!=', '')
+            ->selectRaw('UPPER(SUBSTRING(kode_anggaran, 1, 1)) as kelompok')
             ->distinct()
-            ->orderBy('kelompok_anggaran', 'asc')
-            ->pluck('kelompok_anggaran', null);
+            ->orderBy('kelompok', 'asc')
+            ->pluck('kelompok');
 
-        return Inertia::render('Admin/RincianAnggaran/Index', [
+        return Inertia::render('Admin/Sbo/Index', [
             'items' => $items,
-            'filters' => $request->only(['search', 'kelompok']),
+            'filters' => $request->only(['search', 'kelompok', 'per_page']),
             'kelompoks' => $kelompoks,
         ]);
     }

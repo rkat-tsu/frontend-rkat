@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import React, { useState } from 'react';
+import { Link, router } from '@inertiajs/react';
 import CustomSelect from '@/Components/CustomSelect';
 import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
+import { Head } from '@inertiajs/react';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
-export default function Index({ auth, units = [], flash = {} }) {
+export default function Index({ auth, units = [], users = [], allUnits = [], approvalPaths = [], flash = {} }) {
     const { isAdmin } = usePermission();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTipe, setSelectedTipe] = useState('');
@@ -24,14 +25,8 @@ export default function Index({ auth, units = [], flash = {} }) {
 
     const uniquePaths = [...new Map(units.map(u => [u.approval_path_id, u.approval_path])).values()].filter(Boolean);
     const pathOptions = [
-        { value: '', label: 'Semua Alur RKAT' },
+        { value: '', label: 'Semua Alur Persetujuan' },
         ...uniquePaths.map(p => ({ value: p.id, label: p.name }))
-    ];
-
-    const uniquePencairanPaths = [...new Map(units.map(u => [u.pencairan_approval_path_id, u.pencairan_approval_path])).values()].filter(Boolean);
-    const pencairanPathOptions = [
-        { value: '', label: 'Semua Alur Pencairan' },
-        ...uniquePencairanPaths.map(p => ({ value: p.id, label: p.name }))
     ];
     
     // Parent unit mapping
@@ -79,17 +74,19 @@ export default function Index({ auth, units = [], flash = {} }) {
 
     return (
         <AuthenticatedLayout
-            user={null}
+            user={auth?.user}
             header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Data Unit Kerja</h2>}
         >
-            <Head title="Semua Unit" />
+            <Head title="Data Unit Kerja" />
 
             <div className="py-8">
                 <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
                     
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-                        Data Unit Kerja
-                    </h1>
+                    <div className="flex justify-between items-center mb-6">
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                            Data Unit Kerja
+                        </h1>
+                    </div>
 
                     <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-yellow-500">
                         
@@ -164,7 +161,7 @@ export default function Index({ auth, units = [], flash = {} }) {
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Biro Unit</th>
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Nama Unit</th>
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Kepala Unit</th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Alur Pencairan</th>
+                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Alur Persetujuan</th>
                                         {isAdmin() && <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>}
                                     </tr>
                                 </thead>
@@ -185,7 +182,7 @@ export default function Index({ auth, units = [], flash = {} }) {
                                                     {unit.kepala?.nama_lengkap || '-'}
                                                 </td>
                                                 <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">
-                                                    {unit.pencairan_approval_path?.name || '-'}
+                                                    {unit.approval_path?.name || '-'}
                                                 </td>
                                                 
                                                 {/* Kolom Aksi Icon Saja */}
@@ -224,7 +221,7 @@ export default function Index({ auth, units = [], flash = {} }) {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500 border-b border-gray-300">
+                                            <td colSpan="6" className="px-6 py-8 text-center text-sm text-gray-500 border-b border-gray-300">
                                                 Tidak ada data unit ditemukan.
                                             </td>
                                         </tr>

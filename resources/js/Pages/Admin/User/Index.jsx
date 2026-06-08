@@ -14,20 +14,34 @@ export default function Index({ users, filters = {}, units = [] }) {
     const [selectedUnit, setSelectedUnit] = useState(filters.unit || '');
     const [perPage, setPerPage] = useState(filters.per_page || '15');
 
-    // Debounced Search & Filter
+    const applyFilters = (q, unit, pp) => {
+        router.get(
+            route('user.index'),
+            { q, unit, per_page: pp },
+            { preserveState: true, preserveScroll: true, replace: true }
+        );
+    };
+
+    // Debounce hanya untuk search
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            if (searchTerm !== (filters.q || '') || selectedUnit !== (filters.unit || '') || perPage !== (filters.per_page || '15')) {
-                router.get(
-                    route('user.index'),
-                    { q: searchTerm, unit: selectedUnit, per_page: perPage },
-                    { preserveState: true, preserveScroll: true, replace: true }
-                );
+            if (searchTerm !== (filters.q || '')) {
+                applyFilters(searchTerm, selectedUnit, perPage);
             }
         }, 300);
-
         return () => clearTimeout(timeoutId);
-    }, [searchTerm, selectedUnit, perPage]);
+    }, [searchTerm]);
+
+    // Unit dan perPage langsung trigger (tidak perlu debounce)
+    const handleUnitChange = (val) => {
+        setSelectedUnit(val);
+        applyFilters(searchTerm, val, perPage);
+    };
+
+    const handlePerPageChange = (val) => {
+        setPerPage(val);
+        applyFilters(searchTerm, selectedUnit, val);
+    };
 
     const unitOptions = [
         { value: '', label: 'Semua Unit' },
@@ -71,7 +85,7 @@ export default function Index({ users, filters = {}, units = [] }) {
                                 <div className="w-48">
                                     <CustomSelect
                                         value={selectedUnit}
-                                        onChange={(e) => setSelectedUnit(e.target.value)}
+                                        onChange={(e) => handleUnitChange(e.target.value)}
                                         options={unitOptions}
                                         placeholder="Semua Unit"
                                         className="h-11 rounded-lg border-transparent bg-gray-200 dark:bg-gray-700 dark:text-gray-300 focus:border-blue-500 dark:focus:border-blue-500 focus:bg-white focus:ring-0 text-sm"
@@ -91,7 +105,7 @@ export default function Index({ users, filters = {}, units = [] }) {
 
                         {/* Record Count */}
                         <div className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                            Menampilkan <span className="font-semibold text-gray-900 dark:text-white">{filtered.length}</span> data pengguna
+                            Menampilkan <span className="font-semibold text-gray-900 dark:text-white">{users.from || 0}</span> sampai <span className="font-semibold text-gray-900 dark:text-white">{users.to || 0}</span> dari <span className="font-semibold text-gray-900 dark:text-white">{users.total || 0}</span> akun
                         </div>
 
                         {/* Tabel */}
@@ -197,7 +211,7 @@ export default function Index({ users, filters = {}, units = [] }) {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="6" className="px-6 py-8 text-center text-sm text-gray-500 border-b border-gray-300">
+                                            <td colSpan="8" className="px-6 py-8 text-center text-sm text-gray-500 border-b border-gray-300">
                                                 Tidak ada data akun pengguna ditemukan.
                                             </td>
                                         </tr>
@@ -215,7 +229,7 @@ export default function Index({ users, filters = {}, units = [] }) {
                                         <div className="w-20">
                                             <CustomSelect
                                                 value={perPage}
-                                                onChange={(e) => setPerPage(e.target.value)}
+                                                onChange={(e) => handlePerPageChange(e.target.value)}
                                                 options={[
                                                     { value: '10', label: '10' },
                                                     { value: '15', label: '15' },
@@ -239,6 +253,8 @@ export default function Index({ users, filters = {}, units = [] }) {
                                             <Link
                                                 key={k}
                                                 href={link.url}
+                                                preserveScroll
+                                                preserveState
                                                 className={`px-3 py-1 text-sm border rounded-md transition-colors ${
                                                     link.active
                                                         ? 'bg-blue-600 text-white border-blue-600'

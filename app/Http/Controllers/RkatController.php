@@ -11,7 +11,7 @@ use App\Models\RkatHeader;
 use App\Models\RkatRabItem;
 use App\Models\TahunAnggaran;
 use App\Models\Unit;
-use App\Models\ApprovalPathStep;    
+use App\Models\ApprovalPathStep;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -61,7 +61,8 @@ class RkatController extends Controller
         $query = RkatHeader::query()
             ->with([
                 'unit:id_unit,nama_unit',
-                'tahun_obj:id_tahun,tahun_anggaran,status_rkat'
+                'tahun_obj:id_tahun,tahun_anggaran,status_rkat',
+                'rkatDetails:id_rkat_detail,id_header,jadwal_pelaksanaan_mulai,jadwal_pelaksanaan_akhir'
             ])
             ->whereNull('parent_id');
 
@@ -98,7 +99,7 @@ class RkatController extends Controller
 
         $tahunAnggarans = TahunAnggaran::query()->orderBy('tahun_anggaran', 'desc')->pluck('tahun_anggaran');
         $units = Unit::query()->select(['id_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get();
-        
+
         $dynamicSteps = ApprovalPathStep::select('step_name')->distinct()->pluck('step_name')->toArray();
         $statuses = array_values(array_unique(array_merge(['Draft', 'Revisi', 'Disetujui_Final', 'Ditolak'], $dynamicSteps)));
 
@@ -286,7 +287,7 @@ class RkatController extends Controller
     public function submit(RkatHeader $rkatHeader)
     {
         $rkatHeader->load('tahun_obj');
- 
+
         // Cek status Tahun Anggaran
         if (!in_array($rkatHeader->tahun_obj->status_rkat, ['Submission', 'Approved'])) {
             return redirect()->back()->with('error', 'Pengajuan hanya dapat dilakukan pada periode Pengajuan atau Review.');

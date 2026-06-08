@@ -202,19 +202,20 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                         <table className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
                             <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                 <tr>
-                                    <th className="px-6 py-3 border-b border-gray-300 dark:border-gray-600 font-medium text-center">No</th>
+                                    <th className="px-4 py-3 border-b border-gray-300 dark:border-gray-600 font-medium text-center">No</th>
                                     <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Nomor Dokumen</th>
                                     <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Unit</th>
                                     <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Tahun</th>
                                     <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Status</th>
-                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Tanggal</th>
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Tanggal Pengajuan</th>
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Pelaksanaan</th>
                                     <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {rkats.data && rkats.data.length > 0 ? rkats.data.map((item, index) => (
                                     <tr key={item.id_header} className="bg-white dark:bg-gray-800 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors">
-                                        <td className="px-6 py-4 border-b border-gray-300 dark:border-gray-700 font-medium text-gray-900 dark:text-white text-center">{rkats.from + index}</td>
+                                        <td className="px-4 py-4 border-b border-gray-300 dark:border-gray-700 font-medium text-gray-900 dark:text-white text-center">{rkats.from + index}</td>
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 font-medium">{item.nomor_dokumen}</td>
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">{item.unit?.nama_unit || '-'}</td>
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">{item.tahun_anggaran}</td>
@@ -224,6 +225,13 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">{formatDate(item.tanggal_pengajuan)}</td>
+                                        <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">
+                                            {(item.rkat_details?.length > 0 || item.rkatDetails?.length > 0) ? (
+                                                <div className="text-xs whitespace-nowrap">
+                                                    {formatDate((item.rkat_details || item.rkatDetails)[0].jadwal_pelaksanaan_mulai)} <br /> s.d <br /> {formatDate((item.rkat_details || item.rkatDetails)[0].jadwal_pelaksanaan_akhir)}
+                                                </div>
+                                            ) : '-'}
+                                        </td>
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
 
                                             {/* --- KUMPULAN TOMBOL AKSI --- */}
@@ -292,7 +300,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                     </tr>
                                 )) : (
                                     <tr>
-                                        <td colSpan="7" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                        <td colSpan="8" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                                             Tidak ada data RKAT yang sesuai dengan filter.
                                         </td>
                                     </tr>
@@ -301,38 +309,43 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                         </table>
                     </div>
 
-                        {/* Pagination Links */}
-                        {rkats.links && rkats.links.length > 3 && (
-                            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                <div className="flex flex-col sm:flex-row items-center gap-4">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm text-gray-600 dark:text-gray-400">Tampilkan</span>
-                                        <div className="w-20">
-                                            <CustomSelect
-                                                value={perPage}
-                                                onChange={(e) => setPerPage(e.target.value)}
-                                                options={[
-                                                    { value: '10', label: '10' },
-                                                    { value: '15', label: '15' },
-                                                    { value: '25', label: '25' },
-                                                    { value: '50', label: '50' },
-                                                    { value: '100', label: '100' },
-                                                    { value: 'all', label: 'Semua' }
-                                                ]}
-                                                className="h-8 text-xs py-1 px-2"
-                                            />
-                                        </div>
-                                    </div>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        Menampilkan <span className="font-medium text-gray-900 dark:text-white">{rkats.from || 0}</span> sampai <span className="font-medium text-gray-900 dark:text-white">{rkats.to || 0}</span> dari <span className="font-medium text-gray-900 dark:text-white">{rkats.total || 0}</span> data
-                                    </p>
+                    {/* Pagination Links — selalu tampil */}
+                    <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-600 dark:text-gray-400">Tampilkan</span>
+                                <div className="w-20">
+                                    <CustomSelect
+                                        value={perPage}
+                                        onChange={(e) => {
+                                            setPerPage(e.target.value);
+                                            applyFilters(searchTerm, tahun, status, unitId, e.target.value);
+                                        }}
+                                        options={[
+                                            { value: '10', label: '10' },
+                                            { value: '15', label: '15' },
+                                            { value: '25', label: '25' },
+                                            { value: '50', label: '50' },
+                                            { value: '100', label: '100' },
+                                            { value: 'all', label: 'Semua' }
+                                        ]}
+                                        className="h-8 text-xs py-1 px-2"
+                                    />
                                 </div>
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Menampilkan <span className="font-medium text-gray-900 dark:text-white">{rkats.from || 0}</span> sampai <span className="font-medium text-gray-900 dark:text-white">{rkats.to || 0}</span> dari <span className="font-medium text-gray-900 dark:text-white">{rkats.total || 0}</span> data
+                            </p>
+                        </div>
+                        {rkats.links && rkats.links.length > 3 && (
                             <div className="flex flex-wrap gap-2">
                                 {rkats.links.map((link, index) => (
                                     link.url ? (
                                         <Link
                                             key={index}
                                             href={link.url}
+                                            preserveScroll
+                                            preserveState
                                             className={`px-3 py-1 text-sm border rounded-md transition-colors ${link.active
                                                 ? 'bg-teal-600 text-white border-teal-600'
                                                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
@@ -348,8 +361,8 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                     )
                                 ))}
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>

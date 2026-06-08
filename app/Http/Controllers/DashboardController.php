@@ -58,8 +58,9 @@ class DashboardController extends Controller
             ->selectRaw("
                 COUNT(*) as total,
                 SUM(CASE WHEN status_persetujuan = 'Disetujui_Final' THEN 1 ELSE 0 END) as disetujui,
+                SUM(CASE WHEN status_persetujuan = 'Revisi' THEN 1 ELSE 0 END) as revisi,
                 SUM(CASE WHEN status_persetujuan = 'Ditolak' THEN 1 ELSE 0 END) as ditolak,
-                SUM(CASE WHEN status_persetujuan NOT IN ('Draft', 'Selesai', 'Disetujui_Final', 'Ditolak') THEN 1 ELSE 0 END) as review,
+                SUM(CASE WHEN status_persetujuan NOT IN ('Draft', 'Selesai', 'Disetujui_Final', 'Revisi', 'Ditolak') THEN 1 ELSE 0 END) as review,
                 SUM(CASE WHEN status_persetujuan = 'Disetujui_Final' THEN total_anggaran ELSE 0 END) as total_anggaran_disetujui
             ")
             ->first();
@@ -76,21 +77,24 @@ class DashboardController extends Controller
             ->selectRaw("
                 COUNT(pencairan_danas.id_pencairan) as total_pencairan_dokumen,
                 SUM(CASE WHEN pencairan_danas.status_pencairan = 'Disetujui_Final' THEN 1 ELSE 0 END) as pencairan_disetujui,
+                SUM(CASE WHEN pencairan_danas.status_pencairan = 'Revisi' THEN 1 ELSE 0 END) as pencairan_revisi,
                 SUM(CASE WHEN pencairan_danas.status_pencairan = 'Ditolak' THEN 1 ELSE 0 END) as pencairan_ditolak,
-                SUM(CASE WHEN pencairan_danas.status_pencairan NOT IN ('Draft', 'Disetujui_Final', 'Ditolak') THEN 1 ELSE 0 END) as pencairan_review,
-                SUM(CASE WHEN pencairan_danas.status_pencairan = 'Disetujui_Final' THEN rkat_headers.total_anggaran ELSE 0 END) as total_pencairan_disetujui
+                SUM(CASE WHEN pencairan_danas.status_pencairan NOT IN ('Draft', 'Disetujui_Final', 'Revisi', 'Ditolak') THEN 1 ELSE 0 END) as pencairan_review,
+                SUM(CASE WHEN pencairan_danas.status_pencairan = 'Disetujui_Final' THEN (SELECT SUM(sub_total_pencairan) FROM pencairan_dana_items WHERE pencairan_dana_items.id_pencairan = pencairan_danas.id_pencairan) ELSE 0 END) as total_pencairan_disetujui
             ")
             ->first();
 
         return [
             'total'     => (int) ($stats->total ?? 0),
             'disetujui' => (int) ($stats->disetujui ?? 0),
+            'revisi'    => (int) ($stats->revisi ?? 0),
             'review'    => (int) ($stats->review ?? 0),
             'ditolak'   => (int) ($stats->ditolak ?? 0),
             'total_anggaran_disetujui' => (float) ($stats->total_anggaran_disetujui ?? 0),
             
             'total_pencairan_dokumen'  => (int) ($pencairanStats->total_pencairan_dokumen ?? 0),
             'pencairan_disetujui'      => (int) ($pencairanStats->pencairan_disetujui ?? 0),
+            'pencairan_revisi'         => (int) ($pencairanStats->pencairan_revisi ?? 0),
             'pencairan_ditolak'        => (int) ($pencairanStats->pencairan_ditolak ?? 0),
             'pencairan_review'         => (int) ($pencairanStats->pencairan_review ?? 0),
             'total_pencairan_disetujui'=> (float) ($pencairanStats->total_pencairan_disetujui ?? 0),

@@ -104,26 +104,26 @@ export default function Show({ auth, pencairan, flash = {} }) {
                                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                                     <thead className="bg-gray-50 dark:bg-gray-700">
                                         <tr>
-                                            <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase">Item RAB</th>
-                                            <th className="px-4 py-3 text-right font-medium text-gray-500 uppercase">Vol</th>
-                                            <th className="px-4 py-3 text-right font-medium text-gray-500 uppercase">Harga Satuan</th>
-                                            <th className="px-4 py-3 text-right font-medium text-gray-500 uppercase">Sub Total Cair</th>
+                                            <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-300 uppercase">Item RAB</th>
+                                            <th className="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-300 uppercase">Vol</th>
+                                            <th className="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-300 uppercase">Harga Satuan</th>
+                                            <th className="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-300 uppercase">Sub Total Cair</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                         {items.map((item, idx) => (
                                             <tr key={idx}>
                                                 <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{item.rkat_rab_item?.deskripsi_item}</td>
-                                                <td className="px-4 py-3 text-right">{item.volume_pencairan}</td>
-                                                <td className="px-4 py-3 text-right">{formatCurrency(item.nominal_pencairan)}</td>
+                                                <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{item.volume_pencairan}</td>
+                                                <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{formatCurrency(item.nominal_pencairan)}</td>
                                                 <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-gray-100">{formatCurrency(item.sub_total_pencairan)}</td>
                                             </tr>
                                         ))}
                                     </tbody>
                                     <tfoot className="bg-gray-50 dark:bg-gray-700/50">
                                         <tr>
-                                            <td colSpan="3" className="px-4 py-3 text-right font-bold text-gray-700">Total:</td>
-                                            <td className="px-4 py-3 text-right font-bold text-teal-600 text-base">{formatCurrency(totalCair)}</td>
+                                            <td colSpan="3" className="px-4 py-3 text-right font-bold text-gray-700 dark:text-gray-200">Total:</td>
+                                            <td className="px-4 py-3 text-right font-bold text-teal-600 dark:text-teal-400 text-base">{formatCurrency(totalCair)}</td>
                                         </tr>
                                     </tfoot>
                                 </table>

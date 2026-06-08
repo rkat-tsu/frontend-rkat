@@ -52,7 +52,7 @@ class UserController extends Controller
 
         return Inertia::render('Admin/User/Index', [
             'users' => $users,
-            'filters' => $request->only(['q', 'unit']),
+            'filters' => $request->only(['q', 'unit', 'per_page']),
             'units' => Unit::orderBy('nama_unit', 'asc')->get(),
         ]);
     }

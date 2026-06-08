@@ -4,7 +4,8 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import {
     LayoutDashboard, FileText, Check, LayoutList, Monitor, BookPlus, BookOpenText,
     CalendarCog, ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight,
-    Users, Settings, Building2, CreditCard, FolderOpen, Database, Wallet, Route, CheckCheck
+    Users, Settings, Building2, CreditCard, FolderOpen, Database, Wallet, Route, CheckCheck,
+    FileCheck2
 } from 'lucide-react';
 import {
     Tooltip,
@@ -35,6 +36,7 @@ const navItems = [
         children: [
             { name: 'Pencairan Dana', href: '/pencairan', icon: CreditCard, activePath: '/pencairan' },
             { name: 'Persetujuan Pencairan', href: '/pencairan/approval', icon: CheckCheck, activePath: '/pencairan/approval', hideForInputer: true },
+            { name: 'LPJ (Laporan)', href: '/lpj', icon: FileCheck2 , activePath: '/lpj' },
         ],
     },
     {
@@ -54,7 +56,7 @@ const navItems = [
         children: [
             { name: 'Tahun Anggaran', href: '/tahun', icon: CalendarCog, activePath: '/tahun', adminOnly: true },
             { name: 'Pengaturan Akun', href: '/user', icon: Users, activePath: '/user', adminOnly: true },
-            { name: 'Daftar Unit Kerja', href: '/unit', icon: Building2, activePath: '/unit', adminOnly: true },
+            { name: 'Unit Kerja', href: '/unit', icon: Building2, activePath: '/unit', adminOnly: true },
             { name: 'Alur Persetujuan', href: '/approval-path', icon: Route, activePath: '/approval-path', adminOnly: true },
         ],
     }

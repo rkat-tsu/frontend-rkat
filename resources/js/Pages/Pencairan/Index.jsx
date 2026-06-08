@@ -222,13 +222,18 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
 
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            if (searchTerm !== (filters?.search || '') || perPage !== (filters?.per_page || '15')) {
+            if (searchTerm !== (filters?.search || '')) {
                 applyFilters(searchTerm, tahun, status, unitId, perPage);
             }
         }, 300);
 
         return () => clearTimeout(timeoutId);
-    }, [searchTerm, perPage]);
+    }, [searchTerm]);
+
+    const handlePerPageChange = (val) => {
+        setPerPage(val);
+        applyFilters(searchTerm, tahun, status, unitId, val);
+    };
 
     const handleFilterChange = (filterType, value) => {
         if (filterType === 'tahun') {
@@ -358,63 +363,25 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                         </div>
                     </div>
 
-                    {/* Pagination */}
-                    {pencairans.links && pencairans.links.length > 3 && (
-                        <div className="mt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                            <div className="flex flex-col sm:flex-row items-center gap-4">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm text-gray-500 dark:text-gray-400">Tampilkan</span>
-                                    <div className="w-20">
-                                        <CustomSelect
-                                            value={perPage}
-                                            onChange={(e) => setPerPage(e.target.value)}
-                                            options={[
-                                                { value: '10', label: '10' },
-                                                { value: '15', label: '15' },
-                                                { value: '25', label: '25' },
-                                                { value: '50', label: '50' },
-                                                { value: '100', label: '100' },
-                                                { value: 'all', label: 'Semua' }
-                                            ]}
-                                            className="h-8 text-xs py-1 px-2"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400">
-                                    Menampilkan <span className="font-semibold text-gray-900 dark:text-white">{pencairans.from || 0}</span> sampai <span className="font-semibold text-gray-900 dark:text-white">{pencairans.to || 0}</span> dari <span className="font-semibold text-gray-900 dark:text-white">{pencairans.total || 0}</span> data
-                                </div>
-                            </div>
-                            <div className="flex flex-wrap shadow-sm rounded-md">
-                                {pencairans.links.map((link, key) => (
-                                    <Link
-                                        key={key}
-                                        href={link.url || '#'}
-                                        className={`px-3 py-1 text-sm border ${link.active ? 'bg-teal-600 text-white border-teal-600' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'} ${!link.url ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    )}
 
-                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 mt-4">
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                                <thead className="bg-gray-50 dark:bg-gray-700">
-                                    <tr>
-                                        <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">No</th>
-                                        <th className="px-6 py-4 text-left font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Nomor RKAT</th>
-                                        <th className="px-6 py-4 text-left font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Unit</th>
-                                        <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Status</th>
-                                        <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Tgl Pengajuan</th>
-                                        <th className="px-6 py-4 text-right font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <div className="overflow-x-auto rounded-lg border border-gray-300 dark:border-gray-700 mt-4">
+                        <table className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
+                            <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                                <tr>
+                                    <th className="px-4 py-3 border-b border-gray-300 dark:border-gray-600 font-medium text-center uppercase tracking-wider text-xs">No</th>
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium uppercase tracking-wider text-xs">Nomor RKAT</th>
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium uppercase tracking-wider text-xs">Unit</th>
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center uppercase tracking-wider text-xs">Status</th>
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center uppercase tracking-wider text-xs">Tgl Pengajuan</th>
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center uppercase tracking-wider text-xs">Tanggal Pelaksanaan</th>
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center uppercase tracking-wider text-xs">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                                     {pencairans.data && pencairans.data.length > 0 ? pencairans.data.map((item, index) => (
-                                        <tr key={item.id_pencairan} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                            <td className="px-6 py-4 text-center font-medium text-gray-900 dark:text-white">{pencairans.from + index}</td>
-                                            <td className="px-6 py-4 font-medium">
+                                        <tr key={item.id_pencairan} className="bg-white dark:bg-gray-800 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors">
+                                            <td className="px-4 py-4 border-b border-gray-300 dark:border-gray-700 font-medium text-gray-900 dark:text-white text-center">{pencairans.from + index}</td>
+                                            <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 font-medium">
                                                 {item.rkat_header ? (
                                                     <Link 
                                                         href={route('daftar-ajuan.show', item.rkat_header.uuid)}
@@ -426,14 +393,21 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                                     '-'
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 text-gray-850 dark:text-gray-300">{item.rkat_header?.unit?.nama_unit || '-'}</td>
-                                            <td className="px-6 py-4 text-center">
+                                            <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">{item.rkat_header?.unit?.nama_unit || '-'}</td>
+                                            <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
                                                 <span className={`px-2.5 py-1 inline-flex whitespace-nowrap text-xs leading-5 font-bold rounded-md ${getStatusColor(item.status_pencairan)}`}>
                                                     {(item.status_pencairan || '').replace(/_/g, ' ')}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-center text-gray-850 dark:text-gray-300">{formatDate(item.tanggal_pengajuan)}</td>
-                                            <td className="px-6 py-4 text-right">
+                                            <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center text-gray-800 dark:text-gray-200">{formatDate(item.tanggal_pengajuan)}</td>
+                                            <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center text-gray-800 dark:text-gray-200">
+                                                {(item.rkat_header?.rkat_details?.length > 0) ? (
+                                                    <div className="text-xs whitespace-nowrap">
+                                                        {formatDate(item.rkat_header.rkat_details[0].jadwal_pelaksanaan_mulai)}<br />s.d<br />{formatDate(item.rkat_header.rkat_details[0].jadwal_pelaksanaan_akhir)}
+                                                    </div>
+                                                ) : '-'}
+                                            </td>
+                                            <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
                                                 <div className="flex justify-end gap-1.5">
                                                     <TooltipProvider>
                                                         <Tooltip>
@@ -493,14 +467,66 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                         </tr>
                                     )) : (
                                         <tr>
-                                            <td colSpan="6" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                            <td colSpan="7" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                                                 Tidak ada data pencairan yang sesuai.
                                             </td>
                                         </tr>
                                     )}
                                 </tbody>
                             </table>
+                    </div>
+
+                    {/* Pagination — di bawah tabel */}
+                    <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-600 dark:text-gray-400">Tampilkan</span>
+                                <div className="w-20">
+                                    <CustomSelect
+                                        value={perPage}
+                                        onChange={(e) => handlePerPageChange(e.target.value)}
+                                        options={[
+                                            { value: '10', label: '10' },
+                                            { value: '15', label: '15' },
+                                            { value: '25', label: '25' },
+                                            { value: '50', label: '50' },
+                                            { value: '100', label: '100' },
+                                            { value: 'all', label: 'Semua' }
+                                        ]}
+                                        className="h-8 text-xs py-1 px-2"
+                                    />
+                                </div>
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Menampilkan <span className="font-medium text-gray-900 dark:text-white">{pencairans.from || 0}</span> sampai <span className="font-medium text-gray-900 dark:text-white">{pencairans.to || 0}</span> dari <span className="font-medium text-gray-900 dark:text-white">{pencairans.total || 0}</span> data
+                            </p>
                         </div>
+                        {pencairans.links && pencairans.links.length > 3 && (
+                            <div className="flex flex-wrap gap-2">
+                                {pencairans.links.map((link, k) => (
+                                    link.url ? (
+                                        <Link
+                                            key={k}
+                                            href={link.url}
+                                            preserveScroll
+                                            preserveState
+                                            className={`px-3 py-1 text-sm border rounded-md transition-colors ${
+                                                link.active
+                                                    ? 'bg-teal-600 text-white border-teal-600'
+                                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
+                                            }`}
+                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                        />
+                                    ) : (
+                                        <span
+                                            key={k}
+                                            className="px-3 py-1 text-sm border rounded-md bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600"
+                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                        />
+                                    )
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

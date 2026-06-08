@@ -88,35 +88,36 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                             {/* Baris Atas: 4 Kotak Status RKA */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <StatCard 
-                                    title="Total Dokumen" 
-                                    value={summary.total} 
-                                    icon={<FileText size={22} />} 
-                                    color="blue" 
-                                    label="Tahun Ini" 
-                                    description="Total Pengajuan RKA"
-                                />
-                                <StatCard 
-                                    title="Menunggu" 
-                                    value={summary.review} 
-                                    icon={<Clock size={22} />} 
-                                    color="amber" 
-                                    label="Review" 
-                                    description="Menunggu Persetujuan"
-                                    isLive={true}
-                                />
-                                <StatCard 
                                     title="Disetujui" 
                                     value={summary.disetujui} 
                                     icon={<CheckCircle size={22} />} 
                                     color="emerald" 
+                                    label="Setuju" 
                                     description="Dokumen Disetujui"
+                                />
+                                <StatCard 
+                                    title="Revisi" 
+                                    value={summary.revisi} 
+                                    icon={<Clock size={22} />} 
+                                    color="amber" 
+                                    label="Revisi" 
+                                    description="Butuh Revisi"
                                 />
                                 <StatCard 
                                     title="Ditolak" 
                                     value={summary.ditolak} 
                                     icon={<XCircle size={22} />} 
                                     color="rose" 
-                                    description="Butuh Revisi"
+                                    label="Tolak" 
+                                    description="Dokumen Ditolak"
+                                />
+                                <StatCard 
+                                    title="Total Dokumen" 
+                                    value={summary.total} 
+                                    icon={<FileText size={22} />} 
+                                    color="blue" 
+                                    label="Tahun Ini" 
+                                    description="Total Pengajuan RKA"
                                 />
                             </div>
 
@@ -155,35 +156,36 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                             {/* Baris Bawah: 4 Kotak Status Pencairan */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <StatCard 
-                                    title="Total Dokumen" 
-                                    value={summary.total_pencairan_dokumen} 
-                                    icon={<FileText size={22} />} 
-                                    color="blue" 
-                                    label="Pencairan" 
-                                    description="Total Pengajuan Pencairan"
-                                />
-                                <StatCard 
-                                    title="Menunggu" 
-                                    value={summary.pencairan_review} 
-                                    icon={<Clock size={22} />} 
-                                    color="amber" 
-                                    label="Review" 
-                                    description="Menunggu Persetujuan"
-                                    isLive={true}
-                                />
-                                <StatCard 
                                     title="Disetujui" 
                                     value={summary.pencairan_disetujui} 
                                     icon={<CheckCircle size={22} />} 
                                     color="emerald" 
+                                    label="Setuju" 
                                     description="Pencairan Disetujui"
+                                />
+                                <StatCard 
+                                    title="Revisi" 
+                                    value={summary.pencairan_revisi} 
+                                    icon={<Clock size={22} />} 
+                                    color="amber" 
+                                    label="Revisi" 
+                                    description="Butuh Revisi"
                                 />
                                 <StatCard 
                                     title="Ditolak" 
                                     value={summary.pencairan_ditolak} 
                                     icon={<XCircle size={22} />} 
                                     color="rose" 
-                                    description="Butuh Revisi"
+                                    label="Tolak" 
+                                    description="Pencairan Ditolak"
+                                />
+                                <StatCard 
+                                    title="Total Dokumen" 
+                                    value={summary.total_pencairan_dokumen} 
+                                    icon={<FileText size={22} />} 
+                                    color="blue" 
+                                    label="Pencairan" 
+                                    description="Total Pengajuan Pencairan"
                                 />
                             </div>
                         </div>

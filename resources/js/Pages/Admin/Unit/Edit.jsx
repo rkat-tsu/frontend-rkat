@@ -16,7 +16,6 @@ export default function Edit({ auth, unit, users, units, approvalPaths }) {
         nama_unit: unit.nama_unit || '',
         tipe_unit: unit.tipe_unit || 'Unit',
         approval_path_id: unit.approval_path_id || '',
-        pencairan_approval_path_id: unit.pencairan_approval_path_id || '',
         id_kepala: unit.id_kepala || '',
         parent_id: unit.parent_id || '',
         no_telepon: unit.no_telepon || '',
@@ -26,7 +25,7 @@ export default function Edit({ auth, unit, users, units, approvalPaths }) {
     const submit = (e) => {
         e.preventDefault();
 
-        if (!data.kode_unit || !data.nama_unit || !data.tipe_unit || !data.approval_path_id || !data.pencairan_approval_path_id) {
+        if (!data.kode_unit || !data.nama_unit || !data.tipe_unit || !data.approval_path_id) {
             toast.error("Peringatan", { description: "Semua form bertanda * wajib diisi." });
             return;
         }
@@ -235,31 +234,21 @@ export default function Edit({ auth, unit, users, units, approvalPaths }) {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
+                                <div className="md:col-span-2">
                                     <InputLabel htmlFor="approval_path_id">
-                                        Alur Persetujuan RKAT <span className="text-red-500">*</span>
+                                        Alur Persetujuan <span className="text-red-500">*</span>
                                     </InputLabel>
                                     <CustomSelect
                                         value={data.approval_path_id}
                                         onChange={(e) => setData('approval_path_id', e.target.value)}
                                         options={approvalPaths ? approvalPaths.map((path) => ({ value: path.id, label: path.name })) : []}
-                                        placeholder="Pilih Alur Persetujuan RKAT"
+                                        placeholder="Pilih Alur Persetujuan"
                                         className="mt-1"
                                     />
                                     <InputError message={errors.approval_path_id} className="mt-2" />
                                 </div>
 
-                                <div>
-                                     <InputLabel value="Alur Persetujuan Pencairan Dana" required />
-                                     <CustomSelect
-                                         value={data.pencairan_approval_path_id}
-                                         onChange={(e) => setData('pencairan_approval_path_id', e.target.value)}
-                                         options={approvalPaths ? approvalPaths.map((path) => ({ value: path.id, label: path.name })) : []}
-                                         placeholder="Pilih Alur Persetujuan Pencairan"
-                                         className="mt-1"
-                                     />
-                                     <InputError message={errors.pencairan_approval_path_id} className="mt-2" />
-                                 </div>
+
                             </div>
                         </div>
 

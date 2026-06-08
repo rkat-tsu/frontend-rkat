@@ -48,7 +48,7 @@ export default function CustomSelect({
 
                 <DropdownMenuContent
                     align="start"
-                    className="w-[--radix-dropdown-menu-trigger-width] min-w-[8rem] bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/50 shadow-md max-h-60 overflow-y-auto z-[9999] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                    className="w-[--radix-dropdown-menu-trigger-width] min-w-[8rem] bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/50 shadow-md max-h-60 overflow-y-auto z-[9999]"
                 >
                     {options.length === 0 ? (
                         <div className="p-2 text-sm text-gray-500 text-center">Tidak ada opsi</div>

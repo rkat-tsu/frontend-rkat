@@ -6,6 +6,7 @@ use App\Http\Controllers\ApprovalPathController;
 use App\Http\Controllers\PencairanDanaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IkuController;
+use App\Http\Controllers\LpjController;
 use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RincianAnggaranController;
@@ -62,7 +63,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Pencairan Dana
     Route::get('/pencairan', [PencairanDanaController::class, 'index'])->name('pencairan.index');
-    Route::get('/pencairan/create', [PencairanDanaController::class, 'create'])->name('pencairan.create');
     Route::post('/pencairan', [PencairanDanaController::class, 'store'])->name('pencairan.store');
     Route::get('/pencairan/approval', [PencairanDanaController::class, 'approvalIndex'])->name('pencairan.approval');
     Route::get('/pencairan/{pencairan}', [PencairanDanaController::class, 'show'])->name('pencairan.show');
@@ -70,6 +70,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/pencairan/{pencairan}/submit', [PencairanDanaController::class, 'submit'])->name('pencairan.submit');
     Route::post('/pencairan/{pencairan}/approve', [PencairanDanaController::class, 'approve'])->name('pencairan.approve');
     Route::get('/pencairan/{pencairan}/export', [PencairanDanaController::class, 'exportPdf'])->name('pencairan.export');
+
+    // LPJ
+    Route::get('/lpj', [LpjController::class, 'index'])->name('lpj.index');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -80,16 +83,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['admin'])->group(function () {
         // Tahun Anggaran management (index, create, store, edit, update, destroy)
         Route::get('/tahun', [TahunAnggaranController::class, 'index'])->name('tahun.index');
-        Route::get('/tahun/create', [TahunAnggaranController::class, 'create'])->name('tahun.create');
         Route::post('/tahun', [TahunAnggaranController::class, 'store'])->name('tahun.store');
-        Route::get('/tahun/{tahun}/edit', [TahunAnggaranController::class, 'edit'])->name('tahun.edit');
         Route::patch('/tahun/{tahun}', [TahunAnggaranController::class, 'update'])->name('tahun.update');
         Route::delete('/tahun/{tahun}', [TahunAnggaranController::class, 'destroy'])->name('tahun.destroy');
 
         // Rincian Anggaran (master akun anggaran)
-        Route::get('/sbo/create', [RincianAnggaranController::class, 'create'])->name('sbo.create');
         Route::post('/sbo', [RincianAnggaranController::class, 'store'])->name('sbo.store');
-        Route::get('/sbo/{rincian}/edit', [RincianAnggaranController::class, 'edit'])->name('sbo.edit');
         Route::patch('/sbo/{rincian}', [RincianAnggaranController::class, 'update'])->name('sbo.update');
         Route::delete('/sbo/{rincian}', [RincianAnggaranController::class, 'destroy'])->name('sbo.destroy');
 

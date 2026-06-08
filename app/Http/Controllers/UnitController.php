@@ -23,8 +23,15 @@ class UnitController extends Controller
             ->orderBy('nama_unit', 'asc')
             ->get();
 
+        $users = User::query()->select(['id_user', 'nama_lengkap'])->orderBy('nama_lengkap', 'asc')->get();
+        $allUnits = Unit::query()->select(['id_unit', 'kode_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get();
+        $approvalPaths = ApprovalPath::select(['id', 'name'])->get();
+
         return Inertia::render('Admin/Unit/Index', [
             'units' => $units,
+            'users' => $users,
+            'allUnits' => $allUnits,
+            'approvalPaths' => $approvalPaths,
         ]);
     }
 
@@ -45,10 +52,10 @@ class UnitController extends Controller
     {
         Log::info('[Unit] Membuat Unit', ['by_user' => Auth::id(), 'data' => $request->all()]);
 
-        // Ubah string kosong menjadi null agar lolos validasi exists
         $request->merge([
             'parent_id' => $request->parent_id ?: null,
             'id_kepala' => $request->id_kepala ?: null,
+            'pencairan_approval_path_id' => $request->approval_path_id,
         ]);
 
         $validated = $request->validate([
@@ -87,6 +94,7 @@ class UnitController extends Controller
         $request->merge([
             'parent_id' => $request->parent_id ?: null,
             'id_kepala' => $request->id_kepala ?: null,
+            'pencairan_approval_path_id' => $request->approval_path_id,
         ]);
 
         $validated = $request->validate([

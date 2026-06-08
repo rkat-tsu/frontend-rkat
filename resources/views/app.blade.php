@@ -3,6 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="Sistem Informasi Rencana Kerja dan Anggaran Tahunan (RKAT) untuk mengelola anggaran, rincian biaya, dan pencairan dana secara efisien.">
 
         <title inertia>{{ config('app.name', 'RKAT') }}</title>
 
