@@ -28,9 +28,29 @@ class IkuController extends Controller
 
     public function storeMaster(Request $request)
     {
-        $validated = $request->validate([
+        $rules = [
             'uuid'     => ['nullable', 'string', 'exists:ikus,uuid'],
-            'nama_iku' => ['required', 'string', 'max:500'],
+        ];
+
+        if ($request->filled('uuid')) {
+            $iku = Iku::where('uuid', $request->uuid)->first();
+            $rules['nama_iku'] = [
+                'required', 
+                'string', 
+                'max:500', 
+                \Illuminate\Validation\Rule::unique('ikus', 'nama_iku')->ignore($iku->id_iku, 'id_iku')
+            ];
+        } else {
+            $rules['nama_iku'] = [
+                'required', 
+                'string', 
+                'max:500', 
+                'unique:ikus,nama_iku'
+            ];
+        }
+
+        $validated = $request->validate($rules, [
+            'nama_iku.unique' => 'Nama IKU tersebut sudah terdaftar.',
         ]);
 
         if (isset($validated['uuid'])) {
@@ -77,36 +97,60 @@ class IkuController extends Controller
     {
         Log::debug('[IKU] Proses simpan dimulai.', ['payload' => $request->all()]);
 
-        // 1. Validasi Input
-        $validated = $request->validate([
+        // 1. Validasi Input Dasar
+        $request->validate([
             'uuid_iku' => ['required', 'string', 'exists:ikus,uuid'],
-            
-            // Validasi Array IKK
             'ikks' => ['required', 'array', 'min:1'],
-            'ikks.*.nama_ikk' => ['required', 'string', 'max:500'], 
-            'ikks.*.id_ikk' => ['nullable', 'integer', 'exists:ikks,id_ikk'], // IKK ID still used internally or can be UUID later
-        ], 
-        [
+        ], [
             'uuid_iku.required' => 'Silakan pilih IKU terlebih dahulu.',
             'ikks.min' => 'Minimal harus ada satu Indikator Kinerja Kegiatan (IKK).',
-            'ikks.*.nama_ikk.required' => 'Nama kegiatan (IKK) tidak boleh kosong.',
         ]);
+
+        $iku = Iku::query()->where('uuid', $request->uuid_iku)->firstOrFail(); 
+        
+        // 2. Validasi IKK Khusus (Unik dalam satu IKU)
+        $rules = [];
+        $messages = [];
+        foreach ($request->input('ikks', []) as $index => $ikkData) {
+            $id = $ikkData['id_ikk'] ?? null;
+            
+            $uniqueRule = \Illuminate\Validation\Rule::unique('ikks', 'nama_ikk')
+                ->where('id_iku', $iku->id_iku);
+                
+            if ($id) {
+                $uniqueRule->ignore($id, 'id_ikk');
+            }
+            
+            $rules["ikks.{$index}.nama_ikk"] = [
+                'required', 
+                'string', 
+                'max:500', 
+                'distinct',
+                $uniqueRule
+            ];
+            $rules["ikks.{$index}.id_ikk"] = ['nullable', 'integer', 'exists:ikks,id_ikk'];
+            
+            $messages["ikks.{$index}.nama_ikk.required"] = 'Nama kegiatan (IKK) tidak boleh kosong.';
+            $messages["ikks.{$index}.nama_ikk.distinct"] = 'Terdapat nama IKK yang sama dalam form Anda.';
+            $messages["ikks.{$index}.nama_ikk.unique"] = 'Nama IKK "' . ($ikkData['nama_ikk'] ?? '') . '" sudah terdaftar di IKU ini.';
+        }
+
+        $validated = $request->validate($rules, $messages);
 
         DB::beginTransaction();
 
         try {
-            $iku = Iku::query()->where('uuid', $validated['uuid_iku'])->firstOrFail(); 
             Log::debug('[IKU] Memproses data untuk IKU UUID: ' . $iku->uuid);
 
             // Array untuk menampung ID IKK yang diproses (untuk keperluan sync/delete)
             $processedIkkIds = [];
 
-            // 2. Loop setiap item IKK dari form
-            foreach ($validated['ikks'] as $ikkData) {
+            // 3. Loop setiap item IKK dari form
+            foreach ($request->input('ikks', []) as $ikkData) {
                 
                 // Cek apakah ini data lama (punya ID) atau data baru
                 if (isset($ikkData['id_ikk']) && $ikkData['id_ikk']) {
-                    // --- UPDATE DATA LAMA (Optimasi: 1 Query untuk Verifikasi & Update) ---
+                    // --- UPDATE DATA LAMA ---
                     $updated = Ikk::query()
                         ->where('id_ikk', $ikkData['id_ikk'])
                         ->where('id_iku', $iku->id_iku) // Security check: Pastikan milik IKU ini
@@ -117,22 +161,13 @@ class IkuController extends Controller
                     }
                 } else {
                     // --- CREATE DATA BARU ---
-                    // Cek duplikat nama di IKU yang sama untuk menghindari double input tidak sengaja
-                    $existingIkk = $iku->ikks()->where('nama_ikk', $ikkData['nama_ikk'])->first();
-                    
-                    if ($existingIkk) {
-                        // Jika sudah ada persis, kita pakai yang lama (update nama saja jika perlu)
-                        $existingIkk->update(['nama_ikk' => $ikkData['nama_ikk']]);
-                        $ikk = $existingIkk;
-                    } else {
-                        // Buat baru
-                        $ikk = $iku->ikks()->create(['nama_ikk' => $ikkData['nama_ikk']]);
-                    }
+                    // Buat baru (sudah dijamin unik oleh validasi)
+                    $ikk = $iku->ikks()->create(['nama_ikk' => $ikkData['nama_ikk']]);
                     $processedIkkIds[] = $ikk->id_ikk;
                 }
             }
 
-            // 3. Hapus IKK yang Dibuang User (Sync Logic)
+            // 4. Hapus IKK yang Dibuang User (Sync Logic)
             // Hapus semua IKK milik IKU ini yang ID-nya TIDAK ada dalam daftar yang baru saja diproses
             $deletedCount = $iku->ikks()
                 ->whereNotIn('id_ikk', $processedIkkIds)

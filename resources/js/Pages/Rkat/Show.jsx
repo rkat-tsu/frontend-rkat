@@ -133,7 +133,7 @@ export default function Show({ auth, rkat = {}, history = [] }) {
                             <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium">Nomor Dokumen: {dataRkat?.nomor_dokumen}</p>
                             <div className="mt-2 inline-block">
                                 <span className={`px-3 py-1 text-xs font-bold rounded-full border ${getStatusColor(dataRkat?.status_persetujuan)}`}>
-                                    Status: {typeof dataRkat?.status_persetujuan === 'string' ? dataRkat.status_persetujuan.replace(/_/g, ' ') : '-'}
+                                    Status: {typeof dataRkat?.status_persetujuan === 'string' ? (dataRkat.status_persetujuan === 'Disetujui_Final' ? 'Disetujui RKAT' : dataRkat.status_persetujuan.replace(/_/g, ' ')) : '-'}
                                 </span>
                             </div>
                         </div>
@@ -294,6 +294,18 @@ export default function Show({ auth, rkat = {}, history = [] }) {
                                                     <span className={`w-4 h-4 rounded border flex items-center justify-center ${dataDetail?.jenis_pencairan === 'Tunai' ? 'bg-teal-500 border-teal-500 text-white' : 'border-gray-400'}`}>{dataDetail?.jenis_pencairan === 'Tunai' && '✓'}</span> 
                                                     Tunai
                                                 </div>
+                                                {dataDetail?.jenis_pencairan === 'Tunai' && (
+                                                    <div className="ml-6 mt-2 text-gray-600 dark:text-gray-400">
+                                                        <div className="grid grid-cols-[140px_1fr] gap-1">
+                                                            <span>Nama Pengusul</span>
+                                                            <span>: {dataDetail?.pjawab || '-'}</span>
+                                                            <span>Nama Pemberi</span>
+                                                            <span>: BAUK</span>
+                                                            <span>Nama Penerima</span>
+                                                            <span>: {dataDetail?.nama_penerima || '-'}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </TableRow>
                                     </tbody>

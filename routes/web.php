@@ -83,12 +83,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['admin'])->group(function () {
         // Tahun Anggaran management (index, create, store, edit, update, destroy)
         Route::get('/tahun', [TahunAnggaranController::class, 'index'])->name('tahun.index');
+        Route::get('/tahun/create', fn() => redirect()->route('tahun.index'));
         Route::post('/tahun', [TahunAnggaranController::class, 'store'])->name('tahun.store');
+        Route::get('/tahun/{tahun}/edit', fn() => redirect()->route('tahun.index'));
         Route::patch('/tahun/{tahun}', [TahunAnggaranController::class, 'update'])->name('tahun.update');
         Route::delete('/tahun/{tahun}', [TahunAnggaranController::class, 'destroy'])->name('tahun.destroy');
 
         // Rincian Anggaran (master akun anggaran)
+        Route::get('/sbo/create', fn() => redirect()->route('sbo.index'));
         Route::post('/sbo', [RincianAnggaranController::class, 'store'])->name('sbo.store');
+        Route::get('/sbo/{rincian}/edit', fn() => redirect()->route('sbo.index'));
         Route::patch('/sbo/{rincian}', [RincianAnggaranController::class, 'update'])->name('sbo.update');
         Route::delete('/sbo/{rincian}', [RincianAnggaranController::class, 'destroy'])->name('sbo.destroy');
 
@@ -117,7 +121,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/iku/sync-ikk', [IkuController::class, 'store'])->name('iku.store');
         // Approval Paths Settings
         Route::get('approval-path', [ApprovalPathController::class, 'index'])->name('approval-path.index');
+        Route::get('approval-path/create', fn() => redirect()->route('approval-path.index'));
         Route::post('approval-path', [ApprovalPathController::class, 'store'])->name('approval-path.store');
+        Route::get('approval-path/{approvalPath}/edit', fn() => redirect()->route('approval-path.index'));
         Route::patch('approval-path/{approvalPath}', [ApprovalPathController::class, 'update'])->name('approval-path.update');
         Route::delete('approval-path/{approvalPath}', [ApprovalPathController::class, 'destroy'])->name('approval-path.destroy');
 

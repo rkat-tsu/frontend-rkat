@@ -184,6 +184,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
         nama_bank: '',
         nomor_rekening: '',
         atas_nama: '',
+        nama_penerima: '',
 
         // 7. Array
         indikator_kinerja: [initialIndikator],
@@ -486,7 +487,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t pt-4">
                                     <div>
-                                        <InputLabel value="Tanggal Mulai" required />
+                                        <InputLabel value="Tanggal Mulai Kegiatan" required />
                                         <DateInput
                                             value={data.jadwal_pelaksanaan_mulai}
                                             onChange={(val) => setData('jadwal_pelaksanaan_mulai', val)}
@@ -495,7 +496,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                         <InputError message={errors.jadwal_pelaksanaan_mulai} className="mt-2" />
                                     </div>
                                     <div>
-                                        <InputLabel value="Tanggal Selesai" required />
+                                        <InputLabel value="Tanggal Selesai Kegiatan" required />
                                         <DateInput
                                             value={data.jadwal_pelaksanaan_akhir}
                                             onChange={(val) => setData('jadwal_pelaksanaan_akhir', val)}
@@ -504,7 +505,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                         <InputError message={errors.jadwal_pelaksanaan_akhir} className="mt-2" />
                                     </div>
                                     <div>
-                                        <InputLabel value="Lokasi" required />
+                                        <InputLabel value="Lokasi Kegiatan" required />
                                         <TextInput
                                             value={data.lokasi_pelaksanaan}
                                             onChange={(e) => setData('lokasi_pelaksanaan', e.target.value)}
@@ -517,7 +518,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div>
-                                        <InputLabel value="PIC" required />
+                                        <InputLabel value="PIC Kegiatan" required />
                                         <TextInput
                                             value={data.pjawab}
                                             onChange={(e) => setData('pjawab', e.target.value)}
@@ -593,7 +594,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
 
                         {/* --- 3. INDIKATOR KINERJA --- */}
                         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-blue-500">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">3. Indikator Kinerja</h3>
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">3. Indikator Kinerja Sesuai IKU</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div><InputLabel value="IKU" required /><CustomSelect value={data.iku_id} onChange={(e) => setData(prev => ({ ...prev, iku_id: e.target.value, ikk_id: '' }))} options={ikuOptions} placeholder="Pilih IKU" isMarquee={true} className="mt-1" /><InputError message={errors.iku_id} className="mt-2" /></div>
                                 <div><InputLabel value="IKK" required /><CustomSelect value={data.ikk_id} onChange={(e) => setData('ikk_id', e.target.value)} options={filteredIkks} placeholder="Pilih IKK" disabled={!data.iku_id} isMarquee={true} className="mt-1" /><InputError message={errors.ikk_id} className="mt-2" /></div>
@@ -723,10 +724,10 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
 
                         {/* --- 5. PENCAIRAN --- */}
                         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-green-500">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">5. Metode Pencairan Dana</h3>
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">5. Pencairan Dana</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 dark:bg-gray-700/50 p-5 rounded-xl">
                                 <div>
-                                    <InputLabel value="Metode" />
+                                    <InputLabel value="Metode Pencairan" />
                                     <CustomSelect
                                         value={data.jenis_pencairan}
                                         onChange={(e) => setData('jenis_pencairan', e.target.value)}
@@ -762,6 +763,34 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                                 placeholder="Masukkan Nama Pemilik Rekening"
                                             />
                                             <InputError message={errors.atas_nama} className="mt-2" />
+                                        </div>
+                                    </div>
+                                )}
+                                {data.jenis_pencairan === 'Tunai' && (
+                                    <div className="space-y-4 border-l-2 border-green-200 pl-4 animate-in fade-in slide-in-from-left-4">
+                                        <div><InputLabel value="Nama Pengusul (PIC)" />
+                                            <TextInput
+                                                value={data.pjawab || ''}
+                                                readOnly
+                                                className="mt-1 w-full h-11 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed border-gray-200 dark:border-gray-600"
+                                                placeholder="Otomatis dari PIC"
+                                            />
+                                        </div>
+                                        <div><InputLabel value="Nama Pemberi" />
+                                            <TextInput
+                                                value="BAUK"
+                                                readOnly
+                                                className="mt-1 w-full h-11 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed border-gray-200 dark:border-gray-600 font-semibold"
+                                            />
+                                        </div>
+                                        <div><InputLabel value="Nama Penerima" />
+                                            <TextInput
+                                                value={data.nama_penerima}
+                                                onChange={(e) => setData('nama_penerima', e.target.value)}
+                                                className="mt-1 w-full h-11"
+                                                placeholder="Masukkan Nama Penerima"
+                                            />
+                                            <InputError message={errors.nama_penerima} className="mt-2" />
                                         </div>
                                     </div>
                                 )}

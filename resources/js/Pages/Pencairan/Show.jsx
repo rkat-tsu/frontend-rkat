@@ -62,7 +62,7 @@ export default function Show({ auth, pencairan, flash = {} }) {
                                     <p className="text-sm text-gray-500 mt-1">Nama/Keterangan: <span className="font-semibold">{pencairan.nama_pencairan || 'Tidak ada'}</span></p>
                                 </div>
                                 <span className={`px-3 py-1 text-xs font-bold rounded-full border ${getStatusBadge(pencairan.status_pencairan)}`}>
-                                    Status: {pencairan.status_pencairan.replace(/_/g, ' ')}
+                                    Status: {pencairan.status_pencairan === 'Disetujui_Final' ? 'Disetujui Pencairan' : pencairan.status_pencairan.replace(/_/g, ' ')}
                                 </span>
                             </div>
                         </div>

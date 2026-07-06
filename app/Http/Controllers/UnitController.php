@@ -60,7 +60,7 @@ class UnitController extends Controller
 
         $validated = $request->validate([
             'kode_unit' => 'required|string|unique:unit,kode_unit',
-            'nama_unit' => 'required|string',
+            'nama_unit' => 'required|string|unique:unit,nama_unit',
             'tipe_unit' => ['required', Rule::in(['Rektorat', 'Fakultas', 'Prodi', 'Biro', 'Lembaga', 'UPT', 'Satuan', 'UKM', 'Unit', 'Admin', 'Lainnya', 'Atasan'])],
             'approval_path_id' => 'required|exists:approval_paths,id',
             'pencairan_approval_path_id' => 'required|exists:approval_paths,id',
@@ -68,6 +68,9 @@ class UnitController extends Controller
             'parent_id' => 'nullable|exists:unit,id_unit',
             'no_telepon' => 'nullable|string',
             'email' => 'nullable|email',
+        ], [
+            'nama_unit.unique' => 'Nama Unit ini sudah terdaftar.',
+            'kode_unit.unique' => 'Kode Unit ini sudah terdaftar.'
         ]);
 
         Unit::create($validated);
@@ -99,7 +102,7 @@ class UnitController extends Controller
 
         $validated = $request->validate([
             'kode_unit' => ['required', 'string', Rule::unique('unit', 'kode_unit')->ignore($unit->id_unit, 'id_unit')],
-            'nama_unit' => 'required|string',
+            'nama_unit' => ['required', 'string', Rule::unique('unit', 'nama_unit')->ignore($unit->id_unit, 'id_unit')],
             'tipe_unit' => ['required', Rule::in(['Rektorat', 'Fakultas', 'Prodi', 'Biro', 'Lembaga', 'UPT', 'Satuan', 'UKM', 'Unit', 'Admin', 'Lainnya', 'Atasan'])],
             'approval_path_id' => 'required|exists:approval_paths,id',
             'pencairan_approval_path_id' => 'required|exists:approval_paths,id',
@@ -107,6 +110,9 @@ class UnitController extends Controller
             'parent_id' => 'nullable|exists:unit,id_unit',
             'no_telepon' => 'nullable|string',
             'email' => 'nullable|email',
+        ], [
+            'nama_unit.unique' => 'Nama Unit ini sudah terdaftar.',
+            'kode_unit.unique' => 'Kode Unit ini sudah terdaftar.'
         ]);
 
         Unit::query()->where('id_unit', $unit->id_unit)->update($validated);

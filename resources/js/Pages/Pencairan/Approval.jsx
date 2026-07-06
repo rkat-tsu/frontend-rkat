@@ -96,7 +96,7 @@ export default function Approval({ auth, pencairans }) {
                                                  </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center">
                                                     <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-bold whitespace-nowrap rounded-md ${getStatusColor(item.status_pencairan)}`}>
-                                                        {item.status_pencairan.replace(/_/g, ' ')}
+                                                        {item.status_pencairan === 'Disetujui_Final' ? 'Disetujui Pencairan' : item.status_pencairan.replace(/_/g, ' ')}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center text-gray-700 dark:text-gray-300">

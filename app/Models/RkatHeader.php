@@ -87,9 +87,13 @@ class RkatHeader extends Model
      * Generate a sequential document number for RKAT per year and unit.
      * Format: RKAT-{tahun}-{unit}-{sequence:04}
      */
-    public static function generateNomorDokumen(int $tahunAnggaran, int $idUnit): string
+    public static function generateNomorDokumen(int $tahunAnggaran, int $idUnit, bool $isAdmin = false): string
     {
-        $prefix = sprintf('RKAT-%d-%d', $tahunAnggaran, $idUnit);
+        if ($isAdmin) {
+            $prefix = sprintf('RKAT-ADM-%d-%d', $tahunAnggaran, $idUnit);
+        } else {
+            $prefix = sprintf('RKAT-%d-%d', $tahunAnggaran, $idUnit);
+        }
 
         // Find last nomor_dokumen for same year and unit and increment sequence
         $last = self::query()->where('tahun_anggaran', $tahunAnggaran)

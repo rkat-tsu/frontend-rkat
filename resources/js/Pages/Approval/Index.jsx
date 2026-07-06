@@ -86,7 +86,7 @@ export default function ApproverDashboard({ auth, rkatMenunggu, currentRole, fla
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center">
                                                     <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-md ${getStatusColor(rkat.status_persetujuan)}`}>
-                                                        {rkat.status_persetujuan.replace(/_/g, ' ')}
+                                                        {rkat.status_persetujuan === 'Disetujui_Final' ? 'Disetujui RKAT' : rkat.status_persetujuan.replace(/_/g, ' ')}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center text-gray-700 dark:text-gray-300">

@@ -37,6 +37,7 @@ class RkatDetail extends Model
         'nama_bank',
         'nomor_rekening',
         'atas_nama',
+        'nama_penerima',
     ];
 
     protected $casts = [

@@ -167,6 +167,7 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
         nama_bank: detail.nama_bank || '',
         nomor_rekening: detail.nomor_rekening || '',
         atas_nama: detail.atas_nama || '',
+        nama_penerima: detail.nama_penerima || '',
         indikator_kinerja: detail.indikators ? detail.indikators.map(i => ({
             id: i.id_indikator,
             indikator: i.nama_indikator,
@@ -641,6 +642,34 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                         <div><InputLabel value="Nama Bank" /><TextInput value={data.nama_bank} onChange={(e) => setData('nama_bank', e.target.value)} className="mt-1 w-full h-11" /></div>
                                         <div><InputLabel value="No. Rekening" /><TextInput value={data.nomor_rekening} onChange={(e) => setData('nomor_rekening', e.target.value)} className="mt-1 w-full h-11" /></div>
                                         <div><InputLabel value="Atas Nama" /><TextInput value={data.atas_nama} onChange={(e) => setData('atas_nama', e.target.value)} className="mt-1 w-full h-11" /></div>
+                                    </div>
+                                )}
+                                {data.jenis_pencairan === 'Tunai' && (
+                                    <div className="space-y-4 border-l-2 border-green-200 pl-4 animate-in fade-in slide-in-from-left-4">
+                                        <div><InputLabel value="Nama Pengusul (PIC)" />
+                                            <TextInput
+                                                value={data.pjawab || ''}
+                                                readOnly
+                                                className="mt-1 w-full h-11 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed border-gray-200 dark:border-gray-600"
+                                                placeholder="Otomatis dari PIC"
+                                            />
+                                        </div>
+                                        <div><InputLabel value="Nama Pemberi" />
+                                            <TextInput
+                                                value="BAUK"
+                                                readOnly
+                                                className="mt-1 w-full h-11 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed border-gray-200 dark:border-gray-600 font-semibold"
+                                            />
+                                        </div>
+                                        <div><InputLabel value="Nama Penerima" />
+                                            <TextInput
+                                                value={data.nama_penerima}
+                                                onChange={(e) => setData('nama_penerima', e.target.value)}
+                                                className="mt-1 w-full h-11"
+                                                placeholder="Masukkan Nama Penerima"
+                                            />
+                                            <InputError message={errors.nama_penerima} className="mt-2" />
+                                        </div>
                                     </div>
                                 )}
                             </div>

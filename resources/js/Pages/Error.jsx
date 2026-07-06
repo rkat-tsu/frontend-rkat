@@ -8,6 +8,7 @@ export default function Error({ status, message }) {
         500: '500: Server Error',
         404: '404: Page Not Found',
         403: '403: Forbidden',
+        405: '405: Method Not Allowed',
     }[status] || `Error ${status}`;
 
     const description = {
@@ -15,6 +16,7 @@ export default function Error({ status, message }) {
         500: 'IZIN ✋, terjadi kesalahan pada server kami. Kami akan segera memperbaikinya.',
         404: 'IZIN ✋, halaman yang Anda cari tidak dapat ditemukan.',
         403: 'IZIN ✋, Anda tidak memiliki izin untuk mengakses halaman ini.',
+        405: 'IZIN ✋, halaman yang Anda tuju tidak tersedia dengan cara akses tersebut.',
     }[status] || message || 'IZIN ✋, terjadi kesalahan yang tidak terduga.';
 
     const Icon = {
@@ -22,6 +24,7 @@ export default function Error({ status, message }) {
         500: ServerCrash,
         404: FileSearch,
         403: ShieldAlert,
+        405: ShieldAlert,
     }[status] || AlertCircle;
 
     const accentColor = {
@@ -29,6 +32,7 @@ export default function Error({ status, message }) {
         500: 'rose',
         404: 'blue',
         403: 'orange',
+        405: 'orange',
     }[status] || 'teal';
 
     return (

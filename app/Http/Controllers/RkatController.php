@@ -163,6 +163,7 @@ class RkatController extends Controller
             'nama_bank' => ['nullable', 'required_if:jenis_pencairan,Bank', 'string'],
             'nomor_rekening' => ['nullable', 'required_if:jenis_pencairan,Bank', 'string'],
             'atas_nama' => ['nullable', 'required_if:jenis_pencairan,Bank', 'string'],
+            'nama_penerima' => ['nullable', 'required_if:jenis_pencairan,Tunai', 'string'],
             'dokumen_pendukung' => ['nullable', 'array'],
             'dokumen_pendukung.*' => ['in:Pengajuan Rutin,Proposal,TOR,Usulan'],
         ]);
@@ -175,7 +176,7 @@ class RkatController extends Controller
                 'tahun_anggaran' => $validatedData['tahun_anggaran'],
                 'id_unit' => $validatedData['id_unit'],
                 'diajukan_oleh' => Auth::id(),
-                'nomor_dokumen' => RkatHeader::generateNomorDokumen($validatedData['tahun_anggaran'], $validatedData['id_unit']),
+                'nomor_dokumen' => RkatHeader::generateNomorDokumen($validatedData['tahun_anggaran'], $validatedData['id_unit'], Auth::user()->peran === 'Admin'),
                 'status_persetujuan' => 'Draft',
                 'tanggal_pengajuan' => now(),
                 'total_anggaran' => $validatedData['anggaran'],
@@ -207,6 +208,7 @@ class RkatController extends Controller
                 'nama_bank' => $validatedData['nama_bank'] ?? null,
                 'nomor_rekening' => $validatedData['nomor_rekening'] ?? null,
                 'atas_nama' => $validatedData['atas_nama'] ?? null,
+                'nama_penerima' => $validatedData['nama_penerima'] ?? null,
                 'dokumen_pendukung' => $validatedData['dokumen_pendukung'] ?? null,
             ]);
 
@@ -433,6 +435,7 @@ class RkatController extends Controller
             'nama_bank' => ['nullable', 'required_if:jenis_pencairan,Bank', 'string'],
             'nomor_rekening' => ['nullable', 'required_if:jenis_pencairan,Bank', 'string'],
             'atas_nama' => ['nullable', 'required_if:jenis_pencairan,Bank', 'string'],
+            'nama_penerima' => ['nullable', 'required_if:jenis_pencairan,Tunai', 'string'],
         ]);
 
         try {
@@ -508,6 +511,7 @@ class RkatController extends Controller
                 'nama_bank' => $request->nama_bank,
                 'nomor_rekening' => $request->nomor_rekening,
                 'atas_nama' => $request->atas_nama,
+                'nama_penerima' => $request->nama_penerima,
                 'dokumen_pendukung' => $request->dokumen_pendukung,
             ]);
 

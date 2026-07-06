@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, usePage } from '@inertiajs/react';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import {
@@ -69,9 +70,50 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
 
     // State untuk Accordion Menu
     const [openMenus, setOpenMenus] = useState({});
+    // State untuk Flyout Hover Menu (minimized mode)
+    const [hoveredMenu, setHoveredMenu] = useState(null);
+    const [flyoutPos, setFlyoutPos] = useState({ top: 0, left: 0 });
+    const hoverTimeoutRef = useRef(null);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+        };
+    }, []);
+
+    // Close flyout on route change or when toggling minimize
+    useEffect(() => {
+        setHoveredMenu(null);
+    }, [currentPath, isMinimized]);
+
+    const handleMouseEnter = useCallback((name, buttonEl) => {
+        if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+        if (buttonEl) {
+            const rect = buttonEl.getBoundingClientRect();
+            setFlyoutPos({ top: rect.top, left: rect.right + 8 });
+        }
+        setHoveredMenu(name);
+    }, []);
+
+    const handleMouseLeave = useCallback(() => {
+        hoverTimeoutRef.current = setTimeout(() => {
+            setHoveredMenu(null);
+        }, 300);
+    }, []);
 
     const toggleMenu = (name) => {
         setOpenMenus(prev => ({ ...prev, [name]: !prev[name] }));
+    };
+
+    // Filter children berdasarkan permission
+    const getVisibleChildren = (children) => {
+        if (!children) return [];
+        return children.filter(child => {
+            if (child.adminOnly && !isAdmin()) return false;
+            if (child.hideForInputer && role === 'Inputer') return false;
+            return true;
+        });
     };
 
     const NavItem = ({ item, isChild = false }) => {
@@ -126,18 +168,78 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
         );
 
         if (hasChildren) {
+            // Mode Minimized: Flyout Popup on Hover (via Portal)
             if (isMinimized) {
+                const visibleChildren = getVisibleChildren(item.children);
+                const isFlyoutOpen = hoveredMenu === item.name;
+
                 return (
-                    <Tooltip delayDuration={0}>
-                        <TooltipTrigger asChild>
-                            <button onClick={toggleMinimize} className={`${baseClasses} ${padding} ${isActive ? activeClasses : inactiveClasses}`}>
-                                {content}
-                            </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="right" sideOffset={10}>
-                            {item.name}
-                        </TooltipContent>
-                    </Tooltip>
+                    <div
+                        onMouseEnter={(e) => handleMouseEnter(item.name, e.currentTarget.querySelector('button'))}
+                        onMouseLeave={handleMouseLeave}
+                    >
+                        <button 
+                            onClick={(e) => {
+                                if (isFlyoutOpen) {
+                                    setHoveredMenu(null);
+                                } else {
+                                    handleMouseEnter(item.name, e.currentTarget);
+                                }
+                            }}
+                            className={`${baseClasses} ${padding} ${isActive ? activeClasses : inactiveClasses}`}
+                        >
+                            {content}
+                        </button>
+
+                        {/* Flyout Submenu — rendered via Portal to escape overflow-hidden */}
+                        {createPortal(
+                            <div
+                                className={`fixed z-[300] transition-all duration-200 ease-in-out origin-left ${isFlyoutOpen
+                                    ? 'opacity-100 scale-100 translate-x-0 pointer-events-auto'
+                                    : 'opacity-0 scale-95 -translate-x-1 pointer-events-none'
+                                }`}
+                                style={{ top: flyoutPos.top, left: flyoutPos.left - 16 }}
+                                onMouseEnter={() => handleMouseEnter(item.name, null)}
+                                onMouseLeave={handleMouseLeave}
+                            >
+                                {/* Invisible bridge to connect sidebar icon to flyout */}
+                                <div className="pl-4">
+                                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl shadow-gray-200/50 dark:shadow-black/30 border border-gray-100 dark:border-gray-700 py-2 min-w-[220px]">
+                                        {/* Flyout Header */}
+                                        <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 mb-1">
+                                            <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                                                {item.name}
+                                            </span>
+                                        </div>
+                                        {/* Flyout Links */}
+                                        {visibleChildren.map((child, idx) => {
+                                            let childActive = currentPath === child.activePath || currentPath.startsWith(child.activePath + '/');
+                                            if (child.activePath === '/pencairan' && currentPath.startsWith('/pencairan/approval')) {
+                                                childActive = false;
+                                            }
+
+                                            return (
+                                                <Link
+                                                    key={idx}
+                                                    href={child.href}
+                                                    onClick={() => setHoveredMenu(null)}
+                                                    className={`flex items-center gap-3 px-4 py-2.5 mx-1.5 rounded-lg text-sm transition-all duration-150 ${
+                                                        childActive
+                                                            ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 font-semibold'
+                                                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-200'
+                                                    }`}
+                                                >
+                                                    <child.icon size={16} className="flex-shrink-0" />
+                                                    <span className="truncate">{child.name}</span>
+                                                </Link>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>,
+                            document.body
+                        )}
+                    </div>
                 );
             }
             // Mode Normal: Toggle Submenu
@@ -150,6 +252,7 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
                         <div className="mt-1 space-y-1 relative before:absolute before:left-6 before:top-0 before:bottom-0 before:w-px before:bg-gray-200 dark:before:bg-gray-700">
                             {item.children.map((child, idx) => {
                                 if (child.adminOnly && !isAdmin()) return null;
+                                if (child.hideForInputer && role === 'Inputer') return null;
                                 return <NavItem key={idx} item={child} isChild={true} />;
                             })}
                         </div>
@@ -207,7 +310,7 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
                 </div>
 
                 {/* Nav List */}
-                <nav className="flex-grow px-3 space-y-1 overflow-y-auto h-[calc(100vh-5rem)] scrollbar-hide pb-6 pt-4">
+                <nav className={`flex-grow px-3 space-y-1 ${isMinimized ? '' : 'overflow-y-auto'} h-[calc(100vh-5rem)] scrollbar-hide pb-6 pt-4`}>
                     {navItems.map((item, index) => {
                         // Global visibility check
                         if (item.adminOnly && !isAdmin()) return null;

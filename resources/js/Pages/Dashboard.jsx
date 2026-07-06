@@ -87,36 +87,36 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                         <div className="space-y-6">
                             {/* Baris Atas: 4 Kotak Status RKA */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <StatCard 
-                                    title="Disetujui" 
-                                    value={summary.disetujui} 
-                                    icon={<CheckCircle size={22} />} 
-                                    color="emerald" 
-                                    label="Setuju" 
+                                <StatCard
+                                    title="Disetujui RKAT"
+                                    value={summary.disetujui}
+                                    icon={<CheckCircle size={22} />}
+                                    color="emerald"
+                                    label="Setuju"
                                     description="Dokumen Disetujui"
                                 />
-                                <StatCard 
-                                    title="Revisi" 
-                                    value={summary.revisi} 
-                                    icon={<Clock size={22} />} 
-                                    color="amber" 
-                                    label="Revisi" 
+                                <StatCard
+                                    title="Revisi"
+                                    value={summary.revisi}
+                                    icon={<Clock size={22} />}
+                                    color="amber"
+                                    label="Revisi"
                                     description="Butuh Revisi"
                                 />
-                                <StatCard 
-                                    title="Ditolak" 
-                                    value={summary.ditolak} 
-                                    icon={<XCircle size={22} />} 
-                                    color="rose" 
-                                    label="Tolak" 
+                                <StatCard
+                                    title="Ditolak"
+                                    value={summary.ditolak}
+                                    icon={<XCircle size={22} />}
+                                    color="rose"
+                                    label="Tolak"
                                     description="Dokumen Ditolak"
                                 />
-                                <StatCard 
-                                    title="Total Dokumen" 
-                                    value={summary.total} 
-                                    icon={<FileText size={22} />} 
-                                    color="blue" 
-                                    label="Tahun Ini" 
+                                <StatCard
+                                    title="Total Dokumen"
+                                    value={summary.total}
+                                    icon={<FileText size={22} />}
+                                    color="blue"
+                                    label="Tahun Ini"
                                     description="Total Pengajuan RKA"
                                 />
                             </div>
@@ -126,7 +126,7 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 relative">
                                     {/* Pemisah visual vertikal (tengah) untuk layar md ke atas */}
                                     <div className="hidden md:block absolute top-0 bottom-0 left-1/2 w-px bg-gray-100 dark:bg-gray-700"></div>
-                                    
+
                                     {/* Bagian Anggaran RKA */}
                                     <div className="flex items-start gap-5">
                                         <div className="p-4 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-2xl shadow-inner shrink-0">
@@ -155,36 +155,36 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
 
                             {/* Baris Bawah: 4 Kotak Status Pencairan */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <StatCard 
-                                    title="Disetujui" 
-                                    value={summary.pencairan_disetujui} 
-                                    icon={<CheckCircle size={22} />} 
-                                    color="emerald" 
-                                    label="Setuju" 
+                                <StatCard
+                                    title="Disetujui Pencairan"
+                                    value={summary.pencairan_disetujui}
+                                    icon={<CheckCircle size={22} />}
+                                    color="emerald"
+                                    label="Setuju"
                                     description="Pencairan Disetujui"
                                 />
-                                <StatCard 
-                                    title="Revisi" 
-                                    value={summary.pencairan_revisi} 
-                                    icon={<Clock size={22} />} 
-                                    color="amber" 
-                                    label="Revisi" 
+                                <StatCard
+                                    title="Revisi"
+                                    value={summary.pencairan_revisi}
+                                    icon={<Clock size={22} />}
+                                    color="amber"
+                                    label="Revisi"
                                     description="Butuh Revisi"
                                 />
-                                <StatCard 
-                                    title="Ditolak" 
-                                    value={summary.pencairan_ditolak} 
-                                    icon={<XCircle size={22} />} 
-                                    color="rose" 
-                                    label="Tolak" 
+                                <StatCard
+                                    title="Ditolak"
+                                    value={summary.pencairan_ditolak}
+                                    icon={<XCircle size={22} />}
+                                    color="rose"
+                                    label="Tolak"
                                     description="Pencairan Ditolak"
                                 />
-                                <StatCard 
-                                    title="Total Dokumen" 
-                                    value={summary.total_pencairan_dokumen} 
-                                    icon={<FileText size={22} />} 
-                                    color="blue" 
-                                    label="Pencairan" 
+                                <StatCard
+                                    title="Total Dokumen"
+                                    value={summary.total_pencairan_dokumen}
+                                    icon={<FileText size={22} />}
+                                    color="blue"
+                                    label="Pencairan"
                                     description="Total Pengajuan Pencairan"
                                 />
                             </div>

@@ -9,6 +9,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
+import TextArea from '@/Components/TextArea';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
 
@@ -65,6 +66,80 @@ export default function Index({ auth, ikus }) {
         } else {
             closeModal();
         }
+    };
+
+    const ikkForm = useForm({
+        uuid_iku: '',
+        ikks: [{ nama_ikk: '' }]
+    });
+    
+    const [isIkkModalOpen, setIsIkkModalOpen] = useState(false);
+    const [activeIku, setActiveIku] = useState(null);
+
+    const openIkkModal = (iku) => {
+        setActiveIku(iku);
+        const newIkks = (iku && iku.ikks && iku.ikks.length > 0)
+            ? iku.ikks.map(ikk => ({
+                id_ikk: ikk.id_ikk,
+                nama_ikk: ikk.nama_ikk
+            }))
+            : [{ nama_ikk: '' }];
+
+        ikkForm.setData({
+            uuid_iku: iku.uuid,
+            ikks: newIkks
+        });
+        ikkForm.clearErrors();
+        setIsIkkModalOpen(true);
+    };
+
+    const closeIkkModal = () => {
+        setIsIkkModalOpen(false);
+        setActiveIku(null);
+        ikkForm.reset();
+    };
+
+    const submitIkk = (e) => {
+        e.preventDefault();
+
+        const isIkksValid = ikkForm.data.ikks.every(ikk => ikk.nama_ikk && ikk.nama_ikk.trim() !== '');
+        if (!isIkksValid) {
+            toast.error("Peringatan", { description: "Semua daftar kegiatan (IKK) harus diisi." });
+            return;
+        }
+
+        const toastId = toast.loading("Sedang menyimpan data...");
+        ikkForm.post(route('iku.store'), {
+            onSuccess: () => {
+                toast.success("Berhasil disimpan", { 
+                    id: toastId,
+                    description: `Data IKK berhasil diperbarui.`
+                });
+                closeIkkModal();
+            },
+            onError: () => {
+                toast.error("Gagal Menyimpan", {
+                    id: toastId,
+                    description: "Terjadi kesalahan saat menyimpan data."
+                });
+            }
+        });
+    };
+
+    const addIkkRow = () => {
+        ikkForm.setData('ikks', [...ikkForm.data.ikks, { nama_ikk: '' }]);
+    };
+
+    const removeIkkRow = (index) => {
+        const list = [...ikkForm.data.ikks];
+        list.splice(index, 1);
+        ikkForm.setData('ikks', list);
+    };
+
+    const updateIkkRow = (index, value) => {
+        const list = [...ikkForm.data.ikks];
+        list[index]['nama_ikk'] = value;
+        ikkForm.setData('ikks', list);
     };
 
     const submit = (e) => {
@@ -127,13 +202,6 @@ export default function Index({ auth, ikus }) {
                         {/* HANYA TAMPILKAN TOMBOL KELOLA JIKA ADMIN */}
                         {isAdmin() && (
                             <div className="flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
-                                <Link
-                                    href={route('iku.create')}
-                                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium transition shadow-sm h-11 whitespace-nowrap"
-                                >
-                                    <ListChecks size={18} className="shrink-0" />
-                                    Kelola Rincian IKK
-                                </Link>
                                 <button
                                     onClick={() => openModal()}
                                     className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-md text-sm font-medium shadow-sm transition h-11 whitespace-nowrap"
@@ -203,6 +271,18 @@ export default function Index({ auth, ikus }) {
                                                                 <Tooltip>
                                                                     <TooltipTrigger asChild>
                                                                         <button
+                                                                            onClick={() => openIkkModal(iku)}
+                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-indigo-300 rounded-md shadow-sm text-indigo-700 bg-white hover:bg-indigo-50 dark:bg-gray-700 dark:text-indigo-400 dark:border-indigo-900/50 dark:hover:bg-indigo-900/20 transition-colors"
+                                                                        >
+                                                                            <ListChecks size={16} />
+                                                                        </button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>Kelola IKK</TooltipContent>
+                                                                </Tooltip>
+
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <button
                                                                             onClick={() => handleDelete(iku.uuid)}
                                                                             className="inline-flex items-center justify-center w-8 h-8 border border-red-300 rounded-md shadow-sm text-red-700 bg-white hover:bg-red-50 dark:bg-gray-700 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/20 transition-colors"
                                                                         >
@@ -233,7 +313,9 @@ export default function Index({ auth, ikus }) {
                                                                     <ul className="divide-y divide-gray-100 dark:divide-gray-700/50">
                                                                         {ikkList.map((ikk, i) => (
                                                                             <li key={ikk.id_ikk} className="px-4 py-3 flex items-start gap-3 hover:bg-gray-50/80 dark:hover:bg-gray-700/30">
-                                                                                <CheckCircle2 size={16} className="text-teal-500 mt-0.5 flex-shrink-0" />
+                                                                                <span className="text-teal-600 dark:text-teal-400 font-semibold mt-0.5 flex-shrink-0 text-sm min-w-[1.25rem]">
+                                                                                    {i + 1}.
+                                                                                </span>
                                                                                 <span className="text-gray-700 dark:text-gray-300 text-sm">
                                                                                     {ikk.nama_ikk}
                                                                                 </span>
@@ -244,9 +326,9 @@ export default function Index({ auth, ikus }) {
                                                                     <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400 italic flex flex-col items-center">
                                                                         <span>Belum ada rincian IKK untuk IKU ini.</span>
                                                                         {isAdmin() && (
-                                                                            <Link href={route('iku.create')} className="text-indigo-600 hover:underline mt-1 font-medium">
+                                                                            <button type="button" onClick={() => openIkkModal(iku)} className="text-indigo-600 hover:underline mt-1 font-medium">
                                                                                 + Tambahkan IKK sekarang
-                                                                            </Link>
+                                                                            </button>
                                                                         )}
                                                                     </div>
                                                                 )}
@@ -299,6 +381,80 @@ export default function Index({ auth, ikus }) {
                         <PrimaryButton disabled={processing} className="bg-teal-600 flex items-center justify-center gap-2 px-5 py-2 text-sm font-medium text-white rounded-lg hover:bg-teal-700 focus:ring-4 focus:outline-none focus:ring-teal-300 transition-colors disabled:opacity-70 disabled:cursor-not-allowed" >
                             <Save size={18} />
                             {editData ? 'Simpan Perubahan' : 'Simpan IKU'}
+                        </PrimaryButton>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Modal Input/Edit IKK */}
+            <Modal show={isIkkModalOpen} onClose={closeIkkModal} maxWidth="2xl">
+                <form onSubmit={submitIkk} className="p-6 bg-white dark:bg-gray-800">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                        Kelola Rincian Kegiatan (IKK)
+                    </h2>
+                    <p className="text-sm text-gray-500 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+                        IKU: <span className="font-medium text-gray-900 dark:text-gray-300">{activeIku?.nama_iku}</span>
+                    </p>
+
+                    <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                        {ikkForm.data.ikks.map((item, index) => (
+                            <div key={index} className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-900/10 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all group">
+                                <div className="flex-shrink-0 mt-1">
+                                    <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm font-bold border border-indigo-100 dark:border-indigo-800 shadow-sm">
+                                        {index + 1}
+                                    </div>
+                                </div>
+                                
+                                <div className="flex-grow">
+                                    <InputLabel value={`Nama Kegiatan / Indikator ${index + 1}`} className="sr-only" />
+                                    <TextArea
+                                        value={item.nama_ikk}
+                                        onChange={(e) => updateIkkRow(index, e.target.value)}
+                                        className="w-full text-sm leading-relaxed"
+                                        placeholder={`Masukkan deskripsi lengkap kegiatan/indikator di sini...`}
+                                        rows={2}
+                                        isFocused={index === ikkForm.data.ikks.length - 1 && index > 0}
+                                    />
+                                    {ikkForm.errors[`ikks.${index}.nama_ikk`] && (
+                                        <p className="text-sm text-red-600 mt-1 font-medium flex items-center gap-1">
+                                            <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                                            {ikkForm.errors[`ikks.${index}.nama_ikk`]}
+                                        </p>
+                                    )}
+                                </div>
+                                
+                                <div className="flex-shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => removeIkkRow(index)}
+                                        className="p-2.5 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
+                                        title="Hapus baris ini"
+                                        disabled={ikkForm.data.ikks.length === 1}
+                                    >
+                                        <Trash2 size={20} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <button
+                            type="button"
+                            onClick={addIkkRow}
+                            className="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-800 rounded-md font-semibold text-xs text-indigo-600 dark:text-indigo-400 uppercase tracking-widest shadow-sm hover:bg-indigo-50 dark:hover:bg-indigo-900/30 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150"
+                        >
+                            <Plus size={16} className="mr-2" /> Tambah Baris
+                        </button>
+                        <InputError message={ikkForm.errors.ikks} className="mt-2" />
+                        <InputError message={ikkForm.errors.uuid_iku} className="mt-2" />
+                    </div>
+
+                    <div className="mt-6 flex justify-end gap-3 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 pt-6">
+                        <SecondaryButton type="button" className="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-400 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors" onClick={closeIkkModal}>Tutup</SecondaryButton>
+                        <PrimaryButton disabled={ikkForm.processing} className="bg-indigo-600 flex items-center justify-center gap-2 px-5 py-2 text-sm font-medium text-white rounded-lg hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300 transition-colors disabled:opacity-70 disabled:cursor-not-allowed" >
+                            <Save size={18} />
+                            Simpan Perubahan
                         </PrimaryButton>
                     </div>
                 </form>

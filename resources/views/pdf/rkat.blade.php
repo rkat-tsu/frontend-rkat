@@ -407,6 +407,24 @@
                 <div class="checkbox-group" style="margin-top: 3px;">
                     <div class="checkbox">{{ $detail->jenis_pencairan == 'Tunai' ? 'v' : '' }}</div> Tunai
                 </div>
+                @if ($detail->jenis_pencairan == 'Tunai')
+                <div style="margin-left: 15px; margin-top: 2px;">
+                    <table style="border: none; margin: 0; padding: 0;">
+                        <tr>
+                            <td style="border: none; padding: 0; width: 100px;">Nama Pengusul</td>
+                            <td style="border: none; padding: 0;">: {{ $detail->pjawab ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="border: none; padding: 0;">Nama Pemberi</td>
+                            <td style="border: none; padding: 0;">: BAUK</td>
+                        </tr>
+                        <tr>
+                            <td style="border: none; padding: 0;">Nama Penerima</td>
+                            <td style="border: none; padding: 0;">: {{ $detail->nama_penerima ?? '-' }}</td>
+                        </tr>
+                    </table>
+                </div>
+                @endif
             </td>
         </tr>
     </table>

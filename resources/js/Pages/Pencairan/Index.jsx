@@ -396,7 +396,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                             <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">{item.rkat_header?.unit?.nama_unit || '-'}</td>
                                             <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
                                                 <span className={`px-2.5 py-1 inline-flex whitespace-nowrap text-xs leading-5 font-bold rounded-md ${getStatusColor(item.status_pencairan)}`}>
-                                                    {(item.status_pencairan || '').replace(/_/g, ' ')}
+                                                    {item.status_pencairan === 'Disetujui_Final' ? 'Disetujui Pencairan' : (item.status_pencairan || '').replace(/_/g, ' ')}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center text-gray-800 dark:text-gray-200">{formatDate(item.tanggal_pengajuan)}</td>

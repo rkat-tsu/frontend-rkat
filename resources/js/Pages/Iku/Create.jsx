@@ -186,7 +186,7 @@ export default function Create({ auth, ikus }) {
                                                 {errors[`ikks.${index}.nama_ikk`] && (
                                                     <p className="text-sm text-red-600 mt-1 font-medium flex items-center gap-1">
                                                         <span className="w-1 h-1 bg-red-600 rounded-full"></span>
-                                                        Nama kegiatan tidak boleh kosong.
+                                                        {errors[`ikks.${index}.nama_ikk`]}
                                                     </p>
                                                 )}
                                             </div>
