@@ -28,34 +28,37 @@ class IkuController extends Controller
 
     public function storeMaster(Request $request)
     {
-        $rules = [
-            'uuid'     => ['nullable', 'string', 'exists:ikus,uuid'],
-        ];
+        $namaIku = trim((string) $request->input('nama_iku', ''));
+        $request->merge(['nama_iku' => $namaIku]);
 
-        if ($request->filled('uuid')) {
-            $iku = Iku::where('uuid', $request->uuid)->first();
-            $rules['nama_iku'] = [
-                'required', 
-                'string', 
-                'max:500', 
-                \Illuminate\Validation\Rule::unique('ikus', 'nama_iku')->ignore($iku->id_iku, 'id_iku')
-            ];
-        } else {
-            $rules['nama_iku'] = [
-                'required', 
-                'string', 
-                'max:500', 
-                'unique:ikus,nama_iku'
-            ];
+        $uuid = $request->input('uuid');
+        $existingIku = $uuid ? Iku::where('uuid', $uuid)->first() : null;
+
+        // Pengecekan keunikan nama IKU (case-insensitive & trimmed)
+        $duplicateQuery = Iku::query()
+            ->whereRaw('LOWER(TRIM(nama_iku)) = ?', [mb_strtolower($namaIku)]);
+
+        if ($existingIku) {
+            $duplicateQuery->where('id_iku', '!=', $existingIku->id_iku);
         }
 
+        if ($duplicateQuery->exists()) {
+            return redirect()->back()->withErrors([
+                'nama_iku' => 'Nama IKU tersebut sudah terdaftar di database.'
+            ])->withInput();
+        }
+
+        $rules = [
+            'uuid' => ['nullable', 'string', 'exists:ikus,uuid'],
+            'nama_iku' => ['required', 'string', 'max:500'],
+        ];
+
         $validated = $request->validate($rules, [
-            'nama_iku.unique' => 'Nama IKU tersebut sudah terdaftar.',
+            'nama_iku.required' => 'Nama IKU wajib diisi.',
         ]);
 
-        if (isset($validated['uuid'])) {
-            // Langsung update melalui Query Builder untuk efisiensi (1 Query) dan menghindari peringatan IDE
-            Iku::query()->where('uuid', $validated['uuid'])->update([
+        if ($existingIku) {
+            $existingIku->update([
                 'nama_iku' => $validated['nama_iku']
             ]);
             $message = 'Nama IKU berhasil diperbarui.';

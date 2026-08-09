@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import CustomSelect from '@/Components/CustomSelect';
-import { Search, Plus, Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import StatusBadge from '@/Components/StatusBadge';
+import ActionButton, { ActionGroup } from '@/Components/ActionButton';
+import { Search, Plus, Edit2, Trash2, CheckCircle, XCircle, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { usePermission } from '@/hooks/usePermission';
 import { toast } from 'sonner';
@@ -10,16 +12,25 @@ import { toast } from 'sonner';
 export default function Index({ users, filters = {}, units = [] }) {
     const { isAdmin, user: authUser } = usePermission();
     
-    const [searchTerm, setSearchTerm] = useState(filters.q || '');
-    const [selectedUnit, setSelectedUnit] = useState(filters.unit || '');
-    const [perPage, setPerPage] = useState(filters.per_page || '15');
+    const [searchTerm, setSearchTerm] = useState(filters?.q || '');
+    const [selectedUnit, setSelectedUnit] = useState(filters?.unit || '');
+    const [perPage, setPerPage] = useState(filters?.per_page || '15');
+    const [sortBy, setSortBy] = useState(filters?.sort_by || 'nama_lengkap');
+    const [sortDirection, setSortDirection] = useState(filters?.sort_direction || 'asc');
 
-    const applyFilters = (q, unit, pp) => {
+    const applyFilters = (q, unit, pp, sb = sortBy, sd = sortDirection) => {
         router.get(
             route('user.index'),
-            { q, unit, per_page: pp },
+            { q, unit, per_page: pp, sort_by: sb, sort_direction: sd },
             { preserveState: true, preserveScroll: true, replace: true }
         );
+    };
+
+    const handleSort = (field) => {
+        const newDirection = (sortBy === field && sortDirection === 'asc') ? 'desc' : 'asc';
+        setSortBy(field);
+        setSortDirection(newDirection);
+        applyFilters(searchTerm, selectedUnit, perPage, field, newDirection);
     };
 
     // Debounce hanya untuk search
@@ -35,12 +46,12 @@ export default function Index({ users, filters = {}, units = [] }) {
     // Unit dan perPage langsung trigger (tidak perlu debounce)
     const handleUnitChange = (val) => {
         setSelectedUnit(val);
-        applyFilters(searchTerm, val, perPage);
+        applyFilters(searchTerm, val, perPage, sortBy, sortDirection);
     };
 
     const handlePerPageChange = (val) => {
         setPerPage(val);
-        applyFilters(searchTerm, selectedUnit, val);
+        applyFilters(searchTerm, selectedUnit, val, sortBy, sortDirection);
     };
 
     const unitOptions = [
@@ -113,24 +124,96 @@ export default function Index({ users, filters = {}, units = [] }) {
                             <table className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
                                 <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                     <tr>
-                                        <th className="px-4 py-3 border-b border-gray-300 dark:border-gray-600 font-medium">Nama</th>
-                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">NIK</th>
-                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Email / Username</th>
-                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Peran</th>
-                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Unit ID</th>
-                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Unit</th>
-                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Status</th>
+                                        <th className="px-4 py-3 border-b border-gray-300 dark:border-gray-600 font-medium text-center w-12">No</th>
+                                        <th 
+                                            className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('nama_lengkap')}
+                                        >
+                                            <div className="flex items-center justify-center">
+                                                <span>Nama Lengkap</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'nama_lengkap' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-blue-600 dark:text-blue-400" /> : <ArrowDown size={14} className="text-blue-600 dark:text-blue-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('nik')}
+                                        >
+                                            <div className="flex items-center justify-center">
+                                                <span>NIK</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'nik' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-blue-600 dark:text-blue-400" /> : <ArrowDown size={14} className="text-blue-600 dark:text-blue-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('email')}
+                                        >
+                                            <div className="flex items-center justify-center">
+                                                <span>Email</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'email' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-blue-600 dark:text-blue-400" /> : <ArrowDown size={14} className="text-blue-600 dark:text-blue-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('peran')}
+                                        >
+                                            <div className="flex items-center justify-center">
+                                                <span>Peran / Unit</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'peran' || sortBy === 'unit' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-blue-600 dark:text-blue-400" /> : <ArrowDown size={14} className="text-blue-600 dark:text-blue-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('is_aktif')}
+                                        >
+                                            <div className="flex items-center justify-center">
+                                                <span>Status</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'is_aktif' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-blue-600 dark:text-blue-400" /> : <ArrowDown size={14} className="text-blue-600 dark:text-blue-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
                                         <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filtered.length > 0 ? (
-                                        filtered.map(user => (
+                                        filtered.map((user, index) => (
                                             <tr key={user.id_user} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                                                <td className="px-4 py-3 border-b border-gray-300 dark:border-gray-700 font-medium text-gray-900 dark:text-white">
+                                                <td className="px-4 py-3 border-b border-gray-300 dark:border-gray-700 text-center text-gray-500 text-sm">
+                                                    {(users.from || 1) + index}
+                                                </td>
+                                                <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 font-medium text-gray-900 dark:text-white">
                                                     {user.nama_lengkap}
                                                 </td>
-                                                <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">
+                                                <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center text-gray-800 dark:text-gray-200">
                                                     {user.nik || '-'}
                                                 </td>
                                                 <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700">
@@ -139,79 +222,60 @@ export default function Index({ users, filters = {}, units = [] }) {
                                                         <span className="text-xs text-gray-500 dark:text-gray-400">{user.username || '-'}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                    <span className={`px-2.5 py-1 text-xs rounded-md font-medium whitespace-nowrap inline-flex ${
-                                                        user.peran === 'Admin' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                                                    }`}>
-                                                        {user.peran.replace(/_/g, ' ')}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                    {user.unit?.id_unit ?? user.id_unit ?? '-'}
-                                                </td>
                                                 <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700">
-                                                    {user.unit?.nama_unit || '-'}
-                                                </td>
-                                                <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                    <div className="flex items-center justify-center">
-                                                        {user.is_aktif ? (
-                                                            <CheckCircle className="w-5 h-5 text-green-500" title="Aktif" />
-                                                        ) : (
-                                                            <XCircle className="w-5 h-5 text-red-500" title="Tidak Aktif" />
-                                                        )}
+                                                    <div className="flex flex-col gap-1">
+                                                        <div>
+                                                            <span className={`px-2.5 py-0.5 text-xs rounded-md font-medium whitespace-nowrap inline-flex ${
+                                                                user.peran === 'Admin' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                                                            }`}>
+                                                                {user.peran.replace(/_/g, ' ')}
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                                            {user.unit?.nama_unit || '-'}
+                                                        </span>
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                    <div className="flex justify-center gap-1.5">
-                                                        <TooltipProvider>
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <Link
-                                                                        href={route('user.edit', user.uuid)}
-                                                                        className="inline-flex items-center justify-center w-8 h-8 border border-blue-300 rounded-md shadow-sm text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-900/50 dark:hover:bg-blue-900/20 transition-colors"
-                                                                    >
-                                                                        <Edit2 size={16} /> 
-                                                                    </Link>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>Edit User</TooltipContent>
-                                                            </Tooltip>
-                                                            
-                                                            {authUser?.id_user !== user.id_user && (
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                toast.warning("Konfirmasi Hapus", {
-                                                                                    description: "Yakin ingin menghapus user ini?",
-                                                                                    action: {
-                                                                                        label: "Ya, Hapus",
-                                                                                        onClick: () => {
-                                                                                            const toastId = toast.loading("Sedang menghapus...");
-                                                                                            router.delete(route('user.destroy', user.uuid), {
-                                                                                                onSuccess: () => toast.success("Berhasil dihapus", { id: toastId }),
-                                                                                                onError: () => toast.error("Gagal menghapus", { id: toastId })
-                                                                                            });
-                                                                                        }
-                                                                                    },
-                                                                                    cancel: { label: "Batal" }
+                                                    <StatusBadge status={user.is_aktif ? 'Aktif' : 'Non-Aktif'} size="sm" />
+                                                </td>
+                                                <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center">
+                                                    <ActionGroup>
+                                                        <ActionButton
+                                                            variant="edit"
+                                                            tooltip="Edit User"
+                                                            href={route('user.edit', user.uuid)}
+                                                        />
+                                                        
+                                                        {authUser?.id_user !== user.id_user && (
+                                                            <ActionButton
+                                                                variant="delete"
+                                                                tooltip="Hapus User"
+                                                                onClick={() => {
+                                                                    toast.warning("Konfirmasi Hapus", {
+                                                                        description: "Yakin ingin menghapus user ini?",
+                                                                        action: {
+                                                                            label: "Ya, Hapus",
+                                                                            onClick: () => {
+                                                                                const toastId = toast.loading("Sedang menghapus...");
+                                                                                router.delete(route('user.destroy', user.uuid), {
+                                                                                    onSuccess: () => toast.success("Berhasil dihapus", { id: toastId }),
+                                                                                    onError: () => toast.error("Gagal menghapus", { id: toastId })
                                                                                 });
-                                                                            }}
-                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-red-300 rounded-md shadow-sm text-red-700 bg-white hover:bg-red-50 dark:bg-gray-700 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/20 transition-colors"
-                                                                        >
-                                                                            <Trash2 size={16} />
-                                                                        </button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent>Hapus User</TooltipContent>
-                                                                </Tooltip>
-                                                            )}
-                                                        </TooltipProvider>
-                                                    </div>
+                                                                            }
+                                                                        },
+                                                                        cancel: { label: "Batal" }
+                                                                    });
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </ActionGroup>
                                                 </td>
                                             </tr>
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="8" className="px-6 py-8 text-center text-sm text-gray-500 border-b border-gray-300">
+                                            <td colSpan="7" className="px-6 py-8 text-center text-sm text-gray-500 border-b border-gray-300">
                                                 Tidak ada data akun pengguna ditemukan.
                                             </td>
                                         </tr>

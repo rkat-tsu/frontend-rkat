@@ -73,6 +73,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // LPJ
     Route::get('/lpj', [LpjController::class, 'index'])->name('lpj.index');
+    Route::post('/lpj', [LpjController::class, 'store'])->name('lpj.store');
+    Route::get('/lpj/{lpj}', [LpjController::class, 'show'])->name('lpj.show');
+    Route::put('/lpj/{lpj}', [LpjController::class, 'update'])->name('lpj.update');
+    Route::post('/lpj/{lpj}/submit', [LpjController::class, 'submit'])->name('lpj.submit');
+    Route::post('/lpj/{lpj}/approve', [LpjController::class, 'approve'])->name('lpj.approve');
+    Route::get('/lpj/{lpj}/export', [LpjController::class, 'exportPdf'])->name('lpj.export');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -28,7 +28,7 @@ class UserController extends Controller
     {
         Log::debug('[User Admin] Viewing Index', ['search' => $request->get('q'), 'unit' => $request->get('unit')]);
 
-        $query = User::with('unit')->orderBy('nama_lengkap', 'asc');
+        $query = User::with('unit');
 
         if ($request->filled('q')) {
             $q = $request->get('q');
@@ -48,11 +48,24 @@ class UserController extends Controller
         $perPage = request()->get('per_page', 20);
         $perPage = $perPage === 'all' ? 10000 : (int) $perPage;
 
+        $sortBy = $request->input('sort_by', 'nama_lengkap');
+        $sortDirection = $request->input('sort_direction', 'asc');
+
+        if ($sortBy === 'unit') {
+            $query->join('unit', 'users.id_unit', '=', 'unit.id_unit')
+                  ->orderBy('unit.nama_unit', $sortDirection)
+                  ->select('users.*');
+        } elseif (in_array($sortBy, ['nama_lengkap', 'username', 'email', 'peran', 'is_aktif'])) {
+            $query->orderBy("users.$sortBy", $sortDirection);
+        } else {
+            $query->orderBy('users.nama_lengkap', 'asc');
+        }
+
         $users = $query->paginate($perPage)->onEachSide(0)->withQueryString();
 
         return Inertia::render('Admin/User/Index', [
             'users' => $users,
-            'filters' => $request->only(['q', 'unit', 'per_page']),
+            'filters' => $request->only(['q', 'unit', 'per_page', 'sort_by', 'sort_direction']),
             'units' => Unit::orderBy('nama_unit', 'asc')->get(),
         ]);
     }

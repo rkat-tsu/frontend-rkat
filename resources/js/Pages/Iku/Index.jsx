@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import ActionButton, { ActionGroup } from '@/Components/ActionButton';
 import { Plus, Edit2, Trash2, ListChecks, ChevronDown, ChevronRight, CheckCircle2, Save } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import Modal from '@/Components/Modal';
@@ -145,8 +146,20 @@ export default function Index({ auth, ikus }) {
     const submit = (e) => {
         e.preventDefault();
         
-        if (!data.nama_iku) {
+        const trimmedNama = (data.nama_iku || '').trim();
+        if (!trimmedNama) {
             toast.error("Gagal Menyimpan", { description: "Nama IKU wajib diisi." });
+            return;
+        }
+
+        // Cek duplikasi nama IKU di frontend (case-insensitive & trimmed)
+        const isDuplicate = (ikus || []).some(iku => 
+            iku.nama_iku && iku.nama_iku.trim().toLowerCase() === trimmedNama.toLowerCase() && 
+            iku.uuid !== data.uuid
+        );
+
+        if (isDuplicate) {
+            toast.error("Gagal Menyimpan", { description: `Nama IKU "${trimmedNama}" sudah ada di database.` });
             return;
         }
 
@@ -156,8 +169,9 @@ export default function Index({ auth, ikus }) {
                 toast.success("Berhasil", { id: toastId, description: editData ? `Data IKU ${data.nama_iku} berhasil diperbarui.` : `IKU baru ${data.nama_iku} berhasil ditambahkan.` });
                 closeModal();
             },
-            onError: () => {
-                toast.error("Gagal Menyimpan", { id: toastId, description: "Terdapat kesalahan saat menyimpan data." });
+            onError: (errs) => {
+                const errorMessage = errs.nama_iku || "Terdapat kesalahan saat menyimpan data.";
+                toast.error("Gagal Menyimpan", { id: toastId, description: errorMessage });
             }
         });
     };
@@ -253,46 +267,25 @@ export default function Index({ auth, ikus }) {
                                                 </td>
 
                                                  {isAdmin() && (
-                                                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                        <div className="flex justify-end gap-1.5">
-                                                            <TooltipProvider>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <button
-                                                                            onClick={() => openModal(iku)}
-                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-amber-300 rounded-md shadow-sm text-amber-700 bg-white hover:bg-amber-50 dark:bg-gray-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-900/20 transition-colors"
-                                                                        >
-                                                                            <Edit2 size={16} />
-                                                                        </button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent>Ubah Nama IKU</TooltipContent>
-                                                                </Tooltip>
-
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <button
-                                                                            onClick={() => openIkkModal(iku)}
-                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-indigo-300 rounded-md shadow-sm text-indigo-700 bg-white hover:bg-indigo-50 dark:bg-gray-700 dark:text-indigo-400 dark:border-indigo-900/50 dark:hover:bg-indigo-900/20 transition-colors"
-                                                                        >
-                                                                            <ListChecks size={16} />
-                                                                        </button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent>Kelola IKK</TooltipContent>
-                                                                </Tooltip>
-
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <button
-                                                                            onClick={() => handleDelete(iku.uuid)}
-                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-red-300 rounded-md shadow-sm text-red-700 bg-white hover:bg-red-50 dark:bg-gray-700 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/20 transition-colors"
-                                                                        >
-                                                                            <Trash2 size={16} />
-                                                                        </button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent>Hapus IKU</TooltipContent>
-                                                                </Tooltip>
-                                                            </TooltipProvider>
-                                                        </div>
+                                                    <td className="px-6 py-4 border-b border-l border-gray-200 dark:border-gray-700 text-center">
+                                                        <ActionGroup>
+                                                            <ActionButton
+                                                                variant="edit"
+                                                                tooltip="Ubah Nama IKU"
+                                                                onClick={() => openModal(iku)}
+                                                            />
+                                                            <ActionButton
+                                                                icon={ListChecks}
+                                                                tooltip="Kelola IKK"
+                                                                onClick={() => openIkkModal(iku)}
+                                                                className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-900/50"
+                                                            />
+                                                            <ActionButton
+                                                                variant="delete"
+                                                                tooltip="Hapus IKU"
+                                                                onClick={() => handleDelete(iku.uuid)}
+                                                            />
+                                                        </ActionGroup>
                                                     </td>
                                                 )}
                                             </tr>

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import ActionButton, { ActionGroup } from '@/Components/ActionButton';
 import { Head, Link, router } from '@inertiajs/react';
 import CustomSelect from '@/Components/CustomSelect';
 import { Monitor, BarChart3, Clock, FileText, Eye, PieChart as PieChartIcon } from 'lucide-react';
@@ -258,21 +259,13 @@ export default function Index({
                                         </td>
                                         {isAdmin() && (
                                             <td className="px-6 py-4 border-b border-l border-gray-200 dark:border-gray-700 text-center">
-                                                <div className="flex justify-center">
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <Link
-                                                                    href={route('daftar-ajuan.index', { unit_id: item.id_unit, tahun: selectedYear })}
-                                                                    className="inline-flex items-center justify-center w-8 h-8 border border-indigo-200 dark:border-indigo-900/50 rounded-md shadow-sm text-indigo-700 dark:text-indigo-300 bg-white hover:bg-indigo-50 dark:bg-gray-700 dark:hover:bg-indigo-900/20 transition-colors"
-                                                                >
-                                                                    <Eye size={16} />
-                                                                </Link>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>Detail RKAT</TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
-                                                </div>
+                                                <ActionGroup>
+                                                    <ActionButton
+                                                        variant="detail"
+                                                        tooltip="Detail RKAT"
+                                                        href={route('daftar-ajuan.index', { unit_id: item.id_unit, tahun: selectedYear })}
+                                                    />
+                                                </ActionGroup>
                                             </td>
                                         )}
                                     </tr>

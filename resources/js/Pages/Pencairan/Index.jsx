@@ -30,8 +30,11 @@ class ErrorBoundary extends Component {
 }
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Plus, Search, Send, Edit2, FileDown, Eye, Save, Info } from 'lucide-react';
+import { Plus, Search, Send, Edit2, FileDown, Eye, Save, Info, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
+import DateInput from '@/Components/DateInput';
+import ActionButton, { ActionGroup } from '@/Components/ActionButton';
+import StatusBadge from '@/Components/StatusBadge';
 import Modal from '@/Components/Modal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
@@ -58,9 +61,12 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
     const { isAdmin } = usePermission();
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [tahun, setTahun] = useState(filters?.tahun || '');
+    const [bulan, setBulan] = useState(filters?.bulan || '');
     const [status, setStatus] = useState(filters?.status || '');
     const [unitId, setUnitId] = useState(filters?.unit_id || '');
     const [perPage, setPerPage] = useState(filters?.per_page || '15');
+    const [sortBy, setSortBy] = useState(filters?.sort_by || 'created_at');
+    const [sortDirection, setSortDirection] = useState(filters?.sort_direction || 'desc');
 
     useEffect(() => {
         if (flash?.success) toast.success(flash.success);
@@ -208,12 +214,19 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
         });
     };
 
-    const applyFilters = (newSearch, newTahun, newStatus, newUnitId, newPerPage) => {
+    const applyFilters = (newSearch, newTahun, newBulan, newStatus, newUnitId, newPerPage, newSortBy = sortBy, newSortDirection = sortDirection) => {
         router.get(
             route('pencairan.index'),
-            { search: newSearch, tahun: newTahun, status: newStatus, unit_id: newUnitId, per_page: newPerPage },
+            { search: newSearch, tahun: newTahun, bulan: newBulan, status: newStatus, unit_id: newUnitId, per_page: newPerPage, sort_by: newSortBy, sort_direction: newSortDirection },
             { preserveState: true, preserveScroll: true, replace: true }
         );
+    };
+
+    const handleSort = (field) => {
+        const newDirection = (sortBy === field && sortDirection === 'asc') ? 'desc' : 'asc';
+        setSortBy(field);
+        setSortDirection(newDirection);
+        applyFilters(searchTerm, tahun, bulan, status, unitId, perPage, field, newDirection);
     };
 
     const handleSearchChange = (e) => {
@@ -223,7 +236,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             if (searchTerm !== (filters?.search || '')) {
-                applyFilters(searchTerm, tahun, status, unitId, perPage);
+                applyFilters(searchTerm, tahun, bulan, status, unitId, perPage, sortBy, sortDirection);
             }
         }, 300);
 
@@ -232,19 +245,22 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
 
     const handlePerPageChange = (val) => {
         setPerPage(val);
-        applyFilters(searchTerm, tahun, status, unitId, val);
+        applyFilters(searchTerm, tahun, bulan, status, unitId, val, sortBy, sortDirection);
     };
 
     const handleFilterChange = (filterType, value) => {
         if (filterType === 'tahun') {
             setTahun(value);
-            applyFilters(searchTerm, value, status, unitId, perPage);
+            applyFilters(searchTerm, value, bulan, status, unitId, perPage, sortBy, sortDirection);
+        } else if (filterType === 'bulan') {
+            setBulan(value);
+            applyFilters(searchTerm, tahun, value, status, unitId, perPage, sortBy, sortDirection);
         } else if (filterType === 'status') {
             setStatus(value);
-            applyFilters(searchTerm, tahun, value, unitId, perPage);
+            applyFilters(searchTerm, tahun, bulan, value, unitId, perPage, sortBy, sortDirection);
         } else if (filterType === 'unit_id') {
             setUnitId(value);
-            applyFilters(searchTerm, tahun, status, value, perPage);
+            applyFilters(searchTerm, tahun, bulan, status, value, perPage, sortBy, sortDirection);
         }
     };
 
@@ -318,6 +334,29 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                     />
                                 </div>
 
+                                <div className="flex-1 min-w-[140px] lg:w-36">
+                                    <CustomSelect
+                                        value={bulan}
+                                        onChange={(e) => handleFilterChange('bulan', e.target.value)}
+                                        className="h-11"
+                                        options={[
+                                            { value: '', label: 'Semua Bulan' },
+                                            { value: '1', label: 'Januari' },
+                                            { value: '2', label: 'Februari' },
+                                            { value: '3', label: 'Maret' },
+                                            { value: '4', label: 'April' },
+                                            { value: '5', label: 'Mei' },
+                                            { value: '6', label: 'Juni' },
+                                            { value: '7', label: 'Juli' },
+                                            { value: '8', label: 'Agustus' },
+                                            { value: '9', label: 'September' },
+                                            { value: '10', label: 'Oktober' },
+                                            { value: '11', label: 'November' },
+                                            { value: '12', label: 'Desember' }
+                                        ]}
+                                    />
+                                </div>
+
                                 {isAdmin() && units.length > 0 && (
                                     <div className="flex-1 min-w-[200px] lg:w-56">
                                         <CustomSelect
@@ -369,10 +408,66 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                             <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                 <tr>
                                     <th className="px-4 py-3 border-b border-gray-300 dark:border-gray-600 font-medium text-center uppercase tracking-wider text-xs">No</th>
-                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium uppercase tracking-wider text-xs">Nomor RKAT</th>
-                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium uppercase tracking-wider text-xs">Unit</th>
-                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center uppercase tracking-wider text-xs">Status</th>
-                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center uppercase tracking-wider text-xs">Tgl Pengajuan</th>
+                                    <th 
+                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium uppercase tracking-wider text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                        onClick={() => handleSort('nomor_dokumen')}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span>Nomor RKAT</span>
+                                            <div className="flex flex-col ml-1">
+                                                {sortBy === 'nomor_dokumen' ? (
+                                                    sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                ) : (
+                                                    <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th 
+                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium uppercase tracking-wider text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                        onClick={() => handleSort('unit')}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span>Unit</span>
+                                            <div className="flex flex-col ml-1">
+                                                {sortBy === 'unit' ? (
+                                                    sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                ) : (
+                                                    <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th 
+                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center uppercase tracking-wider text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                        onClick={() => handleSort('status_pencairan')}
+                                    >
+                                        <div className="flex items-center justify-center">
+                                            <span>Status</span>
+                                            <div className="flex flex-col ml-1">
+                                                {sortBy === 'status_pencairan' ? (
+                                                    sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                ) : (
+                                                    <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th 
+                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center uppercase tracking-wider text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                        onClick={() => handleSort('tanggal_pengajuan')}
+                                    >
+                                        <div className="flex items-center justify-center">
+                                            <span>Tgl Pengajuan</span>
+                                            <div className="flex flex-col ml-1">
+                                                {sortBy === 'tanggal_pengajuan' ? (
+                                                    sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                ) : (
+                                                    <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </th>
                                     <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center uppercase tracking-wider text-xs">Tanggal Pelaksanaan</th>
                                     <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center uppercase tracking-wider text-xs">Aksi</th>
                                 </tr>
@@ -395,74 +490,52 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                             </td>
                                             <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">{item.rkat_header?.unit?.nama_unit || '-'}</td>
                                             <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                <span className={`px-2.5 py-1 inline-flex whitespace-nowrap text-xs leading-5 font-bold rounded-md ${getStatusColor(item.status_pencairan)}`}>
-                                                    {item.status_pencairan === 'Disetujui_Final' ? 'Disetujui Pencairan' : (item.status_pencairan || '').replace(/_/g, ' ')}
-                                                </span>
+                                                <StatusBadge status={item.status_pencairan} />
                                             </td>
                                             <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center text-gray-800 dark:text-gray-200">{formatDate(item.tanggal_pengajuan)}</td>
                                             <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center text-gray-800 dark:text-gray-200">
-                                                {(item.rkat_header?.rkat_details?.length > 0) ? (
-                                                    <div className="text-xs whitespace-nowrap">
-                                                        {formatDate(item.rkat_header.rkat_details[0].jadwal_pelaksanaan_mulai)}<br />s.d<br />{formatDate(item.rkat_header.rkat_details[0].jadwal_pelaksanaan_akhir)}
-                                                    </div>
-                                                ) : '-'}
+                                                {(() => {
+                                                    const details = item.rkat_header?.rkat_details || item.rkat_header?.rkatDetails;
+                                                    if (details && details.length > 0 && details[0]?.jadwal_pelaksanaan_mulai) {
+                                                        return (
+                                                            <div className="text-xs whitespace-nowrap">
+                                                                {formatDate(details[0].jadwal_pelaksanaan_mulai)}<br />s.d<br />{formatDate(details[0].jadwal_pelaksanaan_akhir)}
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return '-';
+                                                })()}
                                             </td>
                                             <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                <div className="flex justify-end gap-1.5">
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <Link
-                                                                    href={route('pencairan.show', item.uuid || item.id_pencairan)}
-                                                                    className="inline-flex items-center justify-center w-8 h-8 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 transition-colors"
-                                                                >
-                                                                    <Eye size={16} />
-                                                                </Link>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>Detail Pencairan</TooltipContent>
-                                                        </Tooltip>
- 
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <a
-                                                                    href={route('pencairan.export', item.uuid || item.id_pencairan)}
-                                                                    target="_blank"
-                                                                    className="inline-flex items-center justify-center w-8 h-8 border border-blue-300 rounded-md shadow-sm text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-900/50 dark:hover:bg-blue-900/20 transition-colors"
-                                                                >
-                                                                    <FileDown size={16} />
-                                                                </a>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>Export PDF</TooltipContent>
-                                                        </Tooltip>
- 
-                                                        {(item.status_pencairan === 'Draft' || item.status_pencairan === 'Revisi') && (isAdmin() || auth.user.id_user == item.diajukan_oleh) && (
-                                                            <>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <button
-                                                                            onClick={() => handleEdit(item)}
-                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-yellow-300 rounded-md shadow-sm text-yellow-700 bg-white hover:bg-yellow-50 dark:bg-gray-700 dark:text-yellow-400 dark:border-yellow-900/50 dark:hover:bg-yellow-900/20 transition-colors"
-                                                                        >
-                                                                            <Edit2 size={16} />
-                                                                        </button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent>Edit Pencairan</TooltipContent>
-                                                                </Tooltip>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <button
-                                                                            onClick={() => handleAjukan(item)}
-                                                                            className="inline-flex items-center justify-center w-8 h-8 bg-teal-600 text-white rounded-md shadow-sm hover:bg-teal-700 transition"
-                                                                        >
-                                                                        <Send size={16} />
-                                                                    </button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>Ajukan Pencairan</TooltipContent>
-                                                            </Tooltip>
-                                                            </>
-                                                        )}
-                                                    </TooltipProvider>
-                                                </div>
+                                                <ActionGroup>
+                                                    <ActionButton
+                                                        variant="detail"
+                                                        tooltip="Detail Pencairan"
+                                                        href={route('pencairan.show', item.uuid || item.id_pencairan)}
+                                                    />
+
+                                                    <ActionButton
+                                                        variant="export"
+                                                        tooltip="Export PDF"
+                                                        href={route('pencairan.export', item.uuid || item.id_pencairan)}
+                                                        target="_blank"
+                                                    />
+
+                                                    {(item.status_pencairan === 'Draft' || item.status_pencairan === 'Revisi') && (isAdmin() || auth.user.id_user == item.diajukan_oleh) && (
+                                                        <>
+                                                        <ActionButton
+                                                            variant="edit"
+                                                            tooltip="Edit Pencairan"
+                                                            onClick={() => handleEdit(item)}
+                                                        />
+                                                        <ActionButton
+                                                            variant="submit"
+                                                            tooltip="Ajukan Pencairan"
+                                                            onClick={() => handleAjukan(item)}
+                                                        />
+                                                        </>
+                                                    )}
+                                                </ActionGroup>
                                             </td>
                                         </tr>
                                     )) : (
@@ -629,6 +702,11 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                                             step="any"
                                                             value={item.volume_pencairan}
                                                             onChange={(e) => handleItemChange(item.id, 'volume_pencairan', e.target.value)}
+                                                            onKeyDown={(e) => {
+                                                                if (['-', '+', 'e', 'E'].includes(e.key)) {
+                                                                    e.preventDefault();
+                                                                }
+                                                            }}
                                                             disabled={!item.is_selected}
                                                             className="w-24 rounded-md text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm disabled:opacity-50"
                                                         />

@@ -3,7 +3,7 @@ import Calendar from "./Calendar";
 import TextInput from "./TextInput";
 import { CalendarDays } from "lucide-react"; 
 
-export default function DateInput({ id, value, onChange, className = "", position = "right" }) {
+export default function DateInput({ id, value, onChange, className = "", inputClassName = "", position = "right", isError = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef(null);
   const inputRef = useRef(null);
@@ -68,7 +68,7 @@ export default function DateInput({ id, value, onChange, className = "", positio
         type="text"
         readOnly
         value={formattedDate || ""}
-        className="block w-full cursor-pointer pr-10"
+        className={`block w-full cursor-pointer pr-10 ${isError ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''} ${inputClassName}`}
         placeholder={formattedDate ? formattedDate : "Pilih Tanggal"}
         onClick={() => setIsOpen(true)}
       />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
@@ -7,10 +7,14 @@ import TextInput from '@/Components/TextInput';
 import PrimaryButton from '@/Components/PrimaryButton';
 import PasswordInput from '@/Components/PasswordInput';
 import CustomSelect from '@/Components/CustomSelect'; 
+import FieldTooltipError from '@/Components/FieldTooltipError';
 import { UserPlus, Save, ArrowLeft, Shield, Building2, Lock, Phone, Mail, User, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Edit({ auth, user, units = [] }) {
+    const [profileFormErrors, setProfileFormErrors] = useState({});
+    const [passwordFormErrors, setPasswordFormErrors] = useState({});
+
     // Form untuk data profil
     const { data, setData, patch, processing, errors } = useForm({
         nama_lengkap: user.nama_lengkap || '',
@@ -22,6 +26,20 @@ export default function Edit({ auth, user, units = [] }) {
         id_unit: user.id_unit || '',
         is_aktif: user.is_aktif ? 1 : 0,
     });
+
+    const handleProfileChange = (field, value) => {
+        setData(field, value);
+        if (profileFormErrors[field]) {
+            setProfileFormErrors(prev => ({ ...prev, [field]: null }));
+        }
+    };
+
+    const handlePasswordChange = (field, value) => {
+        passwordForm.setData(field, value);
+        if (passwordFormErrors[field]) {
+            setPasswordFormErrors(prev => ({ ...prev, [field]: null }));
+        }
+    };
 
     // Form khusus ganti password paksa
     const passwordForm = useForm({
@@ -55,6 +73,19 @@ export default function Edit({ auth, user, units = [] }) {
     const submitProfile = (e) => {
         e.preventDefault();
         
+        const errs = {};
+        if (!data.nama_lengkap) errs.nama_lengkap = 'Harap isi bidang ini.';
+        if (!data.username) errs.username = 'Harap isi bidang ini.';
+        if (!data.email) errs.email = 'Harap isi bidang ini.';
+        if (!data.peran) errs.peran = 'Harap isi bidang ini.';
+
+        if (Object.keys(errs).length > 0) {
+            setProfileFormErrors(errs);
+            toast.error("Peringatan", { description: "Harap lengkapi bidang profil yang wajib diisi." });
+            return;
+        }
+
+        setProfileFormErrors({});
         toast.warning("Konfirmasi Simpan", {
             description: "Apakah Anda yakin ingin menyimpan perubahan profil ini?",
             action: {
@@ -84,6 +115,24 @@ export default function Edit({ auth, user, units = [] }) {
 
     const submitPassword = (e) => {
         e.preventDefault();
+
+        const errs = {};
+        if (!passwordForm.data.password) errs.password = 'Harap isi bidang ini.';
+        if (!passwordForm.data.password_confirmation) errs.password_confirmation = 'Harap isi bidang ini.';
+
+        if (Object.keys(errs).length > 0) {
+            setPasswordFormErrors(errs);
+            toast.error("Peringatan", { description: "Harap lengkapi bidang password." });
+            return;
+        }
+
+        if (passwordForm.data.password !== passwordForm.data.password_confirmation) {
+            setPasswordFormErrors({ password_confirmation: 'Password dan konfirmasi password tidak cocok.' });
+            toast.error("Peringatan", { description: "Password dan konfirmasi password tidak cocok." });
+            return;
+        }
+
+        setPasswordFormErrors({});
         const toastId = toast.loading("Mengganti password...");
         passwordForm.patch(route('user.password.update', user.uuid), {
             onSuccess: () => {
@@ -117,44 +166,44 @@ export default function Edit({ auth, user, units = [] }) {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                            <div>
+                            <div className="relative pb-2">
                                 <InputLabel htmlFor="nama_lengkap" value="Nama Lengkap" required />
-                                <TextInput id="nama_lengkap" value={data.nama_lengkap} onChange={(e) => setData('nama_lengkap', e.target.value)} className="mt-1 block w-full" />
-                                <InputError message={errors.nama_lengkap} className="mt-2" />
+                                <TextInput id="nama_lengkap" value={data.nama_lengkap} onChange={(e) => handleProfileChange('nama_lengkap', e.target.value)} className={`mt-1 block w-full ${(profileFormErrors.nama_lengkap || errors.nama_lengkap) ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`} />
+                                <FieldTooltipError message={profileFormErrors.nama_lengkap || errors.nama_lengkap} />
                             </div>
-                            <div>
+                            <div className="relative pb-2">
                                 <InputLabel htmlFor="nik" value="NIK (Nomor Induk Karyawan)" />
-                                <TextInput id="nik" value={data.nik} onChange={(e) => setData('nik', e.target.value)} className="mt-1 block w-full" />
-                                <InputError message={errors.nik} className="mt-2" />
+                                <TextInput id="nik" value={data.nik} onChange={(e) => handleProfileChange('nik', e.target.value)} className="mt-1 block w-full" />
+                                <FieldTooltipError message={profileFormErrors.nik || errors.nik} />
                             </div>
-                            <div>
+                            <div className="relative pb-2">
                                 <InputLabel htmlFor="username" value="Username" required />
-                                <TextInput id="username" value={data.username} onChange={(e) => setData('username', e.target.value)} className="mt-1 block w-full" />
-                                <InputError message={errors.username} className="mt-2" />
+                                <TextInput id="username" value={data.username} onChange={(e) => handleProfileChange('username', e.target.value)} className={`mt-1 block w-full ${(profileFormErrors.username || errors.username) ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`} />
+                                <FieldTooltipError message={profileFormErrors.username || errors.username} />
                             </div>
-                            <div>
+                            <div className="relative pb-2">
                                 <InputLabel htmlFor="email" value="Email" required />
-                                <TextInput id="email" type="email" value={data.email} onChange={(e) => setData('email', e.target.value)} className="mt-1 block w-full" />
-                                <InputError message={errors.email} className="mt-2" />
+                                <TextInput id="email" type="email" value={data.email} onChange={(e) => handleProfileChange('email', e.target.value)} className={`mt-1 block w-full ${(profileFormErrors.email || errors.email) ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`} />
+                                <FieldTooltipError message={profileFormErrors.email || errors.email} />
                             </div>
-                            <div>
+                            <div className="relative pb-2">
                                 <InputLabel htmlFor="no_telepon" value="Nomor Telepon" />
-                                <TextInput id="no_telepon" value={data.no_telepon} onChange={(e) => setData('no_telepon', e.target.value)} className="mt-1 block w-full" />
-                                <InputError message={errors.no_telepon} className="mt-2" />
+                                <TextInput id="no_telepon" value={data.no_telepon} onChange={(e) => handleProfileChange('no_telepon', e.target.value)} className="mt-1 block w-full" />
+                                <FieldTooltipError message={profileFormErrors.no_telepon || errors.no_telepon} />
                             </div>
-                            <div>
+                            <div className="relative pb-2">
                                 <InputLabel htmlFor="peran" value="Peran / Role" required />
-                                <CustomSelect value={data.peran} onChange={(e) => setData('peran', e.target.value)} options={roleOptions} className="mt-1" />
-                                <InputError message={errors.peran} className="mt-2" />
+                                <CustomSelect value={data.peran} onChange={(e) => handleProfileChange('peran', e.target.value)} options={roleOptions} className={`mt-1 ${(profileFormErrors.peran || errors.peran) ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`} />
+                                <FieldTooltipError message={profileFormErrors.peran || errors.peran} />
                             </div>
-                            <div>
+                            <div className="relative pb-2">
                                 <InputLabel htmlFor="id_unit" value="Unit Kerja" />
-                                <CustomSelect value={data.id_unit} onChange={(e) => setData('id_unit', e.target.value)} options={[{value: '', label: '-- Tanpa Unit --'}, ...unitOptions]} className="mt-1" />
-                                <InputError message={errors.id_unit} className="mt-2" />
+                                <CustomSelect value={data.id_unit} onChange={(e) => handleProfileChange('id_unit', e.target.value)} options={[{value: '', label: '-- Tanpa Unit --'}, ...unitOptions]} className="mt-1" />
+                                <FieldTooltipError message={profileFormErrors.id_unit || errors.id_unit} />
                             </div>
-                            <div>
+                            <div className="relative pb-2">
                                 <InputLabel htmlFor="is_aktif" value="Status Akun" required />
-                                <CustomSelect value={data.is_aktif} onChange={(e) => setData('is_aktif', parseInt(e.target.value))} options={statusOptions} className="mt-1" />
+                                <CustomSelect value={data.is_aktif} onChange={(e) => handleProfileChange('is_aktif', parseInt(e.target.value))} options={statusOptions} className="mt-1" />
                             </div>
                         </div>
 
@@ -178,15 +227,15 @@ export default function Edit({ auth, user, units = [] }) {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            <div>
+                            <div className="relative pb-2">
                                 <InputLabel htmlFor="password" value="Password Baru" required />
-                                <PasswordInput id="password" value={passwordForm.data.password} onChange={(e) => passwordForm.setData('password', e.target.value)} className="mt-1 block w-full" />
-                                <InputError message={passwordForm.errors.password} className="mt-2" />
+                                <PasswordInput id="password" value={passwordForm.data.password} onChange={(e) => handlePasswordChange('password', e.target.value)} className={`mt-1 block w-full ${(passwordFormErrors.password || passwordForm.errors.password) ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`} />
+                                <FieldTooltipError message={passwordFormErrors.password || passwordForm.errors.password} />
                             </div>
-                            <div>
+                            <div className="relative pb-2">
                                 <InputLabel htmlFor="password_confirmation" value="Konfirmasi Password Baru" required />
-                                <PasswordInput id="password_confirmation" value={passwordForm.data.password_confirmation} onChange={(e) => passwordForm.setData('password_confirmation', e.target.value)} className="mt-1 block w-full" />
-                                <InputError message={passwordForm.errors.password_confirmation} className="mt-2" />
+                                <PasswordInput id="password_confirmation" value={passwordForm.data.password_confirmation} onChange={(e) => handlePasswordChange('password_confirmation', e.target.value)} className={`mt-1 block w-full ${(passwordFormErrors.password_confirmation || passwordForm.errors.password_confirmation) ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`} />
+                                <FieldTooltipError message={passwordFormErrors.password_confirmation || passwordForm.errors.password_confirmation} />
                             </div>
                         </div>
 

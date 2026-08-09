@@ -23,13 +23,21 @@ class TahunAnggaranController extends Controller
         $perPage = request()->get('per_page', 10);
         $perPage = $perPage === 'all' ? 10000 : (int) $perPage;
 
+        $sortBy = $request->input('sort_by', 'tahun_anggaran');
+        $sortDirection = $request->input('sort_direction', 'desc');
+
+        if (in_array($sortBy, ['tahun_anggaran', 'tanggal_mulai', 'tanggal_akhir', 'status_rkat'])) {
+            $query->orderBy($sortBy, $sortDirection);
+        } else {
+            $query->orderBy('tahun_anggaran', 'desc');
+        }
+
         $tahunAnggarans = $query->select(['id_tahun', 'uuid', 'tahun_anggaran', 'tanggal_mulai', 'tanggal_akhir', 'status_rkat'])
-            ->orderBy('tahun_anggaran', 'desc')
             ->paginate($perPage)->onEachSide(0)->withQueryString();
 
         return Inertia::render('Admin/TahunAnggaran/Index', [
             'tahunAnggarans' => $tahunAnggarans,
-            'filters' => $request->only(['search']),
+            'filters' => $request->only(['search', 'sort_by', 'sort_direction']),
         ]);
     }
 

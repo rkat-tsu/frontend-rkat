@@ -17,11 +17,20 @@ class UnitController extends Controller
     public function index()
     {
         Log::debug('[Unit] Melihat Index');
-        $units = Unit::query()
+        $sortBy = request()->input('sort_by', 'nama_unit');
+        $sortDirection = request()->input('sort_direction', 'asc');
+
+        $query = Unit::query()
             ->select(['id_unit', 'uuid', 'kode_unit', 'nama_unit', 'tipe_unit', 'approval_path_id', 'pencairan_approval_path_id', 'id_kepala', 'parent_id', 'no_telepon', 'email'])
-            ->with(['kepala:id_user,nama_lengkap', 'approvalPath:id,name', 'pencairanApprovalPath:id,name'])
-            ->orderBy('nama_unit', 'asc')
-            ->get();
+            ->with(['kepala:id_user,nama_lengkap', 'approvalPath:id,name', 'pencairanApprovalPath:id,name']);
+
+        if (in_array($sortBy, ['kode_unit', 'nama_unit', 'tipe_unit'])) {
+            $query->orderBy($sortBy, $sortDirection);
+        } else {
+            $query->orderBy('nama_unit', 'asc');
+        }
+
+        $units = $query->get();
 
         $users = User::query()->select(['id_user', 'nama_lengkap'])->orderBy('nama_lengkap', 'asc')->get();
         $allUnits = Unit::query()->select(['id_unit', 'kode_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get();
@@ -32,6 +41,7 @@ class UnitController extends Controller
             'users' => $users,
             'allUnits' => $allUnits,
             'approvalPaths' => $approvalPaths,
+            'filters' => request()->only(['sort_by', 'sort_direction']),
         ]);
     }
 

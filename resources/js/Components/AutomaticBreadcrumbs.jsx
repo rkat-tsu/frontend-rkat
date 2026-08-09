@@ -26,6 +26,7 @@ export default function AutomaticBreadcrumbs() {
         'create': 'Tambah',
         'edit': 'Ubah',
         'profile': 'Profil',
+        'lpj':'Laporan Pertanggungjawaban'
     };
 
     return (

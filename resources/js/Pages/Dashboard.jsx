@@ -65,60 +65,84 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                     {/* --- BAGIAN 1: KARTU RINGKASAN DENGAN DEFERRED LOADING --- */}
                     <Deferred data="summary" fallback={
                         <div className="space-y-6">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {[1, 2, 3, 4].map((i) => (
-                                    <div key={i} className="h-32 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-2xl border border-gray-100 dark:border-gray-700 flex items-center justify-center">
-                                        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                                    </div>
-                                ))}
+                            <div className="bg-slate-50/80 dark:bg-gray-900/40 rounded-3xl border border-slate-200/80 dark:border-gray-700/70 p-6 md:p-8 space-y-4">
+                                <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    {[1, 2, 3, 4].map((i) => (
+                                        <div key={i} className="h-32 bg-white dark:bg-gray-800 animate-pulse rounded-2xl border border-gray-100 dark:border-gray-700 flex items-center justify-center">
+                                            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                             <div className="h-32 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-2xl border border-gray-100 dark:border-gray-700 flex items-center justify-center">
                                 <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {[1, 2, 3, 4].map((i) => (
-                                    <div key={i} className="h-32 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-2xl border border-gray-100 dark:border-gray-700 flex items-center justify-center">
-                                        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                                    </div>
-                                ))}
+                            <div className="bg-slate-50/80 dark:bg-gray-900/40 rounded-3xl border border-slate-200/80 dark:border-gray-700/70 p-6 md:p-8 space-y-4">
+                                <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    {[1, 2, 3, 4].map((i) => (
+                                        <div key={i} className="h-32 bg-white dark:bg-gray-800 animate-pulse rounded-2xl border border-gray-100 dark:border-gray-700 flex items-center justify-center">
+                                            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     }>
-                        <div className="space-y-6">
-                            {/* Baris Atas: 4 Kotak Status RKA */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <StatCard
-                                    title="Disetujui RKAT"
-                                    value={summary.disetujui}
-                                    icon={<CheckCircle size={22} />}
-                                    color="emerald"
-                                    label="Setuju"
-                                    description="Dokumen Disetujui"
-                                />
-                                <StatCard
-                                    title="Revisi"
-                                    value={summary.revisi}
-                                    icon={<Clock size={22} />}
-                                    color="amber"
-                                    label="Revisi"
-                                    description="Butuh Revisi"
-                                />
-                                <StatCard
-                                    title="Ditolak"
-                                    value={summary.ditolak}
-                                    icon={<XCircle size={22} />}
-                                    color="rose"
-                                    label="Tolak"
-                                    description="Dokumen Ditolak"
-                                />
-                                <StatCard
-                                    title="Total Dokumen"
-                                    value={summary.total}
-                                    icon={<FileText size={22} />}
-                                    color="blue"
-                                    label="Tahun Ini"
-                                    description="Total Pengajuan RKA"
-                                />
+                        <div className="space-y-8">
+                            {/* SEKSI 1: PENGAJUAN RKAT (GROUP CONTAINER LAYER) */}
+                            <div className="bg-slate-50/80 dark:bg-gray-900/40 rounded-3xl p-6 md:p-7 border border-slate-200/80 dark:border-gray-700/70 shadow-sm space-y-5">
+                                <div className="flex items-center justify-between pb-4 border-b border-slate-200/70 dark:border-gray-700/70">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2.5 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400 rounded-xl">
+                                            <FileText size={20} strokeWidth={2.5} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-base font-bold text-gray-900 dark:text-white tracking-tight">Pengajuan RKAT</h3>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Ringkasan status dokumen pengajuan anggaran RKA</p>
+                                        </div>
+                                    </div>
+                                    <span className="text-xs font-semibold px-3 py-1 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 rounded-full border border-indigo-200/60 dark:border-indigo-800/60">
+                                        Dokumen RKA
+                                    </span>
+                                </div>
+
+                                {/* Baris Atas: 4 Kotak Status RKA */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <StatCard
+                                        title="Disetujui RKAT"
+                                        value={summary.disetujui}
+                                        icon={<CheckCircle size={22} />}
+                                        color="emerald"
+                                        label="Setuju"
+                                        description="Dokumen Disetujui"
+                                    />
+                                    <StatCard
+                                        title="Revisi"
+                                        value={summary.revisi}
+                                        icon={<Clock size={22} />}
+                                        color="amber"
+                                        label="Revisi"
+                                        description="Butuh Revisi"
+                                    />
+                                    <StatCard
+                                        title="Ditolak"
+                                        value={summary.ditolak}
+                                        icon={<XCircle size={22} />}
+                                        color="rose"
+                                        label="Tolak"
+                                        description="Dokumen Ditolak"
+                                    />
+                                    <StatCard
+                                        title="Total Dokumen"
+                                        value={summary.total}
+                                        icon={<FileText size={22} />}
+                                        color="blue"
+                                        label="Tahun Ini"
+                                        description="Total Pengajuan RKA"
+                                    />
+                                </div>
                             </div>
 
                             {/* Kotak Group untuk Memisah Nominal RKA dan Pencairan */}
@@ -153,40 +177,58 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                                 </div>
                             </div>
 
-                            {/* Baris Bawah: 4 Kotak Status Pencairan */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <StatCard
-                                    title="Disetujui Pencairan"
-                                    value={summary.pencairan_disetujui}
-                                    icon={<CheckCircle size={22} />}
-                                    color="emerald"
-                                    label="Setuju"
-                                    description="Pencairan Disetujui"
-                                />
-                                <StatCard
-                                    title="Revisi"
-                                    value={summary.pencairan_revisi}
-                                    icon={<Clock size={22} />}
-                                    color="amber"
-                                    label="Revisi"
-                                    description="Butuh Revisi"
-                                />
-                                <StatCard
-                                    title="Ditolak"
-                                    value={summary.pencairan_ditolak}
-                                    icon={<XCircle size={22} />}
-                                    color="rose"
-                                    label="Tolak"
-                                    description="Pencairan Ditolak"
-                                />
-                                <StatCard
-                                    title="Total Dokumen"
-                                    value={summary.total_pencairan_dokumen}
-                                    icon={<FileText size={22} />}
-                                    color="blue"
-                                    label="Pencairan"
-                                    description="Total Pengajuan Pencairan"
-                                />
+                            {/* SEKSI 2: PENCAIRAN DANA (GROUP CONTAINER LAYER) */}
+                            <div className="bg-slate-50/80 dark:bg-gray-900/40 rounded-3xl p-6 md:p-7 border border-slate-200/80 dark:border-gray-700/70 shadow-sm space-y-5">
+                                <div className="flex items-center justify-between pb-4 border-b border-slate-200/70 dark:border-gray-700/70">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2.5 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-xl">
+                                            <TrendingUp size={20} strokeWidth={2.5} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-base font-bold text-gray-900 dark:text-white tracking-tight">Pencairan Dana</h3>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Ringkasan status dokumen pencairan dana</p>
+                                        </div>
+                                    </div>
+                                    <span className="text-xs font-semibold px-3 py-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
+                                        Pencairan
+                                    </span>
+                                </div>
+
+                                {/* Baris Bawah: 4 Kotak Status Pencairan */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <StatCard
+                                        title="Disetujui Pencairan"
+                                        value={summary.pencairan_disetujui}
+                                        icon={<CheckCircle size={22} />}
+                                        color="emerald"
+                                        label="Setuju"
+                                        description="Pencairan Disetujui"
+                                    />
+                                    <StatCard
+                                        title="Revisi"
+                                        value={summary.pencairan_revisi}
+                                        icon={<Clock size={22} />}
+                                        color="amber"
+                                        label="Revisi"
+                                        description="Butuh Revisi"
+                                    />
+                                    <StatCard
+                                        title="Ditolak"
+                                        value={summary.pencairan_ditolak}
+                                        icon={<XCircle size={22} />}
+                                        color="rose"
+                                        label="Tolak"
+                                        description="Pencairan Ditolak"
+                                    />
+                                    <StatCard
+                                        title="Total Dokumen"
+                                        value={summary.total_pencairan_dokumen}
+                                        icon={<FileText size={22} />}
+                                        color="blue"
+                                        label="Pencairan"
+                                        description="Total Pengajuan Pencairan"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </Deferred>

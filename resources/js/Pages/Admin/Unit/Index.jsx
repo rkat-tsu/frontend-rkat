@@ -1,20 +1,36 @@
 import React, { useState } from 'react';
-import { Link, router } from '@inertiajs/react';
+import { Link, router, Head } from '@inertiajs/react';
 import CustomSelect from '@/Components/CustomSelect';
-import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
-import { Head } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import ActionButton, { ActionGroup } from '@/Components/ActionButton';
 
-export default function Index({ auth, units = [], users = [], allUnits = [], approvalPaths = [], flash = {} }) {
+export default function Index({ auth, units = [], users = [], allUnits = [], approvalPaths = [], flash = {}, filters = {} }) {
     const { isAdmin } = usePermission();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTipe, setSelectedTipe] = useState('');
     const [selectedParent, setSelectedParent] = useState('');
     const [selectedPath, setSelectedPath] = useState('');
+    const [sortBy, setSortBy] = useState(filters?.sort_by || 'nama_unit');
+    const [sortDirection, setSortDirection] = useState(filters?.sort_direction || 'asc');
 
+    const applyFilters = (sb = sortBy, sd = sortDirection) => {
+        router.get(
+            route('unit.index'),
+            { sort_by: sb, sort_direction: sd },
+            { preserveState: true, preserveScroll: true, replace: true }
+        );
+    };
+
+    const handleSort = (field) => {
+        const newDirection = (sortBy === field && sortDirection === 'asc') ? 'desc' : 'asc';
+        setSortBy(field);
+        setSortDirection(newDirection);
+        applyFilters(field, newDirection);
+    };
 
     // Extract unique filter values
     const uniqueTipes = [...new Set(units.map(u => u.tipe_unit).filter(Boolean))].sort();
@@ -51,7 +67,7 @@ export default function Index({ auth, units = [], users = [], allUnits = [], app
         const matchesPath = selectedPath === '' || String(unit.approval_path_id) === String(selectedPath);
         
         return matchesSearch && matchesTipe && matchesParent && matchesPath;
-    }).sort((a, b) => (a.kode_unit || '').localeCompare(b.kode_unit || '', undefined, { numeric: true, sensitivity: 'base' }));
+    });
 
     const handleDelete = (id) => {
         toast.warning("Konfirmasi Hapus", {
@@ -157,9 +173,51 @@ export default function Index({ auth, units = [], users = [], allUnits = [], app
                             <table className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
                                 <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                     <tr>
-                                        <th className="px-6 py-3 border-b border-gray-300 dark:border-gray-600 font-medium">Unit</th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Biro Unit</th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Nama Unit</th>
+                                        <th 
+                                            className="px-6 py-3 border-b border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('kode_unit')}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span>Unit</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'kode_unit' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-blue-600 dark:text-blue-400" /> : <ArrowDown size={14} className="text-blue-600 dark:text-blue-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('tipe_unit')}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span>Biro Unit</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'tipe_unit' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-blue-600 dark:text-blue-400" /> : <ArrowDown size={14} className="text-blue-600 dark:text-blue-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('nama_unit')}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span>Nama Unit</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'nama_unit' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-blue-600 dark:text-blue-400" /> : <ArrowDown size={14} className="text-blue-600 dark:text-blue-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Kepala Unit</th>
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Alur Persetujuan</th>
                                         {isAdmin() && <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>}
@@ -188,33 +246,18 @@ export default function Index({ auth, units = [], users = [], allUnits = [], app
                                                 {/* Kolom Aksi Icon Saja */}
                                                 {isAdmin() && (
                                                     <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                        <div className="flex gap-1.5 justify-center">
-                                                            <TooltipProvider>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <Link
-                                                                            href={route('unit.edit', unit.uuid)}
-                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-amber-300 rounded-md shadow-sm text-amber-700 bg-white hover:bg-amber-50 dark:bg-gray-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-900/20 transition-colors"
-                                                                        >
-                                                                            <Edit2 size={16} />
-                                                                        </Link>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent>Edit Unit</TooltipContent>
-                                                                </Tooltip>
-
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <button 
-                                                                            onClick={() => handleDelete(unit.uuid)}
-                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-red-300 rounded-md shadow-sm text-red-700 bg-white hover:bg-red-50 dark:bg-gray-700 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/20 transition-colors"
-                                                                        >
-                                                                            <Trash2 size={16} />
-                                                                        </button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent>Hapus Unit</TooltipContent>
-                                                                </Tooltip>
-                                                            </TooltipProvider>
-                                                        </div>
+                                                        <ActionGroup>
+                                                            <ActionButton
+                                                                variant="edit"
+                                                                tooltip="Edit Unit"
+                                                                href={route('unit.edit', unit.uuid)}
+                                                            />
+                                                            <ActionButton
+                                                                variant="delete"
+                                                                tooltip="Hapus Unit"
+                                                                onClick={() => handleDelete(unit.uuid)}
+                                                            />
+                                                        </ActionGroup>
                                                     </td>
                                                 )}
                                             </tr>

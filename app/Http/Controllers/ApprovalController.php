@@ -105,11 +105,32 @@ class ApprovalController extends Controller
             })->values();
         }
 
+        // SORTING ON COLLECTION
+        $sortBy = $request->input('sort_by', 'updated_at');
+        $sortDirection = $request->input('sort_direction', 'desc');
+
+        if ($sortBy === 'nomor_dokumen') {
+            $rkatList = $sortDirection === 'asc'
+                ? $rkatList->sortBy('nomor_dokumen')
+                : $rkatList->sortByDesc('nomor_dokumen');
+        } elseif ($sortBy === 'unit') {
+            $rkatList = $sortDirection === 'asc'
+                ? $rkatList->sortBy(fn($p) => $p->unit->nama_unit ?? '')
+                : $rkatList->sortByDesc(fn($p) => $p->unit->nama_unit ?? '');
+        } else {
+            $rkatList = $sortDirection === 'asc'
+                ? $rkatList->sortBy($sortBy)
+                : $rkatList->sortByDesc($sortBy);
+        }
+
+        $rkatList = $rkatList->values();
+
         Log::debug('[Approval] Memuat ' . $rkatList->count() . ' item untuk persetujuan.');
 
         return Inertia::render('Approval/Index', [
             'rkatMenunggu' => $rkatList,
             'currentRole'  => $peran,
+            'filters'      => $request->only(['sort_by', 'sort_direction'])
         ]);
     }
 

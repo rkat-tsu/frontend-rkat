@@ -16,9 +16,8 @@ import {
 } from "@/Components/ui/tooltip";
 import { usePermission } from '@/hooks/usePermission';
 
-// MENU BAHASA INDONESIA
 const navItems = [
-    { name: 'Dasbor', href: '/dashboard', icon: LayoutDashboard, activePath: '/dashboard' },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, activePath: '/dashboard' },
     { name: 'Monitoring', href: '/monitoring', icon: Monitor, activePath: '/monitoring' },
     {
         name: 'Manajemen RKA',
@@ -26,7 +25,7 @@ const navItems = [
         activePath: '/rkat',
         children: [
             { name: 'RKAT', href: '/rkat', icon: LayoutList, activePath: '/rkat' },
-            { name: 'Daftar Ajuan RKA', href: '/daftar-ajuan', icon: FileText, activePath: '/daftar-ajuan' },
+            { name: 'Pengajuan RKA', href: '/daftar-ajuan', icon: FileText, activePath: '/daftar-ajuan' },
             { name: 'Persetujuan RKAT', href: '/approval', icon: Check, activePath: '/approval', hideForInputer: true },
         ],
     },
@@ -37,7 +36,7 @@ const navItems = [
         children: [
             { name: 'Pencairan Dana', href: '/pencairan', icon: CreditCard, activePath: '/pencairan' },
             { name: 'Persetujuan Pencairan', href: '/pencairan/approval', icon: CheckCheck, activePath: '/pencairan/approval', hideForInputer: true },
-            { name: 'LPJ (Laporan)', href: '/lpj', icon: FileCheck2 , activePath: '/lpj' },
+            { name: 'Laporan Pertanggungjawaban', href: '/lpj', icon: FileCheck2 , activePath: '/lpj' },
         ],
     },
     {
@@ -70,7 +69,6 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
 
     // State untuk Accordion Menu
     const [openMenus, setOpenMenus] = useState({});
-    // State untuk Flyout Hover Menu (minimized mode)
     const [hoveredMenu, setHoveredMenu] = useState(null);
     const [flyoutPos, setFlyoutPos] = useState({ top: 0, left: 0 });
     const hoverTimeoutRef = useRef(null);
@@ -88,19 +86,21 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
     }, [currentPath, isMinimized]);
 
     const handleMouseEnter = useCallback((name, buttonEl) => {
+        if (!isMinimized) return;
         if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
         if (buttonEl) {
             const rect = buttonEl.getBoundingClientRect();
-            setFlyoutPos({ top: rect.top, left: rect.right + 8 });
+            setFlyoutPos({ top: rect.top, left: rect.right + 6 });
         }
         setHoveredMenu(name);
-    }, []);
+    }, [isMinimized]);
 
     const handleMouseLeave = useCallback(() => {
+        if (!isMinimized) return;
         hoverTimeoutRef.current = setTimeout(() => {
             setHoveredMenu(null);
-        }, 300);
-    }, []);
+        }, 150);
+    }, [isMinimized]);
 
     const toggleMenu = (name) => {
         setOpenMenus(prev => ({ ...prev, [name]: !prev[name] }));
@@ -136,17 +136,17 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
             });
         }
 
-        // Logic buka/tutup otomatis
+        // Logic buka/tutup otomatis (aktif atau di-hover atau di-toggle)
         const isOpen = openMenus[item.name] || (isActive && !openMenus.hasOwnProperty(item.name) && !isMinimized);
 
         const baseClasses = "rounded-xl flex items-center transition-all duration-200 ease-in-out w-full whitespace-nowrap overflow-hidden relative cursor-pointer outline-none focus:outline-none";
         const padding = isChild ? 'pl-11 pr-3 py-2 text-sm' : 'px-4 py-3 my-1';
         
         const activeClasses = isChild
-            ? 'bg-teal-50/50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 font-semibold'
+            ? 'bg-teal-50/70 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 font-semibold'
             : 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 font-bold shadow-sm ring-1 ring-teal-100 dark:ring-teal-800';
             
-        const inactiveClasses = "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200";
+        const inactiveClasses = "text-gray-600 dark:text-gray-400 hover:bg-teal-50/50 dark:hover:bg-gray-800/80 hover:text-teal-700 dark:hover:text-teal-300";
 
         const content = (
             <>
@@ -158,7 +158,7 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
                     <div className="flex-grow flex justify-between items-center overflow-hidden">
                         <span className="truncate text-sm">{item.name}</span>
                         {hasChildren && (
-                            <span className="ml-2 text-gray-400">
+                            <span className="ml-2 text-gray-400 transition-transform duration-200">
                                 {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                             </span>
                         )}
@@ -177,6 +177,7 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
                     <div
                         onMouseEnter={(e) => handleMouseEnter(item.name, e.currentTarget.querySelector('button'))}
                         onMouseLeave={handleMouseLeave}
+                        className="relative"
                     >
                         <button 
                             onClick={(e) => {
@@ -198,17 +199,20 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
                                     ? 'opacity-100 scale-100 translate-x-0 pointer-events-auto'
                                     : 'opacity-0 scale-95 -translate-x-1 pointer-events-none'
                                 }`}
-                                style={{ top: flyoutPos.top, left: flyoutPos.left - 16 }}
+                                style={{ top: flyoutPos.top, left: flyoutPos.left - 12 }}
                                 onMouseEnter={() => handleMouseEnter(item.name, null)}
                                 onMouseLeave={handleMouseLeave}
                             >
-                                {/* Invisible bridge to connect sidebar icon to flyout */}
-                                <div className="pl-4">
-                                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl shadow-gray-200/50 dark:shadow-black/30 border border-gray-100 dark:border-gray-700 py-2 min-w-[220px]">
+                                {/* Invisible bridge to connect sidebar icon seamlessly to flyout */}
+                                <div className="pl-3">
+                                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl shadow-teal-900/10 dark:shadow-black/40 border border-teal-100 dark:border-gray-700 py-2 min-w-[230px]">
                                         {/* Flyout Header */}
-                                        <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 mb-1">
-                                            <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                                        <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700/80 mb-1 flex items-center justify-between">
+                                            <span className="text-[11px] font-extrabold text-teal-600 dark:text-teal-400 uppercase tracking-wider">
                                                 {item.name}
+                                            </span>
+                                            <span className="text-[10px] bg-teal-50 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 px-1.5 py-0.5 rounded font-semibold">
+                                                {visibleChildren.length} Menu
                                             </span>
                                         </div>
                                         {/* Flyout Links */}
@@ -223,10 +227,10 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
                                                     key={idx}
                                                     href={child.href}
                                                     onClick={() => setHoveredMenu(null)}
-                                                    className={`flex items-center gap-3 px-4 py-2.5 mx-1.5 rounded-lg text-sm transition-all duration-150 ${
+                                                    className={`flex items-center gap-3 px-3.5 py-2 mx-1.5 rounded-lg text-sm transition-all duration-150 ${
                                                         childActive
-                                                            ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 font-semibold'
-                                                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-200'
+                                                            ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 font-bold shadow-xs'
+                                                            : 'text-gray-600 dark:text-gray-400 hover:bg-teal-50/60 dark:hover:bg-gray-700/60 hover:text-teal-700 dark:hover:text-teal-300'
                                                     }`}
                                                 >
                                                     <child.icon size={16} className="flex-shrink-0" />
@@ -249,7 +253,7 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
                         {content}
                     </button>
                     {isOpen && !isMinimized && (
-                        <div className="mt-1 space-y-1 relative before:absolute before:left-6 before:top-0 before:bottom-0 before:w-px before:bg-gray-200 dark:before:bg-gray-700">
+                        <div className="mt-1 space-y-1 relative before:absolute before:left-6 before:top-0 before:bottom-0 before:w-px before:bg-teal-100 dark:before:bg-gray-700">
                             {item.children.map((child, idx) => {
                                 if (child.adminOnly && !isAdmin()) return null;
                                 if (child.hideForInputer && role === 'Inputer') return null;
@@ -295,11 +299,13 @@ function Sidebar({ auth, isMinimized, toggleMinimize }) {
             <div className={`fixed top-0 left-0 h-screen bg-white dark:bg-gray-900 shadow-lg z-[100] flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${isMinimized ? 'w-0 sm:w-20 border-r-0 sm:border-r sm:border-gray-100 dark:sm:border-gray-800' : 'w-64 border-r border-gray-100 dark:border-gray-800'}`}>
                 {/* Header */}
                 <div className={`flex items-center ${isMinimized ? 'justify-center flex-col gap-2' : 'justify-between'} h-20 px-4 mb-2 mt-2 relative`}>
-                    <Link href="/dashboard" className="flex items-center gap-2 overflow-hidden">
-                        <ApplicationLogo className={`text-teal-600 transition-all duration-300 ease-in-out ${isMinimized ? 'h-8 w-8' : 'h-9 w-auto'}`} />
+                    <Link href="/dashboard" className="flex items-center gap-2.5 overflow-hidden group">
+                        <ApplicationLogo isMinimized={isMinimized} className={`transition-all duration-300 ease-in-out ${isMinimized ? 'h-8 w-8' : 'h-10 w-auto'}`} />
                         {!isMinimized && (
-                            <div className="flex flex-col">
-                                <span className="font-bold text-lg text-gray-800 dark:text-white">ReKAT</span>
+                            <div className="flex items-center">
+                                <span className="font-extrabold text-2xl tracking-tight text-gray-900 dark:text-white font-sans select-none drop-shadow-sm">
+                                    Re<span className="bg-gradient-to-r from-teal-600 via-teal-500 to-cyan-500 bg-clip-text text-transparent font-black">KAT</span>
+                                </span>
                             </div>
                         )}
                     </Link>

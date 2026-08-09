@@ -1,23 +1,22 @@
 import React, { useState } from 'react';
-import { router } from '@inertiajs/react';
-import { Plus, Edit2, Trash2, Save } from 'lucide-react';
+import { router, Head } from '@inertiajs/react';
+import { Plus, Edit2, Trash2, Save, Route, ChevronRight, Layers, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
-import DangerButton from '@/Components/DangerButton';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
 import TextArea from '@/Components/TextArea';
 import Modal from '@/Components/Modal';
 import CustomSelect from '@/Components/CustomSelect';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
+import ActionButton, { ActionGroup } from '@/Components/ActionButton';
+import FieldTooltipError from '@/Components/FieldTooltipError';
 import { toast } from 'sonner';
-
-import { Head } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 export default function Index({ auth, paths, units }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingPath, setEditingPath] = useState(null);
+    const [formErrors, setFormErrors] = useState({});
     const [formData, setFormData] = useState({
         name: '',
         description: '',
@@ -25,6 +24,7 @@ export default function Index({ auth, paths, units }) {
     });
 
     const openDialog = (path = null) => {
+        setFormErrors({});
         if (path) {
             setEditingPath(path);
             setFormData({
@@ -61,15 +61,51 @@ export default function Index({ auth, paths, units }) {
     };
 
     const updateStep = (index, field, value) => {
+        const val = value?.target ? value.target.value : value;
         setFormData(prev => {
             const newSteps = [...prev.steps];
-            newSteps[index] = { ...newSteps[index], [field]: value };
+            newSteps[index] = { ...newSteps[index], [field]: val };
             return { ...prev, steps: newSteps };
         });
+        if (formErrors[`step_${index}_${field}`]) {
+            setFormErrors(prev => ({ ...prev, [`step_${index}_${field}`]: null }));
+        }
+    };
+
+    const handleNameChange = (val) => {
+        setFormData(prev => ({ ...prev, name: val }));
+        if (formErrors.name) {
+            setFormErrors(prev => ({ ...prev, name: null }));
+        }
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        const errs = {};
+        if (!formData.name || !formData.name.trim()) {
+            errs.name = 'Harap isi nama alur.';
+        }
+
+        formData.steps.forEach((step, index) => {
+            if (!step.step_name || !step.step_name.trim()) {
+                errs[`step_${index}_step_name`] = 'Nama tahap wajib diisi.';
+            }
+            if (step.approver_type === 'role' && !step.role_name) {
+                errs[`step_${index}_role_name`] = 'Role approver wajib dipilih.';
+            }
+            if (step.approver_type === 'unit' && !step.unit_id) {
+                errs[`step_${index}_unit_id`] = 'Unit spesifik wajib dipilih.';
+            }
+        });
+
+        if (Object.keys(errs).length > 0) {
+            setFormErrors(errs);
+            toast.error("Peringatan", { description: "Harap lengkapi semua bidang yang wajib diisi." });
+            return;
+        }
+
+        setFormErrors({});
         const toastId = toast.loading("Sedang menyimpan alur persetujuan...");
 
         if (editingPath) {
@@ -108,163 +144,234 @@ export default function Index({ auth, paths, units }) {
         });
     };
 
+    const getApproverLabel = (step) => {
+        if (step.approver_type === 'role') return step.role_name ? step.role_name.replace(/_/g, ' ') : 'Role';
+        if (step.approver_type === 'unit') return step.unit?.nama_unit || 'Unit Spesifik';
+        if (step.approver_type === 'parent_unit') return 'Atasan Unit Pemohon';
+        if (step.approver_type === 'self_unit_head') return 'Kepala Unit Pemohon';
+        return 'Approver';
+    };
+
     return (
         <AuthenticatedLayout
             user={auth?.user}
-            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Daftar Alur Persetujuan</h2>}
+            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Alur Persetujuan</h2>}
         >
-            <Head title="Daftar Alur Persetujuan" />
+            <Head title="Alur Persetujuan" />
 
             <div className="py-8">
-                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
-                    <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                            Daftar Alur Persetujuan
-                        </h1>
-                        <PrimaryButton onClick={() => openDialog()} className="h-11">
-                            <Plus className="w-5 h-5 mr-2" /> Tambah Alur
-                        </PrimaryButton>
+                    {/* Header Banner Toolbar */}
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-l-4 border-l-teal-600">
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                                <Route className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+                                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                                    Kelola Alur Persetujuan (Approval Paths)
+                                </h1>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Atur hirarki dan urutan pengesahan dokumen RKAT & Keuangan untuk setiap unit kerja.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => openDialog()}
+                            className="h-11 inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold text-xs rounded-xl shadow-md shadow-teal-600/20 transition-all duration-200 active:scale-95 whitespace-nowrap"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>Tambah Alur Baru</span>
+                        </button>
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-indigo-500">
-                        <div className="space-y-4">
-                            {paths.map(path => (
-                                <div key={path.id} className="border border-slate-300 dark:border-slate-700 rounded-xl p-6 bg-white dark:bg-gray-800">
-                                    <div className="flex justify-between items-start mb-5">
-                                        <div>
-                                            <h4 className="font-semibold text-slate-800 dark:text-slate-100 text-lg">{path.name}</h4>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{path.description}</p>
+                    {/* Main Content Cards */}
+                    <div className="space-y-4">
+                        {paths.map(path => (
+                            <div
+                                key={path.id}
+                                className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm p-6 hover:shadow-md transition-all duration-200 border-l-4 border-l-teal-500"
+                            >
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 pb-4 border-b border-gray-100 dark:border-gray-700/60">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2.5">
+                                            <h4 className="font-bold text-gray-900 dark:text-white text-lg">
+                                                {path.name}
+                                            </h4>
+                                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 dark:bg-teal-950/50 text-teal-600 dark:text-teal-400 border border-teal-200 dark:border-teal-800">
+                                                {path.steps.length} Tahapan
+                                            </span>
                                         </div>
-                                        <div className="flex justify-center gap-2">
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <button
-                                                            onClick={() => openDialog(path)}
-                                                            className="inline-flex items-center justify-center w-8 h-8 border border-blue-200 rounded-lg text-blue-500 hover:bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-900/30 transition-colors"
-                                                        >
-                                                            <Edit2 size={16} />
-                                                        </button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>Edit Alur</TooltipContent>
-                                                </Tooltip>
-
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <button
-                                                            onClick={() => handleDelete(path.id)}
-                                                            className="inline-flex items-center justify-center w-8 h-8 border border-red-200 rounded-lg text-red-500 hover:bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/30 transition-colors"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>Hapus Alur</TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                        </div>
+                                        {path.description && (
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                {path.description}
+                                            </p>
+                                        )}
                                     </div>
 
-                                    <div className="mt-4">
-                                        <h5 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Urutan Persetujuan:</h5>
-                                        <div className="flex flex-wrap items-center gap-y-3 gap-x-2">
-                                            {path.steps.map((step, index) => (
-                                                <div key={step.id} className="flex items-center">
-                                                    <span className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 shadow-sm transition-all hover:shadow-md">
-                                                        {index + 1}. {step.step_name}
-                                                        <span className="text-slate-400 font-normal ml-1.5">
-                                                            ({step.approver_type === 'role' ? step.role_name : step.approver_type === 'unit' ? step.unit?.nama_unit : step.approver_type === 'parent_unit' ? 'Atasan Unit' : 'Kepala Unit Pemohon'})
-                                                        </span>
+                                    <ActionGroup>
+                                        <ActionButton
+                                            variant="edit"
+                                            tooltip="Edit Alur Persetujuan"
+                                            onClick={() => openDialog(path)}
+                                        />
+                                        <ActionButton
+                                            variant="delete"
+                                            tooltip="Hapus Alur Persetujuan"
+                                            onClick={() => handleDelete(path.id)}
+                                        />
+                                    </ActionGroup>
+                                </div>
+
+                                {/* Flow Diagram Visualization */}
+                                <div>
+                                    <h5 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                                        <Layers className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                                        <span>Visualisasi Pipeline Persetujuan:</span>
+                                    </h5>
+
+                                    <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                                        {path.steps.map((step, index) => (
+                                            <React.Fragment key={step.id || index}>
+                                                <div className="flex items-center gap-2.5 px-3.5 py-2 bg-gray-50/80 dark:bg-gray-900/60 border border-gray-200/80 dark:border-gray-700/80 rounded-xl shadow-xs hover:border-teal-300 dark:hover:border-teal-700 transition">
+                                                    <span className="w-5 h-5 rounded-full bg-teal-600 text-white text-[11px] font-bold flex items-center justify-center shrink-0">
+                                                        {index + 1}
                                                     </span>
-                                                    {index < path.steps.length - 1 && (
-                                                        <span className="mx-2 text-slate-300 font-bold">➔</span>
-                                                    )}
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-bold text-gray-900 dark:text-white">
+                                                            {step.step_name}
+                                                        </span>
+                                                        <span className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold mt-0.5">
+                                                            {getApproverLabel(step)}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                            ))}
-                                        </div>
+
+                                                {index < path.steps.length - 1 && (
+                                                    <ChevronRight className="w-4 h-4 text-teal-500 dark:text-teal-400 shrink-0" />
+                                                )}
+                                            </React.Fragment>
+                                        ))}
+
+                                        {path.steps.length === 0 && (
+                                            <p className="text-xs text-gray-400 italic">Belum ada tahapan persetujuan yang disetting.</p>
+                                        )}
                                     </div>
                                 </div>
-                            ))}
-                            {paths.length === 0 && (
-                                <p className="text-center text-gray-500 py-8">Belum ada alur persetujuan yang dibuat.</p>
-                            )}
-                        </div>
+                            </div>
+                        ))}
+
+                        {paths.length === 0 && (
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 p-12 text-center flex flex-col items-center">
+                                <Route className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
+                                <h3 className="text-base font-bold text-gray-800 dark:text-gray-200">Belum Ada Alur Persetujuan</h3>
+                                <p className="text-xs text-gray-400 mt-1 max-w-sm">
+                                    Klik tombol "+ Tambah Alur Baru" di atas untuk membuat konfigurasi alur persetujuan baru.
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
 
             {/* Modal Form */}
             <Modal show={isDialogOpen} onClose={() => setIsDialogOpen(false)} maxWidth="2xl">
-                <div className="p-6">
-                    <h2 className="text-xl font-medium text-slate-800 dark:text-slate-100">
-                        {editingPath ? 'Edit Alur Persetujuan' : 'Tambah Alur Persetujuan'}
-                    </h2>
+                <div className="p-6 space-y-6">
+                    <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
+                        <div className="flex items-center gap-2">
+                            <Route className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                                {editingPath ? 'Edit Alur Persetujuan' : 'Tambah Alur Persetujuan Baru'}
+                            </h2>
+                        </div>
+                    </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-4">
-                            <div>
-                                <InputLabel htmlFor="name" value="Nama Alur (Misal: Bidang 1)" className="text-slate-600 dark:text-slate-400 mb-1.5" />
-                                <TextInput
-                                    id="name"
-                                    className="block w-full border-slate-300 rounded-lg shadow-sm focus:border-slate-400 focus:ring-slate-400"
+                            <div className="relative pb-2">
+                                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">
+                                    Nama Alur *
+                                </label>
+                                <input
+                                    type="text"
+                                    className={`h-11 w-full px-4 py-2.5 text-sm bg-white dark:bg-gray-900 border rounded-xl shadow-sm focus:ring-2 focus:ring-teal-500 text-gray-900 dark:text-white transition ${formErrors.name ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-gray-200 dark:border-gray-700'}`}
                                     value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    required
+                                    onChange={(e) => handleNameChange(e.target.value)}
+                                    placeholder="Contoh: Alur Persetujuan Bidang 1 / Fakultas Teknik"
                                 />
+                                <FieldTooltipError message={formErrors.name} />
                             </div>
                             <div>
-                                <InputLabel htmlFor="description" value="Deskripsi" className="text-slate-600 dark:text-slate-400 mb-1.5" />
-                                <TextArea
-                                    id="description"
-                                    className="block w-full border-slate-300 rounded-lg shadow-sm focus:border-slate-400 focus:ring-slate-400"
+                                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">
+                                    Deskripsi Catatan
+                                </label>
+                                <textarea
+                                    rows="2"
+                                    className="w-full px-4 py-2.5 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-gray-900 dark:text-white transition"
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                />
+                                    placeholder="Penjelasan singkat alur persetujuan ini..."
+                                ></textarea>
                             </div>
                         </div>
 
-                        <div>
-                            <div className="mb-4 mt-2">
-                                <h3 className="text-base font-medium text-slate-800 dark:text-slate-100">Tahapan Persetujuan</h3>
+                        <div className="space-y-3 pt-2">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                                    <Layers className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                                    <span>Tahapan Persetujuan Berurutan</span>
+                                </h3>
+                                <span className="text-xs text-gray-400">
+                                    {formData.steps.length} Langkah Diset
+                                </span>
                             </div>
-                            <div className="space-y-4">
+
+                            <div className="space-y-3">
                                 {formData.steps.map((step, index) => (
-                                    <div key={index} className="flex gap-4 items-start bg-[#f8fafc] dark:bg-gray-800/50 p-5 rounded-xl border border-slate-300 dark:border-slate-600">
-                                        <div className="pt-8 font-semibold text-slate-500 text-lg">{index + 1}.</div>
-                                        <div className="flex-1 space-y-4">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <InputLabel value="Status Tahapan" className="text-slate-600 dark:text-slate-400 mb-1" />
-                                                    <TextInput
-                                                        className="block w-full border-slate-300 rounded-lg shadow-sm"
+                                    <div key={index} className="flex gap-3 items-start bg-gray-50/80 dark:bg-gray-900/60 p-4 rounded-xl border border-gray-200/80 dark:border-gray-700/80 relative">
+                                        <div className="w-7 h-7 rounded-full bg-teal-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-2">
+                                            {index + 1}
+                                        </div>
+                                        <div className="flex-1 space-y-3">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div className="relative pb-2">
+                                                    <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">
+                                                        Status / Nama Tahap *
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        className={`h-10 w-full px-3 py-2 text-xs bg-white dark:bg-gray-800 border rounded-lg shadow-sm focus:ring-1 focus:ring-teal-500 text-gray-900 dark:text-white ${formErrors[`step_${index}_step_name`] ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-gray-200 dark:border-gray-700'}`}
                                                         value={step.step_name}
                                                         onChange={(e) => updateStep(index, 'step_name', e.target.value)}
-                                                        placeholder="Misal: Mengetahui Unit"
-                                                        required
+                                                        placeholder="Contoh: Mengetahui Dekan"
                                                     />
+                                                    <FieldTooltipError message={formErrors[`step_${index}_step_name`]} />
                                                 </div>
-                                                <div>
-                                                    <InputLabel value="Tipe Approver" className="text-slate-600 dark:text-slate-400 mb-1" />
+                                                <div className="relative pb-2">
+                                                    <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">
+                                                        Tipe Approver *
+                                                    </label>
                                                     <CustomSelect
                                                         value={step.approver_type}
-                                                        onChange={(e) => updateStep(index, 'approver_type', e.target.value)}
+                                                        onChange={(val) => updateStep(index, 'approver_type', val)}
                                                         options={[
                                                             { value: 'role', label: 'Berdasarkan Role (Peran)' },
                                                             { value: 'unit', label: 'Kepala Unit Tertentu' },
                                                             { value: 'parent_unit', label: 'Atasan Unit Pemohon' },
                                                             { value: 'self_unit_head', label: 'Kepala Unit Pemohon' },
                                                         ]}
-                                                        className="w-full border-slate-300 rounded-lg shadow-sm"
                                                     />
+                                                    <FieldTooltipError message={formErrors[`step_${index}_approver_type`]} />
                                                 </div>
                                             </div>
 
                                             {step.approver_type === 'role' && (
-                                                <div>
-                                                    <InputLabel value="Pilih Role" className="text-slate-600 dark:text-slate-400 mb-1" />
+                                                <div className="relative pb-2">
+                                                    <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">
+                                                        Pilih Role Approver *
+                                                    </label>
                                                     <CustomSelect
                                                         value={step.role_name}
-                                                        onChange={(e) => updateStep(index, 'role_name', e.target.value)}
+                                                        onChange={(val) => updateStep(index, 'role_name', val)}
                                                         options={[
                                                             { value: 'Tim_Renbang', label: 'Tim Renbang' },
                                                             { value: 'BAAK', label: 'BAAK' },
@@ -276,53 +383,67 @@ export default function Index({ auth, paths, units }) {
                                                             { value: 'Rektor', label: 'Rektor' },
                                                         ]}
                                                         placeholder="Pilih Role..."
-                                                        className="w-full border-slate-300 rounded-lg shadow-sm"
+                                                        className={formErrors[`step_${index}_role_name`] ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}
                                                     />
+                                                    <FieldTooltipError message={formErrors[`step_${index}_role_name`]} />
                                                 </div>
                                             )}
 
                                             {step.approver_type === 'unit' && (
-                                                <div>
-                                                    <InputLabel value="Pilih Unit" className="text-slate-600 dark:text-slate-400 mb-1" />
+                                                <div className="relative pb-2">
+                                                    <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">
+                                                        Pilih Unit Spesifik *
+                                                    </label>
                                                     <CustomSelect
                                                         value={step.unit_id}
-                                                        onChange={(e) => updateStep(index, 'unit_id', e.target.value)}
-                                                        options={units.map(u => ({ value: u.id_unit, label: u.nama_unit }))}
+                                                        onChange={(val) => updateStep(index, 'unit_id', val)}
+                                                        options={units.map(u => ({ value: u.id_unit.toString(), label: u.nama_unit }))}
                                                         placeholder="Pilih Unit..."
-                                                        className="w-full border-slate-300 rounded-lg shadow-sm"
+                                                        className={formErrors[`step_${index}_unit_id`] ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}
                                                     />
+                                                    <FieldTooltipError message={formErrors[`step_${index}_unit_id`]} />
                                                 </div>
                                             )}
                                         </div>
                                         <button
                                             type="button"
-                                            className="mt-7 flex items-center justify-center w-10 h-10 bg-[#dc2626] hover:bg-[#b91c1c] text-white rounded-lg shadow-sm transition-colors"
+                                            className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-100 dark:hover:bg-rose-950/40 rounded-lg transition mt-1"
                                             onClick={() => removeStep(index)}
                                             title="Hapus Tahap"
                                         >
-                                            <Trash2 className="w-5 h-5" />
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
                                 ))}
+
                                 {formData.steps.length === 0 && (
-                                    <p className="text-sm text-gray-500 text-center py-4">Belum ada tahapan. Klik tombol di bawah untuk menambah tahap baru.</p>
+                                    <p className="text-xs text-gray-400 text-center py-4 italic">
+                                        Belum ada tahapan. Klik tombol di bawah untuk menambah tahap baru.
+                                    </p>
                                 )}
                             </div>
 
                             <button
                                 type="button"
                                 onClick={addStep}
-                                className="mt-4 w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-400 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-center font-medium text-sm"
+                                className="w-full py-3 border-2 border-dashed border-teal-300 dark:border-teal-700/60 rounded-xl text-teal-600 dark:text-teal-400 hover:bg-teal-50/50 dark:hover:bg-teal-950/30 transition font-bold text-xs flex items-center justify-center gap-2"
                             >
-                                <Plus className="w-5 h-5 mr-2" /> Tambah Tahap
+                                <Plus className="w-4 h-4" />
+                                <span>+ Tambah Tahapan Baru</span>
                             </button>
                         </div>
 
-                        <div className="flex justify-end gap-2 pt-4">
-                            <SecondaryButton type="button" onClick={() => setIsDialogOpen(false)}>Batal</SecondaryButton>
-                            <PrimaryButton type="submit">
-                                <Save size={16} className="mr-2" /> Simpan Alur
-                            </PrimaryButton>
+                        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+                            <SecondaryButton type="button" onClick={() => setIsDialogOpen(false)} className="rounded-xl">
+                                Batal
+                            </SecondaryButton>
+                            <button
+                                type="submit"
+                                className="h-11 inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold text-xs rounded-xl shadow-md shadow-teal-600/20 transition-all duration-200 active:scale-95"
+                            >
+                                <Save size={16} />
+                                <span>Simpan Alur</span>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -330,3 +451,4 @@ export default function Index({ auth, paths, units }) {
         </AuthenticatedLayout>
     );
 }
+

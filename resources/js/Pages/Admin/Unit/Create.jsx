@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import PrimaryButton from '@/Components/PrimaryButton';
-import InputError from '@/Components/InputError';
 import CustomSelect from '@/Components/CustomSelect'; 
+import FieldTooltipError from '@/Components/FieldTooltipError';
 import { Building2, Save, ArrowLeft, Settings2, UserCircle, Phone, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Create({ auth, users, units, approvalPaths }) {
+    const [formErrors, setFormErrors] = useState({});
+
     // 1. SETUP FORM: Sesuai Controller Store Method
     const { data, setData, post, processing, errors, reset } = useForm({
         kode_unit: '',
@@ -22,14 +24,29 @@ export default function Create({ auth, users, units, approvalPaths }) {
         email: '',
     });
 
+    const handleFieldChange = (field, value) => {
+        setData(field, value);
+        if (formErrors[field]) {
+            setFormErrors(prev => ({ ...prev, [field]: null }));
+        }
+    };
+
     const submit = (e) => {
         e.preventDefault();
 
-        if (!data.kode_unit || !data.nama_unit || !data.tipe_unit || !data.approval_path_id) {
+        const errs = {};
+        if (!data.kode_unit) errs.kode_unit = 'Harap isi bidang ini.';
+        if (!data.nama_unit) errs.nama_unit = 'Harap isi bidang ini.';
+        if (!data.tipe_unit) errs.tipe_unit = 'Harap isi bidang ini.';
+        if (!data.approval_path_id) errs.approval_path_id = 'Harap isi bidang ini.';
+
+        if (Object.keys(errs).length > 0) {
+            setFormErrors(errs);
             toast.error("Peringatan", { description: "Semua form bertanda * wajib diisi." });
             return;
         }
 
+        setFormErrors({});
         toast.warning("Konfirmasi Simpan", {
             description: "Apakah Anda yakin ingin menyimpan unit kerja baru ini?",
             action: {
@@ -107,52 +124,52 @@ export default function Create({ auth, users, units, approvalPaths }) {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
+                                <div className="relative pb-2">
                                     <InputLabel value="Kode Unit" required />
                                     <TextInput
                                         value={data.kode_unit}
-                                        onChange={(e) => setData('kode_unit', e.target.value)}
-                                        className="mt-1 block w-full"
+                                        onChange={(e) => handleFieldChange('kode_unit', e.target.value)}
+                                        className={`mt-1 block w-full ${(formErrors.kode_unit || errors.kode_unit) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
                                         placeholder=""
                                         isFocused={true}
                                     />
-                                    <InputError message={errors.kode_unit} className="mt-2" />
+                                    <FieldTooltipError message={formErrors.kode_unit || errors.kode_unit} />
                                 </div>
 
-                                <div>
+                                <div className="relative pb-2">
                                     <InputLabel value="Nama Unit Kerja" required />
                                     <TextInput
                                         value={data.nama_unit}
-                                        onChange={(e) => setData('nama_unit', e.target.value)}
-                                        className="mt-1 block w-full"
+                                        onChange={(e) => handleFieldChange('nama_unit', e.target.value)}
+                                        className={`mt-1 block w-full ${(formErrors.nama_unit || errors.nama_unit) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
                                         placeholder="Masukkan Nama Unit Kerja"
                                     />
-                                    <InputError message={errors.nama_unit} className="mt-2" />
+                                    <FieldTooltipError message={formErrors.nama_unit || errors.nama_unit} />
                                 </div>
 
-                                <div>
+                                <div className="relative pb-2">
                                     <InputLabel value="Tipe Unit" required />
                                     <CustomSelect
                                         value={data.tipe_unit}
-                                        onChange={(e) => setData('tipe_unit', e.target.value)}
+                                        onChange={(e) => handleFieldChange('tipe_unit', e.target.value)}
                                         options={tipeOptions}
                                         placeholder="Pilih Tipe"
-                                        className="mt-1"
+                                        className={`mt-1 ${(formErrors.tipe_unit || errors.tipe_unit) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
                                     />
-                                    <InputError message={errors.tipe_unit} className="mt-2" />
+                                    <FieldTooltipError message={formErrors.tipe_unit || errors.tipe_unit} />
                                 </div>
 
                                 {/* Parent Unit (Induk) */}
-                                <div>
+                                <div className="relative pb-2">
                                     <InputLabel value="Unit Induk (Parent)" />
                                     <CustomSelect
                                         value={data.parent_id}
-                                        onChange={(e) => setData('parent_id', e.target.value)}
+                                        onChange={(e) => handleFieldChange('parent_id', e.target.value)}
                                         options={parentOptions}
                                         placeholder="Pilih Unit Induk (Opsional)"
                                         className="mt-1"
                                     />
-                                    <InputError message={errors.parent_id} className="mt-2" />
+                                    <FieldTooltipError message={formErrors.parent_id || errors.parent_id} />
                                     <p className="text-xs text-gray-400 mt-1">Kosongkan jika unit ini adalah unit tingkat atas (Top Level).</p>
                                 </div>
                             </div>
@@ -172,20 +189,20 @@ export default function Create({ auth, users, units, approvalPaths }) {
 
                             <div className="space-y-6">
                                 {/* Kepala Unit */}
-                                <div>
+                                <div className="relative pb-2">
                                     <InputLabel value="Kepala Unit" />
                                     <CustomSelect
                                         value={data.id_kepala}
-                                        onChange={(e) => setData('id_kepala', e.target.value)}
+                                        onChange={(e) => handleFieldChange('id_kepala', e.target.value)}
                                         options={userOptions}
                                         placeholder="Pilih Pejabat / Kepala Unit"
                                         className="mt-1"
                                     />
-                                    <InputError message={errors.id_kepala} className="mt-2" />
+                                    <FieldTooltipError message={formErrors.id_kepala || errors.id_kepala} />
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
+                                    <div className="relative pb-2">
                                         <InputLabel value="No. Telepon / WhatsApp" />
                                         <div className="relative mt-1">
                                             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -193,16 +210,16 @@ export default function Create({ auth, users, units, approvalPaths }) {
                                             </div>
                                             <TextInput
                                                 value={data.no_telepon}
-                                                onChange={(e) => setData('no_telepon', e.target.value)}
+                                                onChange={(e) => handleFieldChange('no_telepon', e.target.value)}
                                                 className="pl-10 block w-full"
                                                 placeholder="Masukkan Nomor Telepon / WhatsApp"
                                             />
                                         </div>
-                                        <InputError message={errors.no_telepon} className="mt-2" />
+                                        <FieldTooltipError message={formErrors.no_telepon || errors.no_telepon} />
                                     </div>
 
-                                    <div>
-                                        <InputLabel value="Email Resmi" required />
+                                    <div className="relative pb-2">
+                                        <InputLabel value="Email Resmi" />
                                         <div className="relative mt-1">
                                             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                                 <Mail className="w-4 h-4 text-gray-400" />
@@ -210,12 +227,12 @@ export default function Create({ auth, users, units, approvalPaths }) {
                                             <TextInput
                                                 type="email"
                                                 value={data.email}
-                                                onChange={(e) => setData('email', e.target.value)}
+                                                onChange={(e) => handleFieldChange('email', e.target.value)}
                                                 className="pl-10 block w-full"
                                                 placeholder="Masukkan Email Resmi Unit"
                                             />
                                         </div>
-                                        <InputError message={errors.email} className="mt-2" />
+                                        <FieldTooltipError message={formErrors.email || errors.email} />
                                     </div>
                                 </div>
                             </div>
@@ -234,19 +251,17 @@ export default function Create({ auth, users, units, approvalPaths }) {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="md:col-span-2">
+                                <div className="md:col-span-2 relative pb-2">
                                     <InputLabel value="Alur Persetujuan" required />
                                     <CustomSelect
                                         value={data.approval_path_id}
-                                        onChange={(e) => setData('approval_path_id', e.target.value)}
+                                        onChange={(e) => handleFieldChange('approval_path_id', e.target.value)}
                                         options={approvalPaths ? approvalPaths.map((path) => ({ value: path.id, label: path.name })) : []}
                                         placeholder="Pilih Alur Persetujuan"
-                                        className="mt-1"
+                                        className={`mt-1 ${(formErrors.approval_path_id || errors.approval_path_id) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
                                     />
-                                    <InputError message={errors.approval_path_id} className="mt-2" />
+                                    <FieldTooltipError message={formErrors.approval_path_id || errors.approval_path_id} />
                                 </div>
-                                
-
                             </div>
                         </div>
 

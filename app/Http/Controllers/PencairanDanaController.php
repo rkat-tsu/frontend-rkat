@@ -22,6 +22,7 @@ class PencairanDanaController extends Controller
 
         $query = PencairanDana::with([
             'rkatHeader.unit',
+            'rkatHeader.rkatDetails',
             'pengaju',
             'items'
         ]);
@@ -79,8 +80,12 @@ class PencairanDanaController extends Controller
             });
         }
 
+        if ($request->filled('bulan')) {
+            $query->whereMonth('pencairan_danas.tanggal_pengajuan', $request->bulan);
+        }
+
         if ($request->filled('status')) {
-            $query->where('status_pencairan', $request->status);
+            $query->where('pencairan_danas.status_pencairan', $request->status);
         }
 
         if ($request->filled('unit_id')) {
@@ -93,7 +98,26 @@ class PencairanDanaController extends Controller
         $perPage = request()->get('per_page', 15);
         $perPage = $perPage === 'all' ? 10000 : (int) $perPage;
 
-        $pencairans = $query->orderBy('created_at', 'desc')->paginate($perPage)->onEachSide(0)->withQueryString();
+        // SORTING
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortDirection = $request->input('sort_direction', 'desc');
+
+        if ($sortBy === 'nomor_dokumen') {
+            $query->join('rkat_headers', 'pencairan_danas.id_header', '=', 'rkat_headers.id_header')
+                  ->orderBy('rkat_headers.nomor_dokumen', $sortDirection)
+                  ->select('pencairan_danas.*');
+        } elseif ($sortBy === 'unit') {
+            $query->join('rkat_headers', 'pencairan_danas.id_header', '=', 'rkat_headers.id_header')
+                  ->join('unit', 'rkat_headers.id_unit', '=', 'unit.id_unit')
+                  ->orderBy('unit.nama_unit', $sortDirection)
+                  ->select('pencairan_danas.*');
+        } elseif (in_array($sortBy, ['status_pencairan', 'tanggal_pengajuan', 'created_at'])) {
+            $query->orderBy("pencairan_danas.$sortBy", $sortDirection);
+        } else {
+            $query->orderBy('pencairan_danas.created_at', 'desc');
+        }
+
+        $pencairans = $query->paginate($perPage)->onEachSide(0)->withQueryString();
         $tahunAnggarans = TahunAnggaran::pluck('tahun_anggaran', null)->toArray();
         $units = Unit::select(['id_unit', 'nama_unit'])->get();
 
@@ -152,11 +176,11 @@ class PencairanDanaController extends Controller
 
         return Inertia::render('Pencairan/Index', [
             'pencairans' => $pencairans,
-            'filters' => $request->only(['search', 'tahun', 'status', 'unit_id', 'per_page']),
+            'filters' => $request->only(['search', 'tahun', 'bulan', 'status', 'unit_id', 'per_page', 'sort_by', 'sort_direction']),
             'tahunAnggarans' => $tahunAnggarans,
             'units' => $units,
             'statuses' => $statuses,
-            'rkatList' => $rkatList,
+            'rkatList' => $rkatList
         ]);
     }
 
@@ -309,13 +333,13 @@ class PencairanDanaController extends Controller
             'pengaju'
         ]);
 
-        if ($user->peran !== 'Admin' && $pencairan->rkatHeader->id_unit !== $user->id_unit) {
+        if ($user->peran !== 'Admin' && $user->peran !== 'Rektor' && $pencairan->rkatHeader->id_unit !== $user->id_unit) {
             $isParentUnit = false;
             if ($user->unit && $user->isUnitHead()) {
                 $isParentUnit = $user->unit->children()->where('id_unit', $pencairan->rkatHeader->id_unit)->exists();
             }
 
-            $hasAccess = $isParentUnit;
+            $hasAccess = $isParentUnit || $user->isApprover();
 
             // Check if user is in any step of the dynamic approval path
             if (!$hasAccess && $pencairan->rkatHeader->unit && $pencairan->rkatHeader->unit->pencairanApprovalPath) {
@@ -324,6 +348,8 @@ class PencairanDanaController extends Controller
                 foreach ($steps as $step) {
                     if ($step->approver_type === 'role' && in_array($step->role_name, $effectiveRoles)) $hasAccess = true;
                     if ($step->approver_type === 'unit' && $user->isUnitHead() && $step->unit_id === $user->id_unit) $hasAccess = true;
+                    if ($step->approver_type === 'self_unit_head' && $user->isUnitHead() && $pencairan->rkatHeader->id_unit === $user->id_unit) $hasAccess = true;
+                    if ($step->approver_type === 'parent_unit' && $user->isUnitHead() && ($pencairan->rkatHeader->unit->parent_id === $user->id_unit || $pencairan->rkatHeader->unit->id_unit === $user->id_unit)) $hasAccess = true;
                 }
             }
 
@@ -467,7 +493,7 @@ class PencairanDanaController extends Controller
     }
 
     // Approval khusus Pencairan
-    public function approvalIndex()
+    public function approvalIndex(Request $request)
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -547,9 +573,28 @@ class PencairanDanaController extends Controller
                 return false;
             })->values();
         }
+        $sortBy = $request->input('sort_by', 'updated_at');
+        $sortDirection = $request->input('sort_direction', 'desc');
+
+        if ($sortBy === 'nomor_dokumen') {
+            $pencairans = $sortDirection === 'asc'
+                ? $pencairans->sortBy(fn($p) => $p->rkatHeader->nomor_dokumen ?? '')
+                : $pencairans->sortByDesc(fn($p) => $p->rkatHeader->nomor_dokumen ?? '');
+        } elseif ($sortBy === 'unit') {
+            $pencairans = $sortDirection === 'asc'
+                ? $pencairans->sortBy(fn($p) => $p->rkatHeader->unit->nama_unit ?? '')
+                : $pencairans->sortByDesc(fn($p) => $p->rkatHeader->unit->nama_unit ?? '');
+        } else {
+            $pencairans = $sortDirection === 'asc'
+                ? $pencairans->sortBy($sortBy)
+                : $pencairans->sortByDesc($sortBy);
+        }
+
+        $pencairans = $pencairans->values();
 
         return Inertia::render('Pencairan/Approval', [
-            'pencairans' => $pencairans
+            'pencairans' => $pencairans,
+            'filters' => $request->only(['sort_by', 'sort_direction'])
         ]);
     }
 

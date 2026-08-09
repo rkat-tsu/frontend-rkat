@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Edit2, Trash2, Search, Plus, Save } from 'lucide-react';
+import ActionButton, { ActionGroup } from '@/Components/ActionButton';
+import { Edit2, Trash2, Search, Plus, Save, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
@@ -9,11 +10,29 @@ import { usePermission } from '@/hooks/usePermission';
 import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import FieldTooltipError from '@/Components/FieldTooltipError';
 
 export default function Index({ auth, items = {}, filters = {}, kelompoks = [], flash = {} }) {
-    const [searchTerm, setSearchTerm] = useState(filters.search || '');
-    const [kelompokFilter, setKelompokFilter] = useState(filters.kelompok || '');
-    const [perPage, setPerPage] = useState(filters.per_page || '20');
+    const [searchTerm, setSearchTerm] = useState(filters?.search || '');
+    const [kelompokFilter, setKelompokFilter] = useState(filters?.kelompok || '');
+    const [perPage, setPerPage] = useState(filters?.per_page || '15');
+    const [sortBy, setSortBy] = useState(filters?.sort_by || 'kode_anggaran');
+    const [sortDirection, setSortDirection] = useState(filters?.sort_direction || 'asc');
+
+    const applyFilters = (newSearch, newKelompok, newPerPage, newSortBy = sortBy, newSortDirection = sortDirection) => {
+        router.get(
+            route('sbo.index'),
+            { search: newSearch, kelompok: newKelompok, per_page: newPerPage, sort_by: newSortBy, sort_direction: newSortDirection },
+            { preserveState: true, preserveScroll: true, replace: true }
+        );
+    };
+
+    const handleSort = (field) => {
+        const newDirection = (sortBy === field && sortDirection === 'asc') ? 'desc' : 'asc';
+        setSortBy(field);
+        setSortDirection(newDirection);
+        applyFilters(searchTerm, kelompokFilter, perPage, field, newDirection);
+    };
 
     const { isAdmin } = usePermission();
 
@@ -21,6 +40,23 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
+
+    const [createFormErrors, setCreateFormErrors] = useState({});
+    const [editFormErrors, setEditFormErrors] = useState({});
+
+    const handleCreateChange = (field, value) => {
+        setCreateData(field, value);
+        if (createFormErrors[field]) {
+            setCreateFormErrors(prev => ({ ...prev, [field]: null }));
+        }
+    };
+
+    const handleEditChange = (field, value) => {
+        setEditData(field, value);
+        if (editFormErrors[field]) {
+            setEditFormErrors(prev => ({ ...prev, [field]: null }));
+        }
+    };
 
     const { data: createData, setData: setCreateData, post, processing: createProcessing, errors: createErrors, reset: resetCreate } = useForm({
         kode_anggaran: '',
@@ -40,12 +76,8 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
 
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            if (searchTerm !== (filters.search || '') || kelompokFilter !== (filters.kelompok || '') || perPage !== (filters.per_page || '20')) {
-                router.get(
-                    route('sbo.index'),
-                    { search: searchTerm, kelompok: kelompokFilter, per_page: perPage },
-                    { preserveState: true, preserveScroll: true, replace: true }
-                );
+            if (searchTerm !== (filters?.search || '') || kelompokFilter !== (filters?.kelompok || '') || perPage !== (filters?.per_page || '15')) {
+                applyFilters(searchTerm, kelompokFilter, perPage, sortBy, sortDirection);
             }
         }, 300);
 
@@ -84,10 +116,24 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
 
     const handleCreateSubmit = (e) => {
         e.preventDefault();
-        if (!createData.kode_anggaran || !createData.nama_anggaran || !createData.nominal) {
-            toast.error("Gagal Menyimpan", { description: "Semua form input bertanda * wajib diisi." });
+        const errorsObj = {};
+        if (!createData.kode_anggaran || !createData.kode_anggaran.trim()) {
+            errorsObj.kode_anggaran = 'Harap isi bidang ini.';
+        }
+        if (!createData.nama_anggaran || !createData.nama_anggaran.trim()) {
+            errorsObj.nama_anggaran = 'Harap isi bidang ini.';
+        }
+        if (createData.nominal === '' || createData.nominal === null || createData.nominal === undefined) {
+            errorsObj.nominal = 'Harap isi bidang ini.';
+        }
+
+        if (Object.keys(errorsObj).length > 0) {
+            setCreateFormErrors(errorsObj);
+            toast.error("Gagal Menyimpan (Belum Lengkap)", { description: "Harap lengkapi form input yang belum terisi." });
             return;
         }
+
+        setCreateFormErrors({});
         const toastId = toast.loading("Sedang menyimpan data...");
         post(route('sbo.store'), {
             onSuccess: () => {
@@ -101,6 +147,7 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
 
     const openEditModal = (item) => {
         setEditingItem(item);
+        setEditFormErrors({});
         setEditData({
             kode_anggaran: item.kode_anggaran || '',
             nama_anggaran: item.nama_anggaran || '',
@@ -113,10 +160,21 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
 
     const handleEditSubmit = (e) => {
         e.preventDefault();
-        if (!editData.nama_anggaran || !editData.nominal) {
-            toast.error("Gagal Menyimpan", { description: "Semua form input bertanda * wajib diisi." });
+        const errorsObj = {};
+        if (!editData.nama_anggaran || !editData.nama_anggaran.trim()) {
+            errorsObj.nama_anggaran = 'Harap isi bidang ini.';
+        }
+        if (editData.nominal === '' || editData.nominal === null || editData.nominal === undefined) {
+            errorsObj.nominal = 'Harap isi bidang ini.';
+        }
+
+        if (Object.keys(errorsObj).length > 0) {
+            setEditFormErrors(errorsObj);
+            toast.error("Gagal Memperbarui (Belum Lengkap)", { description: "Harap lengkapi form input yang belum terisi." });
             return;
         }
+
+        setEditFormErrors({});
         const toastId = toast.loading("Sedang memperbarui data...");
         patch(route('sbo.update', editingItem.uuid || editingItem.kode_anggaran), {
             onSuccess: () => {
@@ -186,10 +244,66 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                                 <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                     <tr>
                                         <th className="w-8 border-b border-gray-300 dark:border-gray-600"></th>
-                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Kode Item</th>
-                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Keterangan</th>
-                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Satuan</th>
-                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Pagu Anggaran</th>
+                                        <th 
+                                            className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('kode_anggaran')}
+                                        >
+                                            <div className="flex items-center justify-center">
+                                                <span>Kode Item</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'kode_anggaran' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('nama_anggaran')}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span>Keterangan</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'nama_anggaran' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('satuan')}
+                                        >
+                                            <div className="flex items-center justify-center">
+                                                <span>Satuan</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'satuan' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('nominal')}
+                                        >
+                                            <div className="flex items-center justify-center">
+                                                <span>Pagu Anggaran</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'nominal' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
                                         {isAdmin() && <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>}
                                     </tr>
                                 </thead>
@@ -222,32 +336,18 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                                                 </td>
                                                 {isAdmin() && (
                                                     <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                        <div className="flex gap-1.5 justify-center">
-                                                            <TooltipProvider>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <button
-                                                                            onClick={() => openEditModal(item)}
-                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-amber-300 rounded-md shadow-sm text-amber-700 bg-white hover:bg-amber-50 dark:bg-gray-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-900/20 transition-colors"
-                                                                        >
-                                                                            <Edit2 size={16} />
-                                                                        </button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent>Edit SBO</TooltipContent>
-                                                                </Tooltip>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <button
-                                                                            onClick={() => handleDelete(item.uuid)}
-                                                                            className="inline-flex items-center justify-center w-8 h-8 border border-red-300 rounded-md shadow-sm text-red-700 bg-white hover:bg-red-50 dark:bg-gray-700 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/20 transition-colors"
-                                                                        >
-                                                                            <Trash2 size={16} />
-                                                                        </button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent>Hapus SBO</TooltipContent>
-                                                                </Tooltip>
-                                                            </TooltipProvider>
-                                                        </div>
+                                                        <ActionGroup>
+                                                            <ActionButton
+                                                                variant="edit"
+                                                                tooltip="Edit SBO"
+                                                                onClick={() => openEditModal(item)}
+                                                            />
+                                                            <ActionButton
+                                                                variant="delete"
+                                                                tooltip="Hapus SBO"
+                                                                onClick={() => handleDelete(item.uuid)}
+                                                            />
+                                                        </ActionGroup>
                                                     </td>
                                                 )}
                                             </tr>
@@ -317,7 +417,7 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
             </div>
 
             {/* Modal Create */}
-            <Modal show={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} maxWidth="2xl">
+            <Modal show={isCreateModalOpen} onClose={() => { setIsCreateModalOpen(false); setCreateFormErrors({}); }} maxWidth="2xl">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                     <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
                         Tambah Item SBO Baru
@@ -325,7 +425,7 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                 </div>
                 <form onSubmit={handleCreateSubmit} className="p-6 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
+                        <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Kode Item <span className="text-red-500">*</span>
                             </label>
@@ -333,13 +433,12 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                                 type="text"
                                 placeholder="Contoh: A.1.1"
                                 value={createData.kode_anggaran}
-                                onChange={(e) => setCreateData('kode_anggaran', e.target.value)}
-                                className={`w-full bg-gray-50 border ${createErrors.kode_anggaran ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
-                                required
+                                onChange={(e) => handleCreateChange('kode_anggaran', e.target.value)}
+                                className={`w-full bg-gray-50 border ${(createFormErrors.kode_anggaran || createErrors.kode_anggaran) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : 'border-gray-300 focus:ring-yellow-500 focus:border-yellow-500'} text-gray-900 rounded-lg p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
                             />
-                            {createErrors.kode_anggaran && <p className="mt-1 text-sm text-red-600">{createErrors.kode_anggaran}</p>}
+                            <FieldTooltipError message={createFormErrors.kode_anggaran || createErrors.kode_anggaran} />
                         </div>
-                        <div>
+                        <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Kelompok Anggaran
                             </label>
@@ -347,13 +446,13 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                                 type="text"
                                 placeholder="Contoh: Kelompok A, B, C"
                                 value={createData.kelompok_anggaran}
-                                onChange={(e) => setCreateData('kelompok_anggaran', e.target.value)}
-                                className={`w-full bg-gray-50 border ${createErrors.kelompok_anggaran ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
+                                onChange={(e) => handleCreateChange('kelompok_anggaran', e.target.value)}
+                                className={`w-full bg-gray-50 border ${(createFormErrors.kelompok_anggaran || createErrors.kelompok_anggaran) ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-gray-300 focus:ring-yellow-500 focus:border-yellow-500'} text-gray-900 rounded-lg p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
                             />
-                            {createErrors.kelompok_anggaran && <p className="mt-1 text-sm text-red-600">{createErrors.kelompok_anggaran}</p>}
+                            <FieldTooltipError message={createFormErrors.kelompok_anggaran || createErrors.kelompok_anggaran} />
                         </div>
                     </div>
-                    <div>
+                    <div className="relative pb-2">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Keterangan / Deskripsi <span className="text-red-500">*</span>
                         </label>
@@ -361,14 +460,13 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                             rows="3"
                             placeholder="Masukkan keterangan lengkap item SBO"
                             value={createData.nama_anggaran}
-                            onChange={(e) => setCreateData('nama_anggaran', e.target.value)}
-                            className={`w-full bg-gray-50 border ${createErrors.nama_anggaran ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
-                            required
+                            onChange={(e) => handleCreateChange('nama_anggaran', e.target.value)}
+                            className={`w-full bg-gray-50 border ${(createFormErrors.nama_anggaran || createErrors.nama_anggaran) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : 'border-gray-300 focus:ring-yellow-500 focus:border-yellow-500'} text-gray-900 rounded-lg p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
                         ></textarea>
-                        {createErrors.nama_anggaran && <p className="mt-1 text-sm text-red-600">{createErrors.nama_anggaran}</p>}
+                        <FieldTooltipError message={createFormErrors.nama_anggaran || createErrors.nama_anggaran} />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
+                        <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Satuan
                             </label>
@@ -376,12 +474,12 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                                 type="text"
                                 placeholder="Contoh: Paket, Orang, Hari"
                                 value={createData.satuan}
-                                onChange={(e) => setCreateData('satuan', e.target.value)}
-                                className={`w-full bg-gray-50 border ${createErrors.satuan ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
+                                onChange={(e) => handleCreateChange('satuan', e.target.value)}
+                                className={`w-full bg-gray-50 border ${(createFormErrors.satuan || createErrors.satuan) ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-gray-300 focus:ring-yellow-500 focus:border-yellow-500'} text-gray-900 rounded-lg p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
                             />
-                            {createErrors.satuan && <p className="mt-1 text-sm text-red-600">{createErrors.satuan}</p>}
+                            <FieldTooltipError message={createFormErrors.satuan || createErrors.satuan} />
                         </div>
-                        <div>
+                        <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Pagu Anggaran (Rp) <span className="text-red-500">*</span>
                             </label>
@@ -393,17 +491,16 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                                     type="number"
                                     min="0"
                                     value={createData.nominal}
-                                    onChange={(e) => setCreateData('nominal', e.target.value)}
-                                    className={`pl-10 w-full bg-gray-50 border ${createErrors.nominal ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
-                                    required
+                                    onChange={(e) => handleCreateChange('nominal', e.target.value)}
+                                    className={`pl-10 w-full bg-gray-50 border ${(createFormErrors.nominal || createErrors.nominal) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : 'border-gray-300 focus:ring-yellow-500 focus:border-yellow-500'} text-gray-900 rounded-lg p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
                                 />
                             </div>
-                            {createErrors.nominal && <p className="mt-1 text-sm text-red-600">{createErrors.nominal}</p>}
+                            <FieldTooltipError message={createFormErrors.nominal || createErrors.nominal} />
                         </div>
                     </div>
                     
                     <div className="mt-6 flex justify-end gap-3 bg-white dark:bg-gray-800 -mx-6 -mb-6 p-4">
-                        <SecondaryButton type="button" onClick={() => setIsCreateModalOpen(false)}>Batal</SecondaryButton>
+                        <SecondaryButton type="button" onClick={() => { setIsCreateModalOpen(false); setCreateFormErrors({}); }}>Batal</SecondaryButton>
                         <PrimaryButton 
                             disabled={createProcessing} 
                             className="bg-yellow-500 flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold text-white rounded-lg hover:bg-yellow-600 focus:ring-4 focus:outline-none focus:ring-yellow-300 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
@@ -416,7 +513,7 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
             </Modal>
 
             {/* Modal Edit */}
-            <Modal show={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} maxWidth="2xl">
+            <Modal show={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); setEditFormErrors({}); }} maxWidth="2xl">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                     <div>
                         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
@@ -441,7 +538,7 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                                 readOnly
                             />
                         </div>
-                        <div>
+                        <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Kelompok Anggaran
                             </label>
@@ -449,13 +546,13 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                                 type="text"
                                 placeholder="Contoh: Kelompok A, B, C"
                                 value={editData.kelompok_anggaran}
-                                onChange={(e) => setEditData('kelompok_anggaran', e.target.value)}
-                                className={`w-full bg-gray-50 border ${editErrors.kelompok_anggaran ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
+                                onChange={(e) => handleEditChange('kelompok_anggaran', e.target.value)}
+                                className={`w-full bg-gray-50 border ${(editFormErrors.kelompok_anggaran || editErrors.kelompok_anggaran) ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-gray-300 focus:ring-yellow-500 focus:border-yellow-500'} text-gray-900 rounded-lg p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
                             />
-                            {editErrors.kelompok_anggaran && <p className="mt-1 text-sm text-red-600">{editErrors.kelompok_anggaran}</p>}
+                            <FieldTooltipError message={editFormErrors.kelompok_anggaran || editErrors.kelompok_anggaran} />
                         </div>
                     </div>
-                    <div>
+                    <div className="relative pb-2">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Keterangan / Deskripsi <span className="text-red-500">*</span>
                         </label>
@@ -463,14 +560,13 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                             rows="3"
                             placeholder="Masukkan keterangan lengkap item SBO"
                             value={editData.nama_anggaran}
-                            onChange={(e) => setEditData('nama_anggaran', e.target.value)}
-                            className={`w-full bg-gray-50 border ${editErrors.nama_anggaran ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
-                            required
+                            onChange={(e) => handleEditChange('nama_anggaran', e.target.value)}
+                            className={`w-full bg-gray-50 border ${(editFormErrors.nama_anggaran || editErrors.nama_anggaran) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : 'border-gray-300 focus:ring-yellow-500 focus:border-yellow-500'} text-gray-900 rounded-lg p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
                         ></textarea>
-                        {editErrors.nama_anggaran && <p className="mt-1 text-sm text-red-600">{editErrors.nama_anggaran}</p>}
+                        <FieldTooltipError message={editFormErrors.nama_anggaran || editErrors.nama_anggaran} />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
+                        <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Satuan
                             </label>
@@ -478,12 +574,12 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                                 type="text"
                                 placeholder="Contoh: Paket, Orang, Hari"
                                 value={editData.satuan}
-                                onChange={(e) => setEditData('satuan', e.target.value)}
-                                className={`w-full bg-gray-50 border ${editErrors.satuan ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
+                                onChange={(e) => handleEditChange('satuan', e.target.value)}
+                                className={`w-full bg-gray-50 border ${(editFormErrors.satuan || editErrors.satuan) ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-gray-300 focus:ring-yellow-500 focus:border-yellow-500'} text-gray-900 rounded-lg p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
                             />
-                            {editErrors.satuan && <p className="mt-1 text-sm text-red-600">{editErrors.satuan}</p>}
+                            <FieldTooltipError message={editFormErrors.satuan || editErrors.satuan} />
                         </div>
-                        <div>
+                        <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Pagu Anggaran (Rp) <span className="text-red-500">*</span>
                             </label>
@@ -495,17 +591,16 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                                     type="number"
                                     min="0"
                                     value={editData.nominal}
-                                    onChange={(e) => setEditData('nominal', e.target.value)}
-                                    className={`pl-10 w-full bg-gray-50 border ${editErrors.nominal ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
-                                    required
+                                    onChange={(e) => handleEditChange('nominal', e.target.value)}
+                                    className={`pl-10 w-full bg-gray-50 border ${(editFormErrors.nominal || editErrors.nominal) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : 'border-gray-300 focus:ring-yellow-500 focus:border-yellow-500'} text-gray-900 rounded-lg p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm`}
                                 />
                             </div>
-                            {editErrors.nominal && <p className="mt-1 text-sm text-red-600">{editErrors.nominal}</p>}
+                            <FieldTooltipError message={editFormErrors.nominal || editErrors.nominal} />
                         </div>
                     </div>
                     
                     <div className="mt-6 flex justify-end gap-3 bg-white dark:bg-gray-800 -mx-6 -mb-6 p-4">
-                        <SecondaryButton type="button" onClick={() => setIsEditModalOpen(false)}>Batal</SecondaryButton>
+                        <SecondaryButton type="button" onClick={() => { setIsEditModalOpen(false); setEditFormErrors({}); }}>Batal</SecondaryButton>
                         <PrimaryButton 
                             disabled={editProcessing} 
                             className="bg-yellow-500 flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold text-white rounded-lg hover:bg-yellow-600 focus:ring-4 focus:outline-none focus:ring-yellow-300 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"

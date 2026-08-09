@@ -1,23 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Search, Package, ArrowLeft, ArrowRight, FileSpreadsheet, Plus } from 'lucide-react';
+import { Search, Package, ArrowLeft, ArrowRight, FileSpreadsheet, Plus, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 
 export default function Index({ auth, items, filters }) {
     // State untuk pencarian
-    const [searchTerm, setSearchTerm] = useState(filters.search || '');
-    const [perPage, setPerPage] = useState(filters.per_page || '15');
+    const [searchTerm, setSearchTerm] = useState(filters?.search || '');
+    const [perPage, setPerPage] = useState(filters?.per_page || '15');
+    const [sortBy, setSortBy] = useState(filters?.sort_by || 'created_at');
+    const [sortDirection, setSortDirection] = useState(filters?.sort_direction || 'asc');
+
+    const applyFilters = (newSearch, newPerPage, newSortBy = sortBy, newSortDirection = sortDirection) => {
+        router.get(
+            route('rkat.index'),
+            { search: newSearch, per_page: newPerPage, sort_by: newSortBy, sort_direction: newSortDirection },
+            { preserveState: true, replace: true, preserveScroll: true }
+        );
+    };
+
+    const handleSort = (field) => {
+        const newDirection = (sortBy === field && sortDirection === 'asc') ? 'desc' : 'asc';
+        setSortBy(field);
+        setSortDirection(newDirection);
+        applyFilters(searchTerm, perPage, field, newDirection);
+    };
 
     // Handle Search dengan Delay (Debounce) via useEffect
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            if (searchTerm !== (filters.search || '') || perPage !== (filters.per_page || '15')) {
-                router.get(
-                    route('rkat.index'),
-                    { search: searchTerm, per_page: perPage },
-                    { preserveState: true, replace: true, preserveScroll: true }
-                );
+            if (searchTerm !== (filters?.search || '') || perPage !== (filters?.per_page || '15')) {
+                applyFilters(searchTerm, perPage, sortBy, sortDirection);
             }
         }, 500); // 500ms delay
 
@@ -93,11 +106,81 @@ export default function Index({ auth, items, filters }) {
                                     <tr>
                                         <th className="px-6 py-3 border-b border-gray-300 dark:border-gray-600 font-medium w-10 text-center">No</th>
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Unit Kerja & Kegiatan</th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Deskripsi Item</th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Vol</th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Satuan</th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-right">Harga Satuan</th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-right">Total</th>
+                                        <th 
+                                            className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('deskripsi_item')}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span>Deskripsi Item</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'deskripsi_item' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('volume')}
+                                        >
+                                            <div className="flex items-center justify-center">
+                                                <span>Vol</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'volume' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('satuan')}
+                                        >
+                                            <div className="flex items-center justify-center">
+                                                <span>Satuan</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'satuan' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-right cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('harga_satuan')}
+                                        >
+                                            <div className="flex items-center justify-end">
+                                                <span>Harga Satuan</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'harga_satuan' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-right cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('sub_total')}
+                                        >
+                                            <div className="flex items-center justify-end">
+                                                <span>Total</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'sub_total' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>

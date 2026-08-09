@@ -35,17 +35,27 @@ class RkatRabItemController extends Controller
             });
         }
 
-        // Urutkan dari yang terbaru
+        // SORTING
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortDirection = $request->input('sort_direction', 'asc');
+        
+        $allowedSorts = ['deskripsi_item', 'volume', 'satuan', 'harga_satuan', 'sub_total', 'created_at'];
+        
+        if (in_array($sortBy, $allowedSorts)) {
+            $query->orderBy($sortBy, $sortDirection);
+        } else {
+            $query->orderBy('created_at', 'asc');
+        }
+
         $perPage = request()->get('per_page', 15);
         $perPage = $perPage === 'all' ? 10000 : (int) $perPage;
 
-        $items = $query->orderBy('created_at', 'asc')
-            ->paginate($perPage)->onEachSide(0)
+        $items = $query->paginate($perPage)->onEachSide(0)
             ->withQueryString(); // Agar parameter search tidak hilang saat ganti halaman
 
         return Inertia::render('RkatRabItem/Index', [
             'items' => $items,
-            'filters' => $request->only(['search']),
+            'filters' => $request->only(['search', 'sort_by', 'sort_direction', 'per_page']),
         ]);
     }
 }

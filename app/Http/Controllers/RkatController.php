@@ -64,38 +64,62 @@ class RkatController extends Controller
                 'tahun_obj:id_tahun,tahun_anggaran,status_rkat',
                 'rkatDetails:id_rkat_detail,id_header,jadwal_pelaksanaan_mulai,jadwal_pelaksanaan_akhir'
             ])
-            ->whereNull('parent_id');
+            ->whereNull('rkat_headers.parent_id');
 
         // Jika pengguna bukan admin, batasi ke unit sendiri
         // KECUALI jika mencari yang Disetujui_Final (Mode Daftar Ajuan: Semua unit bisa lihat hasil final)
         if (Auth::user()->peran !== 'Admin' && $request->status !== 'Disetujui_Final') {
-            $query->where('id_unit', Auth::user()->id_unit);
+            $query->where('rkat_headers.id_unit', Auth::user()->id_unit);
         }
 
         // PENCARIAN & FILTER
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('nomor_dokumen', 'like', "%{$search}%")
+                $q->where('rkat_headers.nomor_dokumen', 'like', "%{$search}%")
                     ->orWhereHas('unit', function ($q) use ($search) {
                         $q->where('nama_unit', 'like', "%{$search}%");
                     });
             });
         }
         if ($request->filled('tahun')) {
-            $query->where('tahun_anggaran', $request->tahun);
+            $query->where('rkat_headers.tahun_anggaran', $request->tahun);
+        }
+        if ($request->filled('bulan')) {
+            $query->whereMonth('rkat_headers.tanggal_pengajuan', $request->bulan);
         }
         if ($request->filled('status')) {
-            $query->where('status_persetujuan', $request->status);
+            $query->where('rkat_headers.status_persetujuan', $request->status);
         }
         if ($request->filled('unit_id')) {
-            $query->where('id_unit', $request->unit_id);
+            $query->where('rkat_headers.id_unit', $request->unit_id);
+        }
+
+        // SORTING
+        $sortBy = $request->get('sort_by', 'tanggal_pengajuan');
+        $sortDirection = $request->get('sort_direction', 'desc') === 'asc' ? 'asc' : 'desc';
+
+        if ($sortBy === 'unit') {
+            $query->join('unit', 'rkat_headers.id_unit', '=', 'unit.id_unit')
+                  ->orderBy('unit.nama_unit', $sortDirection)
+                  ->select('rkat_headers.*');
+        } elseif ($sortBy === 'pelaksanaan') {
+            $query->join('rkat_details', 'rkat_headers.id_header', '=', 'rkat_details.id_header')
+                  ->orderBy('rkat_details.jadwal_pelaksanaan_mulai', $sortDirection)
+                  ->select('rkat_headers.*');
+        } else {
+            $allowedSorts = ['nomor_dokumen', 'tahun_anggaran', 'status_persetujuan', 'tanggal_pengajuan'];
+            if (in_array($sortBy, $allowedSorts)) {
+                $query->orderBy("rkat_headers.{$sortBy}", $sortDirection);
+            } else {
+                $query->orderBy('rkat_headers.tanggal_pengajuan', 'desc');
+            }
         }
 
         $perPage = request()->get('per_page', 15);
         $perPage = $perPage === 'all' ? 10000 : (int) $perPage;
 
-        $rkats = $query->orderBy('tanggal_pengajuan', 'desc')->paginate($perPage)->onEachSide(0)->withQueryString();
+        $rkats = $query->paginate($perPage)->onEachSide(0)->withQueryString();
 
         $tahunAnggarans = TahunAnggaran::query()->orderBy('tahun_anggaran', 'desc')->pluck('tahun_anggaran');
         $units = Unit::query()->select(['id_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get();
@@ -105,7 +129,7 @@ class RkatController extends Controller
 
         return Inertia::render('Rkat/Index', [
             'rkats' => $rkats,
-            'filters' => $request->only(['search', 'tahun', 'status', 'unit_id']),
+            'filters' => $request->only(['search', 'tahun', 'bulan', 'status', 'unit_id', 'sort_by', 'sort_direction']),
             'tahunAnggarans' => $tahunAnggarans,
             'units' => $units,
             'statuses' => $statuses,
@@ -133,10 +157,10 @@ class RkatController extends Controller
         // 2. VALIDASI RAB
         $request->validate([
             'rincian_anggaran' => ['required', 'array', 'min:1'],
-            'rincian_anggaran.*.kode_anggaran' => ['required', 'string'],
+            'rincian_anggaran.*.kode_anggaran' => ['nullable', 'string'],
             'rincian_anggaran.*.kebutuhan' => ['nullable', 'string', 'max:255'],
             'rincian_anggaran.*.vol' => ['required', 'numeric', 'min:1'],
-            'rincian_anggaran.*.satuan' => ['required', 'string', 'max:50'],
+            'rincian_anggaran.*.satuan' => ['nullable', 'string', 'max:50'],
             'rincian_anggaran.*.biaya_satuan' => ['required', 'numeric', 'min:0'],
             'rincian_anggaran.*.jumlah' => ['required', 'numeric', 'min:0'],
         ]);
@@ -229,12 +253,13 @@ class RkatController extends Controller
 
             // D. SIMPAN RAB
             foreach ($request->input('rincian_anggaran') as $item) {
+                $kodeAnggaran = (isset($item['kode_anggaran']) && $item['kode_anggaran'] === '__OTHER__') ? null : ($item['kode_anggaran'] ?? null);
                 RkatRabItem::create([
                     'id_rkat_detail' => $rkatDetail->id_rkat_detail,
-                    'kode_anggaran' => $item['kode_anggaran'],
+                    'kode_anggaran' => $kodeAnggaran,
                     'deskripsi_item' => $item['kebutuhan'] ?? '-',
                     'volume' => $item['vol'],
-                    'satuan' => $item['satuan'],
+                    'satuan' => $item['satuan'] ?? 'Paket',
                     'harga_satuan' => $item['biaya_satuan'],
                     'sub_total' => $item['jumlah'],
                 ]);
@@ -411,9 +436,9 @@ class RkatController extends Controller
             'indikator_kinerja' => ['required', 'array', 'min:1'],
             'indikator_kinerja.*.indikator' => ['required', 'string'],
             'rincian_anggaran' => ['required', 'array', 'min:1'],
-            'rincian_anggaran.*.kode_anggaran' => ['required', 'string'],
+            'rincian_anggaran.*.kode_anggaran' => ['nullable', 'string'],
             'rincian_anggaran.*.vol' => ['required', 'numeric', 'min:1'],
-            'rincian_anggaran.*.satuan' => ['required', 'string', 'max:50'],
+            'rincian_anggaran.*.satuan' => ['nullable', 'string', 'max:50'],
             'rincian_anggaran.*.biaya_satuan' => ['required', 'numeric', 'min:0'],
             'rincian_anggaran.*.jumlah' => ['required', 'numeric', 'min:0'],
             'tahun_anggaran' => ['required', 'exists:tahun_anggarans,tahun_anggaran'],
@@ -530,12 +555,13 @@ class RkatController extends Controller
 
             $rkatDetail->rabItems()->delete();
             foreach ($request->input('rincian_anggaran') as $item) {
+                $kodeAnggaran = (isset($item['kode_anggaran']) && $item['kode_anggaran'] === '__OTHER__') ? null : ($item['kode_anggaran'] ?? null);
                 RkatRabItem::create([
                     'id_rkat_detail' => $rkatDetail->id_rkat_detail,
-                    'kode_anggaran' => $item['kode_anggaran'],
+                    'kode_anggaran' => $kodeAnggaran,
                     'deskripsi_item' => $item['kebutuhan'] ?? '-',
                     'volume' => $item['vol'],
-                    'satuan' => $item['satuan'],
+                    'satuan' => $item['satuan'] ?? '-',
                     'harga_satuan' => $item['biaya_satuan'],
                     'sub_total' => $item['jumlah'],
                 ]);

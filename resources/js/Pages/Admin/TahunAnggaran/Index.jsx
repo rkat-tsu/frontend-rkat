@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Edit2, Trash2, Search, Plus } from 'lucide-react';
+import ActionButton, { ActionGroup } from '@/Components/ActionButton';
+import { Edit2, Trash2, Search, Plus, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
@@ -12,12 +13,43 @@ import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import CustomSelect from '@/Components/CustomSelect'; 
 import DateInput from '@/Components/DateInput';
+import FieldTooltipError from '@/Components/FieldTooltipError';
 import { CalendarPlus, Save, CalendarClock, X, PencilLine } from 'lucide-react';
 
-export default function Index({ tahunAnggarans }) {
+export default function Index({ tahunAnggarans, filters = {} }) {
     const { isAdmin, user: authUser } = usePermission();
-    const [search, setSearch] = useState('');
+    const [search, setSearch] = useState(filters?.search || '');
+    const [sortBy, setSortBy] = useState(filters?.sort_by || 'tahun_anggaran');
+    const [sortDirection, setSortDirection] = useState(filters?.sort_direction || 'desc');
+
+    const applyFilters = (newSearch = search, newSortBy = sortBy, newSortDirection = sortDirection) => {
+        router.get(
+            route('tahun.index'),
+            { search: newSearch, sort_by: newSortBy, sort_direction: newSortDirection },
+            { preserveState: true, preserveScroll: true, replace: true }
+        );
+    };
+
+    const handleSort = (field) => {
+        const newDirection = (sortBy === field && sortDirection === 'asc') ? 'desc' : 'asc';
+        setSortBy(field);
+        setSortDirection(newDirection);
+        applyFilters(search, field, newDirection);
+    };
+
+    React.useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (search !== (filters?.search || '')) {
+                applyFilters(search, sortBy, sortDirection);
+            }
+        }, 300);
+
+        return () => clearTimeout(timeoutId);
+    }, [search]);
+
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [createFormErrors, setCreateFormErrors] = useState({});
+    const [editFormErrors, setEditFormErrors] = useState({});
 
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
         tahun_anggaran: '',
@@ -31,6 +63,20 @@ export default function Index({ tahunAnggarans }) {
         }
     });
 
+    const handleCreateChange = (field, value) => {
+        setData(field, value);
+        if (createFormErrors[field]) {
+            setCreateFormErrors(prev => ({ ...prev, [field]: null }));
+        }
+    };
+
+    const handleEditChange = (field, value) => {
+        editForm.setData(field, value);
+        if (editFormErrors[field]) {
+            setEditFormErrors(prev => ({ ...prev, [field]: null }));
+        }
+    };
+
     const statusOptions = [
         { value: 'Drafting', label: 'Drafting (Penyusunan)' },
         { value: 'Submission', label: 'Submission (Pengajuan)' },
@@ -41,6 +87,7 @@ export default function Index({ tahunAnggarans }) {
     const openCreateModal = () => {
         reset();
         clearErrors();
+        setCreateFormErrors({});
         setIsCreateModalOpen(true);
     };
 
@@ -48,16 +95,24 @@ export default function Index({ tahunAnggarans }) {
         setIsCreateModalOpen(false);
         reset();
         clearErrors();
+        setCreateFormErrors({});
     };
 
     const submitCreate = (e) => {
         e.preventDefault();
+        const errs = {};
+        if (!data.tahun_anggaran) errs.tahun_anggaran = 'Harap isi bidang ini.';
+        if (!data.status_rkat) errs.status_rkat = 'Harap isi bidang ini.';
+        if (!data.tanggal_mulai) errs.tanggal_mulai = 'Harap isi bidang ini.';
+        if (!data.tanggal_akhir) errs.tanggal_akhir = 'Harap isi bidang ini.';
 
-        if (!data.tahun_anggaran || !data.status_rkat || !data.tanggal_mulai || !data.tanggal_akhir) {
-            toast.error("Peringatan", { description: "Semua form wajib diisi." });
+        if (Object.keys(errs).length > 0) {
+            setCreateFormErrors(errs);
+            toast.error("Gagal Menyimpan", { description: "Harap lengkapi bidang form yang wajib diisi." });
             return;
         }
 
+        setCreateFormErrors({});
         const toastId = toast.loading("Sedang menyimpan data...");
         post(route('tahun.store'), {
             onSuccess: () => {
@@ -90,6 +145,7 @@ export default function Index({ tahunAnggarans }) {
     const openEditModal = (tahun) => {
         editForm.reset();
         editForm.clearErrors();
+        setEditFormErrors({});
         editForm.setData({
             id: tahun.uuid || tahun.id_tahun || tahun.id,
             tahun_anggaran: tahun.tahun_anggaran || '',
@@ -109,16 +165,24 @@ export default function Index({ tahunAnggarans }) {
         setIsEditModalOpen(false);
         editForm.reset();
         editForm.clearErrors();
+        setEditFormErrors({});
     };
 
     const submitEdit = (e) => {
         e.preventDefault();
+        const errs = {};
+        if (!editForm.data.tahun_anggaran) errs.tahun_anggaran = 'Harap isi bidang ini.';
+        if (!editForm.data.status_rkat) errs.status_rkat = 'Harap isi bidang ini.';
+        if (!editForm.data.tanggal_mulai) errs.tanggal_mulai = 'Harap isi bidang ini.';
+        if (!editForm.data.tanggal_akhir) errs.tanggal_akhir = 'Harap isi bidang ini.';
 
-        if (!editForm.data.tahun_anggaran || !editForm.data.status_rkat || !editForm.data.tanggal_mulai || !editForm.data.tanggal_akhir) {
-            toast.error("Peringatan", { description: "Semua form wajib diisi." });
+        if (Object.keys(errs).length > 0) {
+            setEditFormErrors(errs);
+            toast.error("Gagal Memperbarui", { description: "Harap lengkapi bidang form yang wajib diisi." });
             return;
         }
 
+        setEditFormErrors({});
         const toastId = toast.loading("Sedang memperbarui data...");
         editForm.patch(route('tahun.update', editForm.data.id), {
             onSuccess: () => {
@@ -230,10 +294,66 @@ export default function Index({ tahunAnggarans }) {
                             <table className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
                                 <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                     <tr>
-                                        <th className="px-2 py-3 border-b border-gray-300 dark:border-gray-600 font-medium text-center">Tahun Anggaran</th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Tanggal Mulai</th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Tanggal Akhir</th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Status</th>
+                                        <th 
+                                            className="px-2 py-3 border-b border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('tahun_anggaran')}
+                                        >
+                                            <div className="flex items-center justify-center">
+                                                <span>Tahun Anggaran</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'tahun_anggaran' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('tanggal_mulai')}
+                                        >
+                                            <div className="flex items-center justify-center">
+                                                <span>Tanggal Mulai</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'tanggal_mulai' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('tanggal_akhir')}
+                                        >
+                                            <div className="flex items-center justify-center">
+                                                <span>Tanggal Akhir</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'tanggal_akhir' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            onClick={() => handleSort('status_rkat')}
+                                        >
+                                            <div className="flex items-center justify-center">
+                                                <span>Status</span>
+                                                <div className="flex flex-col ml-1">
+                                                    {sortBy === 'status_rkat' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
+                                                    ) : (
+                                                        <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </th>
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>
                                     </tr>
                                 </thead>
@@ -256,37 +376,20 @@ export default function Index({ tahunAnggarans }) {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 whitespace-nowrap text-sm text-center">
-                                                    <div className="flex items-center justify-center gap-1.5">
-                                                        <TooltipProvider>
-                                                            {isAdmin() && (
-                                                                <>
-                                                                    <Tooltip>
-                                                                        <TooltipTrigger asChild>
-                                                                            <button 
-                                                                                onClick={() => openEditModal(tahun)}
-                                                                                className="inline-flex items-center justify-center w-8 h-8 border border-teal-300 rounded-md shadow-sm text-teal-700 bg-white hover:bg-teal-50 dark:bg-gray-700 dark:text-teal-400 dark:border-teal-900/50 dark:hover:bg-teal-900/20 transition-colors"
-                                                                            >
-                                                                                <Edit2 size={16} />
-                                                                            </button>
-                                                                        </TooltipTrigger>
-                                                                        <TooltipContent>Edit Tahun</TooltipContent>
-                                                                    </Tooltip>
-
-                                                                    <Tooltip>
-                                                                        <TooltipTrigger asChild>
-                                                                            <button
-                                                                                onClick={() => handleDelete(tahun)}
-                                                                                className="inline-flex items-center justify-center w-8 h-8 border border-red-300 rounded-md shadow-sm text-red-700 bg-white hover:bg-red-50 dark:bg-gray-700 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/20 transition-colors"
-                                                                            >
-                                                                                <Trash2 size={16} />
-                                                                            </button>
-                                                                        </TooltipTrigger>
-                                                                        <TooltipContent>Hapus Tahun</TooltipContent>
-                                                                    </Tooltip>
-                                                                </>
-                                                            )}
-                                                        </TooltipProvider>
-                                                    </div>
+                                                    {isAdmin() && (
+                                                        <ActionGroup>
+                                                            <ActionButton
+                                                                variant="edit"
+                                                                tooltip="Edit Tahun"
+                                                                onClick={() => openEditModal(tahun)}
+                                                            />
+                                                            <ActionButton
+                                                                variant="delete"
+                                                                tooltip="Hapus Tahun"
+                                                                onClick={() => handleDelete(tahun)}
+                                                            />
+                                                        </ActionGroup>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))
@@ -337,30 +440,30 @@ export default function Index({ tahunAnggarans }) {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div className="relative z-0">
+                                <div className="relative pb-2">
                                     <InputLabel htmlFor="tahun_anggaran" value="Tahun Anggaran" required />
                                     <TextInput
                                         id="tahun_anggaran"
                                         type="number"
                                         value={data.tahun_anggaran}
-                                        onChange={(e) => setData('tahun_anggaran', e.target.value)}
-                                        className="mt-1 block w-full"
+                                        onChange={(e) => handleCreateChange('tahun_anggaran', e.target.value)}
+                                        className={`mt-1 block w-full ${(createFormErrors.tahun_anggaran || errors.tahun_anggaran) ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`}
                                         placeholder="Masukkan tahun anggaran"
                                         isFocused={true}
                                     />
-                                    <InputError message={errors.tahun_anggaran} className="mt-2" />
+                                    <FieldTooltipError message={createFormErrors.tahun_anggaran || errors.tahun_anggaran} />
                                 </div>
 
-                                <div className="relative z-0">
+                                <div className="relative pb-2">
                                     <InputLabel value="Status Awal" required />
                                     <CustomSelect
                                         value={data.status_rkat}
-                                        onChange={(e) => setData('status_rkat', e.target.value)}
+                                        onChange={(e) => handleCreateChange('status_rkat', e.target.value)}
                                         options={statusOptions}
                                         placeholder="Pilih Status"
-                                        className="mt-1"
+                                        className={`mt-1 ${(createFormErrors.status_rkat || errors.status_rkat) ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`}
                                     />
-                                    <InputError message={errors.status_rkat} className="mt-2" />
+                                    <FieldTooltipError message={createFormErrors.status_rkat || errors.status_rkat} />
                                 </div>
                             </div>
                         </div>
@@ -379,30 +482,32 @@ export default function Index({ tahunAnggarans }) {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div>
+                                <div className="relative pb-2">
                                     <InputLabel value="Tanggal Mulai" required />
                                     <div className="mt-1 relative z-50"> 
                                         <DateInput
                                             value={data.tanggal_mulai}
-                                            onChange={(val) => setData('tanggal_mulai', val)}
+                                            onChange={(val) => handleCreateChange('tanggal_mulai', val)}
                                             placeholder="Pilih tanggal mulai..."
                                             position="right"
+                                            isError={!!(createFormErrors.tanggal_mulai || errors.tanggal_mulai)}
                                         />
                                     </div>
-                                    <InputError message={errors.tanggal_mulai} className="mt-2" />
+                                    <FieldTooltipError message={createFormErrors.tanggal_mulai || errors.tanggal_mulai} />
                                 </div>
 
-                                <div>
+                                <div className="relative pb-2">
                                     <InputLabel value="Tanggal Selesai" required />
                                     <div className="mt-1 relative z-40">
                                         <DateInput
                                             value={data.tanggal_akhir}
-                                            onChange={(val) => setData('tanggal_akhir', val)}
+                                            onChange={(val) => handleCreateChange('tanggal_akhir', val)}
                                             placeholder="Pilih tanggal selesai..."
                                             position="left"
+                                            isError={!!(createFormErrors.tanggal_akhir || errors.tanggal_akhir)}
                                         />
                                     </div>
-                                    <InputError message={errors.tanggal_akhir} className="mt-2" />
+                                    <FieldTooltipError message={createFormErrors.tanggal_akhir || errors.tanggal_akhir} />
                                 </div>
                             </div>
                         </div>
@@ -516,30 +621,30 @@ export default function Index({ tahunAnggarans }) {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div className="relative z-0">
+                                <div className="relative pb-2">
                                     <InputLabel htmlFor="edit_tahun_anggaran" value="Tahun Anggaran" required />
                                     <TextInput
                                         id="edit_tahun_anggaran"
                                         type="number"
                                         value={editForm.data.tahun_anggaran}
-                                        onChange={(e) => editForm.setData('tahun_anggaran', e.target.value)}
+                                        onChange={(e) => handleEditChange('tahun_anggaran', e.target.value)}
                                         className="mt-1 block w-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 cursor-not-allowed focus:ring-0"
                                         placeholder="Cth: 2026"
                                         readOnly 
                                     />
-                                    <InputError message={editForm.errors.tahun_anggaran} className="mt-2" />
+                                    <FieldTooltipError message={editFormErrors.tahun_anggaran || editForm.errors.tahun_anggaran} />
                                 </div>
 
-                                <div className="relative z-0">
+                                <div className="relative pb-2">
                                     <InputLabel value="Status RKAT" required />
                                     <CustomSelect
                                         value={editForm.data.status_rkat}
-                                        onChange={(e) => editForm.setData('status_rkat', e.target.value)}
+                                        onChange={(e) => handleEditChange('status_rkat', e.target.value)}
                                         options={statusOptions}
                                         placeholder="Pilih Status"
-                                        className="mt-1"
+                                        className={`mt-1 ${(editFormErrors.status_rkat || editForm.errors.status_rkat) ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`}
                                     />
-                                    <InputError message={editForm.errors.status_rkat} className="mt-2" />
+                                    <FieldTooltipError message={editFormErrors.status_rkat || editForm.errors.status_rkat} />
                                 </div>
                             </div>
                         </div>
@@ -558,30 +663,32 @@ export default function Index({ tahunAnggarans }) {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div>
+                                <div className="relative pb-2">
                                     <InputLabel value="Tanggal Mulai" required />
                                     <div className="mt-1 relative z-50"> 
                                         <DateInput
                                             value={editForm.data.tanggal_mulai}
-                                            onChange={(val) => editForm.setData('tanggal_mulai', val)}
+                                            onChange={(val) => handleEditChange('tanggal_mulai', val)}
                                             placeholder="Pilih tanggal mulai..."
                                             position="right"
+                                            isError={!!(editFormErrors.tanggal_mulai || editForm.errors.tanggal_mulai)}
                                         />
                                     </div>
-                                    <InputError message={editForm.errors.tanggal_mulai} className="mt-2" />
+                                    <FieldTooltipError message={editFormErrors.tanggal_mulai || editForm.errors.tanggal_mulai} />
                                 </div>
 
-                                <div>
+                                <div className="relative pb-2">
                                     <InputLabel value="Tanggal Selesai" required />
                                     <div className="mt-1 relative z-40">
                                         <DateInput
                                             value={editForm.data.tanggal_akhir}
-                                            onChange={(val) => editForm.setData('tanggal_akhir', val)}
+                                            onChange={(val) => handleEditChange('tanggal_akhir', val)}
                                             placeholder="Pilih tanggal selesai..."
                                             position="left"
+                                            isError={!!(editFormErrors.tanggal_akhir || editForm.errors.tanggal_akhir)}
                                         />
                                     </div>
-                                    <InputError message={editForm.errors.tanggal_akhir} className="mt-2" />
+                                    <FieldTooltipError message={editFormErrors.tanggal_akhir || editForm.errors.tanggal_akhir} />
                                 </div>
                             </div>
                         </div>

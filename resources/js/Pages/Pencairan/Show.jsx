@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { ArrowLeft, CheckCircle2, Clock, XCircle, AlertCircle, Printer, Send, Download } from 'lucide-react';
 import PrimaryButton from '@/Components/PrimaryButton';
+import StatusBadge from '@/Components/StatusBadge';
 import { toast } from 'sonner';
 
 export default function Show({ auth, pencairan, flash = {} }) {
@@ -10,22 +11,13 @@ export default function Show({ auth, pencairan, flash = {} }) {
         if (flash?.success) toast.success(flash.success);
         if (flash?.error) toast.error(flash.error);
     }, [flash]);
-    const rkat = pencairan.rkat_header;
-    const items = pencairan.items;
 
-    const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+    const rkat = pencairan?.rkat_header;
+    const items = pencairan?.items || [];
 
-    const getStatusBadge = (status) => {
-        if (!status) return 'bg-blue-100 text-blue-800 border-blue-200';
-        const s = status.toLowerCase();
-        if (s.includes('disetujui_final') || s.includes('disetujui final')) return 'bg-green-100 text-green-800 border-green-200';
-        if (s.includes('ditolak')) return 'bg-red-100 text-red-800 border-red-200';
-        if (s.includes('revisi')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-        if (s.includes('draft')) return 'bg-gray-200 text-gray-800 border-gray-300';
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-    };
+    const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
 
-    const totalCair = items.reduce((sum, item) => sum + parseFloat(item.sub_total_pencairan), 0);
+    const totalCair = items.reduce((sum, item) => sum + parseFloat(item.sub_total_pencairan || 0), 0);
 
     const handleSubmit = () => {
         toast("Konfirmasi Pengajuan", {
@@ -49,7 +41,7 @@ export default function Show({ auth, pencairan, flash = {} }) {
 
     return (
         <AuthenticatedLayout user={auth.user} header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Detail Pencairan Dana</h2>}>
-            <Head title={`Detail Pencairan - ${rkat.nomor_dokumen}`} />
+            <Head title={`Detail Pencairan - ${rkat?.nomor_dokumen || ''}`} />
 
             <div className="py-6">
                 <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 space-y-6">
@@ -59,11 +51,9 @@ export default function Show({ auth, pencairan, flash = {} }) {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Informasi Pencairan</h3>
-                                    <p className="text-sm text-gray-500 mt-1">Nama/Keterangan: <span className="font-semibold">{pencairan.nama_pencairan || 'Tidak ada'}</span></p>
+                                    <p className="text-sm text-gray-500 mt-1">Nama/Keterangan: <span className="font-semibold">{pencairan?.nama_pencairan || 'Tidak ada'}</span></p>
                                 </div>
-                                <span className={`px-3 py-1 text-xs font-bold rounded-full border ${getStatusBadge(pencairan.status_pencairan)}`}>
-                                    Status: {pencairan.status_pencairan === 'Disetujui_Final' ? 'Disetujui Pencairan' : pencairan.status_pencairan.replace(/_/g, ' ')}
-                                </span>
+                                <StatusBadge status={pencairan?.status_pencairan} size="lg" />
                             </div>
                         </div>
 
@@ -71,15 +61,29 @@ export default function Show({ auth, pencairan, flash = {} }) {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <p className="text-sm text-gray-500 dark:text-gray-400">RKAT Referensi</p>
-                                    <p className="font-medium text-gray-900 dark:text-gray-100">{rkat.nomor_dokumen}</p>
+                                    <p className="font-medium text-gray-900 dark:text-gray-100">{rkat?.nomor_dokumen || '-'}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500 dark:text-gray-400">Unit Pengaju</p>
-                                    <p className="font-medium text-gray-900 dark:text-gray-100">{rkat.unit?.nama_unit}</p>
+                                    <p className="font-medium text-gray-900 dark:text-gray-100">{rkat?.unit?.nama_unit || '-'}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500 dark:text-gray-400">Tanggal Pengajuan</p>
                                     <p className="font-medium text-gray-900 dark:text-gray-100">{pencairan.tanggal_pengajuan ? new Date(pencairan.tanggal_pengajuan).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Jadwal Pelaksanaan Kegiatan</p>
+                                    <p className="font-medium text-gray-900 dark:text-gray-100">
+                                        {(() => {
+                                            const details = rkat?.rkat_details || rkat?.rkatDetails;
+                                            if (details && details.length > 0 && details[0]?.jadwal_pelaksanaan_mulai) {
+                                                const mulai = new Date(details[0].jadwal_pelaksanaan_mulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                                                const akhir = new Date(details[0].jadwal_pelaksanaan_akhir).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                                                return `${mulai} s.d. ${akhir}`;
+                                            }
+                                            return '-';
+                                        })()}
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500 dark:text-gray-400">Total Pencairan Tahap Ini</p>

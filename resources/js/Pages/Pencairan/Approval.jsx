@@ -1,14 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import PrimaryButton from '@/Components/PrimaryButton';
-import SecondaryButton from '@/Components/SecondaryButton';
-import { CheckCircle2, FileText, Eye } from 'lucide-react';
+import ActionButton, { ActionGroup } from '@/Components/ActionButton';
+import StatusBadge from '@/Components/StatusBadge';
+import { CheckCircle2, FileText, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import PencairanApprovalModal from './Partials/PencairanApprovalModal';
 
-export default function Approval({ auth, pencairans }) {
+export default function Approval({ auth, pencairans, filters }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedPencairan, setSelectedPencairan] = useState(null);
+    const [sortBy, setSortBy] = useState(filters?.sort_by || 'updated_at');
+    const [sortDirection, setSortDirection] = useState(filters?.sort_direction || 'desc');
+
+    const applyFilters = (newSortBy = sortBy, newSortDirection = sortDirection) => {
+        router.get(
+            route('pencairan.approval'),
+            { sort_by: newSortBy, sort_direction: newSortDirection },
+            { preserveState: true, preserveScroll: true, replace: true }
+        );
+    };
+
+    const handleSort = (field) => {
+        const newDirection = (sortBy === field && sortDirection === 'asc') ? 'desc' : 'asc';
+        setSortBy(field);
+        setSortDirection(newDirection);
+        applyFilters(field, newDirection);
+    };
 
     const getStatusColor = (status) => {
         if (!status) return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
@@ -66,20 +83,62 @@ export default function Approval({ auth, pencairans }) {
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm border-collapse">
                                     <thead className="bg-gray-50 dark:bg-gray-700">
                                         <tr>
-                                            <th className="px-6 py-4 text-left font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">No. Dokumen RKAT / Unit</th>
-                                            <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Status Saat Ini</th>
-                                            <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Tgl Pengajuan</th>
-                                            <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Tanggal Pelaksanaan</th>
+                                            <th 
+                                                className="px-6 py-4 text-left font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group border-r border-gray-200 dark:border-gray-600 last:border-r-0"
+                                                onClick={() => handleSort('nomor_dokumen')}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <span>No. Dokumen RKAT / Unit</span>
+                                                    <div className="flex flex-col ml-1">
+                                                        {sortBy === 'nomor_dokumen' ? (
+                                                            sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                        ) : (
+                                                            <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </th>
+                                            <th 
+                                                className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group border-r border-gray-200 dark:border-gray-600 last:border-r-0"
+                                                onClick={() => handleSort('status_pencairan')}
+                                            >
+                                                <div className="flex items-center justify-center">
+                                                    <span>Status Saat Ini</span>
+                                                    <div className="flex flex-col ml-1">
+                                                        {sortBy === 'status_pencairan' ? (
+                                                            sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                        ) : (
+                                                            <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </th>
+                                            <th 
+                                                className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group border-r border-gray-200 dark:border-gray-600 last:border-r-0"
+                                                onClick={() => handleSort('tanggal_pengajuan')}
+                                            >
+                                                <div className="flex items-center justify-center">
+                                                    <span>Tgl Pengajuan</span>
+                                                    <div className="flex flex-col ml-1">
+                                                        {sortBy === 'tanggal_pengajuan' ? (
+                                                            sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                        ) : (
+                                                            <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </th>
+                                            <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs border-r border-gray-200 dark:border-gray-600 last:border-r-0">Tanggal Pelaksanaan</th>
                                             <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                         {pencairans.map((item) => (
                                             <tr key={item.id_pencairan} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                                 <td className="px-6 py-4 whitespace-nowrap">
+                                                 <td className="px-6 py-4 whitespace-nowrap border-r border-gray-200 dark:border-gray-700 last:border-r-0">
                                                      <div className="font-medium">
                                                          {item.rkat_header ? (
                                                              <Link 
@@ -94,15 +153,13 @@ export default function Approval({ auth, pencairans }) {
                                                      </div>
                                                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{item.rkat_header?.unit?.nama_unit || 'Unit Tidak Diketahui'}</div>
                                                  </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                    <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-bold whitespace-nowrap rounded-md ${getStatusColor(item.status_pencairan)}`}>
-                                                        {item.status_pencairan === 'Disetujui_Final' ? 'Disetujui Pencairan' : item.status_pencairan.replace(/_/g, ' ')}
-                                                    </span>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center border-r border-gray-200 dark:border-gray-700 last:border-r-0">
+                                                    <StatusBadge status={item.status_pencairan} />
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center text-gray-700 dark:text-gray-300">
+                                                <td className="px-6 py-4 whitespace-nowrap text-center text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700 last:border-r-0">
                                                     {new Date(item.tanggal_pengajuan).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center text-gray-700 dark:text-gray-300">
+                                                <td className="px-6 py-4 whitespace-nowrap text-center text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700 last:border-r-0">
                                                     {(item.rkat_header?.rkat_details?.length > 0 || item.rkat_header?.rkatDetails?.length > 0) ? (
                                                         <div className="text-xs whitespace-nowrap inline-block text-center">
                                                             {formatDate((item.rkat_header.rkat_details || item.rkat_header.rkatDetails)[0].jadwal_pelaksanaan_mulai)} <br/> s.d <br/> {formatDate((item.rkat_header.rkat_details || item.rkat_header.rkatDetails)[0].jadwal_pelaksanaan_akhir)}
@@ -110,24 +167,21 @@ export default function Approval({ auth, pencairans }) {
                                                     ) : '-'}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center font-medium">
-                                                    <div className="flex justify-center gap-2">
+                                                    <ActionGroup>
                                                         {/* Tombol Lihat Detail */}
-                                                        <SecondaryButton 
+                                                        <ActionButton
+                                                            variant="detail"
+                                                            tooltip="Lihat Detail Pencairan"
                                                             onClick={() => router.get(route('pencairan.show', item.uuid))}
-                                                            className="inline-flex items-center gap-1 border-gray-300 text-gray-700"
-                                                            title="Lihat Detail Pencairan"
-                                                        >
-                                                            <Eye size={16} /> Detail
-                                                        </SecondaryButton>
+                                                        />
                                                         
                                                         {/* Tombol Eksekusi (Membuka Modal) */}
-                                                        <PrimaryButton 
-                                                            onClick={() => openModal(item)} 
-                                                            className="bg-teal-600 hover:bg-teal-700 focus:ring-teal-500 text-white"
-                                                        >
-                                                            Tindak Lanjuti
-                                                        </PrimaryButton>
-                                                    </div>
+                                                        <ActionButton
+                                                            variant="approve"
+                                                            tooltip="Proses Persetujuan Pencairan"
+                                                            onClick={() => openModal(item)}
+                                                        />
+                                                    </ActionGroup>
                                                 </td>
                                             </tr>
                                         ))}

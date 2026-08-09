@@ -31,11 +31,19 @@ class RincianAnggaranController extends Controller
                 ->orWhere('kode_anggaran', 'like', $request->kelompok . '%');
         }
 
-        $perPage = request()->get('per_page', 20);
+        $perPage = request()->get('per_page', 15);
         $perPage = $perPage === 'all' ? 10000 : (int) $perPage;
 
+        $sortBy = $request->input('sort_by', 'kode_anggaran');
+        $sortDirection = $request->input('sort_direction', 'asc');
+
+        if (in_array($sortBy, ['kode_anggaran', 'nama_anggaran', 'kelompok_anggaran', 'nominal', 'satuan'])) {
+            $query->orderBy($sortBy, $sortDirection);
+        } else {
+            $query->orderBy('kode_anggaran', 'asc');
+        }
+
         $items = $query->select(['uuid', 'kode_anggaran', 'nama_anggaran', 'kelompok_anggaran', 'nominal', 'satuan'])
-            ->orderBy('kode_anggaran', 'asc')
             ->paginate($perPage)->onEachSide(0)
             ->withQueryString();
 
@@ -50,7 +58,7 @@ class RincianAnggaranController extends Controller
 
         return Inertia::render('Admin/Sbo/Index', [
             'items' => $items,
-            'filters' => $request->only(['search', 'kelompok', 'per_page']),
+            'filters' => $request->only(['search', 'kelompok', 'per_page', 'sort_by', 'sort_direction']),
             'kelompoks' => $kelompoks,
         ]);
     }

@@ -64,4 +64,8 @@ class PencairanDana extends Model
         return $this->hasMany(PencairanDanaItem::class, 'id_pencairan', 'id_pencairan');
     }
 
+    public function lpj()
+    {
+        return $this->hasOne(Lpj::class, 'id_pencairan', 'id_pencairan');
+    }
 }

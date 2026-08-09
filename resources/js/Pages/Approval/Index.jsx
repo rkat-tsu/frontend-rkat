@@ -3,12 +3,31 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import ActionButton, { ActionGroup } from '@/Components/ActionButton';
+import StatusBadge from '@/Components/StatusBadge';
 import ApprovalModal from './Partials/ApprovalModal'; 
-import { Search, Eye, CheckCircle2 } from 'lucide-react';
+import { Search, Eye, CheckCircle2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 
-export default function ApproverDashboard({ auth, rkatMenunggu, currentRole, flash }) {
+export default function ApproverDashboard({ auth, rkatMenunggu, currentRole, flash, filters }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedRkat, setSelectedRkat] = useState(null);
+    const [sortBy, setSortBy] = useState(filters?.sort_by || 'updated_at');
+    const [sortDirection, setSortDirection] = useState(filters?.sort_direction || 'desc');
+
+    const applyFilters = (newSortBy = sortBy, newSortDirection = sortDirection) => {
+        router.get(
+            route('approval.index'),
+            { sort_by: newSortBy, sort_direction: newSortDirection },
+            { preserveState: true, preserveScroll: true, replace: true }
+        );
+    };
+
+    const handleSort = (field) => {
+        const newDirection = (sortBy === field && sortDirection === 'asc') ? 'desc' : 'asc';
+        setSortBy(field);
+        setSortDirection(newDirection);
+        applyFilters(field, newDirection);
+    };
 
     const getStatusColor = (status) => {
         if (!status) return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
@@ -67,32 +86,72 @@ export default function ApproverDashboard({ auth, rkatMenunggu, currentRole, fla
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                                    <thead className="bg-gray-50 dark:bg-gray-700">
+                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm border border-gray-200 dark:border-gray-700 divide-x">
+                                    <thead className="bg-gray-50 dark:bg-gray-700 divide-x divide-gray-200 dark:divide-gray-700">
                                         <tr>
-                                            <th className="px-6 py-4 text-left font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">No. Dokumen / Unit</th>
-                                            <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Status Saat Ini</th>
-                                            <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Tgl Pengajuan</th>
-                                            <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Tanggal Pelaksanaan</th>
+                                            <th 
+                                                className="px-6 py-4 text-left font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group border-r border-gray-200 dark:border-gray-700"
+                                                onClick={() => handleSort('nomor_dokumen')}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <span>No. Dokumen / Unit</span>
+                                                    <div className="flex flex-col ml-1">
+                                                        {sortBy === 'nomor_dokumen' ? (
+                                                            sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                        ) : (
+                                                            <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </th>
+                                            <th 
+                                                className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group border-r border-gray-200 dark:border-gray-700"
+                                                onClick={() => handleSort('status_persetujuan')}
+                                            >
+                                                <div className="flex items-center justify-center">
+                                                    <span>Status Saat Ini</span>
+                                                    <div className="flex flex-col ml-1">
+                                                        {sortBy === 'status_persetujuan' ? (
+                                                            sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                        ) : (
+                                                            <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </th>
+                                            <th 
+                                                className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group border-r border-gray-200 dark:border-gray-700"
+                                                onClick={() => handleSort('tanggal_pengajuan')}
+                                            >
+                                                <div className="flex items-center justify-center">
+                                                    <span>Tgl Pengajuan</span>
+                                                    <div className="flex flex-col ml-1">
+                                                        {sortBy === 'tanggal_pengajuan' ? (
+                                                            sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                                        ) : (
+                                                            <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </th>
+                                            <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs border-r border-gray-200 dark:border-gray-700">Tanggal Pelaksanaan</th>
                                             <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                         {rkatMenunggu.map((rkat) => (
-                                            <tr key={rkat.id_header} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap">
+                                            <tr key={rkat.id_header} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors divide-x divide-gray-200 dark:divide-gray-700">
+                                                <td className="px-6 py-4 whitespace-nowrap border-r border-gray-200 dark:border-gray-700">
                                                     <div className="font-medium text-gray-900 dark:text-gray-100">{rkat.nomor_dokumen || `#${rkat.id_header}`}</div>
                                                     <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{rkat.unit?.nama_unit || 'Unit Tidak Diketahui'}</div>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                    <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-md ${getStatusColor(rkat.status_persetujuan)}`}>
-                                                        {rkat.status_persetujuan === 'Disetujui_Final' ? 'Disetujui RKAT' : rkat.status_persetujuan.replace(/_/g, ' ')}
-                                                    </span>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center border-r border-gray-200 dark:border-gray-700">
+                                                    <StatusBadge status={rkat.status_persetujuan} />
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center text-gray-700 dark:text-gray-300">
+                                                <td className="px-6 py-4 whitespace-nowrap text-center text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700">
                                                     {new Date(rkat.tanggal_pengajuan).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center text-gray-700 dark:text-gray-300">
+                                                <td className="px-6 py-4 whitespace-nowrap text-center text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700">
                                                     {(rkat.rkat_details?.length > 0 || rkat.rkatDetails?.length > 0) ? (
                                                         <div className="text-xs whitespace-nowrap inline-block text-center">
                                                             {formatDate((rkat.rkat_details || rkat.rkatDetails)[0].jadwal_pelaksanaan_mulai)} <br/> s.d <br/> {formatDate((rkat.rkat_details || rkat.rkatDetails)[0].jadwal_pelaksanaan_akhir)}
@@ -100,24 +159,21 @@ export default function ApproverDashboard({ auth, rkatMenunggu, currentRole, fla
                                                     ) : '-'}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center font-medium">
-                                                    <div className="flex justify-center gap-2">
+                                                    <ActionGroup>
                                                         {/* Tombol Lihat Detail */}
-                                                        <SecondaryButton 
+                                                        <ActionButton
+                                                            variant="detail"
+                                                            tooltip="Lihat Detail RKAT"
                                                             onClick={() => router.get(route('daftar-ajuan.show', rkat.uuid))}
-                                                            className="inline-flex items-center gap-1 border-gray-300 text-gray-700"
-                                                            title="Lihat Detail RKAT"
-                                                        >
-                                                            <Eye size={16} /> Detail
-                                                        </SecondaryButton>
+                                                        />
                                                         
                                                         {/* Tombol Eksekusi (Membuka Modal) */}
-                                                        <PrimaryButton 
-                                                            onClick={() => openModal(rkat)} 
-                                                            className="bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 text-white"
-                                                        >
-                                                            Tindak Lanjuti
-                                                        </PrimaryButton>
-                                                    </div>
+                                                        <ActionButton
+                                                            variant="approve"
+                                                            tooltip="Proses Persetujuan RKAT"
+                                                            onClick={() => openModal(rkat)}
+                                                        />
+                                                    </ActionGroup>
                                                 </td>
                                             </tr>
                                         ))}

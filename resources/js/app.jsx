@@ -42,6 +42,50 @@ router.on('invalid', (event) => {
     }
 });
 
+// Global Indonesian HTML5 Form Validation Messages
+if (typeof window !== 'undefined') {
+    document.addEventListener(
+        'invalid',
+        (event) => {
+            const el = event.target;
+            if (!el || !(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement)) {
+                return;
+            }
+
+            if (el.validity.valueMissing) {
+                el.setCustomValidity('Harap isi bidang ini.');
+            } else if (el.validity.typeMismatch) {
+                if (el.type === 'email') {
+                    el.setCustomValidity('Harap masukkan alamat email yang valid.');
+                } else if (el.type === 'url') {
+                    el.setCustomValidity('Harap masukkan tautan (URL) yang valid.');
+                }
+            } else if (el.validity.patternMismatch) {
+                el.setCustomValidity('Harap sesuaikan dengan format yang diminta.');
+            } else if (el.validity.rangeUnderflow) {
+                el.setCustomValidity(`Nilai harus minimal ${el.min}.`);
+            } else if (el.validity.rangeOverflow) {
+                el.setCustomValidity(`Nilai maksimal adalah ${el.max}.`);
+            } else if (el.validity.tooShort) {
+                el.setCustomValidity(`Harap perpanjang teks ini hingga minimal ${el.minLength} karakter.`);
+            } else if (el.validity.tooLong) {
+                el.setCustomValidity(`Harap perpendek teks ini hingga maksimal ${el.maxLength} karakter.`);
+            }
+        },
+        true
+    );
+
+    const clearValidity = (event) => {
+        const el = event.target;
+        if (el && (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement)) {
+            el.setCustomValidity('');
+        }
+    };
+
+    document.addEventListener('input', clearValidity, true);
+    document.addEventListener('change', clearValidity, true);
+}
+
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({

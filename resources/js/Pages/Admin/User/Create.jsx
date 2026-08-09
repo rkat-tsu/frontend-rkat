@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
@@ -7,10 +7,13 @@ import TextInput from '@/Components/TextInput';
 import PrimaryButton from '@/Components/PrimaryButton';
 import PasswordInput from '@/Components/PasswordInput';
 import CustomSelect from '@/Components/CustomSelect'; 
+import FieldTooltipError from '@/Components/FieldTooltipError';
 import { UserPlus, Save, ArrowLeft, Shield, Building2, Lock, Phone, Mail, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Create({ auth, units = [] }) {
+    const [formErrors, setFormErrors] = useState({});
+
     const { data, setData, post, processing, errors, reset } = useForm({
         nama_lengkap: '',
         nik: '',
@@ -22,6 +25,13 @@ export default function Create({ auth, units = [] }) {
         no_telepon: '',
         id_unit: '',
     });
+
+    const handleFieldChange = (field, value) => {
+        setData(field, value);
+        if (formErrors[field]) {
+            setFormErrors(prev => ({ ...prev, [field]: null }));
+        }
+    };
 
     const roleOptions = [
         { value: 'Inputer', label: 'Inputer (Staf/Operator)' },
@@ -45,16 +55,26 @@ export default function Create({ auth, units = [] }) {
     const submit = (e) => {
         e.preventDefault();
 
-        if (!data.nama_lengkap || !data.email || !data.peran || !data.password || !data.password_confirmation) {
+        const errs = {};
+        if (!data.nama_lengkap) errs.nama_lengkap = 'Harap isi bidang ini.';
+        if (!data.email) errs.email = 'Harap isi bidang ini.';
+        if (!data.peran) errs.peran = 'Harap isi bidang ini.';
+        if (!data.password) errs.password = 'Harap isi bidang ini.';
+        if (!data.password_confirmation) errs.password_confirmation = 'Harap isi bidang ini.';
+
+        if (Object.keys(errs).length > 0) {
+            setFormErrors(errs);
             toast.error("Peringatan", { description: "Semua form wajib diisi." });
             return;
         }
 
         if (data.password !== data.password_confirmation) {
+            setFormErrors({ password_confirmation: 'Password dan konfirmasi password tidak cocok.' });
             toast.error("Peringatan", { description: "Password dan konfirmasi password tidak cocok." });
             return;
         }
 
+        setFormErrors({});
         toast.warning("Konfirmasi Simpan", {
             description: "Apakah Anda yakin ingin menyimpan user baru ini?",
             action: {
@@ -65,7 +85,7 @@ export default function Create({ auth, units = [] }) {
                         onSuccess: () => {
                             toast.success("Berhasil", { id: toastId, description: `User ${data.nama_lengkap} berhasil ditambahkan.` });
                         },
-                        onError: () => {
+                        onError: (err) => {
                             toast.error("Gagal Menyimpan", { id: toastId, description: "Terdapat kesalahan saat menyimpan data." });
                         },
                         onFinish: () => reset('password', 'password_confirmation'),
@@ -125,31 +145,31 @@ export default function Create({ auth, units = [] }) {
                                         <User className="w-4 h-4 mr-2 text-teal-500" /> Informasi Dasar
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
+                                        <div className="relative pb-2">
                                             <InputLabel htmlFor="nama_lengkap" value="Nama Lengkap" required />
                                             <TextInput 
                                                 id="nama_lengkap" 
                                                 value={data.nama_lengkap} 
-                                                onChange={(e) => setData('nama_lengkap', e.target.value)} 
-                                                className="mt-1 block w-full" 
+                                                onChange={(e) => handleFieldChange('nama_lengkap', e.target.value)} 
+                                                className={`mt-1 block w-full ${(formErrors.nama_lengkap || errors.nama_lengkap) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`} 
                                                 placeholder="Masukkan Nama Lengkap"
                                             />
-                                            <InputError message={errors.nama_lengkap} className="mt-2" />
+                                            <FieldTooltipError message={formErrors.nama_lengkap || errors.nama_lengkap} />
                                         </div>
 
-                                        <div>
+                                        <div className="relative pb-2">
                                             <InputLabel htmlFor="nik" value="NIK (Nomor Induk Karyawan)" />
                                             <TextInput 
                                                 id="nik" 
                                                 value={data.nik} 
-                                                onChange={(e) => setData('nik', e.target.value)} 
+                                                onChange={(e) => handleFieldChange('nik', e.target.value)} 
                                                 className="mt-1 block w-full" 
                                                 placeholder="Masukkan NIK"
                                             />
-                                            <InputError message={errors.nik} className="mt-2" />
+                                            <FieldTooltipError message={formErrors.nik || errors.nik} />
                                         </div>
 
-                                        <div>
+                                        <div className="relative pb-2">
                                             <InputLabel htmlFor="email" value="Alamat Email" required />
                                             <div className="relative mt-1">
                                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -159,15 +179,15 @@ export default function Create({ auth, units = [] }) {
                                                     id="email" 
                                                     type="email" 
                                                     value={data.email} 
-                                                    onChange={(e) => setData('email', e.target.value)} 
-                                                    className="pl-10 block w-full" 
+                                                    onChange={(e) => handleFieldChange('email', e.target.value)} 
+                                                    className={`pl-10 block w-full ${(formErrors.email || errors.email) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`} 
                                                     placeholder="Masukkan Alamat Email"
                                                 />
                                             </div>
-                                            <InputError message={errors.email} className="mt-2" />
+                                            <FieldTooltipError message={formErrors.email || errors.email} />
                                         </div>
 
-                                        <div>
+                                        <div className="relative pb-2">
                                             <InputLabel htmlFor="no_telepon" value="Nomor Telepon/WA" />
                                             <div className="relative mt-1">
                                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -176,12 +196,12 @@ export default function Create({ auth, units = [] }) {
                                                 <TextInput 
                                                     id="no_telepon" 
                                                     value={data.no_telepon} 
-                                                    onChange={(e) => setData('no_telepon', e.target.value)} 
+                                                    onChange={(e) => handleFieldChange('no_telepon', e.target.value)} 
                                                     className="pl-10 block w-full" 
                                                     placeholder="Masukkan Nomor Telepon/WA"
                                                 />
                                             </div>
-                                            <InputError message={errors.no_telepon} className="mt-2" />
+                                            <FieldTooltipError message={formErrors.no_telepon || errors.no_telepon} />
                                         </div>
                                     </div>
                                 </div>
@@ -194,29 +214,28 @@ export default function Create({ auth, units = [] }) {
                                         <Building2 className="w-4 h-4 mr-2 text-teal-500" /> Akses & Penempatan
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="relative z-20"> {/* Z-index tinggi untuk dropdown */}
+                                        <div className="relative pb-2 z-20"> {/* Z-index tinggi untuk dropdown */}
                                             <InputLabel htmlFor="peran" value="Peran Pengguna" required />
                                             <CustomSelect
                                                 value={data.peran}
-                                                onChange={(e) => setData('peran', e.target.value)}
+                                                onChange={(e) => handleFieldChange('peran', e.target.value)}
                                                 options={roleOptions}
-                                                
-                                                className="mt-1"
+                                                className={`mt-1 ${(formErrors.peran || errors.peran) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
                                             />
-                                            <InputError message={errors.peran} className="mt-2" />
+                                            <FieldTooltipError message={formErrors.peran || errors.peran} />
                                         </div>
 
-                                        <div className="relative z-10">
+                                        <div className="relative pb-2 z-10">
                                             <InputLabel htmlFor="id_unit" value="Unit Kerja (Opsional)" />
                                             <CustomSelect
                                                 value={data.id_unit}
-                                                onChange={(e) => setData('id_unit', e.target.value)}
+                                                onChange={(e) => handleFieldChange('id_unit', e.target.value)}
                                                 options={unitOptions}
                                                 placeholder="-- Pilih Unit --"
                                                 className="mt-1"
                                             />
                                             <p className="text-xs text-gray-500 mt-1">Kosongkan jika user adalah Admin Global atau Rektorat tanpa unit spesifik.</p>
-                                            <InputError message={errors.id_unit} className="mt-2" />
+                                            <FieldTooltipError message={formErrors.id_unit || errors.id_unit} />
                                         </div>
                                     </div>
                                 </div>
@@ -229,28 +248,27 @@ export default function Create({ auth, units = [] }) {
                                         <Shield className="w-4 h-4 mr-2 text-teal-500" /> Keamanan Akun
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
+                                        <div className="relative pb-2">
                                             <InputLabel htmlFor="password" value="Password" required />
                                             <PasswordInput 
                                                 id="password" 
                                                 value={data.password} 
-                                                onChange={(e) => setData('password', e.target.value)} 
-                                                className="mt-1 block w-full" 
+                                                onChange={(e) => handleFieldChange('password', e.target.value)} 
+                                                className={`mt-1 block w-full ${(formErrors.password || errors.password) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`} 
                                                 autoComplete="new-password"
                                             />
-                                            <InputError message={errors.password} className="mt-2" />
+                                            <FieldTooltipError message={formErrors.password || errors.password} />
                                         </div>
 
-                                        <div>
+                                        <div className="relative pb-2">
                                             <InputLabel htmlFor="password_confirmation" value="Konfirmasi Password" required />
                                             <PasswordInput 
                                                 id="password_confirmation" 
                                                 value={data.password_confirmation} 
-                                                onChange={(e) => setData('password_confirmation', e.target.value)} 
-                                                className="mt-1 block w-full" 
-                                                autoComplete="new-password"
+                                                onChange={(e) => handleFieldChange('password_confirmation', e.target.value)} 
+                                                className={`mt-1 block w-full ${(formErrors.password_confirmation || errors.password_confirmation) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`} 
                                             />
-                                            <InputError message={errors.password_confirmation} className="mt-2" />
+                                            <FieldTooltipError message={formErrors.password_confirmation || errors.password_confirmation} />
                                         </div>
                                     </div>
                                 </div>

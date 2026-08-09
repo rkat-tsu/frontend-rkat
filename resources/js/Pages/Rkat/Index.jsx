@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { ArrowRight, Plus, Search, Download, Send, AlertCircle, Edit2, FileDown, Eye } from 'lucide-react';
+import ActionButton, { ActionGroup } from '@/Components/ActionButton';
+import StatusBadge from '@/Components/StatusBadge';
+import { ArrowRight, Plus, Search, Download, Send, AlertCircle, Edit2, FileDown, Eye, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
@@ -33,17 +35,27 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
     // State untuk menyimpan nilai filter
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [tahun, setTahun] = useState(filters?.tahun || '');
+    const [bulan, setBulan] = useState(filters?.bulan || '');
     const [status, setStatus] = useState(filters?.status || '');
     const [unitId, setUnitId] = useState(filters?.unit_id || '');
     const [perPage, setPerPage] = useState(filters?.per_page || '15');
+    const [sortBy, setSortBy] = useState(filters?.sort_by || 'tanggal_pengajuan');
+    const [sortDirection, setSortDirection] = useState(filters?.sort_direction || 'desc');
 
     // Fungsi untuk menerapkan filter ke backend
-    const applyFilters = (newSearch, newTahun, newStatus, newUnitId, newPerPage) => {
+    const applyFilters = (newSearch, newTahun, newBulan, newStatus, newUnitId, newPerPage, newSortBy = sortBy, newSortDirection = sortDirection) => {
         router.get(
             route('daftar-ajuan.index'),
-            { search: newSearch, tahun: newTahun, status: newStatus, unit_id: newUnitId, per_page: newPerPage },
+            { search: newSearch, tahun: newTahun, bulan: newBulan, status: newStatus, unit_id: newUnitId, per_page: newPerPage, sort_by: newSortBy, sort_direction: newSortDirection },
             { preserveState: true, preserveScroll: true, replace: true }
         );
+    };
+
+    const handleSort = (field) => {
+        const newDirection = (sortBy === field && sortDirection === 'asc') ? 'desc' : 'asc';
+        setSortBy(field);
+        setSortDirection(newDirection);
+        applyFilters(searchTerm, tahun, bulan, status, unitId, perPage, field, newDirection);
     };
 
     // Handle perubahan pada input/select
@@ -54,7 +66,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             if (searchTerm !== (filters?.search || '') || perPage !== (filters?.per_page || '15')) {
-                applyFilters(searchTerm, tahun, status, unitId, perPage);
+                applyFilters(searchTerm, tahun, bulan, status, unitId, perPage, sortBy, sortDirection);
             }
         }, 300); // 300ms delay
 
@@ -73,13 +85,16 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
     const handleFilterChange = (filterType, value) => {
         if (filterType === 'tahun') {
             setTahun(value);
-            applyFilters(searchTerm, value, status, unitId, perPage);
+            applyFilters(searchTerm, value, bulan, status, unitId, perPage, sortBy, sortDirection);
+        } else if (filterType === 'bulan') {
+            setBulan(value);
+            applyFilters(searchTerm, tahun, value, status, unitId, perPage, sortBy, sortDirection);
         } else if (filterType === 'status') {
             setStatus(value);
-            applyFilters(searchTerm, tahun, value, unitId, perPage);
+            applyFilters(searchTerm, tahun, bulan, value, unitId, perPage, sortBy, sortDirection);
         } else if (filterType === 'unit_id') {
             setUnitId(value);
-            applyFilters(searchTerm, tahun, status, value, perPage);
+            applyFilters(searchTerm, tahun, bulan, status, value, perPage, sortBy, sortDirection);
         }
     };// Fungsi untuk mengirim dokumen (Submit)
     const handleAjukan = (item) => {
@@ -153,6 +168,29 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                     />
                                 </div>
 
+                                <div className="flex-1 min-w-[140px] lg:w-36">
+                                    <CustomSelect
+                                        value={bulan}
+                                        onChange={(e) => handleFilterChange('bulan', e.target.value)}
+                                        className="h-11"
+                                        options={[
+                                            { value: '', label: 'Semua Bulan' },
+                                            { value: '1', label: 'Januari' },
+                                            { value: '2', label: 'Februari' },
+                                            { value: '3', label: 'Maret' },
+                                            { value: '4', label: 'April' },
+                                            { value: '5', label: 'Mei' },
+                                            { value: '6', label: 'Juni' },
+                                            { value: '7', label: 'Juli' },
+                                            { value: '8', label: 'Agustus' },
+                                            { value: '9', label: 'September' },
+                                            { value: '10', label: 'Oktober' },
+                                            { value: '11', label: 'November' },
+                                            { value: '12', label: 'Desember' },
+                                        ]}
+                                    />
+                                </div>
+
                                 {isAdmin() && units.length > 0 && (
                                     <div className="flex-1 min-w-[200px] lg:w-56">
                                         <CustomSelect
@@ -203,12 +241,96 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                             <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                 <tr>
                                     <th className="px-4 py-3 border-b border-gray-300 dark:border-gray-600 font-medium text-center">No</th>
-                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Nomor Dokumen</th>
-                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Unit</th>
-                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Tahun</th>
-                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Status</th>
-                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Tanggal Pengajuan</th>
-                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Pelaksanaan</th>
+                                    <th 
+                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                        onClick={() => handleSort('nomor_dokumen')}
+                                    >
+                                        <div className="flex items-center gap-1">
+                                            Nomor Dokumen
+                                            <div className="flex flex-col ml-1">
+                                                {sortBy === 'nomor_dokumen' ? (
+                                                    sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
+                                                ) : (
+                                                    <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th 
+                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                        onClick={() => handleSort('unit')}
+                                    >
+                                        <div className="flex items-center gap-1">
+                                            Unit
+                                            <div className="flex flex-col ml-1">
+                                                {sortBy === 'unit' ? (
+                                                    sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
+                                                ) : (
+                                                    <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th 
+                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                        onClick={() => handleSort('tahun_anggaran')}
+                                    >
+                                        <div className="flex items-center justify-center gap-1">
+                                            Tahun
+                                            <div className="flex flex-col ml-1">
+                                                {sortBy === 'tahun_anggaran' ? (
+                                                    sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
+                                                ) : (
+                                                    <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th 
+                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                        onClick={() => handleSort('status_persetujuan')}
+                                    >
+                                        <div className="flex items-center justify-center gap-1">
+                                            Status
+                                            <div className="flex flex-col ml-1">
+                                                {sortBy === 'status_persetujuan' ? (
+                                                    sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
+                                                ) : (
+                                                    <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th 
+                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                        onClick={() => handleSort('tanggal_pengajuan')}
+                                    >
+                                        <div className="flex items-center justify-center gap-1">
+                                            Tanggal Pengajuan
+                                            <div className="flex flex-col ml-1">
+                                                {sortBy === 'tanggal_pengajuan' ? (
+                                                    sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
+                                                ) : (
+                                                    <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th 
+                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                        onClick={() => handleSort('pelaksanaan')}
+                                    >
+                                        <div className="flex items-center justify-center gap-1">
+                                            Pelaksanaan
+                                            <div className="flex flex-col ml-1">
+                                                {sortBy === 'pelaksanaan' ? (
+                                                    sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
+                                                ) : (
+                                                    <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </th>
                                     <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>
                                 </tr>
                             </thead>
@@ -220,9 +342,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">{item.unit?.nama_unit || '-'}</td>
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">{item.tahun_anggaran}</td>
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">
-                                            <span className={`px-2.5 py-1 inline-flex whitespace-nowrap text-xs leading-5 font-bold rounded-md ${getStatusColor(item.status_persetujuan)}`}>
-                                                {item.status_persetujuan === 'Disetujui_Final' ? 'Disetujui RKAT' : item.status_persetujuan.replace(/_/g, ' ')}
-                                            </span>
+                                            <StatusBadge status={item.status_persetujuan} />
                                         </td>
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">{formatDate(item.tanggal_pengajuan)}</td>
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">
@@ -233,70 +353,41 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                             ) : '-'}
                                         </td>
                                         <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
+                                             <ActionGroup>
+                                                 {/* --- DETAIL --- */}
+                                                 <ActionButton
+                                                     variant="detail"
+                                                     tooltip="Detail RKAT"
+                                                     href={route('daftar-ajuan.show', item.uuid)}
+                                                 />
 
-                                            {/* --- KUMPULAN TOMBOL AKSI --- */}
-                                            <div className="flex justify-center gap-1.5">
-                                                <TooltipProvider>
-                                                    {/* --- DETAIL --- */}
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <Link
-                                                                href={route('daftar-ajuan.show', item.uuid)}
-                                                                className="inline-flex items-center justify-center w-8 h-8 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 transition-colors"
-                                                            >
-                                                                <Eye size={16} />
-                                                            </Link>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>Detail RKAT</TooltipContent>
-                                                    </Tooltip>
+                                                 {/* --- EXPORT --- */}
+                                                 <ActionButton
+                                                     variant="export"
+                                                     tooltip="Export PDF"
+                                                     href={route('daftar-ajuan.export', item.uuid)}
+                                                     target="_blank"
+                                                 />
 
-                                                    {/* --- EXPORT --- */}
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <a
-                                                                href={route('daftar-ajuan.export', item.uuid)}
-                                                                target="_blank"
-                                                                className="inline-flex items-center justify-center w-8 h-8 border border-blue-300 rounded-md shadow-sm text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-900/50 dark:hover:bg-blue-900/20 transition-colors"
-                                                            >
-                                                                <FileDown size={16} />
-                                                            </a>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>Export PDF</TooltipContent>
-                                                    </Tooltip>
+                                                 {/* --- EDIT --- */}
+                                                 {(item.status_persetujuan === 'Draft' || item.status_persetujuan === 'Revisi') && (
+                                                     <ActionButton
+                                                         variant="edit"
+                                                         tooltip="Edit RKAT"
+                                                         href={route('daftar-ajuan.edit', item.uuid)}
+                                                     />
+                                                 )}
 
-                                                    {/* --- EDIT --- */}
-                                                    {(item.status_persetujuan === 'Draft' || item.status_persetujuan === 'Revisi') && (
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <Link
-                                                                    href={route('daftar-ajuan.edit', item.uuid)}
-                                                                    className="inline-flex items-center justify-center w-8 h-8 border border-amber-300 rounded-md shadow-sm text-amber-700 bg-white hover:bg-amber-50 dark:bg-gray-700 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-900/20 transition-colors"
-                                                                >
-                                                                    <Edit2 size={16} />
-                                                                </Link>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>Edit RKAT</TooltipContent>
-                                                        </Tooltip>
-                                                    )}
-
-                                                    {/* --- AJUKAN --- */}
-                                                    {(item.status_persetujuan === 'Draft' || item.status_persetujuan === 'Revisi') && (
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <button
-                                                                    onClick={() => handleAjukan(item)}
-                                                                    className="inline-flex items-center justify-center w-8 h-8 bg-teal-600 text-white rounded-md shadow-sm hover:bg-teal-700 transition"
-                                                                >
-                                                                    <Send size={16} />
-                                                                </button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>Ajukan RKAT</TooltipContent>
-                                                        </Tooltip>
-                                                    )}
-                                                </TooltipProvider>
-                                            </div>
-
-                                        </td>
+                                                 {/* --- AJUKAN --- */}
+                                                 {(item.status_persetujuan === 'Draft' || item.status_persetujuan === 'Revisi') && (
+                                                     <ActionButton
+                                                         variant="submit"
+                                                         tooltip="Ajukan RKAT"
+                                                         onClick={() => handleAjukan(item)}
+                                                     />
+                                                 )}
+                                             </ActionGroup>
+                                         </td>
                                     </tr>
                                 )) : (
                                     <tr>
@@ -319,7 +410,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                         value={perPage}
                                         onChange={(e) => {
                                             setPerPage(e.target.value);
-                                            applyFilters(searchTerm, tahun, status, unitId, e.target.value);
+                                            applyFilters(searchTerm, tahun, bulan, status, unitId, e.target.value, sortBy, sortDirection);
                                         }}
                                         options={[
                                             { value: '10', label: '10' },
