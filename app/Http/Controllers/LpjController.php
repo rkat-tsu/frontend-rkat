@@ -77,7 +77,13 @@ class LpjController extends Controller
         $sortBy = $request->input('sort_by', 'created_at');
         $sortDirection = $request->input('sort_direction', 'desc');
 
-        if (in_array($sortBy, ['nomor_lpj', 'tanggal_lpj', 'status_lpj', 'total_realisasi', 'sisa_dana', 'created_at'])) {
+        if ($sortBy === 'unit') {
+            $query->join('pencairan_danas', 'lpjs.id_pencairan', '=', 'pencairan_danas.id_pencairan')
+                  ->join('rkat_headers', 'pencairan_danas.id_header', '=', 'rkat_headers.id_header')
+                  ->join('unit', 'rkat_headers.id_unit', '=', 'unit.id_unit')
+                  ->orderBy('unit.nama_unit', $sortDirection)
+                  ->select('lpjs.*');
+        } elseif (in_array($sortBy, ['nomor_lpj', 'tanggal_lpj', 'status_lpj', 'total_realisasi', 'sisa_dana', 'created_at'])) {
             $query->orderBy($sortBy, $sortDirection);
         } else {
             $query->orderBy('created_at', 'desc');
@@ -276,7 +282,9 @@ class LpjController extends Controller
             return redirect()->back()->with('error', 'Hanya LPJ berkategori Draft atau Revisi yang dapat diperbarui.');
         }
 
-        if ($user->peran !== 'Admin' && $lpj->diajukan_oleh !== $user->id_user) {
+        $unitLpj = $lpj->pencairanDana?->rkatHeader?->id_unit;
+
+        if ($user->peran !== 'Admin' && $lpj->diajukan_oleh !== $user->id_user && $user->id_unit !== $unitLpj) {
             abort(403, 'Anda tidak memiliki wewenang untuk mengubah LPJ ini.');
         }
 
@@ -350,8 +358,16 @@ class LpjController extends Controller
      */
     public function submit(Lpj $lpj)
     {
+        $user = Auth::user();
+
         if ($lpj->status_lpj !== 'Draft' && $lpj->status_lpj !== 'Revisi') {
             return redirect()->back()->with('error', 'Hanya LPJ berkategori Draft atau Revisi yang dapat diajukan.');
+        }
+
+        $unitLpj = $lpj->pencairanDana?->rkatHeader?->id_unit;
+
+        if ($user->peran !== 'Admin' && $lpj->diajukan_oleh !== $user->id_user && $user->id_unit !== $unitLpj) {
+            abort(403, 'Anda tidak memiliki wewenang untuk mengajukan LPJ ini.');
         }
 
         $lpj->update([

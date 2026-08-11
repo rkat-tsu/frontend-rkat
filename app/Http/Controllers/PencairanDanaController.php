@@ -254,7 +254,8 @@ class PencairanDanaController extends Controller
             return redirect()->back()->with('error', 'Hanya dokumen Draft atau Revisi yang dapat diedit.');
         }
 
-        if ($user->peran !== 'Admin' && $pencairan->diajukan_oleh !== $user->id_user) {
+        $unitPencairan = $pencairan->rkatHeader?->id_unit;
+        if ($user->peran !== 'Admin' && $pencairan->diajukan_oleh !== $user->id_user && $user->id_unit !== $unitPencairan) {
             abort(403, 'Anda tidak memiliki wewenang untuk mengedit pencairan ini.');
         }
 

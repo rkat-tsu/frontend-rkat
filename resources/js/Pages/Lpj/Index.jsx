@@ -217,10 +217,33 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
         setIsCreateModalOpen(true);
     };
 
+    const parseNonNegativeFloat = (val) => {
+        const num = parseFloat(val);
+        return isNaN(num) || num < 0 ? 0 : num;
+    };
+
+    const handleNumberKeyDown = (e) => {
+        if (['e', 'E', '+', '-'].includes(e.key)) {
+            e.preventDefault();
+        }
+    };
+
     // Item form handler
     const handleItemChange = (index, field, value) => {
         const updated = [...itemsForm];
-        updated[index][field] = value;
+        if (field === 'volume_realisasi' || field === 'harga_satuan_realisasi') {
+            let cleanVal = value;
+            if (typeof cleanVal === 'string') {
+                cleanVal = cleanVal.replace(/[^0-9.]/g, '');
+                const parts = cleanVal.split('.');
+                if (parts.length > 2) {
+                    cleanVal = parts[0] + '.' + parts.slice(1).join('');
+                }
+            }
+            updated[index][field] = cleanVal;
+        } else {
+            updated[index][field] = value;
+        }
         setItemsForm(updated);
     };
 
@@ -241,7 +264,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
 
     // Calculate totals for Modal Create/Edit
     const totalPencairanModal = itemsForm.reduce((sum, item) => sum + (parseFloat(item.sub_total_pencairan) || 0), 0);
-    const totalRealisasiModal = itemsForm.reduce((sum, item) => sum + ((parseFloat(item.volume_realisasi) || 0) * (parseFloat(item.harga_satuan_realisasi) || 0)), 0);
+    const totalRealisasiModal = itemsForm.reduce((sum, item) => sum + (parseNonNegativeFloat(item.volume_realisasi) * parseNonNegativeFloat(item.harga_satuan_realisasi)), 0);
     const totalSisaModal = totalPencairanModal - totalRealisasiModal;
 
     // Submit Create/Edit Form
@@ -292,8 +315,8 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
             ringkasan_kegiatan: ringkasan,
             items: itemsForm.map(item => ({
                 id_pencairan_item: item.id_pencairan_item,
-                volume_realisasi: parseFloat(item.volume_realisasi) || 0,
-                harga_satuan_realisasi: parseFloat(item.harga_satuan_realisasi) || 0,
+                volume_realisasi: parseNonNegativeFloat(item.volume_realisasi),
+                harga_satuan_realisasi: parseNonNegativeFloat(item.harga_satuan_realisasi),
                 nomor_kwitansi: item.nomor_kwitansi,
                 keterangan: item.keterangan,
             })),
@@ -520,7 +543,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                             </div>
 
                             {/* Unit (Admin/Approver) */}
-                            {units.length > 0 && (
+                            {(isAdmin() || isApprover()) && units.length > 0 && (
                                 <div className="w-48">
                                     <CustomSelect
                                         value={unitId}
@@ -567,12 +590,14 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                     </th>
 
                                     <th 
-                                        onClick={() => handleSortColumn('unit')}
-                                        className="py-3.5 px-4 text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition border-r border-gray-200 dark:border-gray-700/60 last:border-r-0"
+                                        onClick={(isAdmin() || isApprover()) ? () => handleSortColumn('unit') : undefined}
+                                        className={`py-3.5 px-4 text-center border-r border-gray-200 dark:border-gray-700/60 last:border-r-0 ${
+                                            (isAdmin() || isApprover()) ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition' : ''
+                                        }`}
                                     >
                                         <div className="flex items-center justify-center">
                                             <span>Unit Kerja</span>
-                                            {renderSortIcon('unit')}
+                                            {(isAdmin() || isApprover()) && renderSortIcon('unit')}
                                         </div>
                                     </th>
 
@@ -622,7 +647,9 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
                                 {lpjs?.data && lpjs.data.length > 0 ? (
                                     lpjs.data.map((lpj, index) => {
-                                        const isPengaju = auth.user.id_user === lpj.diajukan_oleh || isAdmin();
+                                        const unitLpjId = lpj.pencairan_dana?.rkat_header?.id_unit;
+                                        const isBelongsToUnit = auth.user.id_unit && unitLpjId && String(auth.user.id_unit) === String(unitLpjId);
+                                        const isPengaju = auth.user.id_user === lpj.diajukan_oleh || isBelongsToUnit || isAdmin();
                                         const canEdit = (lpj.status_lpj === 'Draft' || lpj.status_lpj === 'Revisi') && isPengaju;
                                         const canSubmit = (lpj.status_lpj === 'Draft' || lpj.status_lpj === 'Revisi') && isPengaju;
                                         const canApprove = lpj.status_lpj === 'Diajukan' && (isApprover() || isAdmin());
@@ -926,7 +953,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-900">
                                         {itemsForm.map((item, idx) => {
-                                            const subtotalReal = (parseFloat(item.volume_realisasi) || 0) * (parseFloat(item.harga_satuan_realisasi) || 0);
+                                            const subtotalReal = parseNonNegativeFloat(item.volume_realisasi) * parseNonNegativeFloat(item.harga_satuan_realisasi);
                                             const selisih = (parseFloat(item.sub_total_pencairan) || 0) - subtotalReal;
 
                                             return (
@@ -948,6 +975,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                                             min="0"
                                                             step="any"
                                                             value={item.volume_realisasi}
+                                                            onKeyDown={handleNumberKeyDown}
                                                             onChange={(e) => handleItemChange(idx, 'volume_realisasi', e.target.value)}
                                                             className="w-full text-center py-1 px-2 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-teal-500"
                                                         />
@@ -958,6 +986,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                                             min="0"
                                                             step="any"
                                                             value={item.harga_satuan_realisasi}
+                                                            onKeyDown={handleNumberKeyDown}
                                                             onChange={(e) => handleItemChange(idx, 'harga_satuan_realisasi', e.target.value)}
                                                             className="w-full text-right py-1 px-2 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-teal-500"
                                                         />

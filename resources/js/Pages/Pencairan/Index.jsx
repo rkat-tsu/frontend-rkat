@@ -521,20 +521,24 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                                         target="_blank"
                                                     />
 
-                                                    {(item.status_pencairan === 'Draft' || item.status_pencairan === 'Revisi') && (isAdmin() || auth.user.id_user == item.diajukan_oleh) && (
-                                                        <>
-                                                        <ActionButton
-                                                            variant="edit"
-                                                            tooltip="Edit Pencairan"
-                                                            onClick={() => handleEdit(item)}
-                                                        />
-                                                        <ActionButton
-                                                            variant="submit"
-                                                            tooltip="Ajukan Pencairan"
-                                                            onClick={() => handleAjukan(item)}
-                                                        />
-                                                        </>
-                                                    )}
+                                                    {(() => {
+                                                        const isBelongsToUnit = auth.user.id_unit && item.rkat_header?.id_unit && String(auth.user.id_unit) === String(item.rkat_header.id_unit);
+                                                        const canEditPencairan = (item.status_pencairan === 'Draft' || item.status_pencairan === 'Revisi') && (isAdmin() || auth.user.id_user == item.diajukan_oleh || isBelongsToUnit);
+                                                        return canEditPencairan && (
+                                                            <>
+                                                            <ActionButton
+                                                                variant="edit"
+                                                                tooltip="Edit Pencairan"
+                                                                onClick={() => handleEdit(item)}
+                                                            />
+                                                            <ActionButton
+                                                                variant="submit"
+                                                                tooltip="Ajukan Pencairan"
+                                                                onClick={() => handleAjukan(item)}
+                                                            />
+                                                            </>
+                                                        );
+                                                    })()}
                                                 </ActionGroup>
                                             </td>
                                         </tr>
@@ -717,6 +721,11 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                                             min="0"
                                                             value={item.nominal_pencairan}
                                                             onChange={(e) => handleItemChange(item.id, 'nominal_pencairan', e.target.value)}
+                                                            onKeyDown={(e) => {
+                                                                if (['-', '+', 'e', 'E'].includes(e.key)) {
+                                                                    e.preventDefault();
+                                                                }
+                                                            }}
                                                             disabled={!item.is_selected}
                                                             className="w-32 rounded-md text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm disabled:opacity-50"
                                                         />
