@@ -145,7 +145,7 @@
             <td><strong>{{ $lpj->nomor_lpj }}</strong></td>
             <td class="info-label">Unit Kerja</td>
             <td class="info-colon">:</td>
-            <td>{{ $lpj->pencairanDana->rkatHeader->unit->nama_unit ?? '-' }}</td>
+            <td>{{ $lpj->rkatHeader->unit->nama_unit ?? $lpj->pencairanDana->rkatHeader->unit->nama_unit ?? '-' }}</td>
         </tr>
         <tr>
             <td class="info-label">Judul LPJ / Kegiatan</td>
@@ -153,12 +153,12 @@
             <td>{{ $lpj->judul_lpj }}</td>
             <td class="info-label">Tahun Anggaran</td>
             <td class="info-colon">:</td>
-            <td>{{ $lpj->pencairanDana->rkatHeader->tahun_anggaran ?? '-' }}</td>
+            <td>{{ $lpj->rkatHeader->tahun_anggaran ?? $lpj->pencairanDana->rkatHeader->tahun_anggaran ?? '-' }}</td>
         </tr>
         <tr>
-            <td class="info-label">Ref. Pencairan Dana</td>
+            <td class="info-label">Ref. Dokumen RKA / Pencairan</td>
             <td class="info-colon">:</td>
-            <td>{{ $lpj->pencairanDana->nama_pencairan ?? '-' }} ({{ $lpj->pencairanDana->rkatHeader->nomor_dokumen ?? '-' }})</td>
+            <td>{{ $lpj->rkatHeader->nomor_dokumen ?? $lpj->pencairanDana->rkatHeader->nomor_dokumen ?? '-' }} {{ $lpj->pencairanDana ? '('.$lpj->pencairanDana->nama_pencairan.')' : '(Gabungan Pencairan)' }}</td>
             <td class="info-label">Tanggal Pelaksanaan</td>
             <td class="info-colon">:</td>
             <td>
@@ -282,7 +282,7 @@
             <td>
                 Yang Mengajukan LPJ,
                 <br><br>
-                <strong>{{ $lpj->pencairanDana->rkatHeader->unit->nama_unit ?? 'Unit Kerja' }}</strong>
+                <strong>{{ $lpj->rkatHeader->unit->nama_unit ?? $lpj->pencairanDana->rkatHeader->unit->nama_unit ?? 'Unit Kerja' }}</strong>
                 <div class="signature-space"></div>
                 <strong><u>{{ $lpj->pengaju->name ?? 'Pengaju' }}</u></strong><br>
                 NIP/NIK: {{ $lpj->pengaju->nip ?? '-' }}

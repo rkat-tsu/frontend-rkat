@@ -18,6 +18,30 @@ const formatDate = (value) => {
     }
 };
 
+const formatPelaksanaan = (mulai, akhir) => {
+    if (!mulai && !akhir) return '-';
+    if (!mulai) return formatDate(akhir);
+    if (!akhir) return formatDate(mulai);
+
+    const fmtMulai = formatDate(mulai);
+    const fmtAkhir = formatDate(akhir);
+
+    if (fmtMulai === fmtAkhir) {
+        return fmtMulai;
+    }
+
+    return (
+        <>
+            {fmtMulai} <br /> s.d <br /> {fmtAkhir}
+        </>
+    );
+};
+
+const formatRupiah = (angka) => {
+    const number = Number(angka) || 0;
+    return `Rp. ${number.toLocaleString('id-ID', { minimumFractionDigits: 0 })}`;
+};
+
 // Tambahkan prop 'flash' untuk menangkap pesan error/success dari Controller
 export default function Index({ auth, rkats, filters, tahunAnggarans, units = [], flash = {}, statuses = [] }) {
     const { isAdmin } = usePermission();
@@ -246,7 +270,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                         onClick={() => handleSort('nomor_dokumen')}
                                     >
                                         <div className="flex items-center gap-1">
-                                            Nomor Dokumen
+                                            Nama Kegiatan / No. Dokumen
                                             <div className="flex flex-col ml-1">
                                                 {sortBy === 'nomor_dokumen' ? (
                                                     sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
@@ -273,12 +297,27 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                     </th>
                                     <th 
                                         className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                        onClick={() => handleSort('tahun_anggaran')}
+                                        onClick={() => handleSort('pelaksanaan')}
                                     >
                                         <div className="flex items-center justify-center gap-1">
-                                            Tahun
+                                            Tanggal Pelaksanaan
                                             <div className="flex flex-col ml-1">
-                                                {sortBy === 'tahun_anggaran' ? (
+                                                {sortBy === 'pelaksanaan' ? (
+                                                    sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
+                                                ) : (
+                                                    <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th 
+                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-right cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                        onClick={() => handleSort('total_anggaran')}
+                                    >
+                                        <div className="flex items-center justify-end gap-1">
+                                            Anggaran
+                                            <div className="flex flex-col ml-1">
+                                                {sortBy === 'total_anggaran' ? (
                                                     sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
                                                 ) : (
                                                     <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -291,7 +330,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                         onClick={() => handleSort('status_persetujuan')}
                                     >
                                         <div className="flex items-center justify-center gap-1">
-                                            Status
+                                            Status Dokumen
                                             <div className="flex flex-col ml-1">
                                                 {sortBy === 'status_persetujuan' ? (
                                                     sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
@@ -316,80 +355,83 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                             </div>
                                         </div>
                                     </th>
-                                    <th 
-                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                        onClick={() => handleSort('pelaksanaan')}
-                                    >
-                                        <div className="flex items-center justify-center gap-1">
-                                            Pelaksanaan
-                                            <div className="flex flex-col ml-1">
-                                                {sortBy === 'pelaksanaan' ? (
-                                                    sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
-                                                ) : (
-                                                    <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                )}
-                                            </div>
-                                        </div>
-                                    </th>
                                     <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {rkats.data && rkats.data.length > 0 ? rkats.data.map((item, index) => (
-                                    <tr key={item.id_header} className="bg-white dark:bg-gray-800 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors">
-                                        <td className="px-4 py-4 border-b border-gray-300 dark:border-gray-700 font-medium text-gray-900 dark:text-white text-center">{rkats.from + index}</td>
-                                        <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 font-medium">{item.nomor_dokumen}</td>
-                                        <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">{item.unit?.nama_unit || '-'}</td>
-                                        <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">{item.tahun_anggaran}</td>
-                                        <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">
-                                            <StatusBadge status={item.status_persetujuan} />
-                                        </td>
-                                        <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">{formatDate(item.tanggal_pengajuan)}</td>
-                                        <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">
-                                            {(item.rkat_details?.length > 0 || item.rkatDetails?.length > 0) ? (
-                                                <div className="text-xs whitespace-nowrap">
-                                                    {formatDate((item.rkat_details || item.rkatDetails)[0].jadwal_pelaksanaan_mulai)} <br /> s.d <br /> {formatDate((item.rkat_details || item.rkatDetails)[0].jadwal_pelaksanaan_akhir)}
+                                {rkats.data && rkats.data.length > 0 ? rkats.data.map((item, index) => {
+                                    const details = item.rkat_details || item.rkatDetails || [];
+                                    const firstDetail = details[0];
+                                    const namaKegiatan = firstDetail?.judul_kegiatan || firstDetail?.deskripsi_kegiatan;
+                                    const totalAnggaran = item.total_anggaran || details.reduce((sum, d) => sum + Number(d.anggaran || 0), 0);
+
+                                    return (
+                                        <tr key={item.id_header} className="bg-white dark:bg-gray-800 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors">
+                                            <td className="px-4 py-4 border-b border-gray-300 dark:border-gray-700 font-medium text-gray-900 dark:text-white text-center">{rkats.from + index}</td>
+                                            <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 font-medium">
+                                                {namaKegiatan && (
+                                                    <div className="font-semibold text-gray-900 dark:text-white leading-snug">
+                                                        {namaKegiatan}
+                                                    </div>
+                                                )}
+                                                <div className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">
+                                                    {item.nomor_dokumen}
                                                 </div>
-                                            ) : '-'}
-                                        </td>
-                                        <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                             <ActionGroup>
-                                                 {/* --- DETAIL --- */}
-                                                 <ActionButton
-                                                     variant="detail"
-                                                     tooltip="Detail RKAT"
-                                                     href={route('daftar-ajuan.show', item.uuid)}
-                                                 />
+                                            </td>
+                                            <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">{item.unit?.nama_unit || '-'}</td>
+                                            <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">
+                                                {(details.length > 0) ? (
+                                                    <div className="text-xs whitespace-nowrap">
+                                                        {formatPelaksanaan(details[0].jadwal_pelaksanaan_mulai, details[0].jadwal_pelaksanaan_akhir)}
+                                                    </div>
+                                                ) : '-'}
+                                            </td>
+                                            <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-right font-medium">
+                                                {formatRupiah(totalAnggaran)}
+                                            </td>
+                                            <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">
+                                                <StatusBadge status={item.status_persetujuan} type="rka" />
+                                            </td>
+                                            <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">{formatDate(item.tanggal_pengajuan)}</td>
+                                            <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
+                                                <ActionGroup>
+                                                    {/* --- DETAIL --- */}
+                                                    <ActionButton
+                                                        variant="detail"
+                                                        tooltip="Detail RKAT"
+                                                        href={route('daftar-ajuan.show', item.uuid)}
+                                                    />
 
-                                                 {/* --- EXPORT --- */}
-                                                 <ActionButton
-                                                     variant="export"
-                                                     tooltip="Export PDF"
-                                                     href={route('daftar-ajuan.export', item.uuid)}
-                                                     target="_blank"
-                                                 />
+                                                    {/* --- EXPORT --- */}
+                                                    <ActionButton
+                                                        variant="export"
+                                                        tooltip="Export PDF"
+                                                        href={route('daftar-ajuan.export', item.uuid)}
+                                                        target="_blank"
+                                                    />
 
-                                                 {/* --- EDIT --- */}
-                                                 {(item.status_persetujuan === 'Draft' || item.status_persetujuan === 'Revisi') && (
-                                                     <ActionButton
-                                                         variant="edit"
-                                                         tooltip="Edit RKAT"
-                                                         href={route('daftar-ajuan.edit', item.uuid)}
-                                                     />
-                                                 )}
+                                                    {/* --- EDIT --- */}
+                                                    {(item.status_persetujuan === 'Draft' || item.status_persetujuan === 'Revisi') && (
+                                                        <ActionButton
+                                                            variant="edit"
+                                                            tooltip="Edit RKAT"
+                                                            href={route('daftar-ajuan.edit', item.uuid)}
+                                                        />
+                                                    )}
 
-                                                 {/* --- AJUKAN --- */}
-                                                 {(item.status_persetujuan === 'Draft' || item.status_persetujuan === 'Revisi') && (
-                                                     <ActionButton
-                                                         variant="submit"
-                                                         tooltip="Ajukan RKAT"
-                                                         onClick={() => handleAjukan(item)}
-                                                     />
-                                                 )}
-                                             </ActionGroup>
-                                         </td>
-                                    </tr>
-                                )) : (
+                                                    {/* --- AJUKAN --- */}
+                                                    {(item.status_persetujuan === 'Draft' || item.status_persetujuan === 'Revisi') && (
+                                                        <ActionButton
+                                                            variant="submit"
+                                                            tooltip="Ajukan RKAT"
+                                                            onClick={() => handleAjukan(item)}
+                                                        />
+                                                    )}
+                                                </ActionGroup>
+                                            </td>
+                                        </tr>
+                                    );
+                                }) : (
                                     <tr>
                                         <td colSpan="8" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                                             Tidak ada data RKAT yang sesuai dengan filter.

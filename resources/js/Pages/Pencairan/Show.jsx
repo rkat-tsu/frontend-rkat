@@ -53,7 +53,7 @@ export default function Show({ auth, pencairan, flash = {} }) {
                                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Informasi Pencairan</h3>
                                     <p className="text-sm text-gray-500 mt-1">Nama/Keterangan: <span className="font-semibold">{pencairan?.nama_pencairan || 'Tidak ada'}</span></p>
                                 </div>
-                                <StatusBadge status={pencairan?.status_pencairan} size="lg" />
+                                <StatusBadge status={pencairan?.status_pencairan} type="pencairan" size="lg" />
                             </div>
                         </div>
 

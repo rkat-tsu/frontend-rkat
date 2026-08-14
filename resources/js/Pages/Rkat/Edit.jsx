@@ -550,7 +550,12 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
     // Options
     const tahunOptions = tahunAnggarans.map(t => ({ value: t.tahun_anggaran, label: t.tahun_anggaran }));
     const unitOptions = units.map(u => ({ value: u.id_unit, label: `${u.kode_unit} - ${u.nama_unit}` }));
-    const ikuOptions = ikus.map(i => ({ value: i.id_iku, label: i.nama_iku }));
+    
+    const filteredIkuList = ikus.filter(i => {
+        if (!data.tahun_anggaran) return true;
+        return !i.tahun_anggaran || Number(i.tahun_anggaran) === Number(data.tahun_anggaran);
+    });
+    const ikuOptions = filteredIkuList.map(i => ({ value: i.id_iku, label: i.nama_iku }));
     const akunOptions = akunAnggarans.map(a => ({
         value: a.kode_anggaran,
         label: `${a.kode_anggaran} - ${a.nama_anggaran}`,

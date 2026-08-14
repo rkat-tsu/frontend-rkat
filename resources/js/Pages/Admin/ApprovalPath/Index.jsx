@@ -233,7 +233,7 @@ export default function Index({ auth, paths, units }) {
                                         {path.steps.map((step, index) => (
                                             <React.Fragment key={step.id || index}>
                                                 <div className="flex items-center gap-2.5 px-3.5 py-2 bg-gray-50/80 dark:bg-gray-900/60 border border-gray-200/80 dark:border-gray-700/80 rounded-xl shadow-xs hover:border-teal-300 dark:hover:border-teal-700 transition">
-                                                    <span className="w-5 h-5 rounded-full bg-teal-600 text-white text-[11px] font-bold flex items-center justify-center shrink-0">
+                                                    <span className="w-6 h-6 rounded-full bg-teal-600 text-white text-xs font-bold inline-flex items-center justify-center text-center leading-none shrink-0">
                                                         {index + 1}
                                                     </span>
                                                     <div className="flex flex-col">
@@ -328,7 +328,7 @@ export default function Index({ auth, paths, units }) {
                             <div className="space-y-3">
                                 {formData.steps.map((step, index) => (
                                     <div key={index} className="flex gap-3 items-start bg-gray-50/80 dark:bg-gray-900/60 p-4 rounded-xl border border-gray-200/80 dark:border-gray-700/80 relative">
-                                        <div className="w-7 h-7 rounded-full bg-teal-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-2">
+                                        <div className="w-7 h-7 rounded-full bg-teal-600 text-white text-xs font-bold inline-flex items-center justify-center text-center leading-none shrink-0 mt-2">
                                             {index + 1}
                                         </div>
                                         <div className="flex-1 space-y-3">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Lpj;
 use App\Models\LpjItem;
 use App\Models\PencairanDana;
+use App\Models\RkatHeader;
 use App\Models\TahunAnggaran;
 use App\Models\Unit;
 use Illuminate\Http\Request;
@@ -23,6 +24,7 @@ class LpjController extends Controller
         $user = Auth::user();
 
         $query = Lpj::with([
+            'rkatHeader.unit',
             'pencairanDana.rkatHeader.unit',
             'pencairanDana.items.rkatRabItem',
             'pengaju',
@@ -32,8 +34,12 @@ class LpjController extends Controller
 
         // Filter berdasarkan wewenang Unit / Peran
         if ($user->peran !== 'Admin' && !$user->isApprover()) {
-            $query->whereHas('pencairanDana.rkatHeader', function ($q) use ($user) {
-                $q->where('id_unit', $user->id_unit);
+            $query->where(function ($q) use ($user) {
+                $q->whereHas('rkatHeader', function ($rq) use ($user) {
+                    $rq->where('id_unit', $user->id_unit);
+                })->orWhereHas('pencairanDana.rkatHeader', function ($pq) use ($user) {
+                    $pq->where('id_unit', $user->id_unit);
+                });
             });
         }
 
@@ -43,6 +49,12 @@ class LpjController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('nomor_lpj', 'like', "%{$search}%")
                   ->orWhere('judul_lpj', 'like', "%{$search}%")
+                  ->orWhereHas('rkatHeader', function ($rq) use ($search) {
+                      $rq->where('nomor_dokumen', 'like', "%{$search}%")
+                        ->orWhereHas('unit', function ($uq) use ($search) {
+                            $uq->where('nama_unit', 'like', "%{$search}%");
+                        });
+                  })
                   ->orWhereHas('pencairanDana.rkatHeader', function ($rq) use ($search) {
                       $rq->where('nomor_dokumen', 'like', "%{$search}%")
                         ->orWhereHas('unit', function ($uq) use ($search) {
@@ -55,8 +67,12 @@ class LpjController extends Controller
         // Filter Tahun Anggaran
         if ($request->filled('tahun')) {
             $tahun = $request->tahun;
-            $query->whereHas('pencairanDana.rkatHeader', function ($q) use ($tahun) {
-                $q->where('tahun_anggaran', $tahun);
+            $query->where(function ($q) use ($tahun) {
+                $q->whereHas('rkatHeader', function ($rq) use ($tahun) {
+                    $rq->where('tahun_anggaran', $tahun);
+                })->orWhereHas('pencairanDana.rkatHeader', function ($pq) use ($tahun) {
+                    $pq->where('tahun_anggaran', $tahun);
+                });
             });
         }
 
@@ -68,8 +84,12 @@ class LpjController extends Controller
         // Filter Unit
         if ($request->filled('unit_id')) {
             $unitId = $request->unit_id;
-            $query->whereHas('pencairanDana.rkatHeader', function ($q) use ($unitId) {
-                $q->where('id_unit', $unitId);
+            $query->where(function ($q) use ($unitId) {
+                $q->whereHas('rkatHeader', function ($rq) use ($unitId) {
+                    $rq->where('id_unit', $unitId);
+                })->orWhereHas('pencairanDana.rkatHeader', function ($pq) use ($unitId) {
+                    $pq->where('id_unit', $unitId);
+                });
             });
         }
 
@@ -78,9 +98,13 @@ class LpjController extends Controller
         $sortDirection = $request->input('sort_direction', 'desc');
 
         if ($sortBy === 'unit') {
-            $query->join('pencairan_danas', 'lpjs.id_pencairan', '=', 'pencairan_danas.id_pencairan')
-                  ->join('rkat_headers', 'pencairan_danas.id_header', '=', 'rkat_headers.id_header')
-                  ->join('unit', 'rkat_headers.id_unit', '=', 'unit.id_unit')
+            $query->leftJoin('rkat_headers', 'lpjs.id_header', '=', 'rkat_headers.id_header')
+                  ->leftJoin('pencairan_danas', 'lpjs.id_pencairan', '=', 'pencairan_danas.id_pencairan')
+                  ->leftJoin('rkat_headers as rkat_pencairan', 'pencairan_danas.id_header', '=', 'rkat_pencairan.id_header')
+                  ->leftJoin('unit', function ($join) {
+                      $join->on('unit.id_unit', '=', 'rkat_headers.id_unit')
+                           ->orOn('unit.id_unit', '=', 'rkat_pencairan.id_unit');
+                  })
                   ->orderBy('unit.nama_unit', $sortDirection)
                   ->select('lpjs.*');
         } elseif (in_array($sortBy, ['nomor_lpj', 'tanggal_lpj', 'status_lpj', 'total_realisasi', 'sisa_dana', 'created_at'])) {
@@ -95,8 +119,12 @@ class LpjController extends Controller
         // Statistical Summaries
         $baseStatsQuery = Lpj::query();
         if ($user->peran !== 'Admin' && !$user->isApprover()) {
-            $baseStatsQuery->whereHas('pencairanDana.rkatHeader', function ($q) use ($user) {
-                $q->where('id_unit', $user->id_unit);
+            $baseStatsQuery->where(function ($q) use ($user) {
+                $q->whereHas('rkatHeader', function ($rq) use ($user) {
+                    $rq->where('id_unit', $user->id_unit);
+                })->orWhereHas('pencairanDana.rkatHeader', function ($pq) use ($user) {
+                    $pq->where('id_unit', $user->id_unit);
+                });
             });
         }
 
@@ -113,7 +141,7 @@ class LpjController extends Controller
             'ditolak' => $allLpjs->where('status_lpj', 'Ditolak')->count(),
         ];
 
-        // Fetch Pencairan Dana yang siap dibuatkan LPJ (status_pencairan = Disetujui_Final dan belum punya LPJ final)
+        // Fetch Pencairan Dana yang siap dibuatkan LPJ (status_pencairan = Disetujui_Final dan belum punya LPJ aktif/non-Ditolak)
         $pencairanQuery = PencairanDana::with([
             'rkatHeader.unit',
             'items.rkatRabItem',
@@ -126,30 +154,48 @@ class LpjController extends Controller
             });
         }
 
-        $availablePencairans = $pencairanQuery->get()->filter(function ($pencairan) {
-            // Bebas jika belum ada LPJ atau LPJ-nya Ditolak
+        $allApprovedPencairans = $pencairanQuery->get()->filter(function ($pencairan) {
             return !$pencairan->lpj || $pencairan->lpj->status_lpj === 'Ditolak';
-        })->map(function ($pencairan) {
-            $totalPencairan = $pencairan->items->sum('sub_total_pencairan');
-            return [
-                'id_pencairan' => $pencairan->id_pencairan,
-                'uuid' => $pencairan->uuid,
-                'nama_pencairan' => $pencairan->nama_pencairan,
-                'nomor_dokumen_rkat' => $pencairan->rkatHeader->nomor_dokumen ?? '-',
-                'unit_name' => $pencairan->rkatHeader->unit->nama_unit ?? '-',
-                'tahun_anggaran' => $pencairan->rkatHeader->tahun_anggaran ?? '-',
-                'tanggal_pengajuan' => $pencairan->tanggal_pengajuan ? $pencairan->tanggal_pengajuan->format('Y-m-d') : '-',
-                'total_pencairan' => $totalPencairan,
-                'items' => $pencairan->items->map(function ($item) {
-                    return [
+        });
+
+        // Group pencairans by RKA (id_header) to build combined packages
+        $groupedByRkat = $allApprovedPencairans->groupBy('id_header');
+
+        $availablePencairans = $groupedByRkat->map(function ($pencairans, $idHeader) {
+            $firstPencairan = $pencairans->first();
+            $rkatHeader = $firstPencairan->rkatHeader;
+
+            $totalPencairanCombined = 0;
+            $mergedItems = [];
+
+            foreach ($pencairans as $pencairan) {
+                foreach ($pencairan->items as $item) {
+                    $totalPencairanCombined += (float) $item->sub_total_pencairan;
+                    $mergedItems[] = [
                         'id_pencairan_item' => $item->id_pencairan_item,
+                        'id_pencairan' => $pencairan->id_pencairan,
+                        'nama_pencairan' => $pencairan->nama_pencairan,
                         'deskripsi_item' => $item->rkatRabItem->deskripsi_item ?? 'Item Anggaran',
                         'satuan' => $item->rkatRabItem->satuan ?? 'Satuan',
                         'volume_pencairan' => $item->volume_pencairan,
                         'nominal_pencairan' => $item->nominal_pencairan,
                         'sub_total_pencairan' => $item->sub_total_pencairan,
                     ];
-                })
+                }
+            }
+
+            return [
+                'id_header' => $idHeader,
+                'id_pencairan' => $firstPencairan->id_pencairan,
+                'uuid' => $rkatHeader->uuid ?? $firstPencairan->uuid,
+                'nama_pencairan' => "Gabungan All Pencairan (" . $pencairans->count() . " Tahap)",
+                'nomor_dokumen_rkat' => $rkatHeader->nomor_dokumen ?? '-',
+                'unit_name' => $rkatHeader->unit->nama_unit ?? '-',
+                'tahun_anggaran' => $rkatHeader->tahun_anggaran ?? '-',
+                'tanggal_pengajuan' => $firstPencairan->tanggal_pengajuan ? $firstPencairan->tanggal_pengajuan->format('Y-m-d') : '-',
+                'total_pencairan' => $totalPencairanCombined,
+                'total_tahap' => $pencairans->count(),
+                'items' => $mergedItems
             ];
         })->values();
 
@@ -174,7 +220,8 @@ class LpjController extends Controller
         $user = Auth::user();
 
         $request->validate([
-            'id_pencairan' => 'required|exists:pencairan_danas,id_pencairan',
+            'id_header' => 'nullable|exists:rkat_headers,id_header',
+            'id_pencairan' => 'nullable|exists:pencairan_danas,id_pencairan',
             'judul_lpj' => 'required|string|max:255',
             'tanggal_lpj' => 'required|date',
             'tanggal_pelaksanaan_mulai' => 'nullable|date',
@@ -190,14 +237,22 @@ class LpjController extends Controller
             'dokumen_bukti' => 'nullable|array',
         ]);
 
-        $pencairan = PencairanDana::with('rkatHeader.unit')->findOrFail($request->id_pencairan);
+        if ($request->id_header) {
+            $rkatHeader = RkatHeader::with('unit')->findOrFail($request->id_header);
+            $unitCode = strtoupper($rkatHeader->unit->singkatan_unit ?? 'UNIT');
+            $idUnit = $rkatHeader->id_unit;
+        } else {
+            $pencairan = PencairanDana::with('rkatHeader.unit')->findOrFail($request->id_pencairan);
+            $rkatHeader = $pencairan->rkatHeader;
+            $unitCode = strtoupper($rkatHeader->unit->singkatan_unit ?? 'UNIT');
+            $idUnit = $rkatHeader->id_unit;
+        }
 
-        if ($user->peran !== 'Admin' && $pencairan->rkatHeader->id_unit !== $user->id_unit) {
+        if ($user->peran !== 'Admin' && $idUnit !== $user->id_unit) {
             abort(403, 'Anda tidak memiliki wewenang untuk membuat LPJ dari unit ini.');
         }
 
         // Generate Nomor LPJ
-        $unitCode = strtoupper($pencairan->rkatHeader->unit->singkatan_unit ?? 'UNIT');
         $year = date('Y', strtotime($request->tanggal_lpj));
         $countToday = Lpj::whereYear('created_at', date('Y'))->count() + 1;
         $nomorLpj = sprintf("LPJ/%s/%s/%04d", $year, $unitCode, $countToday);
@@ -218,6 +273,7 @@ class LpjController extends Controller
         $sisaDana = $totalPencairan - $totalRealisasi;
 
         $lpj = Lpj::create([
+            'id_header' => $request->id_header ?? $rkatHeader->id_header,
             'id_pencairan' => $request->id_pencairan,
             'nomor_lpj' => $nomorLpj,
             'judul_lpj' => $request->judul_lpj,
@@ -260,6 +316,7 @@ class LpjController extends Controller
     public function show(Lpj $lpj)
     {
         $lpj->load([
+            'rkatHeader.unit',
             'pencairanDana.rkatHeader.unit',
             'pengaju',
             'approver',
@@ -282,7 +339,7 @@ class LpjController extends Controller
             return redirect()->back()->with('error', 'Hanya LPJ berkategori Draft atau Revisi yang dapat diperbarui.');
         }
 
-        $unitLpj = $lpj->pencairanDana?->rkatHeader?->id_unit;
+        $unitLpj = $lpj->rkatHeader?->id_unit ?? $lpj->pencairanDana?->rkatHeader?->id_unit;
 
         if ($user->peran !== 'Admin' && $lpj->diajukan_oleh !== $user->id_user && $user->id_unit !== $unitLpj) {
             abort(403, 'Anda tidak memiliki wewenang untuk mengubah LPJ ini.');
@@ -364,7 +421,7 @@ class LpjController extends Controller
             return redirect()->back()->with('error', 'Hanya LPJ berkategori Draft atau Revisi yang dapat diajukan.');
         }
 
-        $unitLpj = $lpj->pencairanDana?->rkatHeader?->id_unit;
+        $unitLpj = $lpj->rkatHeader?->id_unit ?? $lpj->pencairanDana?->rkatHeader?->id_unit;
 
         if ($user->peran !== 'Admin' && $lpj->diajukan_oleh !== $user->id_user && $user->id_unit !== $unitLpj) {
             abort(403, 'Anda tidak memiliki wewenang untuk mengajukan LPJ ini.');
@@ -423,6 +480,7 @@ class LpjController extends Controller
             ini_set('memory_limit', '512M');
 
             $lpj->load([
+                'rkatHeader.unit',
                 'pencairanDana.rkatHeader.unit',
                 'pengaju',
                 'approver',

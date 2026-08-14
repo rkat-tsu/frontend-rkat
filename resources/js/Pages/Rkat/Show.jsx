@@ -28,6 +28,16 @@ const formatDate = (dateString) => {
     }
 };
 
+const formatPelaksanaanText = (mulai, akhir) => {
+    if (!mulai && !akhir) return '-';
+    if (!mulai) return formatDate(akhir);
+    if (!akhir) return formatDate(mulai);
+    const fmtMulai = formatDate(mulai);
+    const fmtAkhir = formatDate(akhir);
+    if (fmtMulai === fmtAkhir) return fmtMulai;
+    return `${fmtMulai} s.d. ${fmtAkhir}`;
+};
+
 // Custom Table Row for the layout
 const TableRow = ({ no, label, children, colSpan = 1 }) => (
     <tr className="border-b border-gray-300 dark:border-gray-700">
@@ -163,7 +173,7 @@ export default function Show({ auth, rkat = {}, history = [] }) {
                                         <TableRow no="6" label="Tujuan" colSpan={2}>{dataDetail?.tujuan}</TableRow>
                                         <TableRow no="7" label="Mekanisme & Rancangan" colSpan={2}>{dataDetail?.mekanisme}</TableRow>
                                         <TableRow no="8" label="Jadwal Pelaksanaan" colSpan={2}>
-                                            {formatDate(dataDetail?.jadwal_pelaksanaan_mulai)} s.d. {formatDate(dataDetail?.jadwal_pelaksanaan_akhir)}
+                                            {formatPelaksanaanText(dataDetail?.jadwal_pelaksanaan_mulai, dataDetail?.jadwal_pelaksanaan_akhir)}
                                         </TableRow>
                                         <TableRow no="9" label="Lokasi Pelaksanaan" colSpan={2}>{dataDetail?.lokasi_pelaksanaan}</TableRow>
                                         
@@ -274,7 +284,7 @@ export default function Show({ auth, rkat = {}, history = [] }) {
                                             </div>
                                         </TableRow>
                                         <TableRow label="Waktu Pelaksanaan">
-                                            {formatDate(dataDetail?.jadwal_pelaksanaan_mulai)} s.d {formatDate(dataDetail?.jadwal_pelaksanaan_akhir)}
+                                            {formatPelaksanaanText(dataDetail?.jadwal_pelaksanaan_mulai, dataDetail?.jadwal_pelaksanaan_akhir)}
                                         </TableRow>
                                         <TableRow label="Anggaran">
                                             <span className="font-bold text-lg text-teal-700 dark:text-teal-400">

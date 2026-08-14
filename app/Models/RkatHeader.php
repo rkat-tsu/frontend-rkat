@@ -83,6 +83,11 @@ class RkatHeader extends Model
         return $this->hasMany(LogPersetujuan::class, 'id_header', 'id_header');
     }
 
+    public function pencairanDanas()
+    {
+        return $this->hasMany(PencairanDana::class, 'id_header', 'id_header');
+    }
+
     /**
      * Generate a sequential document number for RKAT per year and unit.
      * Format: RKAT-{tahun}-{unit}-{sequence:04}

@@ -51,27 +51,62 @@ export default function Index({ tahunAnggarans, filters = {} }) {
     const [createFormErrors, setCreateFormErrors] = useState({});
     const [editFormErrors, setEditFormErrors] = useState({});
 
+    const computeIndikatorLabels = (yearVal) => {
+        const y = parseInt(yearVal, 10);
+        if (!y || isNaN(y)) {
+            return { past: '', current: '', future: '' };
+        }
+        return {
+            past: String(y - 1),
+            current: `Tahun ${y}`,
+            future: `Akhir ${y + 3}`
+        };
+    };
+
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
         tahun_anggaran: '',
         status_rkat: 'Drafting',
         tanggal_mulai: '',
         tanggal_akhir: '',
         indikator_labels: {
-            past: '2025',
-            current: 'Tahun 2026',
-            future: 'Akhir 2029'
+            past: '',
+            current: '',
+            future: ''
         }
     });
 
     const handleCreateChange = (field, value) => {
-        setData(field, value);
+        if (field === 'tahun_anggaran') {
+            const y = parseInt(value, 10);
+            const computed = computeIndikatorLabels(value);
+            const isValidYear = y && !isNaN(y) && y >= 2000 && y <= 2100;
+            
+            setData(prev => ({
+                ...prev,
+                tahun_anggaran: value,
+                tanggal_mulai: (isValidYear && !prev.tanggal_mulai) ? `${y}-01-01` : prev.tanggal_mulai,
+                tanggal_akhir: (isValidYear && !prev.tanggal_akhir) ? `${y}-12-31` : prev.tanggal_akhir,
+                indikator_labels: computed
+            }));
+        } else {
+            setData(field, value);
+        }
         if (createFormErrors[field]) {
             setCreateFormErrors(prev => ({ ...prev, [field]: null }));
         }
     };
 
     const handleEditChange = (field, value) => {
-        editForm.setData(field, value);
+        if (field === 'tahun_anggaran') {
+            const computed = computeIndikatorLabels(value);
+            editForm.setData(prev => ({
+                ...prev,
+                tahun_anggaran: value,
+                indikator_labels: computed
+            }));
+        } else {
+            editForm.setData(field, value);
+        }
         if (editFormErrors[field]) {
             setEditFormErrors(prev => ({ ...prev, [field]: null }));
         }
@@ -88,6 +123,14 @@ export default function Index({ tahunAnggarans, filters = {} }) {
         reset();
         clearErrors();
         setCreateFormErrors({});
+        const nextYear = new Date().getFullYear();
+        setData({
+            tahun_anggaran: nextYear,
+            status_rkat: 'Drafting',
+            tanggal_mulai: `${nextYear}-01-01`,
+            tanggal_akhir: `${nextYear}-12-31`,
+            indikator_labels: computeIndikatorLabels(nextYear)
+        });
         setIsCreateModalOpen(true);
     };
 
@@ -131,9 +174,9 @@ export default function Index({ tahunAnggarans, filters = {} }) {
         tanggal_mulai: '',
         tanggal_akhir: '',
         indikator_labels: {
-            past: '2025',
-            current: 'Tahun 2026',
-            future: 'Akhir 2029'
+            past: '',
+            current: '',
+            future: ''
         }
     });
 
@@ -146,16 +189,18 @@ export default function Index({ tahunAnggarans, filters = {} }) {
         editForm.reset();
         editForm.clearErrors();
         setEditFormErrors({});
+
+        const computed = computeIndikatorLabels(tahun.tahun_anggaran);
         editForm.setData({
             id: tahun.uuid || tahun.id_tahun || tahun.id,
             tahun_anggaran: tahun.tahun_anggaran || '',
             status_rkat: tahun.status_rkat || 'Drafting',
             tanggal_mulai: formatInputDate(tahun.tanggal_mulai),
             tanggal_akhir: formatInputDate(tahun.tanggal_akhir),
-            indikator_labels: tahun.indikator_labels || {
-                past: '2025',
-                current: 'Tahun 2026',
-                future: 'Akhir 2029'
+            indikator_labels: {
+                past: tahun.indikator_labels?.past || computed.past,
+                current: tahun.indikator_labels?.current || computed.current,
+                future: tahun.indikator_labels?.future || computed.future,
             }
         });
         setIsEditModalOpen(true);

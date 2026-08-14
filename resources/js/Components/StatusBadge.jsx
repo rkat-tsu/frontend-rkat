@@ -10,15 +10,27 @@ export default function StatusBadge({
     status = '',
     size = 'md',
     showIcon = true,
-    className = ''
+    className = '',
+    type = ''
 }) {
     if (!status) return null;
 
     const normalizedStatus = String(status).toLowerCase().trim().replace(/_/g, ' ');
 
-    let label = status;
+    let label = status.replace(/_/g, ' ');
     let colorStyle = 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700';
     let Icon = Clock;
+
+    // Determine type prefix if provided
+    let prefix = '';
+    const typeLower = String(type || '').toLowerCase().trim();
+    if (typeLower === 'rka' || typeLower === 'rkat') {
+        prefix = 'RKA ';
+    } else if (typeLower === 'pencairan' || typeLower === 'pencairan_dana') {
+        prefix = 'Pencairan ';
+    } else if (typeLower === 'lpj') {
+        prefix = 'LPJ ';
+    }
 
     // 1. DRAFT STATUS
     if (normalizedStatus.includes('draft')) {
@@ -30,9 +42,11 @@ export default function StatusBadge({
     else if (
         normalizedStatus.includes('diajukan') ||
         normalizedStatus.includes('menunggu') ||
-        normalizedStatus.includes('proses')
+        normalizedStatus.includes('proses') ||
+        normalizedStatus.includes('submission')
     ) {
         label = status.replace(/_/g, ' ');
+        if (normalizedStatus === 'submission') label = 'Diajukan';
         colorStyle = 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-900/50';
         Icon = Send;
     }
@@ -43,6 +57,7 @@ export default function StatusBadge({
         normalizedStatus.includes('siap cair')
     ) {
         label = status.replace(/_/g, ' ');
+        if (normalizedStatus === 'approved') label = 'Disetujui';
         colorStyle = 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900/50';
         Icon = CheckCircle2;
     }
@@ -84,6 +99,11 @@ export default function StatusBadge({
         label = 'Non-Aktif';
         colorStyle = 'bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700';
         Icon = XCircle;
+    }
+
+    // Apply prefix if type is provided and label doesn't already contain it
+    if (prefix && !label.toUpperCase().startsWith(prefix.trim().toUpperCase())) {
+        label = `${prefix}${label}`;
     }
 
     // Size variations

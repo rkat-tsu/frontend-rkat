@@ -37,7 +37,11 @@ class TahunAnggaranController extends Controller
 
         return Inertia::render('Admin/TahunAnggaran/Index', [
             'tahunAnggarans' => $tahunAnggarans,
-            'filters' => $request->only(['search', 'sort_by', 'sort_direction']),
+            'filters' => [
+                'search' => $request->search ?? '',
+                'sort_by' => $sortBy,
+                'sort_direction' => $sortDirection,
+            ],
         ]);
     }
 
@@ -47,7 +51,11 @@ class TahunAnggaranController extends Controller
         Log::info('[TahunAnggaran] Membuat data baru.');
 
         $validated = $request->validate([
-            'tahun_anggaran' => 'required|integer|unique:tahun_anggarans,tahun_anggaran',
+            'tahun_anggaran' => [
+                'required',
+                'integer',
+                Rule::unique('tahun_anggarans', 'tahun_anggaran')->whereNull('deleted_at'),
+            ],
             'tanggal_mulai' => 'required|date',
             'tanggal_akhir' => 'required|date|after_or_equal:tanggal_mulai',
             'status_rkat' => ['required', Rule::in(['Drafting', 'Submission', 'Approved', 'Closed'])],
@@ -55,9 +63,30 @@ class TahunAnggaranController extends Controller
             'indikator_labels.past' => 'nullable|string|max:100',
             'indikator_labels.current' => 'nullable|string|max:100',
             'indikator_labels.future' => 'nullable|string|max:100',
+        ], [
+            'tahun_anggaran.unique' => 'Tahun Anggaran ini sudah terdaftar dan masih aktif.',
         ]);
 
-        TahunAnggaran::create($validated);
+        $y = (int) $validated['tahun_anggaran'];
+        if (empty($validated['indikator_labels']) || empty($validated['indikator_labels']['past'])) {
+            $validated['indikator_labels'] = [
+                'past' => (string) ($y - 1),
+                'current' => "Tahun {$y}",
+                'future' => "Akhir " . ($y + 3),
+            ];
+        }
+
+        $existingRecord = TahunAnggaran::withTrashed()
+            ->where('tahun_anggaran', $validated['tahun_anggaran'])
+            ->first();
+
+        if ($existingRecord && $existingRecord->trashed()) {
+            $existingRecord->restore();
+            $existingRecord->update($validated);
+            Log::info("[TahunAnggaran] Mengaktifkan kembali (restore) tahun_anggaran {$validated['tahun_anggaran']} yang sebelumnya dihapus.");
+        } else {
+            TahunAnggaran::create($validated);
+        }
 
         return Redirect::route('tahun.index')->with('success', 'Tahun Anggaran berhasil ditambahkan.');
     }
@@ -76,6 +105,15 @@ class TahunAnggaranController extends Controller
             'indikator_labels.current' => 'nullable|string|max:100',
             'indikator_labels.future' => 'nullable|string|max:100',
         ]);
+
+        $y = (int) $tahun->tahun_anggaran;
+        if (empty($validated['indikator_labels']) || empty($validated['indikator_labels']['past'])) {
+            $validated['indikator_labels'] = [
+                'past' => (string) ($y - 1),
+                'current' => "Tahun {$y}",
+                'future' => "Akhir " . ($y + 3),
+            ];
+        }
 
         $tahun->fill($validated)->save();
 

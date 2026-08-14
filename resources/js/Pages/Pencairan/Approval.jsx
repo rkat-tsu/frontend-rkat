@@ -6,6 +6,34 @@ import StatusBadge from '@/Components/StatusBadge';
 import { CheckCircle2, FileText, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import PencairanApprovalModal from './Partials/PencairanApprovalModal';
 
+const formatDate = (value) => {
+    if (!value) return '-';
+    try {
+        return new Date(value).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch {
+        return value;
+    }
+};
+
+const formatPelaksanaan = (mulai, akhir) => {
+    if (!mulai && !akhir) return '-';
+    if (!mulai) return formatDate(akhir);
+    if (!akhir) return formatDate(mulai);
+
+    const fmtMulai = formatDate(mulai);
+    const fmtAkhir = formatDate(akhir);
+
+    if (fmtMulai === fmtAkhir) {
+        return fmtMulai;
+    }
+
+    return (
+        <>
+            {fmtMulai} <br /> s.d <br /> {fmtAkhir}
+        </>
+    );
+};
+
 export default function Approval({ auth, pencairans, filters }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedPencairan, setSelectedPencairan] = useState(null);
@@ -162,7 +190,7 @@ export default function Approval({ auth, pencairans, filters }) {
                                                 <td className="px-6 py-4 whitespace-nowrap text-center text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700 last:border-r-0">
                                                     {(item.rkat_header?.rkat_details?.length > 0 || item.rkat_header?.rkatDetails?.length > 0) ? (
                                                         <div className="text-xs whitespace-nowrap inline-block text-center">
-                                                            {formatDate((item.rkat_header.rkat_details || item.rkat_header.rkatDetails)[0].jadwal_pelaksanaan_mulai)} <br/> s.d <br/> {formatDate((item.rkat_header.rkat_details || item.rkat_header.rkatDetails)[0].jadwal_pelaksanaan_akhir)}
+                                                            {formatPelaksanaan((item.rkat_header.rkat_details || item.rkat_header.rkatDetails)[0].jadwal_pelaksanaan_mulai, (item.rkat_header.rkat_details || item.rkat_header.rkatDetails)[0].jadwal_pelaksanaan_akhir)}
                                                         </div>
                                                     ) : '-'}
                                                 </td>

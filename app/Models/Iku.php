@@ -15,12 +15,17 @@ class Iku extends Model
     use HasFactory, SoftDeletes;
     
     protected $primaryKey = 'id_iku';
-    protected $fillable = ['nama_iku'];
+    protected $fillable = ['nama_iku', 'tahun_anggaran'];
     protected $table = 'ikus';
 
     public function ikks()
     {
         return $this->hasMany(Ikk::class, 'id_iku', 'id_iku');
+    }
+
+    public function logs()
+    {
+        return $this->hasMany(IkuChangeLog::class, 'id_iku', 'id_iku');
     }
 
     protected static function boot()

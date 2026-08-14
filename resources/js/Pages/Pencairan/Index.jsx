@@ -49,6 +49,25 @@ const formatDate = (value) => {
     }
 };
 
+const formatPelaksanaan = (mulai, akhir) => {
+    if (!mulai && !akhir) return '-';
+    if (!mulai) return formatDate(akhir);
+    if (!akhir) return formatDate(mulai);
+
+    const fmtMulai = formatDate(mulai);
+    const fmtAkhir = formatDate(akhir);
+
+    if (fmtMulai === fmtAkhir) {
+        return fmtMulai;
+    }
+
+    return (
+        <>
+            {fmtMulai} <br /> s.d <br /> {fmtAkhir}
+        </>
+    );
+};
+
 export default function Index(props) {
     return (
         <ErrorBoundary>
@@ -490,16 +509,16 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                             </td>
                                             <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">{item.rkat_header?.unit?.nama_unit || '-'}</td>
                                             <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                <StatusBadge status={item.status_pencairan} />
+                                                <StatusBadge status={item.status_pencairan} type="pencairan" />
                                             </td>
                                             <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center text-gray-800 dark:text-gray-200">{formatDate(item.tanggal_pengajuan)}</td>
                                             <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center text-gray-800 dark:text-gray-200">
                                                 {(() => {
                                                     const details = item.rkat_header?.rkat_details || item.rkat_header?.rkatDetails;
-                                                    if (details && details.length > 0 && details[0]?.jadwal_pelaksanaan_mulai) {
+                                                    if (details && details.length > 0 && (details[0]?.jadwal_pelaksanaan_mulai || details[0]?.jadwal_pelaksanaan_akhir)) {
                                                         return (
                                                             <div className="text-xs whitespace-nowrap">
-                                                                {formatDate(details[0].jadwal_pelaksanaan_mulai)}<br />s.d<br />{formatDate(details[0].jadwal_pelaksanaan_akhir)}
+                                                                {formatPelaksanaan(details[0].jadwal_pelaksanaan_mulai, details[0].jadwal_pelaksanaan_akhir)}
                                                             </div>
                                                         );
                                                     }

@@ -15,6 +15,7 @@ class Lpj extends Model
 
     protected $fillable = [
         'uuid',
+        'id_header',
         'id_pencairan',
         'nomor_lpj',
         'judul_lpj',
@@ -55,6 +56,11 @@ class Lpj extends Model
                 $model->uuid = (string) Str::uuid();
             }
         });
+    }
+
+    public function rkatHeader()
+    {
+        return $this->belongsTo(RkatHeader::class, 'id_header', 'id_header');
     }
 
     public function pencairanDana()

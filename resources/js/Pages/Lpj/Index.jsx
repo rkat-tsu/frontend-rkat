@@ -152,9 +152,11 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
     useEffect(() => {
         if (selectedPencairanId && !editingLpj) {
             const rawId = selectedPencairanId?.target ? selectedPencairanId.target.value : selectedPencairanId;
-            const selectedPencairan = availablePencairans.find(p => String(p.id_pencairan) === String(rawId));
+            const selectedPencairan = availablePencairans.find(p => 
+                String(p.id_header) === String(rawId) || String(p.id_pencairan) === String(rawId)
+            );
             if (selectedPencairan) {
-                setJudulLpj(`LPJ - ${selectedPencairan.nama_pencairan}`);
+                setJudulLpj(`LPJ - ${selectedPencairan.nomor_dokumen_rkat} (${selectedPencairan.unit_name})`);
                 setItemsForm(selectedPencairan.items.map(item => ({
                     id_pencairan_item: item.id_pencairan_item,
                     deskripsi_item: item.deskripsi_item,
@@ -305,8 +307,14 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
 
         setFormErrors({});
 
+        const rawId = selectedPencairanId?.target ? selectedPencairanId.target.value : selectedPencairanId;
+        const selectedPencairan = availablePencairans.find(p => 
+            String(p.id_header) === String(rawId) || String(p.id_pencairan) === String(rawId)
+        );
+
         const payload = {
-            id_pencairan: selectedPencairanId,
+            id_header: selectedPencairan?.id_header || null,
+            id_pencairan: selectedPencairan?.id_pencairan || selectedPencairanId,
             judul_lpj: judulLpj,
             tanggal_lpj: tanggalLpj,
             tanggal_pelaksanaan_mulai: tglMulai || null,
@@ -646,8 +654,8 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
                                 {lpjs?.data && lpjs.data.length > 0 ? (
-                                    lpjs.data.map((lpj, index) => {
-                                        const unitLpjId = lpj.pencairan_dana?.rkat_header?.id_unit;
+                                     lpjs.data.map((lpj, index) => {
+                                        const unitLpjId = lpj.rkat_header?.id_unit || lpj.pencairan_dana?.rkat_header?.id_unit;
                                         const isBelongsToUnit = auth.user.id_unit && unitLpjId && String(auth.user.id_unit) === String(unitLpjId);
                                         const isPengaju = auth.user.id_user === lpj.diajukan_oleh || isBelongsToUnit || isAdmin();
                                         const canEdit = (lpj.status_lpj === 'Draft' || lpj.status_lpj === 'Revisi') && isPengaju;
@@ -671,14 +679,14 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                                     </div>
                                                 </td>
                                                 <td className="py-3.5 px-4 text-center font-medium text-gray-800 dark:text-gray-200 border-r border-gray-200/80 dark:border-gray-700/50 last:border-r-0">
-                                                    {lpj.pencairan_dana?.rkat_header?.unit?.nama_unit || '-'}
+                                                    {lpj.rkat_header?.unit?.nama_unit || lpj.pencairan_dana?.rkat_header?.unit?.nama_unit || '-'}
                                                 </td>
                                                 <td className="py-3.5 px-4 text-center text-xs text-gray-600 dark:text-gray-300 border-r border-gray-200/80 dark:border-gray-700/50 last:border-r-0">
                                                     <div className="font-medium text-gray-900 dark:text-white">
-                                                        {lpj.pencairan_dana?.nama_pencairan || '-'}
+                                                        {lpj.pencairan_dana?.nama_pencairan || 'Gabungan Pencairan'}
                                                     </div>
                                                     <div className="text-[11px] text-gray-400">
-                                                        No RKAT: {lpj.pencairan_dana?.rkat_header?.nomor_dokumen || '-'}
+                                                        No RKAT: {lpj.rkat_header?.nomor_dokumen || lpj.pencairan_dana?.rkat_header?.nomor_dokumen || '-'}
                                                     </div>
                                                 </td>
                                                 <td className="py-3.5 px-4 text-center font-bold text-gray-900 dark:text-white border-r border-gray-200/80 dark:border-gray-700/50 last:border-r-0">
@@ -690,7 +698,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                                     </span>
                                                 </td>
                                                 <td className="py-3.5 px-4 text-center border-r border-gray-200/80 dark:border-gray-700/50 last:border-r-0">
-                                                    {getStatusBadge(lpj.status_lpj)}
+                                                    <StatusBadge status={lpj.status_lpj} type="lpj" />
                                                 </td>
                                                 <td className="py-3.5 px-4 text-center">
                                                     <ActionGroup>
@@ -802,10 +810,10 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Pilih Pencairan Dana */}
+                        {/* Pilih Dokumen RKA / Pencairan Dana */}
                         <div className="md:col-span-2 relative pb-2">
                             <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">
-                                Pilih Dokumen Pencairan Dana *
+                                Pilih Dokumen RKA (Gabungan Pencairan) *
                             </label>
                             <CustomSelect
                                 value={selectedPencairanId}
@@ -816,10 +824,10 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                 }}
                                 isDisabled={!!editingLpj}
                                 options={[
-                                    { value: '', label: 'Pilih Pencairan Dana yang Disetujui' },
+                                    { value: '', label: 'Pilih Dokumen RKA yang Disetujui' },
                                     ...availablePencairans.map(p => ({
-                                        value: p.id_pencairan.toString(),
-                                        label: `${p.nama_pencairan} (${p.unit_name} - ${p.nomor_dokumen_rkat}) - Pencairan: ${formatCurrency(p.total_pencairan)}`
+                                        value: (p.id_header || p.id_pencairan).toString(),
+                                        label: `${p.nomor_dokumen_rkat} - ${p.unit_name} (${p.total_tahap || 1} Tahap Pencairan) - Total: ${formatCurrency(p.total_pencairan)}`
                                     }))
                                 ]}
                             />
@@ -1147,7 +1155,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                             <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl space-y-1">
                                 <span className="text-gray-400 block">Unit Kerja:</span>
                                 <span className="font-bold text-gray-900 dark:text-white">
-                                    {selectedLpjDetail.pencairan_dana?.rkat_header?.unit?.nama_unit || '-'}
+                                    {selectedLpjDetail.rkat_header?.unit?.nama_unit || selectedLpjDetail.pencairan_dana?.rkat_header?.unit?.nama_unit || '-'}
                                 </span>
                             </div>
                             <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl space-y-1">

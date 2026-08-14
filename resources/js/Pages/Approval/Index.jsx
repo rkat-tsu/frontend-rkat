@@ -8,6 +8,34 @@ import StatusBadge from '@/Components/StatusBadge';
 import ApprovalModal from './Partials/ApprovalModal'; 
 import { Search, Eye, CheckCircle2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 
+const formatDate = (value) => {
+    if (!value) return '-';
+    try {
+        return new Date(value).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch {
+        return value;
+    }
+};
+
+const formatPelaksanaan = (mulai, akhir) => {
+    if (!mulai && !akhir) return '-';
+    if (!mulai) return formatDate(akhir);
+    if (!akhir) return formatDate(mulai);
+
+    const fmtMulai = formatDate(mulai);
+    const fmtAkhir = formatDate(akhir);
+
+    if (fmtMulai === fmtAkhir) {
+        return fmtMulai;
+    }
+
+    return (
+        <>
+            {fmtMulai} <br /> s.d <br /> {fmtAkhir}
+        </>
+    );
+};
+
 export default function ApproverDashboard({ auth, rkatMenunggu, currentRole, flash, filters }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedRkat, setSelectedRkat] = useState(null);
@@ -146,7 +174,7 @@ export default function ApproverDashboard({ auth, rkatMenunggu, currentRole, fla
                                                     <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{rkat.unit?.nama_unit || 'Unit Tidak Diketahui'}</div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center border-r border-gray-200 dark:border-gray-700">
-                                                    <StatusBadge status={rkat.status_persetujuan} />
+                                                    <StatusBadge status={rkat.status_persetujuan} type="rka" />
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700">
                                                     {new Date(rkat.tanggal_pengajuan).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -154,7 +182,7 @@ export default function ApproverDashboard({ auth, rkatMenunggu, currentRole, fla
                                                 <td className="px-6 py-4 whitespace-nowrap text-center text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700">
                                                     {(rkat.rkat_details?.length > 0 || rkat.rkatDetails?.length > 0) ? (
                                                         <div className="text-xs whitespace-nowrap inline-block text-center">
-                                                            {formatDate((rkat.rkat_details || rkat.rkatDetails)[0].jadwal_pelaksanaan_mulai)} <br/> s.d <br/> {formatDate((rkat.rkat_details || rkat.rkatDetails)[0].jadwal_pelaksanaan_akhir)}
+                                                            {formatPelaksanaan((rkat.rkat_details || rkat.rkatDetails)[0].jadwal_pelaksanaan_mulai, (rkat.rkat_details || rkat.rkatDetails)[0].jadwal_pelaksanaan_akhir)}
                                                         </div>
                                                     ) : '-'}
                                                 </td>

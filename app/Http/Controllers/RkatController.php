@@ -39,7 +39,7 @@ class RkatController extends Controller
 
         $units = Unit::query()->select(['id_unit', 'kode_unit', 'nama_unit'])->orderBy('kode_unit', 'asc')->get();
         $akunAnggarans = RincianAnggaran::query()->select(['kode_anggaran', 'nama_anggaran', 'nominal', 'satuan'])->orderBy('kode_anggaran', 'asc')->get();
-        $ikus = Iku::query()->select(['id_iku', 'nama_iku'])->with(['ikks:id_ikk,id_iku,nama_ikk'])->orderBy('id_iku', 'asc')->get();
+        $ikus = Iku::query()->select(['id_iku', 'nama_iku', 'tahun_anggaran'])->with(['ikks:id_ikk,id_iku,nama_ikk'])->orderBy('id_iku', 'asc')->get();
 
         Log::debug('[RKAT] Data Master Dimuat', [
             'tahun_count' => $tahunAnggarans->count(),
@@ -62,7 +62,9 @@ class RkatController extends Controller
             ->with([
                 'unit:id_unit,nama_unit',
                 'tahun_obj:id_tahun,tahun_anggaran,status_rkat',
-                'rkatDetails:id_rkat_detail,id_header,jadwal_pelaksanaan_mulai,jadwal_pelaksanaan_akhir'
+                'rkatDetails:id_rkat_detail,id_header,judul_kegiatan,deskripsi_kegiatan,jadwal_pelaksanaan_mulai,jadwal_pelaksanaan_akhir,anggaran',
+                'pencairanDanas:id_pencairan,id_header,status_pencairan,nama_pencairan',
+                'pencairanDanas.lpj:id_lpj,id_pencairan,status_lpj'
             ])
             ->whereNull('rkat_headers.parent_id');
 
@@ -108,7 +110,7 @@ class RkatController extends Controller
                   ->orderBy('rkat_details.jadwal_pelaksanaan_mulai', $sortDirection)
                   ->select('rkat_headers.*');
         } else {
-            $allowedSorts = ['nomor_dokumen', 'tahun_anggaran', 'status_persetujuan', 'tanggal_pengajuan'];
+            $allowedSorts = ['nomor_dokumen', 'tahun_anggaran', 'status_persetujuan', 'tanggal_pengajuan', 'total_anggaran'];
             if (in_array($sortBy, $allowedSorts)) {
                 $query->orderBy("rkat_headers.{$sortBy}", $sortDirection);
             } else {
@@ -399,7 +401,7 @@ class RkatController extends Controller
 
         $units = Unit::query()->select(['id_unit', 'kode_unit', 'nama_unit'])->orderBy('kode_unit', 'asc')->get();
         $akunAnggarans = RincianAnggaran::query()->select(['kode_anggaran', 'nama_anggaran', 'nominal', 'satuan'])->orderBy('kode_anggaran', 'asc')->get();
-        $ikus = Iku::query()->select(['id_iku', 'nama_iku'])->with(['ikks:id_ikk,id_iku,nama_ikk'])->orderBy('id_iku', 'asc')->get();
+        $ikus = Iku::query()->select(['id_iku', 'nama_iku', 'tahun_anggaran'])->with(['ikks:id_ikk,id_iku,nama_ikk'])->orderBy('id_iku', 'asc')->get();
 
         return Inertia::render('Rkat/Edit', [
             'rkat' => $rkatHeader,

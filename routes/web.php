@@ -118,8 +118,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/unit/{unit}', [UnitController::class, 'update'])->name('unit.update');
         Route::delete('/unit/{unit}', [UnitController::class, 'destroy'])->name('unit.destroy');
 
-        // Master IKU
+        // Master IKU & IKK Management
         Route::post('/iku/master', [IkuController::class, 'storeMaster'])->name('iku.master.store');
+        Route::post('/iku/annual', [IkuController::class, 'storeAnnual'])->name('iku.annual.store');
+        Route::put('/iku/{iku}', [IkuController::class, 'updateUnified'])->name('iku.update');
+        Route::post('/iku/copy-year', [IkuController::class, 'copyFromPreviousYear'])->name('iku.copy_year');
         Route::delete('/iku/{iku}', [IkuController::class, 'destroy'])->name('iku.destroy');
 
         // IKK Management
