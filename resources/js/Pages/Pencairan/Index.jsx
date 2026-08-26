@@ -30,7 +30,7 @@ class ErrorBoundary extends Component {
 }
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Plus, Search, Send, Edit2, FileDown, Eye, Save, Info, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Plus, Search, Send, Edit2, FileDown, Eye, Save, Info, ArrowUp, ArrowDown, ArrowUpDown, FileSpreadsheet } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import DateInput from '@/Components/DateInput';
 import ActionButton, { ActionGroup } from '@/Components/ActionButton';
@@ -39,6 +39,7 @@ import Modal from '@/Components/Modal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
+import { exportToExcel } from '@/Utils/exportToExcel';
 
 const formatDate = (value) => {
     if (!value) return '-';
@@ -310,6 +311,36 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
         });
     };
 
+    const handleExportExcel = () => {
+        if (!pencairans?.data || pencairans.data.length === 0) return;
+        const exportData = pencairans.data.map((item, index) => {
+            const rkat = item.rkat_header || item.rkatHeader;
+            const details = rkat?.rkat_details || rkat?.rkatDetails || [];
+            const firstDetail = details[0];
+            const nominalPencairan = (item.items || []).reduce((acc, i) => acc + (parseFloat(i.sub_total_pencairan) || 0), 0);
+
+            let tglPelak = '-';
+            if (firstDetail?.jadwal_pelaksanaan_mulai || firstDetail?.jadwal_pelaksanaan_akhir) {
+                const m = firstDetail.jadwal_pelaksanaan_mulai ? formatDate(firstDetail.jadwal_pelaksanaan_mulai) : '';
+                const a = firstDetail.jadwal_pelaksanaan_akhir ? formatDate(firstDetail.jadwal_pelaksanaan_akhir) : '';
+                tglPelak = m === a ? m : `${m} s.d ${a}`;
+            }
+
+            return {
+                'No': (pencairans.from || 1) + index,
+                'Nama Pencairan / Dokumen': item.nama_pencairan || rkat?.nomor_dokumen || '-',
+                'Nomor RKAT': rkat?.nomor_dokumen || '-',
+                'Unit': rkat?.unit?.nama_unit || '-',
+                'Status Pencairan': (item.status_pencairan || '-').replace(/_/g, ' '),
+                'Tanggal Pengajuan': formatDate(item.tanggal_pengajuan),
+                'Tanggal Pelaksanaan': tglPelak,
+                'Nominal Pencairan (Rp)': nominalPencairan
+            };
+        });
+
+        exportToExcel(exportData, `Daftar_Pencairan_${new Date().toISOString().slice(0, 10)}.xlsx`, 'Daftar Pencairan');
+    };
+
     const isLocked = !!flash.error;
 
     return (
@@ -404,6 +435,15 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                         ]}
                                     />
                                 </div>
+
+                                <button
+                                    onClick={handleExportExcel}
+                                    disabled={!pencairans?.data || pencairans.data.length === 0}
+                                    className="h-11 inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <FileSpreadsheet size={18} />
+                                    Export Excel
+                                </button>
 
                                 <button
                                     onClick={() => {

@@ -4,7 +4,7 @@ import { Head, Link, Deferred } from '@inertiajs/react';
 import {
     FileText, CheckCircle, Clock, XCircle, TrendingUp,
     ArrowRight, Activity, PieChart, Bell, Info, Calendar,
-    MessageCircle, Loader2
+    MessageCircle, Loader2, FileCheck
 } from 'lucide-react';
 
 import {
@@ -145,33 +145,42 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                                 </div>
                             </div>
 
-                            {/* Kotak Group untuk Memisah Nominal RKA dan Pencairan */}
+                            {/* Kotak Group untuk Memisah Nominal RKA, Pencairan, dan LPJ */}
                             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 md:p-8 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 relative">
-                                    {/* Pemisah visual vertikal (tengah) untuk layar md ke atas */}
-                                    <div className="hidden md:block absolute top-0 bottom-0 left-1/2 w-px bg-gray-100 dark:bg-gray-700"></div>
-
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:divide-gray-700">
                                     {/* Bagian Anggaran RKA */}
-                                    <div className="flex items-start gap-5">
-                                        <div className="p-4 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-2xl shadow-inner shrink-0">
-                                            <PieChart size={28} strokeWidth={2.5} />
+                                    <div className="flex items-start gap-4 pb-4 md:pb-0">
+                                        <div className="p-3.5 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400 rounded-2xl shadow-inner shrink-0">
+                                            <PieChart size={26} strokeWidth={2.5} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Anggaran RKA</p>
-                                            <h3 className="text-3xl lg:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">{formatRupiahSingkat(summary.total_anggaran_disetujui)}</h3>
-                                            <p className="text-sm font-medium text-gray-400 dark:text-gray-500 mt-2">Total Dana Disetujui</p>
+                                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Anggaran RKA</p>
+                                            <h3 className="text-2xl lg:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">{formatRupiahSingkat(summary.total_anggaran_disetujui)}</h3>
+                                            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 mt-1.5">Total Dana Disetujui</p>
                                         </div>
                                     </div>
 
                                     {/* Bagian Pencairan Dana */}
-                                    <div className="flex items-start gap-5">
-                                        <div className="p-4 bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 rounded-2xl shadow-inner shrink-0">
-                                            <TrendingUp size={28} strokeWidth={2.5} />
+                                    <div className="flex items-start gap-4 pt-4 md:pt-0 md:pl-6">
+                                        <div className="p-3.5 bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 rounded-2xl shadow-inner shrink-0">
+                                            <TrendingUp size={26} strokeWidth={2.5} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Pencairan Dana</p>
-                                            <h3 className="text-3xl lg:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">{formatRupiahSingkat(summary.total_pencairan_disetujui)}</h3>
-                                            <p className="text-sm font-medium text-gray-400 dark:text-gray-500 mt-2">Total Dana Dicairkan</p>
+                                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Pencairan Dana</p>
+                                            <h3 className="text-2xl lg:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">{formatRupiahSingkat(summary.total_pencairan_disetujui)}</h3>
+                                            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 mt-1.5">Total Dana Dicairkan</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Bagian Realisasi LPJ */}
+                                    <div className="flex items-start gap-4 pt-4 md:pt-0 md:pl-6">
+                                        <div className="p-3.5 bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400 rounded-2xl shadow-inner shrink-0">
+                                            <FileCheck size={26} strokeWidth={2.5} />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Realisasi LPJ</p>
+                                            <h3 className="text-2xl lg:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">{formatRupiahSingkat(summary.total_lpj_realisasi)}</h3>
+                                            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 mt-1.5">Total Realisasi Penggunaan</p>
                                         </div>
                                     </div>
                                 </div>
@@ -181,7 +190,7 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                             <div className="bg-slate-50/80 dark:bg-gray-900/40 rounded-3xl p-6 md:p-7 border border-slate-200/80 dark:border-gray-700/70 shadow-sm space-y-5">
                                 <div className="flex items-center justify-between pb-4 border-b border-slate-200/70 dark:border-gray-700/70">
                                     <div className="flex items-center gap-3">
-                                        <div className="p-2.5 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-xl">
+                                        <div className="p-2.5 bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 rounded-xl">
                                             <TrendingUp size={20} strokeWidth={2.5} />
                                         </div>
                                         <div>
@@ -189,7 +198,7 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                                             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Ringkasan status dokumen pencairan dana</p>
                                         </div>
                                     </div>
-                                    <span className="text-xs font-semibold px-3 py-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
+                                    <span className="text-xs font-semibold px-3 py-1 bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-full border border-blue-200/60 dark:border-blue-800/60">
                                         Pencairan
                                     </span>
                                 </div>
@@ -227,6 +236,60 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                                         color="blue"
                                         label="Pencairan"
                                         description="Total Pengajuan Pencairan"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* SEKSI 3: LAPORAN PERTANGGUNGJAWABAN (LPJ) */}
+                            <div className="bg-slate-50/80 dark:bg-gray-900/40 rounded-3xl p-6 md:p-7 border border-slate-200/80 dark:border-gray-700/70 shadow-sm space-y-5">
+                                <div className="flex items-center justify-between pb-4 border-b border-slate-200/70 dark:border-gray-700/70">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2.5 bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400 rounded-xl">
+                                            <FileCheck size={20} strokeWidth={2.5} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-base font-bold text-gray-900 dark:text-white tracking-tight">Laporan Pertanggungjawaban (LPJ)</h3>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Ringkasan status dokumen laporan pertanggungjawaban</p>
+                                        </div>
+                                    </div>
+                                    <span className="text-xs font-semibold px-3 py-1 bg-purple-50 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 rounded-full border border-purple-200/60 dark:border-purple-800/60">
+                                        Dokumen LPJ
+                                    </span>
+                                </div>
+
+                                {/* Baris 4 Kotak Status LPJ */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <StatCard
+                                        title="Disetujui LPJ"
+                                        value={summary.lpj_disetujui}
+                                        icon={<CheckCircle size={22} />}
+                                        color="emerald"
+                                        label="Setuju"
+                                        description="LPJ Disetujui"
+                                    />
+                                    <StatCard
+                                        title="Revisi"
+                                        value={summary.lpj_revisi}
+                                        icon={<Clock size={22} />}
+                                        color="amber"
+                                        label="Revisi"
+                                        description="Butuh Revisi"
+                                    />
+                                    <StatCard
+                                        title="Ditolak"
+                                        value={summary.lpj_ditolak}
+                                        icon={<XCircle size={22} />}
+                                        color="rose"
+                                        label="Tolak"
+                                        description="LPJ Ditolak"
+                                    />
+                                    <StatCard
+                                        title="Total Dokumen"
+                                        value={summary.total_lpj_dokumen}
+                                        icon={<FileText size={22} />}
+                                        color="purple"
+                                        label="LPJ"
+                                        description="Total Pengajuan LPJ"
                                     />
                                 </div>
                             </div>
@@ -375,7 +438,8 @@ function StatCard({ title, value, icon, color, label, description, isLive }) {
         blue: "bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20",
         amber: "bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20",
         emerald: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20",
-        rose: "bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20"
+        rose: "bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20",
+        purple: "bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20"
     };
 
     const colorParts = colors[color].split(' ');

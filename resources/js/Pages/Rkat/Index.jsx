@@ -3,11 +3,12 @@ import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ActionButton, { ActionGroup } from '@/Components/ActionButton';
 import StatusBadge from '@/Components/StatusBadge';
-import { ArrowRight, Plus, Search, Download, Send, AlertCircle, Edit2, FileDown, Eye, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { ArrowRight, Plus, Search, Download, Send, AlertCircle, Edit2, FileDown, Eye, ArrowUp, ArrowDown, ArrowUpDown, FileSpreadsheet } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
+import { exportToExcel } from '@/Utils/exportToExcel';
 
 const formatDate = (value) => {
     if (!value) return '-';
@@ -120,7 +121,40 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
             setUnitId(value);
             applyFilters(searchTerm, tahun, bulan, status, value, perPage, sortBy, sortDirection);
         }
-    };// Fungsi untuk mengirim dokumen (Submit)
+    };
+
+    const handleExportExcel = () => {
+        if (!rkats?.data || rkats.data.length === 0) return;
+        const exportData = rkats.data.map((item, index) => {
+            const details = item.rkat_details || item.rkatDetails || [];
+            const firstDetail = details[0];
+            const calculatedAnggaran = Number(item.total_anggaran) > 0
+                ? Number(item.total_anggaran)
+                : details.reduce((acc, d) => acc + (parseFloat(d.anggaran) || 0), 0);
+
+            let tglPelak = '-';
+            if (firstDetail?.jadwal_pelaksanaan_mulai || firstDetail?.jadwal_pelaksanaan_akhir) {
+                const m = firstDetail.jadwal_pelaksanaan_mulai ? formatDate(firstDetail.jadwal_pelaksanaan_mulai) : '';
+                const a = firstDetail.jadwal_pelaksanaan_akhir ? formatDate(firstDetail.jadwal_pelaksanaan_akhir) : '';
+                tglPelak = m === a ? m : `${m} s.d ${a}`;
+            }
+
+            return {
+                'No': (rkats.from || 1) + index,
+                'No. Dokumen': item.nomor_dokumen || '-',
+                'Unit Kerja': item.unit?.nama_unit || '-',
+                'Tahun Anggaran': item.tahun_anggaran || '-',
+                'Tanggal Pengajuan': formatDate(item.tanggal_pengajuan),
+                'Tanggal Pelaksanaan': tglPelak,
+                'Total Anggaran (Rp)': calculatedAnggaran,
+                'Status': (item.status_persetujuan || '-').replace(/_/g, ' ')
+            };
+        });
+
+        exportToExcel(exportData, `Daftar_Ajuan_RKAT_${new Date().toISOString().slice(0, 10)}.xlsx`, 'Daftar Ajuan');
+    };
+
+    // Fungsi untuk mengirim dokumen (Submit)
     const handleAjukan = (item) => {
         toast("Konfirmasi Pengajuan", {
             description: "Apakah Anda yakin ingin mengajukan RKAT ini? Setelah diajukan, data tidak dapat diubah kecuali dikembalikan untuk revisi.",
@@ -153,8 +187,6 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
 
             <div className="py-6">
                 <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
-
-
 
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
                         Daftar Ajuan
@@ -243,6 +275,16 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                         ]}
                                     />
                                 </div>
+
+                                {/* TOMBOL EXPORT EXCEL */}
+                                <button
+                                    onClick={handleExportExcel}
+                                    disabled={!rkats?.data || rkats.data.length === 0}
+                                    className="h-11 inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <FileSpreadsheet size={18} />
+                                    Export Excel
+                                </button>
 
                                 {/* TOMBOL BARU */}
                                 <Link

@@ -2,9 +2,10 @@ import React, { useMemo } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import CustomSelect from '@/Components/CustomSelect';
-import { Monitor, BarChart3, Clock, FileText, PieChart as PieChartIcon } from 'lucide-react';
+import { Monitor, BarChart3, Clock, FileText, PieChart as PieChartIcon, FileSpreadsheet } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/Components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { exportToExcel } from '@/Utils/exportToExcel';
 
 export default function Index({
     auth = {},
@@ -19,6 +20,24 @@ export default function Index({
 }) {
     const handleYearChange = (e) => {
         router.get('/monitoring', { tahun: e.target.value }, { preserveState: true });
+    };
+
+    const handleExportExcel = () => {
+        if (!data || data.length === 0) return;
+        const exportData = data.map((item, index) => ({
+            'No': index + 1,
+            'Kode Unit': item.kode_unit || '-',
+            'Nama Unit': item.nama_unit || '-',
+            'Kepala Unit': item.kepala_unit || '-',
+            'RKAT (Jumlah Kegiatan)': item.count_rkat || 0,
+            'RKAT (Total Anggaran Rp)': item.total_anggaran_rkat || 0,
+            'Pencairan (Jumlah Kegiatan)': item.count_pencairan || 0,
+            'Pencairan (Total Anggaran Rp)': item.total_anggaran_pencairan || 0,
+            'Laporan (Jumlah Kegiatan)': item.count_laporan || 0,
+            'Laporan (Total Realisasi Rp)': item.total_anggaran_laporan || 0
+        }));
+
+        exportToExcel(exportData, `Monitoring_RKAT_${selectedYear || new Date().getFullYear()}.xlsx`, 'Monitoring Unit');
     };
 
     const formatRupiah = (num = 0) =>
@@ -190,9 +209,19 @@ export default function Index({
 
                 {/* TABLE */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border border-gray-200 dark:border-gray-700">
-                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex items-center gap-2">
-                        <FileText size={18} className="text-indigo-500 dark:text-indigo-400" />
-                        <h4 className="font-semibold text-gray-900 dark:text-gray-100">Progres RKAT, Pencairan, dan Laporan {selectedYear}</h4>
+                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                            <FileText size={18} className="text-indigo-500 dark:text-indigo-400" />
+                            <h4 className="font-semibold text-gray-900 dark:text-gray-100">Progres RKAT, Pencairan, dan Laporan {selectedYear}</h4>
+                        </div>
+                        <button
+                            onClick={handleExportExcel}
+                            disabled={!data || data.length === 0}
+                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <FileSpreadsheet size={16} />
+                            Export Excel
+                        </button>
                     </div>
 
                     <div className="overflow-x-auto">

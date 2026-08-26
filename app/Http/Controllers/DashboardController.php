@@ -6,6 +6,7 @@ use App\Models\RkatHeader;
 use App\Models\TahunAnggaran;
 use App\Models\RkatDetail;
 use App\Models\PencairanDana;
+use App\Models\Lpj;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -84,6 +85,26 @@ class DashboardController extends Controller
             ")
             ->first();
 
+        $lpjQuery = Lpj::query()
+            ->join('pencairan_danas', 'lpjs.id_pencairan', '=', 'pencairan_danas.id_pencairan', 'inner', false)
+            ->join('rkat_headers', 'pencairan_danas.id_header', '=', 'rkat_headers.id_header', 'inner', false)
+            ->where('rkat_headers.tahun_anggaran', $tahunSekarang);
+
+        if (!$user->isAdmin()) {
+            $lpjQuery->where('rkat_headers.id_unit', $user->id_unit);
+        }
+
+        $lpjStats = $lpjQuery
+            ->selectRaw("
+                COUNT(lpjs.id_lpj) as total_lpj_dokumen,
+                SUM(CASE WHEN lpjs.status_lpj IN ('Disetujui', 'Disetujui_Final') THEN 1 ELSE 0 END) as lpj_disetujui,
+                SUM(CASE WHEN lpjs.status_lpj = 'Revisi' THEN 1 ELSE 0 END) as lpj_revisi,
+                SUM(CASE WHEN lpjs.status_lpj = 'Ditolak' THEN 1 ELSE 0 END) as lpj_ditolak,
+                SUM(CASE WHEN lpjs.status_lpj NOT IN ('Draft', 'Disetujui', 'Disetujui_Final', 'Revisi', 'Ditolak') THEN 1 ELSE 0 END) as lpj_review,
+                SUM(CASE WHEN lpjs.status_lpj IN ('Disetujui', 'Disetujui_Final') THEN lpjs.total_realisasi ELSE 0 END) as total_lpj_realisasi
+            ")
+            ->first();
+
         return [
             'total'     => (int) ($stats->total ?? 0),
             'disetujui' => (int) ($stats->disetujui ?? 0),
@@ -98,6 +119,13 @@ class DashboardController extends Controller
             'pencairan_ditolak'        => (int) ($pencairanStats->pencairan_ditolak ?? 0),
             'pencairan_review'         => (int) ($pencairanStats->pencairan_review ?? 0),
             'total_pencairan_disetujui'=> (float) ($pencairanStats->total_pencairan_disetujui ?? 0),
+
+            'total_lpj_dokumen'        => (int) ($lpjStats->total_lpj_dokumen ?? 0),
+            'lpj_disetujui'            => (int) ($lpjStats->lpj_disetujui ?? 0),
+            'lpj_revisi'               => (int) ($lpjStats->lpj_revisi ?? 0),
+            'lpj_ditolak'              => (int) ($lpjStats->lpj_ditolak ?? 0),
+            'lpj_review'               => (int) ($lpjStats->lpj_review ?? 0),
+            'total_lpj_realisasi'      => (float) ($lpjStats->total_lpj_realisasi ?? 0),
         ];
     }
 

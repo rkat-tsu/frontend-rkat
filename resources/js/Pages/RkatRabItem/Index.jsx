@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Search, Package, Plus, ArrowUp, ArrowDown, ArrowUpDown, FileText } from 'lucide-react';
+import { Search, Package, Plus, ArrowUp, ArrowDown, ArrowUpDown, FileText, FileSpreadsheet } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import StatusBadge from '@/Components/StatusBadge';
 import ActionButton, { ActionGroup } from '@/Components/ActionButton';
 import { usePermission } from '@/hooks/usePermission';
+import { exportToExcel } from '@/Utils/exportToExcel';
 
 const formatDate = (value) => {
     if (!value) return '-';
@@ -84,6 +85,44 @@ export default function Index({ auth, rkats = { data: [] }, filters = {}, tahunA
         setSearchTerm(e.target.value);
     };
 
+    const handleExportExcel = () => {
+        if (!rkats?.data || rkats.data.length === 0) return;
+        const exportData = rkats.data.map((item, index) => {
+            const details = item.rkat_details || item.rkatDetails || [];
+            const firstDetail = details[0];
+            const namaKegiatan = firstDetail?.judul_kegiatan || firstDetail?.deskripsi_kegiatan || item.nomor_dokumen;
+            const calculatedAnggaran = Number(item.total_anggaran) > 0
+                ? Number(item.total_anggaran)
+                : details.reduce((acc, d) => acc + (parseFloat(d.anggaran) || 0), 0);
+
+            const pencairanList = item.pencairan_danas || item.pencairanDanas || [];
+            const pencairan = pencairanList[0];
+            const lpj = pencairan?.lpj;
+
+            let tglPelak = '-';
+            if (firstDetail?.jadwal_pelaksanaan_mulai || firstDetail?.jadwal_pelaksanaan_akhir) {
+                const m = firstDetail.jadwal_pelaksanaan_mulai ? formatDate(firstDetail.jadwal_pelaksanaan_mulai) : '';
+                const a = firstDetail.jadwal_pelaksanaan_akhir ? formatDate(firstDetail.jadwal_pelaksanaan_akhir) : '';
+                tglPelak = m === a ? m : `${m} s.d ${a}`;
+            }
+
+            return {
+                'No': (rkats.from || 1) + index,
+                'Nama Kegiatan': namaKegiatan,
+                'No. Dokumen': item.nomor_dokumen || '-',
+                'Unit': item.unit?.nama_unit || '-',
+                'Tahun': item.tahun_anggaran || '-',
+                'Tanggal Pelaksanaan': tglPelak,
+                'Anggaran (Rp)': calculatedAnggaran,
+                'Status RKA': item.status_persetujuan || '-',
+                'Status Pencairan': pencairan?.status_pencairan || '-',
+                'Status LPJ': lpj?.status_lpj || '-'
+            };
+        });
+
+        exportToExcel(exportData, `Daftar_RKAT_${new Date().toISOString().slice(0, 10)}.xlsx`, 'Daftar RKAT');
+    };
+
     const tahunSelectOptions = [
         { value: '', label: 'Semua Tahun' },
         ...tahunAnggarans.map(t => ({ value: t.tahun_anggaran, label: `Tahun ${t.tahun_anggaran}` }))
@@ -153,6 +192,16 @@ export default function Index({ auth, rkats = { data: [] }, filters = {}, tahunA
                                     </div>
                                 )}
                             </div>
+
+                            {/* Tombol Export Excel */}
+                            <button
+                                onClick={handleExportExcel}
+                                disabled={!rkats?.data || rkats.data.length === 0}
+                                className="w-full sm:w-auto px-4 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shrink-0"
+                            >
+                                <FileSpreadsheet size={16} />
+                                Export Excel
+                            </button>
                         </div>
 
                         {/* Record Count */}
