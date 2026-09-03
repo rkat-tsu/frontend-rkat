@@ -168,6 +168,15 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
         }));
     };
 
+    const toggleSelectAll = () => {
+        const allSelected = items.length > 0 && items.every(item => item.is_selected);
+        setItems(items.map(item => ({
+            ...item,
+            is_selected: !allSelected,
+            volume_pencairan: !allSelected ? item.remaining_volume : 0
+        })));
+    };
+
     const handleSubmitCreate = (e) => {
         e.preventDefault();
         
@@ -253,15 +262,12 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
         setSearchTerm(e.target.value);
     };
 
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            if (searchTerm !== (filters?.search || '')) {
-                applyFilters(searchTerm, tahun, bulan, status, unitId, perPage, sortBy, sortDirection);
-            }
-        }, 300);
-
-        return () => clearTimeout(timeoutId);
-    }, [searchTerm]);
+    const handleSearchKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            applyFilters(searchTerm, tahun, bulan, status, unitId, perPage, sortBy, sortDirection);
+        }
+    };
 
     const handlePerPageChange = (val) => {
         setPerPage(val);
@@ -356,9 +362,10 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                         Pencairan Dana
                     </h1>
 
-                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-teal-500 mb-6">
-                        <div className="flex flex-col lg:flex-row items-center gap-4 w-full">
-                            <div className="relative w-full lg:flex-1">
+                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-teal-500 mb-6 space-y-4">
+                        {/* Baris 1: Search & Tombol Action */}
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
+                            <div className="relative w-full sm:flex-1 max-w-2xl">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <Search size={18} className="text-gray-400" />
                                 </div>
@@ -366,17 +373,45 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                     type="text"
                                     value={searchTerm}
                                     onChange={handleSearchChange}
+                                    onKeyDown={handleSearchKeyDown}
                                     placeholder="Cari nomor dokumen rkat atau unit..."
                                     className="pl-10 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
                                 />
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-                                <div className="flex-1 min-w-[140px] lg:w-36">
+                            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                                <button
+                                    onClick={handleExportExcel}
+                                    disabled={!pencairans?.data || pencairans.data.length === 0}
+                                    className="h-11 flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <FileSpreadsheet size={18} />
+                                    Export Excel
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        if (!isLocked) setIsCreateModalOpen(true);
+                                    }}
+                                    className={`h-11 flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md ${isLocked
+                                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                                        : 'bg-teal-600 hover:bg-teal-700 text-white active:scale-95'
+                                        }`}
+                                >
+                                    <Plus size={18} />
+                                    Baru
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Baris 2: Filters Grid */}
+                        <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div>
                                     <CustomSelect
                                         value={tahun}
                                         onChange={(e) => handleFilterChange('tahun', e.target.value)}
-                                        className="h-11"
+                                        className="h-11 w-full"
                                         options={[
                                             { value: '', label: 'Semua Tahun' },
                                             ...(tahunAnggarans || []).map(th => ({ value: th, label: th }))
@@ -384,11 +419,11 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                     />
                                 </div>
 
-                                <div className="flex-1 min-w-[140px] lg:w-36">
+                                <div>
                                     <CustomSelect
                                         value={bulan}
                                         onChange={(e) => handleFilterChange('bulan', e.target.value)}
-                                        className="h-11"
+                                        className="h-11 w-full"
                                         options={[
                                             { value: '', label: 'Semua Bulan' },
                                             { value: '1', label: 'Januari' },
@@ -408,11 +443,11 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                 </div>
 
                                 {isAdmin() && units.length > 0 && (
-                                    <div className="flex-1 min-w-[200px] lg:w-56">
+                                    <div>
                                         <CustomSelect
                                             value={unitId}
                                             onChange={(e) => handleFilterChange('unit_id', e.target.value)}
-                                            className="h-11"
+                                            className="h-11 w-full"
                                             options={[
                                                 { value: '', label: 'Semua Unit Kerja' },
                                                 ...units.map(u => ({ value: u.id_unit, label: u.nama_unit }))
@@ -421,11 +456,11 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                     </div>
                                 )}
 
-                                <div className="flex-1 min-w-[160px] lg:w-44">
+                                <div>
                                     <CustomSelect
                                         value={status}
                                         onChange={(e) => handleFilterChange('status', e.target.value)}
-                                        className="h-11"
+                                        className="h-11 w-full"
                                         options={[
                                             { value: '', label: 'Semua Status' },
                                             ...(statuses || []).map(s => ({
@@ -435,28 +470,6 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                         ]}
                                     />
                                 </div>
-
-                                <button
-                                    onClick={handleExportExcel}
-                                    disabled={!pencairans?.data || pencairans.data.length === 0}
-                                    className="h-11 inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <FileSpreadsheet size={18} />
-                                    Export Excel
-                                </button>
-
-                                <button
-                                    onClick={() => {
-                                        if (!isLocked) setIsCreateModalOpen(true);
-                                    }}
-                                    className={`h-11 inline-flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md ${isLocked
-                                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                                        : 'bg-teal-600 hover:bg-teal-700 text-white active:scale-95'
-                                        }`}
-                                >
-                                    <Plus size={18} />
-                                    Baru
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -726,12 +739,32 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
 
                         {items.length > 0 && (
                             <div className="mt-8">
-                                <h4 className="text-md font-bold text-gray-900 dark:text-white mb-4 pb-2">Rincian Item yang Dicairkan</h4>
+                                <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">
+                                    <h4 className="text-md font-bold text-gray-900 dark:text-white">Rincian Item yang Dicairkan</h4>
+                                    <button
+                                        type="button"
+                                        onClick={toggleSelectAll}
+                                        className="text-xs font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 transition cursor-pointer"
+                                    >
+                                        {items.every(i => i.is_selected) ? 'Batal Pilih Semua' : 'Pilih Semua Item'}
+                                    </button>
+                                </div>
                                 <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
                                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                                         <thead className="bg-gray-50 dark:bg-gray-700">
                                             <tr>
-                                                <th className="px-4 py-3 text-left w-12 text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Pilih</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={items.length > 0 && items.every(i => i.is_selected)}
+                                                            onChange={toggleSelectAll}
+                                                            className="w-4 h-4 text-teal-600 rounded border-gray-300 focus:ring-teal-500 cursor-pointer"
+                                                            title="Pilih Semua Item"
+                                                        />
+                                                        <span>PILIH</span>
+                                                    </div>
+                                                </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Item & Harga Satuan Asli</th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Sisa Volume (Max)</th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Volume Dicairkan</th>

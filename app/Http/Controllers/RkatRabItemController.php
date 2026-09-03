@@ -51,6 +51,9 @@ class RkatRabItemController extends Controller
         if ($request->filled('unit_id')) {
             $query->where('rkat_headers.id_unit', $request->unit_id);
         }
+        if ($request->filled('status')) {
+            $query->where('rkat_headers.status_persetujuan', $request->status);
+        }
 
         // SORTING
         $sortBy = $request->get('sort_by', 'tanggal_pengajuan');
@@ -80,12 +83,22 @@ class RkatRabItemController extends Controller
 
         $tahunAnggarans = TahunAnggaran::orderBy('tahun_anggaran', 'desc')->get();
         $units = Unit::orderBy('kode_unit', 'asc')->get();
+        $statuses = [
+            'Draft',
+            'Diajukan',
+            'Revisi',
+            'Ditolak',
+            'Disetujui_Tahap_1',
+            'Disetujui_Tahap_2',
+            'Disetujui_Final',
+        ];
 
         return Inertia::render('RkatRabItem/Index', [
             'rkats' => $rkats,
             'tahunAnggarans' => $tahunAnggarans,
             'units' => $units,
-            'filters' => $request->only(['search', 'tahun', 'unit_id', 'sort_by', 'sort_direction', 'per_page']),
+            'statuses' => $statuses,
+            'filters' => $request->only(['search', 'tahun', 'unit_id', 'status', 'sort_by', 'sort_direction', 'per_page']),
         ]);
     }
 }

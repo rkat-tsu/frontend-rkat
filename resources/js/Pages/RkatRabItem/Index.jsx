@@ -41,20 +41,21 @@ const formatRupiah = (angka) => {
     return `Rp. ${number.toLocaleString('id-ID', { minimumFractionDigits: 0 })}`;
 };
 
-export default function Index({ auth, rkats = { data: [] }, filters = {}, tahunAnggarans = [], units = [] }) {
+export default function Index({ auth, rkats = { data: [] }, filters = {}, tahunAnggarans = [], units = [], statuses = [] }) {
     const { isAdmin } = usePermission();
 
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [tahun, setTahun] = useState(filters?.tahun || '');
     const [unitId, setUnitId] = useState(filters?.unit_id || '');
+    const [status, setStatus] = useState(filters?.status || '');
     const [perPage, setPerPage] = useState(filters?.per_page || '15');
     const [sortBy, setSortBy] = useState(filters?.sort_by || 'tanggal_pengajuan');
     const [sortDirection, setSortDirection] = useState(filters?.sort_direction || 'desc');
 
-    const applyFilters = (newSearch, newTahun, newUnitId, newPerPage, newSortBy = sortBy, newSortDirection = sortDirection) => {
+    const applyFilters = (newSearch, newTahun, newUnitId, newStatus, newPerPage, newSortBy = sortBy, newSortDirection = sortDirection) => {
         router.get(
             route('rkat.index'),
-            { search: newSearch, tahun: newTahun, unit_id: newUnitId, per_page: newPerPage, sort_by: newSortBy, sort_direction: newSortDirection },
+            { search: newSearch, tahun: newTahun, unit_id: newUnitId, status: newStatus, per_page: newPerPage, sort_by: newSortBy, sort_direction: newSortDirection },
             { preserveState: true, replace: true, preserveScroll: true }
         );
     };
@@ -63,26 +64,18 @@ export default function Index({ auth, rkats = { data: [] }, filters = {}, tahunA
         const newDirection = (sortBy === field && sortDirection === 'asc') ? 'desc' : 'asc';
         setSortBy(field);
         setSortDirection(newDirection);
-        applyFilters(searchTerm, tahun, unitId, perPage, field, newDirection);
+        applyFilters(searchTerm, tahun, unitId, status, perPage, field, newDirection);
     };
-
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            if (
-                searchTerm !== (filters?.search || '') ||
-                tahun !== (filters?.tahun || '') ||
-                unitId !== (filters?.unit_id || '') ||
-                perPage !== (filters?.per_page || '15')
-            ) {
-                applyFilters(searchTerm, tahun, unitId, perPage, sortBy, sortDirection);
-            }
-        }, 400);
-
-        return () => clearTimeout(timeoutId);
-    }, [searchTerm, tahun, unitId, perPage]);
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
+    };
+
+    const handleSearchKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            applyFilters(searchTerm, tahun, unitId, status, perPage, sortBy, sortDirection);
+        }
     };
 
     const handleExportExcel = () => {
@@ -133,6 +126,14 @@ export default function Index({ auth, rkats = { data: [] }, filters = {}, tahunA
         ...units.map(u => ({ value: u.id_unit, label: `${u.kode_unit} - ${u.nama_unit}` }))
     ];
 
+    const statusSelectOptions = [
+        { value: '', label: 'Semua Status' },
+        ...(statuses || []).map(s => ({
+            value: s,
+            label: s.replace(/_/g, ' ')
+        }))
+    ];
+
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -149,63 +150,77 @@ export default function Index({ auth, rkats = { data: [] }, filters = {}, tahunA
                     </h1>
 
                     {/* --- KONTAINER: FILTER & TABLE --- */}
-                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-indigo-500 mb-6">
+                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-indigo-500 mb-6 space-y-4">
 
-                        {/* Top Bar: Search & Filters */}
-                        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
-                            <div className="flex flex-col sm:flex-row items-center gap-3 w-full flex-1">
-                                {/* Search */}
-                                <div className="relative w-full sm:w-64">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                        <Search size={18} className="text-gray-400" />
-                                    </div>
-                                    <input
-                                        type="text"
-                                        className="pl-10 h-10 block w-full bg-gray-100 border-transparent rounded-lg focus:border-indigo-500 focus:bg-white focus:ring-0 text-xs dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
-                                        placeholder="Cari kegiatan, dokumen..."
-                                        value={searchTerm}
-                                        onChange={handleSearch}
-                                    />
+                        {/* Baris 1: Search Box & Tombol Action */}
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
+                            {/* Search */}
+                            <div className="relative w-full sm:flex-1 max-w-2xl">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Search size={18} className="text-gray-400" />
                                 </div>
-
-                                {/* Filter Tahun */}
-                                <div className="w-full sm:w-44">
-                                    <CustomSelect
-                                        value={tahun}
-                                        onChange={(e) => { setTahun(e.target.value); applyFilters(searchTerm, e.target.value, unitId, perPage); }}
-                                        options={tahunSelectOptions}
-                                        placeholder="Pilih Tahun"
-                                        className="h-10 text-xs"
-                                    />
-                                </div>
-
-                                {/* Filter Unit (If Admin) */}
-                                {isAdmin() && (
-                                    <div className="w-full sm:w-56">
-                                        <CustomSelect
-                                            value={unitId}
-                                            onChange={(e) => { setUnitId(e.target.value); applyFilters(searchTerm, tahun, e.target.value, perPage); }}
-                                            options={unitSelectOptions}
-                                            placeholder="Pilih Unit"
-                                            className="h-10 text-xs"
-                                        />
-                                    </div>
-                                )}
+                                <input
+                                    type="text"
+                                    className="pl-10 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
+                                    placeholder="Cari kegiatan, dokumen..."
+                                    value={searchTerm}
+                                    onChange={handleSearch}
+                                    onKeyDown={handleSearchKeyDown}
+                                />
                             </div>
 
                             {/* Tombol Export Excel */}
-                            <button
-                                onClick={handleExportExcel}
-                                disabled={!rkats?.data || rkats.data.length === 0}
-                                className="w-full sm:w-auto px-4 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shrink-0"
-                            >
-                                <FileSpreadsheet size={16} />
-                                Export Excel
-                            </button>
+                            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                                <button
+                                    onClick={handleExportExcel}
+                                    disabled={!rkats?.data || rkats.data.length === 0}
+                                    className="h-11 flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <FileSpreadsheet size={18} />
+                                    Export Excel
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Baris 2: Filters Grid */}
+                        <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div>
+                                    <CustomSelect
+                                        value={tahun}
+                                        onChange={(e) => { setTahun(e.target.value); applyFilters(searchTerm, e.target.value, unitId, status, perPage); }}
+                                        options={tahunSelectOptions}
+                                        placeholder="Pilih Tahun"
+                                        className="h-11 w-full text-sm"
+                                    />
+                                </div>
+
+                                {isAdmin() && (
+                                    <div>
+                                        <CustomSelect
+                                            value={unitId}
+                                            onChange={(e) => { setUnitId(e.target.value); applyFilters(searchTerm, tahun, e.target.value, status, perPage); }}
+                                            options={unitSelectOptions}
+                                            placeholder="Pilih Unit"
+                                            className="h-11 w-full text-sm"
+                                        />
+                                    </div>
+                                )}
+
+                                <div>
+                                    <CustomSelect
+                                        value={status}
+                                        onChange={(e) => { setStatus(e.target.value); applyFilters(searchTerm, tahun, unitId, e.target.value, perPage); }}
+                                        options={statusSelectOptions}
+                                        placeholder="Pilih Status"
+                                        className="h-11 w-full text-sm"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         {/* Record Count */}
-                        <div className="mb-4 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="pt-2 text-xs text-gray-500 dark:text-gray-400">
                             Menampilkan <span className="font-semibold text-gray-900 dark:text-white">{rkats?.total || 0}</span> dokumen RKAT
                         </div>
 

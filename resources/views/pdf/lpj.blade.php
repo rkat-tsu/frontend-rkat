@@ -188,7 +188,7 @@
         <thead>
             <tr>
                 <th width="4%">No</th>
-                <th width="28%">Deskripsi Item / Kwitansi</th>
+                <th width="28%">Deskripsi Item / Keterangan</th>
                 <th width="14%">Pencairan (Rp)</th>
                 <th width="10%">Vol Realisasi</th>
                 <th width="14%">Harga Satuan (Rp)</th>
@@ -214,7 +214,7 @@
                     <td>
                         <strong>{{ $item->pencairanItem->rkatRabItem->deskripsi_item ?? 'Item' }}</strong>
                         @if($item->nomor_kwitansi)
-                            <br><small style="color: #444;">No Kwitansi: {{ $item->nomor_kwitansi }}</small>
+                            <br><small style="color: #444;">Keterangan: {{ $item->nomor_kwitansi }}</small>
                         @endif
                         @if($item->keterangan)
                             <br><small style="color: #666;">Catatan: {{ $item->keterangan }}</small>

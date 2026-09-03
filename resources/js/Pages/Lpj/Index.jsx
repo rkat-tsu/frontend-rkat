@@ -956,7 +956,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                             <th className="py-3 px-3 text-right bg-teal-50/50 dark:bg-teal-950/30 w-36">Harga Realisasi</th>
                                             <th className="py-3 px-3 text-right bg-teal-50/50 dark:bg-teal-950/30">Total Realisasi</th>
                                             <th className="py-3 px-3 text-right">Selisih</th>
-                                            <th className="py-3 px-3 w-40">No Kwitansi / Nota</th>
+                                            <th className="py-3 px-3 w-48">Keterangan</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-900">
@@ -1008,7 +1008,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                                     <td className="py-2.5 px-3">
                                                         <input
                                                             type="text"
-                                                            placeholder="No Nota/Kwitansi"
+                                                            placeholder="Keterangan / Catatan..."
                                                             value={item.nomor_kwitansi}
                                                             onChange={(e) => handleItemChange(idx, 'nomor_kwitansi', e.target.value)}
                                                             className="w-full py-1 px-2 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-teal-500"
@@ -1199,7 +1199,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                             <th className="p-2.5 text-right">Vol</th>
                                             <th className="p-2.5 text-right">Harga Satuan</th>
                                             <th className="p-2.5 text-right">Total Realisasi</th>
-                                            <th className="p-2.5">No Kwitansi</th>
+                                            <th className="p-2.5">Keterangan</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 dark:divide-gray-800">

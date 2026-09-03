@@ -33,15 +33,12 @@ export default function Index({ users, filters = {}, units = [] }) {
         applyFilters(searchTerm, selectedUnit, perPage, field, newDirection);
     };
 
-    // Debounce hanya untuk search
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            if (searchTerm !== (filters.q || '')) {
-                applyFilters(searchTerm, selectedUnit, perPage);
-            }
-        }, 300);
-        return () => clearTimeout(timeoutId);
-    }, [searchTerm]);
+    const handleSearchKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            applyFilters(searchTerm, selectedUnit, perPage, sortBy, sortDirection);
+        }
+    };
 
     // Unit dan perPage langsung trigger (tidak perlu debounce)
     const handleUnitChange = (val) => {
@@ -79,7 +76,7 @@ export default function Index({ users, filters = {}, units = [] }) {
                         
                         {/* Top Bar: Search, Filter, & Tambah Button */}
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-                            <div className="relative w-full md:w-1/2">
+                            <div className="relative w-full md:flex-1 max-w-xl">
                                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                     <Search className="w-5 h-5 text-gray-400" />
                                 </div>
@@ -88,6 +85,7 @@ export default function Index({ users, filters = {}, units = [] }) {
                                     placeholder="Cari nama, email, atau peran..." 
                                     value={searchTerm} 
                                     onChange={(e) => setSearchTerm(e.target.value)} 
+                                    onKeyDown={handleSearchKeyDown}
                                     className="pl-10 h-11 block w-full bg-gray-100 border-transparent rounded-lg focus:border-blue-500 focus:bg-white focus:ring-0 text-sm dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                                 />
                             </div>

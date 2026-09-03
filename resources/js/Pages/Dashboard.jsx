@@ -4,7 +4,8 @@ import { Head, Link, Deferred } from '@inertiajs/react';
 import {
     FileText, CheckCircle, Clock, XCircle, TrendingUp,
     ArrowRight, Activity, PieChart, Bell, Info, Calendar,
-    MessageCircle, Loader2, FileCheck
+    MessageCircle, Loader2, FileCheck, HelpCircle, ChevronDown,
+    Sun, Moon
 } from 'lucide-react';
 
 import {
@@ -420,16 +421,142 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
                                 </p>
                             </div>
                             <div className="mt-4">
-                                <a href="#" className="inline-flex items-center gap-2 text-xs font-bold bg-white text-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-50 transition-all shadow-sm">
+                                <a href="mailto:pikdi@tsu.ac.id" className="inline-flex items-center gap-2 text-xs font-bold bg-white text-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-50 transition-all shadow-sm">
                                     Hubungi IT Support <ArrowRight size={14} />
                                 </a>
                             </div>
                         </div>
                     </div>
 
+                    {/* --- SEKSI FAQ (PERTANYAAN FREKUEN & PANDUAN) --- */}
+                    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
+                        <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-700">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-teal-100 text-teal-600 dark:bg-teal-900/40 dark:text-teal-400 rounded-xl">
+                                    <HelpCircle size={22} strokeWidth={2.5} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Pertanyaan Umum (FAQ) & Panduan Sistem</h3>
+                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Jawaban cepat mengenai penggunaan sistem, mode tampilan, dan pengajuan RKAT</p>
+                                </div>
+                            </div>
+                            <span className="hidden sm:inline-flex text-xs font-semibold px-3 py-1 bg-teal-50 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300 rounded-full border border-teal-200/60 dark:border-teal-800/60">
+                                Pusat Bantuan & Edukasi
+                            </span>
+                        </div>
+
+                        <FaqAccordion />
+                    </div>
+
                 </div>
             </div>
         </AuthenticatedLayout>
+    );
+}
+
+function FaqAccordion() {
+    const [openIndex, setOpenIndex] = React.useState(0); // Item pertama terbuka secara default
+
+    const faqs = [
+        {
+            question: "Bagaimana cara mengubah Mode Malam (Dark Mode) dan Mode Terang (Light Mode)?",
+            badge: "Mode Tampilan",
+            answer: (
+                <div className="space-y-2">
+                    <p className="font-semibold text-gray-800 dark:text-gray-200">
+                        Untuk mengubah tema tampilan sistem (Dark Mode / Light Mode):
+                    </p>
+                    <ol className="list-decimal list-inside space-y-2 text-gray-600 dark:text-gray-300 font-medium pl-1">
+                        <li>
+                            Klik pada <strong>Foto / Nama Profil</strong> Anda yang terletak di <strong>pojok kanan atas</strong> navigasi header.
+                        </li>
+                        <li>
+                            Pilih menu <strong>"Tema Tampilan"</strong> (dengan ikon Bulan <Moon size={14} className="inline text-indigo-400 font-bold" /> / Matahari <Sun size={14} className="inline text-amber-500 font-bold" />).
+                        </li>
+                        <li>
+                            Geser tombol saklar (<em>toggle switch</em>) untuk mengaktifkan <strong>Mode Malam (Dark Mode)</strong> atau <strong>Mode Terang (Light Mode)</strong>. Sistem akan langsung menyesuaikan tema tampilan secara otomatis.
+                        </li>
+                    </ol>
+                </div>
+            )
+        },
+        {
+            question: "Bagaimana cara mengajukan dokumen RKAT baru?",
+            badge: "Pengajuan RKAT",
+            answer: (
+                <p>
+                    Navigasi ke menu <strong>Daftar Ajuan</strong> pada sidebar/menu utama, lalu klik tombol hijau <strong>"+ Baru"</strong>. Lengkapi form rincian kegiatan dan anggaran yang dibutuhkan, kemudian klik simpan sebagai Draft atau ajukan dokumen untuk proses verifikasi.
+                </p>
+            )
+        },
+        {
+            question: "Bagaimana alur pencairan anggaran dan laporan LPJ?",
+            badge: "Pencairan & LPJ",
+            answer: (
+                <p>
+                    Setelah dokumen RKAT disetujui final, Anda dapat mengajukan pencairan secara bertahap melalui menu <strong>Pencairan Dana</strong>. Setelah pencairan dicairkan dan kegiatan selesai dilaksanakan, wajib mengunggah Laporan Pertanggungjawaban pada menu <strong>LPJ</strong>.
+                </p>
+            )
+        },
+        {
+            question: "Bagaimana cara mengunduh data ke format Excel?",
+            badge: "Export Data",
+            answer: (
+                <p>
+                    Di setiap halaman tabel data (Daftar RKAT, Pencairan Dana, LPJ, dll), klik tombol hijau <strong>"Export Excel"</strong> di bagian atas tabel. Hasil export sudah dirancang dengan header berwarna (*contrast heading*) yang rapi dan siap cetak/lapor.
+                </p>
+            )
+        }
+    ];
+
+    return (
+        <div className="space-y-3">
+            {faqs.map((faq, idx) => {
+                const isOpen = openIndex === idx;
+                return (
+                    <div
+                        key={idx}
+                        className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
+                            isOpen
+                                ? 'bg-slate-50/80 dark:bg-gray-900/60 border-teal-400/80 dark:border-teal-700/80 shadow-sm'
+                                : 'bg-white dark:bg-gray-800/80 border-gray-100 dark:border-gray-700/80 hover:border-gray-200 dark:hover:border-gray-600'
+                        }`}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => setOpenIndex(isOpen ? -1 : idx)}
+                            className="w-full p-4 md:p-5 text-left flex items-center justify-between gap-4 transition-colors cursor-pointer"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className={`p-2 rounded-xl text-xs font-bold shrink-0 ${
+                                    isOpen
+                                        ? 'bg-teal-600 text-white shadow-sm shadow-teal-600/30'
+                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                                }`}>
+                                    Q{idx + 1}
+                                </div>
+                                <span className="font-semibold text-gray-900 dark:text-white text-sm md:text-base">
+                                    {faq.question}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0">
+                                <span className="hidden md:inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700/70 text-gray-600 dark:text-gray-300 border border-gray-200/60 dark:border-gray-600/60">
+                                    {faq.badge}
+                                </span>
+                                <div className={`p-1.5 rounded-full transition-transform duration-300 ${isOpen ? 'rotate-180 bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-300' : 'text-gray-400'}`}>
+                                    <ChevronDown size={18} />
+                                </div>
+                            </div>
+                        </button>
+                        {isOpen && (
+                            <div className="px-5 pb-5 pt-2 text-xs md:text-sm text-gray-600 dark:text-gray-300 border-t border-gray-100/80 dark:border-gray-700/50 mt-1 leading-relaxed">
+                                {faq.answer}
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
+        </div>
     );
 }
 

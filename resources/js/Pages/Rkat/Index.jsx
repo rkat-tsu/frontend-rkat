@@ -88,15 +88,12 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
         setSearchTerm(e.target.value);
     };
 
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            if (searchTerm !== (filters?.search || '') || perPage !== (filters?.per_page || '15')) {
-                applyFilters(searchTerm, tahun, bulan, status, unitId, perPage, sortBy, sortDirection);
-            }
-        }, 300); // 300ms delay
-
-        return () => clearTimeout(timeoutId);
-    }, [searchTerm, perPage]);
+    const handleSearchKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            applyFilters(searchTerm, tahun, bulan, status, unitId, perPage, sortBy, sortDirection);
+        }
+    };
 
     useEffect(() => {
         if (flash?.success) {
@@ -192,12 +189,12 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                         Daftar Ajuan
                     </h1>
 
-                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-teal-500 mb-6">
+                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-teal-500 mb-6 space-y-4">
 
-                        {/* Top Bar: Search, Filters & Buttons */}
-                        <div className="flex flex-col lg:flex-row items-center gap-4 w-full">
+                        {/* Baris 1: Search Box & Action Buttons */}
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
                             {/* Search */}
-                            <div className="relative w-full lg:flex-1">
+                            <div className="relative w-full sm:flex-1 max-w-2xl">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <Search size={18} className="text-gray-400" />
                                 </div>
@@ -205,18 +202,45 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                     type="text"
                                     value={searchTerm}
                                     onChange={handleSearchChange}
+                                    onKeyDown={handleSearchKeyDown}
                                     placeholder="Cari nomor dokumen atau unit..."
                                     className="pl-10 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
                                 />
                             </div>
 
-                            {/* Filters Group */}
-                            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-                                <div className="flex-1 min-w-[140px] lg:w-36">
+                            {/* Tombol Action */}
+                            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                                <button
+                                    onClick={handleExportExcel}
+                                    disabled={!rkats?.data || rkats.data.length === 0}
+                                    className="h-11 flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <FileSpreadsheet size={18} />
+                                    Export Excel
+                                </button>
+
+                                <Link
+                                    href={isLocked ? '#' : route('daftar-ajuan.create')}
+                                    onClick={(e) => isLocked && e.preventDefault()}
+                                    className={`h-11 flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md ${isLocked
+                                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                                        : 'bg-teal-600 hover:bg-teal-700 text-white active:scale-95'
+                                        }`}
+                                >
+                                    <Plus size={18} />
+                                    Baru
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Baris 2: Filters Grid */}
+                        <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div>
                                     <CustomSelect
                                         value={tahun}
                                         onChange={(e) => handleFilterChange('tahun', e.target.value)}
-                                        className="h-11"
+                                        className="h-11 w-full"
                                         options={[
                                             { value: '', label: 'Semua Tahun' },
                                             ...(tahunAnggarans || []).map(th => ({ value: th, label: th }))
@@ -224,11 +248,11 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                     />
                                 </div>
 
-                                <div className="flex-1 min-w-[140px] lg:w-36">
+                                <div>
                                     <CustomSelect
                                         value={bulan}
                                         onChange={(e) => handleFilterChange('bulan', e.target.value)}
-                                        className="h-11"
+                                        className="h-11 w-full"
                                         options={[
                                             { value: '', label: 'Semua Bulan' },
                                             { value: '1', label: 'Januari' },
@@ -248,11 +272,11 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                 </div>
 
                                 {isAdmin() && units.length > 0 && (
-                                    <div className="flex-1 min-w-[200px] lg:w-56">
+                                    <div>
                                         <CustomSelect
                                             value={unitId}
                                             onChange={(e) => handleFilterChange('unit_id', e.target.value)}
-                                            className="h-11"
+                                            className="h-11 w-full"
                                             options={[
                                                 { value: '', label: 'Semua Unit Kerja' },
                                                 ...units.map(u => ({ value: u.id_unit, label: u.nama_unit }))
@@ -261,11 +285,11 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                     </div>
                                 )}
 
-                                <div className="flex-1 min-w-[160px] lg:w-44">
+                                <div>
                                     <CustomSelect
                                         value={status}
                                         onChange={(e) => handleFilterChange('status', e.target.value)}
-                                        className="h-11"
+                                        className="h-11 w-full"
                                         options={[
                                             { value: '', label: 'Semua Status' },
                                             ...(statuses || []).map(s => ({
@@ -275,29 +299,6 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                         ]}
                                     />
                                 </div>
-
-                                {/* TOMBOL EXPORT EXCEL */}
-                                <button
-                                    onClick={handleExportExcel}
-                                    disabled={!rkats?.data || rkats.data.length === 0}
-                                    className="h-11 inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <FileSpreadsheet size={18} />
-                                    Export Excel
-                                </button>
-
-                                {/* TOMBOL BARU */}
-                                <Link
-                                    href={isLocked ? '#' : route('daftar-ajuan.create')}
-                                    onClick={(e) => isLocked && e.preventDefault()}
-                                    className={`h-11 inline-flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md ${isLocked
-                                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                                        : 'bg-teal-600 hover:bg-teal-700 text-white active:scale-95'
-                                        }`}
-                                >
-                                    <Plus size={18} />
-                                    Baru
-                                </Link>
                             </div>
                         </div>
                     </div>
