@@ -198,25 +198,41 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                         Standar Biaya Operasional (SBO)
                     </h1>
 
-                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-yellow-500">
+                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-yellow-500 mb-6 space-y-4">
 
-                        {/* Top Bar */}
-                        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-                            <div className="relative w-full md:w-1/2">
-                                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        {/* Baris 1: Search Box & Tombol Action */}
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
+                            {/* Search */}
+                            <div className="relative w-full sm:flex-1 max-w-2xl">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <Search size={18} className="text-gray-400" />
                                 </div>
                                 <input
                                     type="text"
+                                    className="pl-10 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-yellow-500 focus:bg-white focus:ring-4 focus:ring-yellow-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
                                     placeholder="Cari kode, nama, atau kelompok anggaran..."
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
-                                    className="pl-10 block w-full h-11 bg-gray-100 border-transparent rounded-lg focus:border-yellow-500 focus:bg-white focus:ring-0 text-sm dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                                 />
                             </div>
 
-                            <div className="flex flex-wrap items-center justify-start md:justify-end gap-3 w-full md:w-auto mt-2 md:mt-0">
-                                <div className="w-full sm:w-40">
+                            {/* Tombol Action */}
+                            {isAdmin() && (
+                                <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                                    <button
+                                        onClick={() => setIsCreateModalOpen(true)}
+                                        className="h-11 flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md"
+                                    >
+                                        <Plus size={18} /> Tambah Item SBO
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Baris 2: Filters Grid */}
+                        <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div>
                                     <CustomSelect
                                         value={kelompokFilter}
                                         onChange={(e) => setKelompokFilter(e.target.value)}
@@ -224,17 +240,10 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                                             { value: '', label: 'Semua Kelompok' },
                                             ...kelompoks.map(k => ({ value: k, label: k }))
                                         ]}
-                                        className="h-11 rounded-lg border-transparent bg-gray-200 dark:bg-gray-700 dark:text-gray-300 focus:border-yellow-500 focus:bg-white focus:ring-0 text-sm"
+                                        placeholder="Pilih Kelompok"
+                                        className="h-11 w-full text-sm"
                                     />
                                 </div>
-                                {isAdmin() && (
-                                    <button
-                                        onClick={() => setIsCreateModalOpen(true)}
-                                        className="flex items-center justify-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-medium transition whitespace-nowrap h-11"
-                                    >
-                                        <Plus size={16} /> Tambah Item SBO
-                                    </button>
-                                )}
                             </div>
                         </div>
 

@@ -3,7 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ActionButton, { ActionGroup } from '@/Components/ActionButton';
 import StatusBadge from '@/Components/StatusBadge';
-import { ArrowRight, Plus, Search, Download, Send, AlertCircle, Edit2, FileDown, Eye, ArrowUp, ArrowDown, ArrowUpDown, FileSpreadsheet } from 'lucide-react';
+import { ArrowRight, Plus, Lock, Search, Download, Send, AlertCircle, Edit2, FileDown, Eye, ArrowUp, ArrowDown, ArrowUpDown, FileSpreadsheet } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
@@ -172,8 +172,21 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
         });
     };
 
-    // Cek apakah tombol "Baru" harus dikunci (jika ada error periode ditutup)
-    const isLocked = !!flash.error;
+    // Cek status tahun anggaran
+    const tahunList = (tahunAnggarans || []).map(th => 
+        typeof th === 'object' ? th : { tahun_anggaran: String(th), status_rkat: 'Submission' }
+    );
+
+    // Cari tahun yang dipilih di filter, atau ambil tahun pertama yang tidak Closed
+    const currentSelectedYear = tahun 
+        ? tahunList.find(t => String(t.tahun_anggaran) === String(tahun))
+        : (tahunList.find(t => t.status_rkat !== 'Closed') || tahunList[0]);
+
+    // Cek apakah ada tahun anggaran yang dibuka (Drafting atau Submission)
+    const hasOpenYear = tahunList.some(t => t.status_rkat === 'Drafting' || t.status_rkat === 'Submission');
+
+    // dikunci jika ada error, tidak ada tahun yang dibuka, atau tahun yang dipilih berstatus Closed
+    const isLocked = !!flash?.error || !hasOpenYear || (currentSelectedYear && currentSelectedYear.status_rkat === 'Closed');
 
     return (
         <AuthenticatedLayout
@@ -219,17 +232,33 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                     Export Excel
                                 </button>
 
-                                <Link
-                                    href={isLocked ? '#' : route('daftar-ajuan.create')}
-                                    onClick={(e) => isLocked && e.preventDefault()}
-                                    className={`h-11 flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md ${isLocked
-                                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                                        : 'bg-teal-600 hover:bg-teal-700 text-white active:scale-95'
-                                        }`}
-                                >
-                                    <Plus size={18} />
-                                    Baru
-                                </Link>
+                                {isLocked ? (
+                                    <TooltipProvider>
+                                        <Tooltip delayDuration={100}>
+                                            <TooltipTrigger asChild>
+                                                <button
+                                                    type="button"
+                                                    disabled
+                                                    className="h-11 flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold whitespace-nowrap bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-600 cursor-not-allowed shadow-none"
+                                                >
+                                                    <Lock size={18} />
+                                                    Ditutup
+                                                </button>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="bottom" className="bg-slate-900 text-white dark:bg-slate-800 dark:text-slate-100 text-xs font-medium py-1.5 px-3 shadow-lg">
+                                                Periode pengajuan RKAT sedang ditutup (Closed)
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                ) : (
+                                    <Link
+                                        href={route('daftar-ajuan.create')}
+                                        className="h-11 flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md bg-teal-600 hover:bg-teal-700 text-white active:scale-95"
+                                    >
+                                        <Plus size={18} />
+                                        Baru
+                                    </Link>
+                                )}
                             </div>
                         </div>
 

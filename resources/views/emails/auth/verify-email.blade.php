@@ -44,6 +44,10 @@
                     
                     <p>Selamat bergabung di <strong>ReKAT</strong>! Kami perlu memverifikasi alamat email Anda untuk memastikan keamanan akun Anda.</p>
                     
+                    <div style="background-color: #fef3c7; border: 1px solid #fde68a; color: #92400e; padding: 12px 16px; border-radius: 8px; font-size: 13px; margin: 20px 0;">
+                        <strong>⚠️ Masa Kadaluarsa Tautan:</strong> Tautan verifikasi ini berlaku selama <strong>3 menit</strong>. Jika sudah kadaluarsa, Anda dapat meminta tautan verifikasi baru melalui aplikasi.
+                    </div>
+
                     <div class="btn-wrapper">
                         <a href="{{ $verificationUrl ?? '#' }}" class="btn">Verifikasi Alamat Email</a>
                     </div>

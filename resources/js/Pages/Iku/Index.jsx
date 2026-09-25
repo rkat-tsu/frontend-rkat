@@ -280,13 +280,13 @@ export default function Index({
             <div className="py-6 pb-24">
                 <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 space-y-6">
 
-                    {/* --- HEADER CONTROLS CARD (SELESAI & CLEAN) --- */}
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-5">
+                    {/* --- HEADER CONTROLS CARD (RESPONSIVE FOR MOBILE & DESKTOP) --- */}
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 space-y-5">
                         
                         {/* Row 1: Judul & Subjudul (Kiri) vs Action Buttons (Kanan) */}
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
                                     Daftar IKU & IKK
                                 </h1>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -294,11 +294,11 @@ export default function Index({
                                 </p>
                             </div>
 
-                            {/* Tombol Aksi (Kanan - Rapi & Sejajar) */}
-                            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                            {/* Tombol Aksi (Responsive Stack di Mobile, Flex di Desktop) */}
+                            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 w-full lg:w-auto shrink-0">
                                 <button
                                     onClick={() => setIsLogModalOpen(true)}
-                                    className="inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold transition shadow-sm border border-slate-200 dark:border-gray-600 h-10 whitespace-nowrap"
+                                    className="inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold transition shadow-sm border border-slate-200 dark:border-gray-600 h-10 whitespace-nowrap w-full sm:w-auto"
                                     title="Lihat riwayat log perubahan dan pengarsipan IKU/IKK"
                                 >
                                     <History size={16} className="text-slate-600 dark:text-slate-300 shrink-0" />
@@ -314,7 +314,7 @@ export default function Index({
                                     <>
                                         <button
                                             onClick={openCopyYearModal}
-                                            className="inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs font-semibold transition shadow-sm h-10 whitespace-nowrap"
+                                            className="inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs font-semibold transition shadow-sm h-10 whitespace-nowrap w-full sm:w-auto"
                                             title="Salin semua IKU & IKK dari tahun anggaran sebelumnya"
                                         >
                                             <Copy size={16} className="shrink-0" />
@@ -323,7 +323,7 @@ export default function Index({
 
                                         <button
                                             onClick={openAnnualModal}
-                                            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold shadow-sm transition h-10 whitespace-nowrap"
+                                            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold shadow-sm transition h-10 whitespace-nowrap w-full sm:w-auto"
                                         >
                                             <Plus size={16} className="shrink-0" />
                                             <span>Tambah IKU & IKK</span>
@@ -333,27 +333,27 @@ export default function Index({
                             </div>
                         </div>
 
-                        {/* Row 2: Dedicated Bar Filter Tahun Anggaran */}
+                        {/* Row 2: Dedicated Bar Filter Tahun Anggaran (Flexible Wrap for Mobile) */}
                         <div className="pt-4 border-t border-gray-100 dark:border-gray-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
                                 <span className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5 shrink-0">
                                     <Calendar size={15} className="text-teal-600 dark:text-teal-400" />
                                     Tahun Anggaran:
                                 </span>
-                                <div className="w-56">
+                                <div className="w-full sm:w-56">
                                     <CustomSelect
                                         value={selectedTahun}
                                         onChange={(e) => handleYearChange(Number(e.target.value))}
                                         options={yearSelectOptions}
-                                        className="h-9 text-xs"
+                                        className="h-10 text-xs w-full"
                                     />
                                 </div>
                                 {isArchiveYear ? (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-700/50 shrink-0">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-700/50 shrink-0">
                                         <Archive size={13} /> Arsip
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700/50 shrink-0">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700/50 shrink-0">
                                         <CheckCircle2 size={13} /> Tahun Digunakan (Aktif)
                                     </span>
                                 )}
@@ -365,8 +365,90 @@ export default function Index({
                         </div>
                     </div>
 
-                    {/* --- TABEL MASTER IKU & IKK (TAMPIL LANGSUNG SEMUA IKK) --- */}
-                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-200 dark:border-gray-700">
+                    {/* --- MOBILE CARD VIEW (TAMPIL PADA SCREEN HP / TABLET KECIL) --- */}
+                    <div className="block md:hidden space-y-4">
+                        {ikus.length > 0 ? (
+                            ikus.map((iku, index) => {
+                                const ikkList = iku.ikks || [];
+                                return (
+                                    <div key={iku.id_iku} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 space-y-3">
+                                        {/* Header Mobile Card */}
+                                        <div className="flex items-center justify-between gap-3 pb-3 border-b border-gray-100 dark:border-gray-700">
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-6 h-6 rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900/60 dark:text-teal-300 font-bold text-xs flex items-center justify-center shrink-0">
+                                                    {index + 1}
+                                                </span>
+                                                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                                                    Tahun {iku.tahun_anggaran || selectedTahun}
+                                                </span>
+                                            </div>
+                                            {isAdmin() && (
+                                                <ActionGroup>
+                                                    <ActionButton
+                                                        variant="edit"
+                                                        tooltip="Edit IKU & Rincian IKK"
+                                                        onClick={() => openEditModal(iku)}
+                                                    />
+                                                    <ActionButton
+                                                        variant="delete"
+                                                        tooltip="Hapus IKU ini"
+                                                        onClick={() => handleDelete(iku.uuid)}
+                                                    />
+                                                </ActionGroup>
+                                            )}
+                                        </div>
+
+                                        {/* Judul IKU */}
+                                        <div>
+                                            <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 dark:text-gray-500 block mb-1">
+                                                Indikator Kinerja Utama (IKU)
+                                            </span>
+                                            <h4 className="font-bold text-gray-900 dark:text-white text-sm leading-relaxed">
+                                                {iku.nama_iku}
+                                            </h4>
+                                        </div>
+
+                                        {/* List IKK */}
+                                        <div className="pt-2 border-t border-gray-100 dark:border-gray-700/60">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 dark:text-gray-500">
+                                                    Rincian Kegiatan (IKK)
+                                                </span>
+                                                <span className="text-xs text-gray-500 font-medium">
+                                                    {ikkList.length} IKK
+                                                </span>
+                                            </div>
+                                            {ikkList.length > 0 ? (
+                                                <div className="space-y-2">
+                                                    {ikkList.map((ikk, i) => (
+                                                        <div key={ikk.id_ikk} className="flex items-start gap-2.5 text-xs bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-lg border border-gray-100 dark:border-gray-700/60">
+                                                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300 font-bold shrink-0 text-[10px] border border-teal-200 dark:border-teal-700">
+                                                                {i + 1}
+                                                            </span>
+                                                            <span className="text-gray-800 dark:text-gray-200 leading-relaxed pt-0.5">
+                                                                {ikk.nama_ikk}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="py-2 text-xs text-gray-400 dark:text-gray-500 italic bg-gray-50 dark:bg-gray-900/30 p-2.5 rounded-lg text-center">
+                                                    Belum ada rincian kegiatan (IKK).
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 text-center text-gray-500 dark:text-gray-400 text-sm border border-gray-200 dark:border-gray-700">
+                                Belum ada data IKU terdaftar untuk Tahun Anggaran {selectedTahun}.
+                            </div>
+                        )}
+                    </div>
+
+                    {/* --- TABEL DESKTOP MASTER IKU & IKK (HIDDEN DI MOBILE) --- */}
+                    <div className="hidden md:block bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-200 dark:border-gray-700">
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead className="bg-gray-50 dark:bg-gray-700/60">

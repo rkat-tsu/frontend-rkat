@@ -1,11 +1,12 @@
 import React from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, Deferred } from '@inertiajs/react';
+import { toast } from 'sonner';
 import {
     FileText, CheckCircle, Clock, XCircle, TrendingUp,
     ArrowRight, Activity, PieChart, Bell, Info, Calendar,
     MessageCircle, Loader2, FileCheck, HelpCircle, ChevronDown,
-    Sun, Moon
+    Sun, Moon, Mail, Copy
 } from 'lucide-react';
 
 import {
@@ -50,6 +51,25 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
             label: "Pengajuan RKAT",
             color: "hsl(var(--chart-1))",
         },
+    };
+
+    const handleContactSupport = (e) => {
+        e.preventDefault();
+        const email = 'pikdi@tsu.ac.id';
+        
+        // 1. Salin email ke clipboard sebagai fallback instan
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(email);
+        }
+
+        // 2. Buka mailto di window baru / tab baru
+        window.open(`mailto:${email}?subject=Bantuan%20Sistem%20RKAT`, '_blank');
+
+        // 3. Notifikasi toast ramah pengguna
+        toast.success("Alamat Email Disalin!", {
+            description: `Email (${email}) berhasil disalin ke clipboard. Jika aplikasi email tidak terbuka otomatis, Anda dapat langsung menempelkannya di email Anda.`,
+            duration: 6000
+        });
     };
 
     return (
@@ -410,20 +430,41 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
 
                         <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-2xl p-6 shadow-md text-white flex flex-col justify-between h-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                             <div>
-                                <div className="flex items-center gap-3 mb-4">
+                                <div className="flex items-center gap-3 mb-3">
                                     <div className="p-2 bg-white/20 backdrop-blur-md rounded-lg">
                                         <MessageCircle size={20} />
                                     </div>
-                                    <h4 className="font-bold">Butuh Bantuan?</h4>
+                                    <h4 className="font-bold text-base">Butuh Bantuan?</h4>
                                 </div>
-                                <p className="text-sm text-indigo-50 leading-relaxed">
-                                    Jika Anda mengalami kendala teknis dalam penginputan RKAT, silakan hubungi Tim IT TSU melalui kanal resmi.
+                                <p className="text-sm text-indigo-50 leading-relaxed mb-4">
+                                    Jika mengalami kendala teknis dalam penginputan RKAT, silakan hubungi Tim IT TSU melalui email resmi:
                                 </p>
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 text-xs font-mono font-semibold text-white">
+                                    <Mail size={14} className="text-indigo-200" />
+                                    <span>pikdi@tsu.ac.id</span>
+                                </div>
                             </div>
-                            <div className="mt-4">
-                                <a href="mailto:pikdi@tsu.ac.id" className="inline-flex items-center gap-2 text-xs font-bold bg-white text-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-50 transition-all shadow-sm">
-                                    Hubungi IT Support <ArrowRight size={14} />
-                                </a>
+                            <div className="mt-5 flex flex-wrap items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={handleContactSupport}
+                                    className="inline-flex items-center gap-2 text-xs font-bold bg-white text-indigo-600 px-4 py-2.5 rounded-xl hover:bg-indigo-50 transition-all shadow-sm cursor-pointer"
+                                >
+                                    <Mail size={14} /> Hubungi IT Support <ArrowRight size={14} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (navigator.clipboard) {
+                                            navigator.clipboard.writeText('pikdi@tsu.ac.id');
+                                            toast.success("Email (pikdi@tsu.ac.id) disalin ke clipboard!");
+                                        }
+                                    }}
+                                    className="inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-800/60 hover:bg-indigo-800 text-white px-3 py-2.5 rounded-xl transition-all border border-indigo-500/40 cursor-pointer"
+                                    title="Salin Email"
+                                >
+                                    <Copy size={13} /> Salin Email
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -455,7 +496,7 @@ export default function Dashboard({ auth, grafikRkat = [], tahunAnggaran = new D
 }
 
 function FaqAccordion() {
-    const [openIndex, setOpenIndex] = React.useState(0); // Item pertama terbuka secara default
+    const [openIndex, setOpenIndex] = React.useState(null);
 
     const faqs = [
         {

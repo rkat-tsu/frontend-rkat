@@ -104,12 +104,13 @@ export default function Index({ auth, units = [], users = [], allUnits = [], app
                         </h1>
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-yellow-500">
+                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-yellow-500 mb-6 space-y-4">
                         
-                        {/* Top Bar: Search, Filters, & Tambah Button */}
-                        <div className="flex flex-col xl:flex-row justify-between items-center gap-4 mb-4">
-                            <div className="relative w-full xl:w-1/4">
-                                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        {/* Baris 1: Search Box & Tombol Action */}
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
+                            {/* Search */}
+                            <div className="relative w-full sm:flex-1 max-w-2xl">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <Search className="w-5 h-5 text-gray-400" />
                                 </div>
                                 <input 
@@ -117,49 +118,55 @@ export default function Index({ auth, units = [], users = [], allUnits = [], app
                                     placeholder="Cari unit atau kode..." 
                                     value={searchTerm} 
                                     onChange={e => setSearchTerm(e.target.value)} 
-                                    className="pl-10 h-11 block w-full bg-gray-100 border-transparent rounded-lg focus:border-yellow-500 focus:bg-white focus:ring-0 text-sm dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+                                    className="pl-10 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-yellow-500 focus:bg-white focus:ring-4 focus:ring-yellow-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
                                 />
                             </div>
                             
-                            <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-end">
-                                <div className="w-[140px]">
+                            {/* Tombol Action */}
+                            {isAdmin() && (
+                                <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                                    <Link 
+                                        href={route('unit.create')} 
+                                        className="h-11 flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md"
+                                    >
+                                        <Plus size={18} /> Tambah Unit
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Baris 2: Filters Grid */}
+                        <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div>
                                     <CustomSelect
                                         value={selectedTipe}
                                         onChange={(e) => setSelectedTipe(e.target.value)}
                                         options={tipeOptions}
-                                        placeholder="Tipe Unit"
-                                        className="h-11 rounded-lg border-transparent bg-gray-200 dark:bg-gray-700 dark:text-gray-300 focus:border-yellow-500 focus:bg-white focus:ring-0 text-sm w-full"
+                                        placeholder="Pilih Tipe Unit"
+                                        className="h-11 w-full text-sm"
                                     />
                                 </div>
 
-                                <div className="w-[140px]">
+                                <div>
                                     <CustomSelect
                                         value={selectedParent}
                                         onChange={(e) => setSelectedParent(e.target.value)}
                                         options={parentOptions}
-                                        placeholder="Unit Induk"
-                                        className="h-11 rounded-lg border-transparent bg-gray-200 dark:bg-gray-700 dark:text-gray-300 focus:border-yellow-500 focus:bg-white focus:ring-0 text-sm w-full"
+                                        placeholder="Pilih Unit Induk"
+                                        className="h-11 w-full text-sm"
                                     />
                                 </div>
 
-                                <div className="w-[140px]">
+                                <div>
                                     <CustomSelect
                                         value={selectedPath}
                                         onChange={(e) => setSelectedPath(e.target.value)}
                                         options={pathOptions}
-                                        placeholder="Alur" 
-                                        className="h-11 rounded-lg border-transparent bg-gray-200 dark:bg-gray-700 dark:text-gray-300 focus:border-yellow-500 focus:bg-white focus:ring-0 text-sm w-full"
+                                        placeholder="Pilih Alur Approval" 
+                                        className="h-11 w-full text-sm"
                                     />
                                 </div>
-
-                                {isAdmin() && (
-                                    <Link 
-                                        href={route('unit.create')} // Pastikan route ini sesuai dengan setting Laravel Anda
-                                        className="h-11 flex items-center justify-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-medium transition whitespace-nowrap shadow-sm"
-                                    >
-                                        <Plus size={16} /> Tambah
-                                    </Link>
-                                )}
                             </div>
                         </div>
                         

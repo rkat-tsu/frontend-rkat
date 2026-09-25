@@ -123,7 +123,10 @@ class RkatController extends Controller
 
         $rkats = $query->paginate($perPage)->onEachSide(0)->withQueryString();
 
-        $tahunAnggarans = TahunAnggaran::query()->orderBy('tahun_anggaran', 'desc')->pluck('tahun_anggaran');
+        $tahunAnggarans = TahunAnggaran::query()
+            ->select(['id_tahun', 'tahun_anggaran', 'status_rkat'])
+            ->orderBy('tahun_anggaran', 'desc')
+            ->get();
         $units = Unit::query()->select(['id_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get();
 
         $dynamicSteps = ApprovalPathStep::select('step_name')->distinct()->pluck('step_name')->toArray();
