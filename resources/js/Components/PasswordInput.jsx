@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import TextInput from '@/Components/TextInput';
 import { Eye, EyeOff } from 'lucide-react';
 
-export default function PasswordInput(props) {
+const PasswordInput = forwardRef(function PasswordInput({ maxLength = 20, className = '', ...props }, ref) {
     const [passwordVisible, setPasswordVisible] = useState(false);
 
     const togglePasswordVisibility = () => {
@@ -15,9 +15,11 @@ export default function PasswordInput(props) {
     return (
         <div className="relative">
             <TextInput
-                {...props} // Meneruskan semua props (id, name, value, onChange, autoComplete, className)
+                {...props} // Meneruskan semua props (id, name, value, onChange, autoComplete, dll)
+                ref={ref}
                 type={inputType}
-                className={`w-full pr-10 ${props.className || ''}`} // Tambahkan padding kanan
+                maxLength={maxLength}
+                className={`w-full pr-10 ${className}`} // Tambahkan padding kanan
             />
 
             <button
@@ -33,4 +35,6 @@ export default function PasswordInput(props) {
             </button>
         </div>
     );
-}
+});
+
+export default PasswordInput;

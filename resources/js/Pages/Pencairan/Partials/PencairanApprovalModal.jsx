@@ -9,6 +9,8 @@ export default function PencairanApprovalModal({ show, onClose, pencairan }) {
     if (!pencairan) return null;
 
     const handleConfirm = ({ action, catatan }) => {
+        if (processing) return;
+        toast.dismiss();
         const actionType = action === 'Disetujui' ? 'Setuju' : action;
         const toastId = toast.loading(`Sedang memproses persetujuan pencairan...`);
         setProcessing(true);

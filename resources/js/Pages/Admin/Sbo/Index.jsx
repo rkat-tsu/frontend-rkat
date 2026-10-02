@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ActionButton, { ActionGroup } from '@/Components/ActionButton';
-import { Edit2, Trash2, Search, Plus, Save, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Edit2, Trash2, Search, Plus, Save, ArrowUp, ArrowDown, ArrowUpDown, Loader2, X } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
@@ -18,12 +18,19 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
     const [perPage, setPerPage] = useState(filters?.per_page || '15');
     const [sortBy, setSortBy] = useState(filters?.sort_by || 'kode_anggaran');
     const [sortDirection, setSortDirection] = useState(filters?.sort_direction || 'asc');
+    const [isSearching, setIsSearching] = useState(false);
 
     const applyFilters = (newSearch, newKelompok, newPerPage, newSortBy = sortBy, newSortDirection = sortDirection) => {
+        setIsSearching(true);
         router.get(
             route('sbo.index'),
             { search: newSearch, kelompok: newKelompok, per_page: newPerPage, sort_by: newSortBy, sort_direction: newSortDirection },
-            { preserveState: true, preserveScroll: true, replace: true }
+            { 
+                preserveState: true, 
+                preserveScroll: true, 
+                replace: true,
+                onFinish: () => setIsSearching(false)
+            }
         );
     };
 
@@ -32,6 +39,25 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
         setSortBy(field);
         setSortDirection(newDirection);
         applyFilters(searchTerm, kelompokFilter, perPage, field, newDirection);
+    };
+
+    const handleInstantSearch = () => {
+        applyFilters(searchTerm, kelompokFilter, perPage, sortBy, sortDirection);
+    };
+
+    const handleClearSearch = () => {
+        setSearchTerm('');
+        applyFilters('', kelompokFilter, perPage, sortBy, sortDirection);
+    };
+
+    const handleKelompokChange = (val) => {
+        setKelompokFilter(val);
+        applyFilters(searchTerm, val, perPage, sortBy, sortDirection);
+    };
+
+    const handlePerPageChange = (val) => {
+        setPerPage(val);
+        applyFilters(searchTerm, kelompokFilter, val, sortBy, sortDirection);
     };
 
     const { isAdmin } = usePermission();
@@ -74,15 +100,20 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
         nominal: '',
     });
 
+    // Debounce untuk pengetikan pencarian (delay 700ms agar pengguna dapat menyelesaikan ketikan sebelum query dikirim)
     useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            if (searchTerm !== (filters?.search || '') || kelompokFilter !== (filters?.kelompok || '') || perPage !== (filters?.per_page || '15')) {
-                applyFilters(searchTerm, kelompokFilter, perPage, sortBy, sortDirection);
-            }
-        }, 300);
+        if (searchTerm === (filters?.search || '')) return;
 
-        return () => clearTimeout(timeoutId);
-    }, [searchTerm, kelompokFilter, perPage]);
+        setIsSearching(true);
+        const timeoutId = setTimeout(() => {
+            applyFilters(searchTerm, kelompokFilter, perPage, sortBy, sortDirection);
+        }, 700);
+
+        return () => {
+            clearTimeout(timeoutId);
+            setIsSearching(false);
+        };
+    }, [searchTerm]);
 
     // Data dari server
     const filtered = items.data || [];
@@ -204,16 +235,36 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
                             {/* Search */}
                             <div className="relative w-full sm:flex-1 max-w-2xl">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Search size={18} className="text-gray-400" />
+                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    {isSearching ? (
+                                        <Loader2 size={18} className="text-yellow-500 animate-spin" />
+                                    ) : (
+                                        <Search size={18} className="text-gray-400" />
+                                    )}
                                 </div>
                                 <input
                                     type="text"
-                                    className="pl-10 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-yellow-500 focus:bg-white focus:ring-4 focus:ring-yellow-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
-                                    placeholder="Cari kode, nama, atau kelompok anggaran..."
+                                    className="pl-10 pr-10 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-yellow-500 focus:bg-white focus:ring-4 focus:ring-yellow-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
+                                    placeholder="Cari kode, nama, atau kelompok anggaran... (Tekan Enter untuk cari cepat)"
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleInstantSearch();
+                                        }
+                                    }}
                                 />
+                                {searchTerm && (
+                                    <button
+                                        type="button"
+                                        onClick={handleClearSearch}
+                                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                        title="Hapus pencarian"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                )}
                             </div>
 
                             {/* Tombol Action */}
@@ -235,7 +286,7 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                                 <div>
                                     <CustomSelect
                                         value={kelompokFilter}
-                                        onChange={(e) => setKelompokFilter(e.target.value)}
+                                        onChange={(e) => handleKelompokChange(e.target.value)}
                                         options={[
                                             { value: '', label: 'Semua Kelompok' },
                                             ...kelompoks.map(k => ({ value: k, label: k }))
@@ -381,7 +432,7 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                                         <div className="w-20">
                                             <CustomSelect
                                                 value={perPage}
-                                                onChange={(e) => setPerPage(e.target.value)}
+                                                onChange={(e) => handlePerPageChange(e.target.value)}
                                                 options={[
                                                     { value: '10', label: '10' },
                                                     { value: '15', label: '15' },

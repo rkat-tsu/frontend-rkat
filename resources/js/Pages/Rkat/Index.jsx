@@ -66,6 +66,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
     const [perPage, setPerPage] = useState(filters?.per_page || '15');
     const [sortBy, setSortBy] = useState(filters?.sort_by || 'tanggal_pengajuan');
     const [sortDirection, setSortDirection] = useState(filters?.sort_direction || 'desc');
+    const [submittingId, setSubmittingId] = useState(null);
 
     // Fungsi untuk menerapkan filter ke backend
     const applyFilters = (newSearch, newTahun, newBulan, newStatus, newUnitId, newPerPage, newSortBy = sortBy, newSortDirection = sortDirection) => {
@@ -153,21 +154,35 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
 
     // Fungsi untuk mengirim dokumen (Submit)
     const handleAjukan = (item) => {
+        if (submittingId) return;
+        toast.dismiss();
+
         toast("Konfirmasi Pengajuan", {
+            id: `konfirmasi-pengajuan-${item.uuid}`,
             description: "Apakah Anda yakin ingin mengajukan RKAT ini? Setelah diajukan, data tidak dapat diubah kecuali dikembalikan untuk revisi.",
             action: {
                 label: "Ya, Ajukan",
                 onClick: () => {
+                    if (submittingId) return;
+                    toast.dismiss();
+                    setSubmittingId(item.uuid);
                     const toastId = toast.loading("Sedang mengirim pengajuan...");
                     router.post(route('daftar-ajuan.submit', item.uuid), {}, {
+                        onSuccess: () => {
+                            toast.success("Berhasil", { id: toastId, description: "Pengajuan RKAT berhasil dikirim." });
+                        },
+                        onError: (err) => {
+                            toast.error("Gagal Mengajukan", { id: toastId, description: err?.message || "Terjadi kesalahan saat mengirim pengajuan." });
+                        },
                         onFinish: () => {
-                            toast.dismiss(toastId);
+                            setSubmittingId(null);
                         }
                     });
                 }
             },
             cancel: {
-                label: "Batal"
+                label: "Batal",
+                onClick: () => toast.dismiss()
             }
         });
     };
@@ -496,6 +511,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                                         <ActionButton
                                                             variant="submit"
                                                             tooltip="Ajukan RKAT"
+                                                            disabled={submittingId === item.uuid || isLocked}
                                                             onClick={() => handleAjukan(item)}
                                                         />
                                                     )}

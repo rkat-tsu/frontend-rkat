@@ -12,6 +12,8 @@ use App\Models\RkatRabItem;
 use App\Models\TahunAnggaran;
 use App\Models\Unit;
 use App\Models\ApprovalPathStep;
+use App\Models\Karyawan;
+use App\Models\RkatKomentar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -40,12 +42,17 @@ class RkatController extends Controller
         $units = Unit::query()->select(['id_unit', 'kode_unit', 'nama_unit'])->orderBy('kode_unit', 'asc')->get();
         $akunAnggarans = RincianAnggaran::query()->select(['kode_anggaran', 'nama_anggaran', 'nominal', 'satuan'])->orderBy('kode_anggaran', 'asc')->get();
         $ikus = Iku::query()->select(['id_iku', 'nama_iku', 'tahun_anggaran'])->with(['ikks:id_ikk,id_iku,nama_ikk'])->orderBy('id_iku', 'asc')->get();
+        $karyawans = Karyawan::query()
+            ->where('is_aktif', true)
+            ->orderBy('nama', 'asc')
+            ->get(['id_karyawan', 'nik', 'nama', 'jabatan', 'id_unit']);
 
         Log::debug('[RKAT] Data Master Dimuat', [
             'tahun_count' => $tahunAnggarans->count(),
             'unit_count' => $units->count(),
             'akun_count' => $akunAnggarans->count(),
             'iku_count' => $ikus->count(),
+            'karyawan_count' => $karyawans->count(),
         ]);
 
         return Inertia::render('Rkat/Create', [
@@ -53,6 +60,7 @@ class RkatController extends Controller
             'units' => $units,
             'akunAnggarans' => $akunAnggarans,
             'ikus' => $ikus,
+            'karyawans' => $karyawans,
         ]);
     }
 
@@ -291,25 +299,37 @@ class RkatController extends Controller
             'rkatDetails.rabItems',
             'rkatDetails.indikators',
             'logPersetujuans.approver:id_user,nama_lengkap,nik',
+            'komentars.user:id_user,nama_lengkap,peran,nik',
         ]);
 
         // Ambil seluruh riwayat dokumen dalam satu silsilah (lineage)
-        $rootId = $rkatHeader->parent_id ?? $rkatHeader->id_header;
-        $history = RkatHeader::query()
-            ->where('id_header', $rootId)
-            ->orWhere('parent_id', $rootId)
-            ->select(['id_header', 'uuid', 'nomor_dokumen', 'status_persetujuan', 'created_at'])
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->filter(function ($item) use ($rkatHeader) {
-                // Sembunyikan dokumen yang sedang dilihat saat ini dari daftar riwayat
-                return $item->id_header !== $rkatHeader->id_header;
-            })
-            ->values();
+        // Arsip dibuat dengan parent_id = id_header dokumen live (live doc adalah root).
+        // Semua arsip adalah anak dari dokumen live saat ini.
+        $liveId = $rkatHeader->id_header;
+
+        // Cari semua arsip yang memiliki parent_id = liveId (versi sebelum revisi terakhir)
+        $archives = RkatHeader::query()
+            ->where('parent_id', $liveId)
+            ->with(['rkatDetails:id_rkat_detail,id_header,judul_kegiatan,anggaran,pjawab'])
+            ->select(['id_header', 'uuid', 'nomor_dokumen', 'status_persetujuan', 'total_anggaran', 'created_at', 'parent_id'])
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        // Nilai awal diambil dari arsip paling awal (snapshot pertama sebelum revisi pertama)
+        // Jika belum pernah direvisi, nilai awal = nilai terkini (tidak ada perubahan)
+        $firstArchive = $archives->first();
+        $initialTotalAnggaran = $firstArchive
+            ? (float)$firstArchive->total_anggaran
+            : (float)$rkatHeader->total_anggaran;
+
+        // History menampilkan semua arsip, diurutkan terbaru dulu
+        $history = $archives->sortByDesc('created_at')->values();
 
         return Inertia::render('Rkat/Show', [
             'rkat' => $rkatHeader,
             'history' => $history,
+            'initialTotalAnggaran' => $initialTotalAnggaran,
+            'komentars' => $rkatHeader->komentars,
         ]);
     }
 
@@ -405,6 +425,10 @@ class RkatController extends Controller
         $units = Unit::query()->select(['id_unit', 'kode_unit', 'nama_unit'])->orderBy('kode_unit', 'asc')->get();
         $akunAnggarans = RincianAnggaran::query()->select(['kode_anggaran', 'nama_anggaran', 'nominal', 'satuan'])->orderBy('kode_anggaran', 'asc')->get();
         $ikus = Iku::query()->select(['id_iku', 'nama_iku', 'tahun_anggaran'])->with(['ikks:id_ikk,id_iku,nama_ikk'])->orderBy('id_iku', 'asc')->get();
+        $karyawans = Karyawan::query()
+            ->where('is_aktif', true)
+            ->orderBy('nama', 'asc')
+            ->get(['id_karyawan', 'nik', 'nama', 'jabatan', 'id_unit']);
 
         return Inertia::render('Rkat/Edit', [
             'rkat' => $rkatHeader,
@@ -412,6 +436,7 @@ class RkatController extends Controller
             'units' => $units,
             'akunAnggarans' => $akunAnggarans,
             'ikus' => $ikus,
+            'karyawans' => $karyawans,
         ]);
     }
 
@@ -608,5 +633,20 @@ class RkatController extends Controller
                 'line' => $e->getLine()
             ], 500);
         }
+    }
+
+    public function storeKomentar(Request $request, RkatHeader $rkatHeader)
+    {
+        $request->validate([
+            'pesan' => 'required|string|max:2000',
+        ]);
+
+        RkatKomentar::create([
+            'id_header' => $rkatHeader->id_header,
+            'id_user' => Auth::id(),
+            'pesan' => $request->pesan,
+        ]);
+
+        return redirect()->back()->with('success', 'Catatan / tanggapan revisi berhasil dikirim.');
     }
 }

@@ -9,6 +9,8 @@ export default function ApprovalModal({ show, onClose, rkat }) {
     if (!rkat) return null;
 
     const handleConfirm = ({ action, catatan }) => {
+        if (processing) return;
+        toast.dismiss();
         const actionType = action === 'Disetujui' ? 'Setuju' : action;
         const toastId = toast.loading(`Sedang memproses ${actionType}...`);
         setProcessing(true);

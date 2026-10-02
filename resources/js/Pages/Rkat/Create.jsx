@@ -166,7 +166,7 @@ const formatRupiah = (angka) => {
         </Popover>
     );
 };
-export default function Create({ auth, tahunAnggarans, units, akunAnggarans, ikus }) {
+export default function Create({ auth, tahunAnggarans, units, akunAnggarans, ikus, karyawans = [] }) {
     const { user, isAdmin } = usePermission();
 
     // Initial States
@@ -235,6 +235,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
 
     const [filteredIkks, setFilteredIkks] = useState([]);
     const [isManualDeskripsi, setIsManualDeskripsi] = useState(false);
+    const [isManualPic, setIsManualPic] = useState(false);
     const [formErrors, setFormErrors] = useState({});
 
     const getFieldError = (field) => formErrors[field] || errors[field];
@@ -729,13 +730,51 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="relative pb-2">
-                                        <InputLabel value="PIC Kegiatan" required />
-                                        <TextInput
-                                            value={data.pjawab}
-                                            onChange={(e) => handleFieldChange('pjawab', e.target.value)}
-                                            className={`mt-1 w-full h-11 ${getFieldError('pjawab') ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
-                                            placeholder="Masukkan Penanggung Jawab"
-                                        />
+                                        <div className="flex items-center justify-between mb-1">
+                                            <InputLabel value="PIC Kegiatan" required />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsManualPic(!isManualPic);
+                                                    if (!isManualPic) {
+                                                        handleFieldChange('pjawab', '');
+                                                    }
+                                                }}
+                                                className="text-[11px] text-teal-600 dark:text-teal-400 hover:underline font-semibold"
+                                            >
+                                                {isManualPic ? '⬅️ Pilih dari Data SDM' : '✏️ Input Manual / Lain-lain'}
+                                            </button>
+                                        </div>
+                                        {!isManualPic ? (
+                                            <CustomSelect
+                                                value={data.pjawab}
+                                                onChange={(e) => {
+                                                    if (e.target.value === '__MANUAL__') {
+                                                        setIsManualPic(true);
+                                                        handleFieldChange('pjawab', '');
+                                                    } else {
+                                                        handleFieldChange('pjawab', e.target.value);
+                                                    }
+                                                }}
+                                                options={[
+                                                    { value: '', label: '-- Pilih PIC dari Data SDM --' },
+                                                    ...karyawans.map(k => ({
+                                                        value: k.nama,
+                                                        label: `${k.nama}${k.nik ? ` (${k.nik})` : ''}${k.jabatan ? ` - ${k.jabatan}` : ''}`
+                                                    })),
+                                                    { value: '__MANUAL__', label: '✏️ Input Manual / Lain-lain...' }
+                                                ]}
+                                                placeholder="Pilih PIC Kegiatan"
+                                                className={`mt-1 h-11 text-sm ${getFieldError('pjawab') ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`}
+                                            />
+                                        ) : (
+                                            <TextInput
+                                                value={data.pjawab}
+                                                onChange={(e) => handleFieldChange('pjawab', e.target.value)}
+                                                className={`mt-1 w-full h-11 ${getFieldError('pjawab') ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
+                                                placeholder="Ketik Nama Penanggung Jawab (Manual)"
+                                            />
+                                        )}
                                         <FieldTooltipError message={getFieldError('pjawab')} />
                                     </div>
                                     <div className="relative pb-2">

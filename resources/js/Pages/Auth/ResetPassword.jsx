@@ -65,12 +65,13 @@ export default function ResetPassword({ token, email }) {
                 <div>
                     <div className="mb-1.5 flex items-center text-sm font-medium text-slate-700 dark:text-slate-300">
                         <Lock className="mr-2 h-4 w-4 text-blue-500" />
-                        Kata Sandi Baru
+                        Kata Sandi Baru (Maks. 20 Karakter)
                     </div>
                     <PasswordInput
                         id="password"
                         name="password"
                         value={data.password}
+                        maxLength={20}
                         className="block w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:ring-blue-500"
                         autoComplete="new-password"
                         onChange={(e) => setData('password', e.target.value)}
@@ -88,6 +89,7 @@ export default function ResetPassword({ token, email }) {
                         id="password_confirmation"
                         name="password_confirmation"
                         value={data.password_confirmation}
+                        maxLength={20}
                         className="block w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:ring-blue-500"
                         autoComplete="new-password"
                         onChange={(e) => setData('password_confirmation', e.target.value)}

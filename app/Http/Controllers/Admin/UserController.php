@@ -84,7 +84,7 @@ class UserController extends Controller
             'username' => ['nullable', 'string', 'max:50', Rule::unique(User::class)],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class)],
             'no_telepon' => 'nullable|string|max:20',
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => ['required', 'string', 'max:20', 'confirmed', Rules\Password::defaults()],
             'peran' => ['required', 'string', Rule::in([
                 'Inputer',
                 'Kaprodi',
@@ -172,7 +172,7 @@ class UserController extends Controller
     public function updatePassword(Request $request, User $user)
     {
         $request->validate([
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => ['required', 'string', 'max:20', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user->fill([

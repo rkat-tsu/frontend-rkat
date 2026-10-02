@@ -36,6 +36,8 @@ const Toaster = ({
   return (
     <Sonner
       theme={theme}
+      visibleToasts={1}
+      closeButton
       className="toaster group"
       icons={{
         success: (

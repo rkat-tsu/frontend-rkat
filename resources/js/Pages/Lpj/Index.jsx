@@ -115,6 +115,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
     const [approvalAction, setApprovalAction] = useState('Disetujui');
     const [approvalCatatan, setApprovalCatatan] = useState('');
     const [targetLpjForApproval, setTargetLpjForApproval] = useState(null);
+    const [submittingLpjId, setSubmittingLpjId] = useState(null);
 
     // Filter Trigger
     const handleFilterChange = (newFilters = {}) => {
@@ -358,11 +359,18 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
 
     // Submit for Approval action with Sonner Toast Confirmation
     const handleSubmitForApproval = (lpjId) => {
+        if (submittingLpjId) return;
+        toast.dismiss();
+
         toast.warning('Konfirmasi Pengajuan LPJ', {
+            id: `konfirmasi-lpj-${lpjId}`,
             description: 'Apakah Anda yakin ingin mengajukan LPJ ini untuk persetujuan?',
             action: {
                 label: 'Ya, Ajukan',
                 onClick: () => {
+                    if (submittingLpjId) return;
+                    toast.dismiss();
+                    setSubmittingLpjId(lpjId);
                     const toastId = toast.loading('Sedang mengajukan LPJ...');
                     router.post(route('lpj.submit', lpjId), {}, {
                         onSuccess: () => {
@@ -370,12 +378,16 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                         },
                         onError: () => {
                             toast.error('Gagal mengajukan LPJ.', { id: toastId });
+                        },
+                        onFinish: () => {
+                            setSubmittingLpjId(null);
                         }
                     });
                 }
             },
             cancel: {
-                label: 'Batal'
+                label: 'Batal',
+                onClick: () => toast.dismiss()
             }
         });
     };
@@ -566,16 +578,18 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                             )}
                         </div>
 
-                        {/* Button Buat LPJ Baru (Posisi Paling Kanan - Warna TSU Teal) */}
-                        <div className="w-full lg:w-auto flex justify-end">
-                            <button
-                                onClick={handleOpenCreateModal}
-                                className="h-11 inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold text-xs rounded-xl shadow-md shadow-teal-600/20 transition-all duration-200 active:scale-95 whitespace-nowrap"
-                            >
-                                <Plus className="w-4 h-4" />
-                                <span>Buat LPJ Baru</span>
-                            </button>
-                        </div>
+                        {/* Button Buat LPJ Baru (Hanya untuk unit pengusul yang memiliki pencairan siap LPJ, atau Admin) */}
+                        {(availablePencairans.length > 0 || isAdmin()) && (
+                            <div className="w-full lg:w-auto flex justify-end">
+                                <button
+                                    onClick={handleOpenCreateModal}
+                                    className="h-11 inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold text-xs rounded-xl shadow-md shadow-teal-600/20 transition-all duration-200 active:scale-95 whitespace-nowrap"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    <span>Buat LPJ Baru</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -657,7 +671,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                      lpjs.data.map((lpj, index) => {
                                         const unitLpjId = lpj.rkat_header?.id_unit || lpj.pencairan_dana?.rkat_header?.id_unit;
                                         const isBelongsToUnit = auth.user.id_unit && unitLpjId && String(auth.user.id_unit) === String(unitLpjId);
-                                        const isPengaju = auth.user.id_user === lpj.diajukan_oleh || isBelongsToUnit || isAdmin();
+                                        const isPengaju = isBelongsToUnit || isAdmin();
                                         const canEdit = (lpj.status_lpj === 'Draft' || lpj.status_lpj === 'Revisi') && isPengaju;
                                         const canSubmit = (lpj.status_lpj === 'Draft' || lpj.status_lpj === 'Revisi') && isPengaju;
                                         const canApprove = lpj.status_lpj === 'Diajukan' && (isApprover() || isAdmin());
@@ -734,6 +748,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                                             <ActionButton
                                                                 variant="submit"
                                                                 tooltip="Ajukan LPJ"
+                                                                disabled={submittingLpjId === lpj.id_lpj}
                                                                 onClick={() => handleSubmitForApproval(lpj.id_lpj)}
                                                             />
                                                         )}

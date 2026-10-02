@@ -64,7 +64,7 @@ export default function UpdatePasswordForm({ className = '' }) {
                 </h2>
 
                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    <b>Pastikan akun Anda menggunakan password yang panjang dan acak untuk tetap aman.</b>
+                    <b>Gunakan kata sandi dengan panjang minimal 8 dan maksimal 20 karakter demi keamanan akun Anda.</b>
                 </p>
             </header>
 
@@ -82,7 +82,7 @@ export default function UpdatePasswordForm({ className = '' }) {
                         onChange={(e) =>
                             setData('current_password', e.target.value)
                         }
-                        type="password"
+                        maxLength={20}
                         className="mt-1 block w-full"
                         autoComplete="current-password"
                     />
@@ -94,14 +94,14 @@ export default function UpdatePasswordForm({ className = '' }) {
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="password" value="New Password" />
+                    <InputLabel htmlFor="password" value="New Password (Maks. 20 Karakter)" />
 
                     <PasswordInput
                         id="password"
                         ref={passwordInput}
                         value={data.password}
                         onChange={(e) => setData('password', e.target.value)}
-                        type="password"
+                        maxLength={20}
                         className="mt-1 block w-full"
                         autoComplete="new-password"
                     />
@@ -121,7 +121,7 @@ export default function UpdatePasswordForm({ className = '' }) {
                         onChange={(e) =>
                             setData('password_confirmation', e.target.value)
                         }
-                        type="password"
+                        maxLength={20}
                         className="mt-1 block w-full"
                         autoComplete="new-password"
                     />

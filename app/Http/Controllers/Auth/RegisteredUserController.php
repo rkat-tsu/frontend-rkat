@@ -31,7 +31,7 @@ class RegisteredUserController extends Controller
             'username' => 'nullable|string|max:50|unique:'.User::class,
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'no_telepon' => 'nullable|string|max:15',
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => ['required', 'string', 'max:20', 'confirmed', Rules\Password::defaults()],
             'peran' => ['required','string', Rule::in([
                 'Inputer', 'Kaprodi', 'Kepala_Unit', 'Dekan', 'WR_1', 'WR_2', 'WR_3', 'Rektor', 'Admin'
             ])],

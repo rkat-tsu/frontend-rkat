@@ -76,7 +76,7 @@ export default function AuthenticatedLayout({ header, children }) {
         <div className="min-h-screen flex bg-gray-200 dark:bg-gray-900 font-sans text-gray-800 transition-colors duration-300">
 
 
-            <Toaster position="top-center" richColors />
+            <Toaster position="top-center" richColors visibleToasts={1} />
 
             {/* SIDEBAR */}
             <Sidebar

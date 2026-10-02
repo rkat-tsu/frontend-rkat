@@ -68,6 +68,12 @@ export default function Create({ auth, units = [] }) {
             return;
         }
 
+        if (data.password.length > 20) {
+            setFormErrors({ password: 'Password maksimal 20 karakter.' });
+            toast.error("Peringatan", { description: "Password maksimal 20 karakter." });
+            return;
+        }
+
         if (data.password !== data.password_confirmation) {
             setFormErrors({ password_confirmation: 'Password dan konfirmasi password tidak cocok.' });
             toast.error("Peringatan", { description: "Password dan konfirmasi password tidak cocok." });
@@ -249,10 +255,11 @@ export default function Create({ auth, units = [] }) {
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="relative pb-2">
-                                            <InputLabel htmlFor="password" value="Password" required />
+                                            <InputLabel htmlFor="password" value="Password (Maks. 20 Karakter)" required />
                                             <PasswordInput 
                                                 id="password" 
                                                 value={data.password} 
+                                                maxLength={20}
                                                 onChange={(e) => handleFieldChange('password', e.target.value)} 
                                                 className={`mt-1 block w-full ${(formErrors.password || errors.password) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`} 
                                                 autoComplete="new-password"
@@ -265,6 +272,7 @@ export default function Create({ auth, units = [] }) {
                                             <PasswordInput 
                                                 id="password_confirmation" 
                                                 value={data.password_confirmation} 
+                                                maxLength={20}
                                                 onChange={(e) => handleFieldChange('password_confirmation', e.target.value)} 
                                                 className={`mt-1 block w-full ${(formErrors.password_confirmation || errors.password_confirmation) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`} 
                                             />

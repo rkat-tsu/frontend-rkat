@@ -148,10 +148,16 @@ class LpjController extends Controller
             'lpj'
         ])->where('status_pencairan', 'Disetujui_Final');
 
-        if ($user->peran !== 'Admin' && !$user->isApprover()) {
-            $pencairanQuery->whereHas('rkatHeader', function ($q) use ($user) {
-                $q->where('id_unit', $user->id_unit);
-            });
+        // Hanya unit pengusul yang dapat membuat LPJ (berdasarkan id_unit). 
+        // Tim Renbang / Reviewer yang tidak memiliki unit pengusul tidak boleh memuat pencairan milik unit lain untuk dibuatkan LPJ.
+        if ($user->peran !== 'Admin') {
+            if ($user->id_unit) {
+                $pencairanQuery->whereHas('rkatHeader', function ($q) use ($user) {
+                    $q->where('id_unit', $user->id_unit);
+                });
+            } else {
+                $pencairanQuery->whereRaw('1 = 0');
+            }
         }
 
         $allApprovedPencairans = $pencairanQuery->get()->filter(function ($pencairan) {
@@ -248,8 +254,8 @@ class LpjController extends Controller
             $idUnit = $rkatHeader->id_unit;
         }
 
-        if ($user->peran !== 'Admin' && $idUnit !== $user->id_unit) {
-            abort(403, 'Anda tidak memiliki wewenang untuk membuat LPJ dari unit ini.');
+        if ($user->peran !== 'Admin' && (!$user->id_unit || $idUnit !== $user->id_unit)) {
+            abort(403, 'Anda tidak memiliki wewenang untuk membuat LPJ dari unit ini. Hanya unit pengusul yang berwenang membuat LPJ.');
         }
 
         // Generate Nomor LPJ
@@ -341,8 +347,8 @@ class LpjController extends Controller
 
         $unitLpj = $lpj->rkatHeader?->id_unit ?? $lpj->pencairanDana?->rkatHeader?->id_unit;
 
-        if ($user->peran !== 'Admin' && $lpj->diajukan_oleh !== $user->id_user && $user->id_unit !== $unitLpj) {
-            abort(403, 'Anda tidak memiliki wewenang untuk mengubah LPJ ini.');
+        if ($user->peran !== 'Admin' && (!$user->id_unit || $user->id_unit !== $unitLpj)) {
+            abort(403, 'Anda tidak memiliki wewenang untuk mengubah LPJ ini. Hanya unit pengusul yang berwenang.');
         }
 
         $request->validate([
@@ -423,8 +429,8 @@ class LpjController extends Controller
 
         $unitLpj = $lpj->rkatHeader?->id_unit ?? $lpj->pencairanDana?->rkatHeader?->id_unit;
 
-        if ($user->peran !== 'Admin' && $lpj->diajukan_oleh !== $user->id_user && $user->id_unit !== $unitLpj) {
-            abort(403, 'Anda tidak memiliki wewenang untuk mengajukan LPJ ini.');
+        if ($user->peran !== 'Admin' && (!$user->id_unit || $user->id_unit !== $unitLpj)) {
+            abort(403, 'Hanya unit pengusul yang memiliki wewenang untuk mengajukan LPJ ini.');
         }
 
         $lpj->update([

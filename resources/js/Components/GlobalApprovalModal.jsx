@@ -28,6 +28,8 @@ export default function GlobalApprovalModal({
     const handleSubmit = (e) => {
         e.preventDefault();
 
+        if (processing) return;
+
         if ((action === 'Revisi' || action === 'Ditolak') && !catatan.trim()) {
             toast.error('Catatan wajib diisi apabila melakukan revisi atau penolakan.');
             return;

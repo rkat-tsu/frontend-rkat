@@ -18,23 +18,38 @@ export default function Show({ auth, pencairan, flash = {} }) {
     const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
 
     const totalCair = items.reduce((sum, item) => sum + parseFloat(item.sub_total_pencairan || 0), 0);
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
 
     const handleSubmit = () => {
+        if (isSubmitting) return;
+        toast.dismiss();
+
         toast("Konfirmasi Pengajuan", {
+            id: `konfirmasi-pencairan-${pencairan.uuid || pencairan.id_pencairan}`,
             description: "Apakah Anda yakin ingin mengajukan pencairan ini?",
             action: {
                 label: "Ya, Ajukan",
                 onClick: () => {
-                    const toastId = toast.loading('Sedang mengajukan...');
-                    router.post(route('pencairan.submit', pencairan.uuid), {}, {
+                    if (isSubmitting) return;
+                    toast.dismiss();
+                    setIsSubmitting(true);
+                    const toastId = toast.loading('Sedang mengirim pengajuan...');
+                    router.post(route('pencairan.submit', pencairan.uuid || pencairan.id_pencairan), {}, {
+                        onSuccess: () => {
+                            toast.success("Berhasil", { id: toastId, description: "Pengajuan pencairan berhasil dikirim." });
+                        },
+                        onError: (err) => {
+                            toast.error("Gagal Mengajukan", { id: toastId, description: err?.message || "Terjadi kesalahan saat mengirim pengajuan." });
+                        },
                         onFinish: () => {
-                            toast.dismiss(toastId);
+                            setIsSubmitting(false);
                         }
                     });
                 }
             },
             cancel: {
-                label: "Batal"
+                label: "Batal",
+                onClick: () => toast.dismiss()
             }
         });
     };
@@ -155,10 +170,11 @@ export default function Show({ auth, pencairan, flash = {} }) {
                             {(pencairan.status_pencairan === 'Draft' || pencairan.status_pencairan === 'Revisi') && auth.user.id_user === pencairan.diajukan_oleh && (
                                 <button
                                     type="button"
+                                    disabled={isSubmitting}
                                     onClick={handleSubmit}
-                                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm rounded-md shadow-lg shadow-teal-200/50 dark:shadow-teal-900/50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold text-sm rounded-md shadow-lg shadow-teal-200/50 dark:shadow-teal-900/50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
                                 >
-                                    <Send size={18} /> Ajukan Pencairan
+                                    <Send size={18} /> {isSubmitting ? 'Mengirim...' : 'Ajukan Pencairan'}
                                 </button>
                             )}
                         </div>

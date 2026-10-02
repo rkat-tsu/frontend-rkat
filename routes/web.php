@@ -6,6 +6,7 @@ use App\Http\Controllers\ApprovalPathController;
 use App\Http\Controllers\PencairanDanaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IkuController;
+use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\LpjController;
 use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\ProfileController;
@@ -36,6 +37,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/daftar-ajuan/{rkatHeader}', [RkatController::class, 'update'])->name('daftar-ajuan.update');
     Route::post('/daftar-ajuan/{rkatHeader}/submit', [RkatController::class, 'submit'])->name('daftar-ajuan.submit');
     Route::get('/daftar-ajuan/{rkatHeader}/export', [RkatController::class, 'exportPdf'])->name('daftar-ajuan.export');
+    Route::post('/daftar-ajuan/{rkatHeader}/komentar', [RkatController::class, 'storeKomentar'])->name('daftar-ajuan.komentar.store');
+
+    // Karyawan / SDM routes
+    Route::get('/karyawan', [KaryawanController::class, 'index'])->name('karyawan.index');
+    Route::post('/karyawan', [KaryawanController::class, 'store'])->name('karyawan.store');
+    Route::patch('/karyawan/{karyawan}', [KaryawanController::class, 'update'])->name('karyawan.update');
+    Route::delete('/karyawan/{karyawan}', [KaryawanController::class, 'destroy'])->name('karyawan.destroy');
 
     // Unit resource routes (Public view)
     Route::get('/unit', [UnitController::class, 'index'])->name('unit.index');

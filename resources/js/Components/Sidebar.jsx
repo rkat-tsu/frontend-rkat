@@ -17,45 +17,61 @@ import {
 import { usePermission } from '@/hooks/usePermission';
 
 const navItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, activePath: '/dashboard' },
-    { name: 'Monitoring', href: '/monitoring', icon: Monitor, activePath: '/monitoring' },
+    { 
+        name: 'Dashboard', 
+        href: '/dashboard', 
+        icon: LayoutDashboard, 
+        activePath: '/dashboard' 
+    },
     {
-        name: 'Manajemen RKA',
+        name: 'Pengajuan RKAT',
         icon: FolderOpen,
-        activePath: '/rkat',
+        activePath: '/daftar-ajuan',
         children: [
-            { name: 'RKAT', href: '/rkat', icon: LayoutList, activePath: '/rkat' },
-            { name: 'Pengajuan RKA', href: '/daftar-ajuan', icon: FileText, activePath: '/daftar-ajuan' },
+            { name: 'Daftar Pengajuan', href: '/daftar-ajuan', icon: FileText, activePath: '/daftar-ajuan' },
+            { name: 'Rincian Kegiatan (RAB)', href: '/rkat', icon: LayoutList, activePath: '/rkat' },
             { name: 'Persetujuan RKAT', href: '/approval', icon: Check, activePath: '/approval', hideForInputer: true },
         ],
     },
     {
-        name: 'Keuangan',
+        name: 'Pencairan Dana',
         icon: Wallet,
         activePath: '/pencairan',
         children: [
-            { name: 'Pencairan Dana', href: '/pencairan', icon: CreditCard, activePath: '/pencairan' },
+            { name: 'Pengajuan Pencairan', href: '/pencairan', icon: CreditCard, activePath: '/pencairan' },
             { name: 'Persetujuan Pencairan', href: '/pencairan/approval', icon: CheckCheck, activePath: '/pencairan/approval', hideForInputer: true },
-            { name: 'Laporan Pertanggungjawaban', href: '/lpj', icon: FileCheck2 , activePath: '/lpj' },
         ],
     },
+    { 
+        name: 'Laporan Pertanggungjawaban', 
+        href: '/lpj', 
+        icon: FileCheck2, 
+        activePath: '/lpj' 
+    },
+    { 
+        name: 'Monitoring Anggaran', 
+        href: '/monitoring', 
+        icon: Monitor, 
+        activePath: '/monitoring' 
+    },
     {
-        name: 'Data Master',
+        name: 'Data Referensi',
         icon: Database,
         activePath: '/master',
         children: [
-            { name: 'Standar Biaya Operasional', href: '/sbo', icon: BookOpenText, activePath: '/sbo' },
-            { name: 'Indikator Kinerja Utama', href: '/iku', icon: BookPlus, activePath: '/iku' }
+            { name: 'Standar Biaya (SBO)', href: '/sbo', icon: BookOpenText, activePath: '/sbo' },
+            { name: 'Indikator Kinerja (IKU)', href: '/iku', icon: BookPlus, activePath: '/iku' },
+            { name: 'Data SDM / Karyawan', href: '/karyawan', icon: Users, activePath: '/karyawan' }
         ],
     },
     {
-        name: 'Pengaturan',
+        name: 'Pengaturan Sistem',
         icon: Settings,
         activePath: '/pengaturan',
         adminOnly: true,
         children: [
             { name: 'Tahun Anggaran', href: '/tahun', icon: CalendarCog, activePath: '/tahun', adminOnly: true },
-            { name: 'Pengaturan Akun', href: '/user', icon: Users, activePath: '/user', adminOnly: true },
+            { name: 'Kelola Pengguna', href: '/user', icon: Users, activePath: '/user', adminOnly: true },
             { name: 'Unit Kerja', href: '/unit', icon: Building2, activePath: '/unit', adminOnly: true },
             { name: 'Alur Persetujuan', href: '/approval-path', icon: Route, activePath: '/approval-path', adminOnly: true },
         ],

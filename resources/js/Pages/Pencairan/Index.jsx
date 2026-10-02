@@ -87,6 +87,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
     const [perPage, setPerPage] = useState(filters?.per_page || '15');
     const [sortBy, setSortBy] = useState(filters?.sort_by || 'created_at');
     const [sortDirection, setSortDirection] = useState(filters?.sort_direction || 'desc');
+    const [submittingId, setSubmittingId] = useState(null);
 
     useEffect(() => {
         if (flash?.success) toast.success(flash.success);
@@ -298,21 +299,36 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
     };
 
     const handleAjukan = (item) => {
+        const itemId = item.uuid || item.id_pencairan;
+        if (submittingId) return;
+        toast.dismiss();
+
         toast("Konfirmasi Pengajuan", {
+            id: `konfirmasi-pencairan-${itemId}`,
             description: "Apakah Anda yakin ingin mengajukan pencairan ini?",
             action: {
                 label: "Ya, Ajukan",
                 onClick: () => {
+                    if (submittingId) return;
+                    toast.dismiss();
+                    setSubmittingId(itemId);
                     const toastId = toast.loading("Sedang mengirim pengajuan...");
-                    router.post(route('pencairan.submit', item.uuid || item.id_pencairan), {}, {
+                    router.post(route('pencairan.submit', itemId), {}, {
+                        onSuccess: () => {
+                            toast.success("Berhasil", { id: toastId, description: "Pengajuan pencairan berhasil dikirim." });
+                        },
+                        onError: (err) => {
+                            toast.error("Gagal Mengajukan", { id: toastId, description: err?.message || "Terjadi kesalahan saat mengirim pengajuan." });
+                        },
                         onFinish: () => {
-                            toast.dismiss(toastId);
+                            setSubmittingId(null);
                         }
                     });
                 }
             },
             cancel: {
-                label: "Batal"
+                label: "Batal",
+                onClick: () => toast.dismiss()
             }
         });
     };
@@ -606,6 +622,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                                             <ActionButton
                                                                 variant="submit"
                                                                 tooltip="Ajukan Pencairan"
+                                                                disabled={submittingId === (item.uuid || item.id_pencairan)}
                                                                 onClick={() => handleAjukan(item)}
                                                             />
                                                             </>

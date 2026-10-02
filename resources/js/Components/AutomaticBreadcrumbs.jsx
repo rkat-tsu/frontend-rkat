@@ -14,19 +14,22 @@ export default function AutomaticBreadcrumbs() {
     // Dictionary untuk nama tampilan yang lebih cantik
     const breadcrumbNameMap = {
         'dashboard': 'Dashboard',
-        'rkat': 'RKAT',
-        'daftar-ajuan': 'Daftar Ajuan RKA',
-        'sbo': 'SBO',
-        'iku': 'IKU',
-        'approval': 'Persetujuan',
-        'monitoring': 'Monitoring',
+        'rkat': 'Rincian Kegiatan (RAB)',
+        'daftar-ajuan': 'Daftar Pengajuan RKAT',
+        'sbo': 'Standar Biaya (SBO)',
+        'iku': 'Indikator Kinerja (IKU)',
+        'approval': 'Persetujuan RKAT',
+        'monitoring': 'Monitoring Anggaran',
+        'pencairan': 'Pencairan Dana',
         'unit': 'Unit Kerja',
-        'user': 'Pengguna',
+        'user': 'Kelola Pengguna',
         'tahun': 'Tahun Anggaran',
+        'karyawan': 'Data SDM / Karyawan',
+        'approval-path': 'Alur Persetujuan',
         'create': 'Tambah',
         'edit': 'Ubah',
         'profile': 'Profil',
-        'lpj':'Laporan Pertanggungjawaban'
+        'lpj': 'Laporan Pertanggungjawaban'
     };
 
     return (

@@ -88,6 +88,11 @@ class RkatHeader extends Model
         return $this->hasMany(PencairanDana::class, 'id_header', 'id_header');
     }
 
+    public function komentars()
+    {
+        return $this->hasMany(RkatKomentar::class, 'id_header', 'id_header')->with('user:id_user,nama_lengkap,peran,nik')->orderBy('created_at', 'asc');
+    }
+
     /**
      * Generate a sequential document number for RKAT per year and unit.
      * Format: RKAT-{tahun}-{unit}-{sequence:04}

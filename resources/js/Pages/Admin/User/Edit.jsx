@@ -126,6 +126,12 @@ export default function Edit({ auth, user, units = [] }) {
             return;
         }
 
+        if (passwordForm.data.password.length > 20) {
+            setPasswordFormErrors({ password: 'Password maksimal 20 karakter.' });
+            toast.error("Peringatan", { description: "Password maksimal 20 karakter." });
+            return;
+        }
+
         if (passwordForm.data.password !== passwordForm.data.password_confirmation) {
             setPasswordFormErrors({ password_confirmation: 'Password dan konfirmasi password tidak cocok.' });
             toast.error("Peringatan", { description: "Password dan konfirmasi password tidak cocok." });
@@ -228,13 +234,13 @@ export default function Edit({ auth, user, units = [] }) {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <div className="relative pb-2">
-                                <InputLabel htmlFor="password" value="Password Baru" required />
-                                <PasswordInput id="password" value={passwordForm.data.password} onChange={(e) => handlePasswordChange('password', e.target.value)} className={`mt-1 block w-full ${(passwordFormErrors.password || passwordForm.errors.password) ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`} />
+                                <InputLabel htmlFor="password" value="Password Baru (Maks. 20 Karakter)" required />
+                                <PasswordInput id="password" maxLength={20} value={passwordForm.data.password} onChange={(e) => handlePasswordChange('password', e.target.value)} className={`mt-1 block w-full ${(passwordFormErrors.password || passwordForm.errors.password) ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`} />
                                 <FieldTooltipError message={passwordFormErrors.password || passwordForm.errors.password} />
                             </div>
                             <div className="relative pb-2">
                                 <InputLabel htmlFor="password_confirmation" value="Konfirmasi Password Baru" required />
-                                <PasswordInput id="password_confirmation" value={passwordForm.data.password_confirmation} onChange={(e) => handlePasswordChange('password_confirmation', e.target.value)} className={`mt-1 block w-full ${(passwordFormErrors.password_confirmation || passwordForm.errors.password_confirmation) ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`} />
+                                <PasswordInput id="password_confirmation" maxLength={20} value={passwordForm.data.password_confirmation} onChange={(e) => handlePasswordChange('password_confirmation', e.target.value)} className={`mt-1 block w-full ${(passwordFormErrors.password_confirmation || passwordForm.errors.password_confirmation) ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`} />
                                 <FieldTooltipError message={passwordFormErrors.password_confirmation || passwordForm.errors.password_confirmation} />
                             </div>
                         </div>
