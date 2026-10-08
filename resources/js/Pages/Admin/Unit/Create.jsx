@@ -18,6 +18,7 @@ export default function Create({ auth, users, units, approvalPaths }) {
         nama_unit: '',
         tipe_unit: 'Unit',              // Default sesuai validasi
         approval_path_id: '',
+        pencairan_approval_path_id: '',
         id_kepala: '',
         parent_id: '',
         no_telepon: '',
@@ -39,6 +40,7 @@ export default function Create({ auth, users, units, approvalPaths }) {
         if (!data.nama_unit) errs.nama_unit = 'Harap isi bidang ini.';
         if (!data.tipe_unit) errs.tipe_unit = 'Harap isi bidang ini.';
         if (!data.approval_path_id) errs.approval_path_id = 'Harap isi bidang ini.';
+        if (!data.pencairan_approval_path_id) errs.pencairan_approval_path_id = 'Harap isi bidang ini.';
 
         if (Object.keys(errs).length > 0) {
             setFormErrors(errs);
@@ -251,8 +253,8 @@ export default function Create({ auth, users, units, approvalPaths }) {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="md:col-span-2 relative pb-2">
-                                    <InputLabel value="Alur Persetujuan" required />
+                                <div className="relative pb-2">
+                                    <InputLabel value="Alur Persetujuan RKA" required />
                                     <CustomSelect
                                         value={data.approval_path_id}
                                         onChange={(e) => handleFieldChange('approval_path_id', e.target.value)}
@@ -261,6 +263,17 @@ export default function Create({ auth, users, units, approvalPaths }) {
                                         className={`mt-1 ${(formErrors.approval_path_id || errors.approval_path_id) ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
                                     />
                                     <FieldTooltipError message={formErrors.approval_path_id || errors.approval_path_id} />
+                                </div>
+                                <div className="relative pb-2">
+                                    <InputLabel value="Alur Persetujuan Pencairan" required />
+                                    <CustomSelect
+                                        value={data.pencairan_approval_path_id}
+                                        onChange={(e) => handleFieldChange('pencairan_approval_path_id', e.target.value)}
+                                        options={approvalPaths ? approvalPaths.map((path) => ({ value: path.id, label: path.name })) : []}
+                                        placeholder="Pilih Alur Persetujuan Pencairan"
+                                        className={`mt-1 ${(formErrors.pencairan_approval_path_id || errors.pencairan_approval_path_id) ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`}
+                                    />
+                                    <FieldTooltipError message={formErrors.pencairan_approval_path_id || errors.pencairan_approval_path_id} />
                                 </div>
                             </div>
                         </div>

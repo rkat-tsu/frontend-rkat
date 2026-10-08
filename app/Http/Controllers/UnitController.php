@@ -65,7 +65,7 @@ class UnitController extends Controller
         $request->merge([
             'parent_id' => $request->parent_id ?: null,
             'id_kepala' => $request->id_kepala ?: null,
-            'pencairan_approval_path_id' => $request->approval_path_id,
+            'pencairan_approval_path_id' => $request->pencairan_approval_path_id,
         ]);
 
         $validated = $request->validate([
@@ -107,7 +107,7 @@ class UnitController extends Controller
         $request->merge([
             'parent_id' => $request->parent_id ?: null,
             'id_kepala' => $request->id_kepala ?: null,
-            'pencairan_approval_path_id' => $request->approval_path_id,
+            'pencairan_approval_path_id' => $request->pencairan_approval_path_id,
         ]);
 
         $validated = $request->validate([

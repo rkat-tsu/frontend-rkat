@@ -27,18 +27,18 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
         setIsSearching(true);
         router.get(
             route('karyawan.index'),
-            { 
-                search: newSearch, 
-                unit_id: newUnit, 
-                status_pegawai: newStatusPegawai, 
-                status_aktif: newStatusAktif, 
-                per_page: newPerPage, 
-                sort_by: newSortBy, 
-                sort_direction: newSortDirection 
+            {
+                search: newSearch,
+                unit_id: newUnit,
+                status_pegawai: newStatusPegawai,
+                status_aktif: newStatusAktif,
+                per_page: newPerPage,
+                sort_by: newSortBy,
+                sort_direction: newSortDirection
             },
-            { 
-                preserveState: true, 
-                preserveScroll: true, 
+            {
+                preserveState: true,
+                preserveScroll: true,
                 replace: true,
                 onFinish: () => setIsSearching(false)
             }
@@ -79,6 +79,8 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
     // Modal state
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [selectedKaryawan, setSelectedKaryawan] = useState(null);
     const [editingKaryawan, setEditingKaryawan] = useState(null);
     const [createFormErrors, setCreateFormErrors] = useState({});
     const [editFormErrors, setEditFormErrors] = useState({});
@@ -262,7 +264,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
                                 <input
                                     type="text"
                                     className="pl-10 pr-10 h-11 block w-full bg-gray-50 border-gray-200 rounded-xl focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
-                                    placeholder="Cari nama, NIK, jabatan, email... (Enter untuk cari)"
+                                    placeholder="Cari nama, NIK, jabatan atau email"
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
                                     onKeyDown={e => {
@@ -321,10 +323,10 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
                     <div className="bg-white dark:bg-gray-800 shadow-sm rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
-                                <thead className="bg-gray-50/80 dark:bg-gray-750 text-gray-800 dark:text-gray-200 border-b border-gray-100 dark:border-gray-700 font-semibold">
+                                <thead className="bg-gray-50/80 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-b border-gray-100 dark:border-gray-700 font-semibold">
                                     <tr>
                                         <th className="w-12 px-4 py-3.5 text-center">No</th>
-                                        <th 
+                                        <th
                                             className="px-4 py-3.5 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition select-none"
                                             onClick={() => handleSort('nama')}
                                         >
@@ -336,7 +338,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
                                             </div>
                                         </th>
                                         <th className="px-4 py-3.5">Unit Kerja</th>
-                                        <th 
+                                        <th
                                             className="px-4 py-3.5 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition select-none"
                                             onClick={() => handleSort('jabatan')}
                                         >
@@ -349,12 +351,12 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
                                         </th>
                                         <th className="px-4 py-3.5">Status Pegawai</th>
                                         <th className="px-4 py-3.5 text-center">Status</th>
-                                        {isAdmin() && <th className="px-4 py-3.5 text-center w-28">Aksi</th>}
+                                        <th className="px-4 py-3.5 text-center w-28">Detail / Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                                     {items.length > 0 ? items.map((item, idx) => (
-                                        <tr key={item.id_karyawan} className="hover:bg-teal-50/30 dark:hover:bg-gray-750/50 transition">
+                                        <tr key={item.id_karyawan} className="hover:bg-teal-50/30 dark:hover:bg-gray-700/50 transition">
                                             <td className="px-4 py-3.5 text-center text-gray-400 font-medium">
                                                 {(karyawans.from || 1) + idx}
                                             </td>
@@ -394,9 +396,14 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
                                                     {item.is_aktif ? 'Aktif' : 'Nonaktif'}
                                                 </span>
                                             </td>
-                                            {isAdmin() && (
-                                                <td className="px-4 py-3.5 text-center">
-                                                    <ActionGroup>
+                                            <td className="px-4 py-3.5 text-center">
+                                                <ActionGroup>
+                                                    <ActionButton
+                                                        variant="detail"
+                                                        tooltip="Lihat Detail Karyawan"
+                                                        onClick={() => { setSelectedKaryawan(item); setIsDetailModalOpen(true); }}
+                                                    />
+                                                    {isAdmin() && <>
                                                         <ActionButton
                                                             variant="edit"
                                                             tooltip="Edit Data SDM"
@@ -407,13 +414,13 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
                                                             tooltip="Hapus Data SDM"
                                                             onClick={() => handleDelete(item)}
                                                         />
-                                                    </ActionGroup>
-                                                </td>
-                                            )}
+                                                    </>}
+                                                </ActionGroup>
+                                            </td>
                                         </tr>
                                     )) : (
                                         <tr>
-                                            <td colSpan={isAdmin() ? 7 : 6} className="px-6 py-12 text-center text-gray-400">
+                                            <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
                                                 <div className="flex flex-col items-center justify-center gap-2">
                                                     <Users size={36} className="text-gray-300 dark:text-gray-600" />
                                                     <p className="text-sm">Tidak ada data SDM / Karyawan yang sesuai.</p>
@@ -462,7 +469,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
                                                 className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${link.active
                                                     ? 'bg-teal-600 text-white shadow-sm'
                                                     : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
-                                                }`}
+                                                    }`}
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
                                             />
                                         ) : (
@@ -480,6 +487,45 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
                 </div>
             </div>
 
+            {/* Modal Detail Karyawan */}
+            <Modal show={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} maxWidth="2xl">
+                {selectedKaryawan && (
+                    <div className="p-6">
+                        <div className="mb-5 flex items-start justify-between border-b border-gray-100 pb-4 dark:border-gray-700">
+                            <div className="flex items-center gap-3">
+                                <div className="rounded-xl bg-teal-50 p-2.5 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300"><Users size={20} /></div>
+                                <div>
+                                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">Detail Karyawan</h2>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Informasi profil SDM / karyawan</p>
+                                </div>
+                            </div>
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${selectedKaryawan.is_aktif ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}>
+                                {selectedKaryawan.is_aktif ? 'Aktif' : 'Nonaktif'}
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            {[
+                                ['Nama Lengkap & Gelar', selectedKaryawan.nama],
+                                ['NIK / NIDN / NIP', selectedKaryawan.nik],
+                                ['Unit Kerja / Penempatan', selectedKaryawan.unit ? `${selectedKaryawan.unit.kode_unit} - ${selectedKaryawan.unit.nama_unit}` : null],
+                                ['Jabatan / Posisi', selectedKaryawan.jabatan],
+                                ['Status Kepegawaian', selectedKaryawan.status_pegawai],
+                                ['Email', selectedKaryawan.email],
+                                ['No. Telepon / WhatsApp', selectedKaryawan.no_telepon],
+                            ].map(([label, value]) => (
+                                <div key={label} className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900/70">
+                                    <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</div>
+                                    <div className="break-words text-sm font-semibold text-gray-900 dark:text-gray-100">{value || '-'}</div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-6 flex justify-end border-t border-gray-100 pt-4 dark:border-gray-700">
+                            <SecondaryButton type="button" onClick={() => setIsDetailModalOpen(false)}>Tutup</SecondaryButton>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
             {/* Modal Tambah SDM */}
             <Modal show={isCreateModalOpen} onClose={() => { setIsCreateModalOpen(false); setCreateFormErrors({}); }} maxWidth="2xl">
                 <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
@@ -487,7 +533,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
                         <Plus className="text-teal-600" size={20} /> Tambah Data SDM / Karyawan
                     </h2>
                 </div>
-                <form onSubmit={handleCreateSubmit} className="p-6 space-y-4">
+                <form id="create-karyawan-form" onSubmit={handleCreateSubmit} className="px-6 pt-6 pb-6 space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -565,11 +611,11 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
                             </label>
                             <div className="flex items-center gap-4 mt-2">
                                 <label className="inline-flex items-center cursor-pointer">
-                                    <input 
-                                        type="checkbox" 
-                                        checked={createData.is_aktif} 
+                                    <input
+                                        type="checkbox"
+                                        checked={createData.is_aktif}
                                         onChange={e => handleCreateChange('is_aktif', e.target.checked)}
-                                        className="rounded border-gray-300 text-teal-600 shadow-sm focus:ring-teal-500" 
+                                        className="rounded border-gray-300 text-teal-600 shadow-sm focus:ring-teal-500"
                                     />
                                     <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 font-medium">Pegawai Aktif</span>
                                 </label>
@@ -604,18 +650,20 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
                         </div>
                     </div>
 
-                    <div className="mt-6 flex justify-end gap-3 bg-gray-50 dark:bg-gray-750 -mx-6 -mb-6 p-4 rounded-b-xl border-t border-gray-100 dark:border-gray-700">
-                        <SecondaryButton type="button" onClick={() => { setIsCreateModalOpen(false); setCreateFormErrors({}); }}>
-                            Batal
-                        </SecondaryButton>
-                        <PrimaryButton 
-                            disabled={createProcessing} 
-                            className="bg-teal-600 hover:bg-teal-700 flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-md"
-                        >
-                            <Save size={18} /> Simpan Data SDM
-                        </PrimaryButton>
-                    </div>
                 </form>
+                <div className="flex justify-end gap-3 bg-gray-50 px-6 py-4 dark:bg-gray-700 border-t border-gray-100 dark:border-gray-600 rounded-b-lg">
+                    <SecondaryButton type="button" onClick={() => { setIsCreateModalOpen(false); setCreateFormErrors({}); }}>
+                        Batal
+                    </SecondaryButton>
+                    <PrimaryButton
+                        type="submit"
+                        form="create-karyawan-form"
+                        disabled={createProcessing}
+                        className="flex items-center justify-center gap-2 px-6 py-2.5 shadow-teal-200 hover:shadow-teal-400"
+                    >
+                        <Save size={18} /> Simpan Data SDM
+                    </PrimaryButton>
+                </div>
             </Modal>
 
             {/* Modal Edit SDM */}
@@ -625,7 +673,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
                         <Edit2 className="text-teal-600" size={20} /> Edit Data SDM / Karyawan
                     </h2>
                 </div>
-                <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+                <form id="edit-karyawan-form" onSubmit={handleEditSubmit} className="px-6 pt-6 pb-6 space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -703,11 +751,11 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
                             </label>
                             <div className="flex items-center gap-4 mt-2">
                                 <label className="inline-flex items-center cursor-pointer">
-                                    <input 
-                                        type="checkbox" 
-                                        checked={editData.is_aktif} 
+                                    <input
+                                        type="checkbox"
+                                        checked={editData.is_aktif}
                                         onChange={e => handleEditChange('is_aktif', e.target.checked)}
-                                        className="rounded border-gray-300 text-teal-600 shadow-sm focus:ring-teal-500" 
+                                        className="rounded border-gray-300 text-teal-600 shadow-sm focus:ring-teal-500"
                                     />
                                     <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 font-medium">Pegawai Aktif</span>
                                 </label>
@@ -742,18 +790,20 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
                         </div>
                     </div>
 
-                    <div className="mt-6 flex justify-end gap-3 bg-gray-50 dark:bg-gray-750 -mx-6 -mb-6 p-4 rounded-b-xl border-t border-gray-100 dark:border-gray-700">
-                        <SecondaryButton type="button" onClick={() => { setIsEditModalOpen(false); setEditFormErrors({}); }}>
-                            Batal
-                        </SecondaryButton>
-                        <PrimaryButton 
-                            disabled={editProcessing} 
-                            className="bg-teal-600 hover:bg-teal-700 flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-md"
-                        >
-                            <Save size={18} /> Simpan Perubahan
-                        </PrimaryButton>
-                    </div>
                 </form>
+                <div className="flex justify-end gap-3 bg-gray-50 px-6 py-4 dark:bg-gray-700 border-t border-gray-100 dark:border-gray-600 rounded-b-lg">
+                    <SecondaryButton type="button" onClick={() => { setIsEditModalOpen(false); setEditFormErrors({}); }}>
+                        Batal
+                    </SecondaryButton>
+                    <PrimaryButton
+                        type="submit"
+                        form="edit-karyawan-form"
+                        disabled={editProcessing}
+                        className="flex items-center justify-center gap-2 px-6 py-2.5 shadow-teal-200 hover:shadow-teal-400"
+                    >
+                        <Save size={18} /> Simpan Perubahan
+                    </PrimaryButton>
+                </div>
             </Modal>
         </AuthenticatedLayout>
     );

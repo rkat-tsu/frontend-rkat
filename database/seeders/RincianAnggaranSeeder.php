@@ -2488,8 +2488,7 @@ class RincianAnggaranSeeder extends Seeder
         'satuan' => 'Paket',
         'nominal' => 4120,
     ],
-]
-        ];
+];
 
         // Masukkan ke database (Gunakan upsert agar tidak duplikat jika dijalankan ulang)
         // Asumsi nama tabel adalah 'rincian_anggarans' atau 'akun_anggarans' 

@@ -177,11 +177,11 @@ export default function Index({ auth, units = [], users = [], allUnits = [], app
 
                         {/* Table */}
                         <div className="overflow-x-auto rounded-lg border border-gray-300 dark:border-gray-700">
-                            <table className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
+                            <table className="min-w-[480px] w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
                                 <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                     <tr>
                                         <th 
-                                            className="px-6 py-3 border-b border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            className="w-[110px] min-w-[110px] px-3 py-3 border-b border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
                                             onClick={() => handleSort('kode_unit')}
                                         >
                                             <div className="flex items-center justify-between">
@@ -196,7 +196,7 @@ export default function Index({ auth, units = [], users = [], allUnits = [], app
                                             </div>
                                         </th>
                                         <th 
-                                            className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
+                                            className="w-[125px] min-w-[125px] px-3 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
                                             onClick={() => handleSort('tipe_unit')}
                                         >
                                             <div className="flex items-center justify-between">
@@ -225,34 +225,38 @@ export default function Index({ auth, units = [], users = [], allUnits = [], app
                                                 </div>
                                             </div>
                                         </th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Kepala Unit</th>
-                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Alur Persetujuan</th>
-                                        {isAdmin() && <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>}
+                                        <th className="w-[240px] min-w-[240px] px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Kepala Unit</th>
+                                        <th className="w-[180px] min-w-[180px] px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Alur Persetujuan RKA</th>
+                                        <th className="w-[180px] min-w-[180px] px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Alur Persetujuan Pencairan</th>
+                                        {isAdmin() && <th className="w-[112px] min-w-[112px] px-2 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filteredUnits.length > 0 ? (
                                         filteredUnits.map((unit) => (
                                             <tr key={unit.id_unit} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                                                <td className="px-6 py-4 border-b border-gray-300 dark:border-gray-700 font-medium text-gray-900 dark:text-white">
+                                                <td className="w-[110px] min-w-[110px] px-3 py-4 border-b border-gray-300 dark:border-gray-700 font-medium text-gray-900 dark:text-white">
                                                     {unit.kode_unit}
                                                 </td>
-                                                <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">
+                                                <td className="w-[125px] min-w-[125px] px-3 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">
                                                     {unit.tipe_unit || '-'}
                                                 </td>
                                                 <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">
                                                     {unit.nama_unit}
                                                 </td>
-                                                <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">
+                                                <td className="w-[240px] min-w-[240px] px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">
                                                     {unit.kepala?.nama_lengkap || '-'}
                                                 </td>
-                                                <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">
+                                                <td className="w-[180px] min-w-[180px] px-4 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">
                                                     {unit.approval_path?.name || '-'}
+                                                </td>
+                                                <td className="w-[180px] min-w-[180px] px-4 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">
+                                                    {unit.pencairan_approval_path?.name || '-'}
                                                 </td>
                                                 
                                                 {/* Kolom Aksi Icon Saja */}
                                                 {isAdmin() && (
-                                                    <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
+                                                    <td className="w-[112px] min-w-[112px] px-2 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
                                                         <ActionGroup>
                                                             <ActionButton
                                                                 variant="edit"

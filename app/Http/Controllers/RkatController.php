@@ -14,10 +14,13 @@ use App\Models\Unit;
 use App\Models\ApprovalPathStep;
 use App\Models\Karyawan;
 use App\Models\RkatKomentar;
+use App\Models\JenisKegiatanOption;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Inertia\Inertia;
@@ -61,6 +64,7 @@ class RkatController extends Controller
             'akunAnggarans' => $akunAnggarans,
             'ikus' => $ikus,
             'karyawans' => $karyawans,
+            'jenisKegiatanOptions' => JenisKegiatanOption::query()->where('is_active', true)->orderBy('nama')->get(['nama']),
         ]);
     }
 
@@ -174,6 +178,8 @@ class RkatController extends Controller
             'rincian_anggaran.*.kebutuhan' => ['nullable', 'string', 'max:255'],
             'rincian_anggaran.*.vol' => ['required', 'numeric', 'min:1'],
             'rincian_anggaran.*.satuan' => ['nullable', 'string', 'max:50'],
+            'rincian_anggaran.*.vol2' => ['nullable', 'numeric', 'min:1'],
+            'rincian_anggaran.*.satuan2' => ['nullable', 'string', 'max:50'],
             'rincian_anggaran.*.biaya_satuan' => ['required', 'numeric', 'min:0'],
             'rincian_anggaran.*.jumlah' => ['required', 'numeric', 'min:0'],
         ]);
@@ -192,7 +198,7 @@ class RkatController extends Controller
             'jadwal_pelaksanaan_mulai' => ['required', 'date', 'after_or_equal:today'],
             'jadwal_pelaksanaan_akhir' => ['required', 'date', 'after_or_equal:jadwal_pelaksanaan_mulai'],
             'lokasi_pelaksanaan' => ['required', 'string'],
-            'jenis_kegiatan' => ['required', 'string'],
+            'jenis_kegiatan' => ['required', 'string', Rule::exists('jenis_kegiatan_options', 'nama')->where('is_active', true)],
             'pjawab' => ['required', 'string'],
             'target' => ['required', 'string'],
             'anggaran' => ['required', 'numeric', 'min:0'],
@@ -201,12 +207,20 @@ class RkatController extends Controller
             'nomor_rekening' => ['nullable', 'required_if:jenis_pencairan,Bank', 'string'],
             'atas_nama' => ['nullable', 'required_if:jenis_pencairan,Bank', 'string'],
             'nama_penerima' => ['nullable', 'required_if:jenis_pencairan,Tunai', 'string'],
-            'dokumen_pendukung' => ['nullable', 'array'],
-            'dokumen_pendukung.*' => ['in:Pengajuan Rutin,Proposal,TOR,Usulan'],
+            'dokumen_links' => ['nullable', 'array', 'max:10'],
+            'dokumen_links.*' => ['nullable', 'url', 'regex:/^https:\/\/(drive|docs)\.google\.com\//i', 'max:2048'],
+            'dokumen_files' => ['nullable', 'array', 'max:10'],
+            'dokumen_files.*' => ['file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png', 'extensions:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png'],
         ]);
+
+        if (!$this->hasSupportingDocuments($request)) {
+            return back()->withErrors(['dokumen_links' => 'Tambahkan minimal satu tautan Google Drive atau berkas pendukung.'])->withInput();
+        }
 
         try {
             DB::beginTransaction();
+            $uploadedPaths = [];
+            $documents = $this->buildSupportingDocuments($request, [], [], $uploadedPaths);
 
             // A. SIMPAN HEADER RKAT
             $rkatHeader = RkatHeader::create([
@@ -246,7 +260,7 @@ class RkatController extends Controller
                 'nomor_rekening' => $validatedData['nomor_rekening'] ?? null,
                 'atas_nama' => $validatedData['atas_nama'] ?? null,
                 'nama_penerima' => $validatedData['nama_penerima'] ?? null,
-                'dokumen_pendukung' => $validatedData['dokumen_pendukung'] ?? null,
+                'dokumen_pendukung' => $documents,
             ]);
 
             // C. SIMPAN INDIKATOR KEBERHASILAN (Multi-row)
@@ -265,24 +279,36 @@ class RkatController extends Controller
             }
 
             // D. SIMPAN RAB
+            $totalAnggaran = 0;
             foreach ($request->input('rincian_anggaran') as $item) {
                 $kodeAnggaran = (isset($item['kode_anggaran']) && $item['kode_anggaran'] === '__OTHER__') ? null : ($item['kode_anggaran'] ?? null);
+                $volume = (float) $item['vol'];
+                $volume2 = isset($item['vol2']) && $item['vol2'] !== '' ? (float) $item['vol2'] : null;
+                $hargaSatuan = (float) $item['biaya_satuan'];
+                $subtotal = round($volume * ($volume2 ?? 1) * $hargaSatuan, 2);
+                $totalAnggaran += $subtotal;
                 RkatRabItem::create([
                     'id_rkat_detail' => $rkatDetail->id_rkat_detail,
                     'kode_anggaran' => $kodeAnggaran,
                     'deskripsi_item' => $item['kebutuhan'] ?? '-',
-                    'volume' => $item['vol'],
+                    'volume' => $volume,
                     'satuan' => $item['satuan'] ?? 'Paket',
-                    'harga_satuan' => $item['biaya_satuan'],
-                    'sub_total' => $item['jumlah'],
+                    'volume2' => $volume2,
+                    'satuan2' => $item['satuan2'] ?? null,
+                    'harga_satuan' => $hargaSatuan,
+                    'sub_total' => $subtotal,
                 ]);
             }
+
+            RkatHeader::query()->where('id_header', $rkatHeader->id_header)->update(['total_anggaran' => $totalAnggaran]);
+            RkatDetail::query()->where('id_rkat_detail', $rkatDetail->id_rkat_detail)->update(['anggaran' => $totalAnggaran]);
 
             DB::commit();
 
             return redirect()->route('daftar-ajuan.index')->with('success', 'Pengajuan RKAT berhasil disimpan sebagai Draft.');
         } catch (\Exception $e) {
             DB::rollBack();
+            foreach ($uploadedPaths ?? [] as $path) Storage::disk('local')->delete($path);
             Log::error('[RKAT] Kesalahan: ' . $e->getMessage());
 
             return redirect()->back()->with('error', 'Terjadi kesalahan saat memproses data: ' . $e->getMessage())->withInput();
@@ -331,6 +357,55 @@ class RkatController extends Controller
             'initialTotalAnggaran' => $initialTotalAnggaran,
             'komentars' => $rkatHeader->komentars,
         ]);
+    }
+
+    public function downloadDocument(RkatHeader $rkatHeader, int $index)
+    {
+        $detail = $rkatHeader->rkatDetails()->firstOrFail();
+        $document = $detail->dokumen_pendukung[$index] ?? null;
+
+        abort_unless(is_array($document) && ($document['type'] ?? null) === 'file' && !empty($document['path']), 404);
+
+        $user = Auth::user();
+        abort_unless($user->isAdmin() || $user->isApprover() || (int) $user->id_user === (int) $rkatHeader->diajukan_oleh || (int) $user->id_unit === (int) $rkatHeader->id_unit, 403);
+        abort_unless(Storage::disk('local')->exists($document['path']), 404);
+
+        return Storage::disk('local')->download($document['path'], $document['name'] ?? basename($document['path']));
+    }
+
+    private function hasSupportingDocuments(Request $request): bool
+    {
+        $hasLinks = collect($request->input('dokumen_links', []))->contains(fn ($link) => is_string($link) && trim($link) !== '');
+        $hasFiles = count($request->file('dokumen_files', [])) > 0;
+        $hasExisting = count($request->input('existing_dokumen_indices', [])) > 0;
+
+        return $hasLinks || $hasFiles || $hasExisting;
+    }
+
+    private function buildSupportingDocuments(Request $request, array $existingDocuments = [], array $existingIndices = [], array &$uploadedPaths = []): array
+    {
+        $documents = [];
+        foreach ($existingIndices as $index) {
+            if (array_key_exists((int) $index, $existingDocuments)) {
+                $documents[] = $existingDocuments[(int) $index];
+            }
+        }
+
+        foreach ($request->input('dokumen_links', []) as $link) {
+            if (is_string($link) && trim($link) !== '') {
+                $documents[] = ['type' => 'link', 'name' => 'Google Drive', 'url' => trim($link)];
+            }
+        }
+
+        foreach ($request->file('dokumen_files', []) as $file) {
+            if (!$file) continue;
+            $path = $file->store('rkat-documents', 'local');
+            if (!$path) throw new \RuntimeException('Berkas dokumen pendukung gagal disimpan.');
+            $uploadedPaths[] = $path;
+            $documents[] = ['type' => 'file', 'name' => $file->getClientOriginalName(), 'path' => $path];
+        }
+
+        return $documents;
     }
 
     /**
@@ -437,6 +512,11 @@ class RkatController extends Controller
             'akunAnggarans' => $akunAnggarans,
             'ikus' => $ikus,
             'karyawans' => $karyawans,
+            'jenisKegiatanOptions' => JenisKegiatanOption::query()
+                ->where('is_active', true)
+                ->orWhere('nama', $rkatHeader->rkatDetails->first()?->jenis_kegiatan)
+                ->orderBy('nama')
+                ->get(['nama']),
         ]);
     }
 
@@ -467,8 +547,11 @@ class RkatController extends Controller
             'indikator_kinerja.*.indikator' => ['required', 'string'],
             'rincian_anggaran' => ['required', 'array', 'min:1'],
             'rincian_anggaran.*.kode_anggaran' => ['nullable', 'string'],
+            'rincian_anggaran.*.kebutuhan' => ['nullable', 'string', 'max:255'],
             'rincian_anggaran.*.vol' => ['required', 'numeric', 'min:1'],
             'rincian_anggaran.*.satuan' => ['nullable', 'string', 'max:50'],
+            'rincian_anggaran.*.vol2' => ['nullable', 'numeric', 'min:1'],
+            'rincian_anggaran.*.satuan2' => ['nullable', 'string', 'max:50'],
             'rincian_anggaran.*.biaya_satuan' => ['required', 'numeric', 'min:0'],
             'rincian_anggaran.*.jumlah' => ['required', 'numeric', 'min:0'],
             'tahun_anggaran' => ['required', 'exists:tahun_anggarans,tahun_anggaran'],
@@ -482,7 +565,7 @@ class RkatController extends Controller
             'jadwal_pelaksanaan_mulai' => ['required', 'date'],
             'jadwal_pelaksanaan_akhir' => ['required', 'date', 'after_or_equal:jadwal_pelaksanaan_mulai'],
             'lokasi_pelaksanaan' => ['required', 'string'],
-            'jenis_kegiatan' => ['required', 'string'],
+            'jenis_kegiatan' => ['required', 'string', 'exists:jenis_kegiatan_options,nama'],
             'pjawab' => ['required', 'string'],
             'target' => ['required', 'string'],
             'anggaran' => ['required', 'numeric', 'min:0'],
@@ -491,10 +574,22 @@ class RkatController extends Controller
             'nomor_rekening' => ['nullable', 'required_if:jenis_pencairan,Bank', 'string'],
             'atas_nama' => ['nullable', 'required_if:jenis_pencairan,Bank', 'string'],
             'nama_penerima' => ['nullable', 'required_if:jenis_pencairan,Tunai', 'string'],
+            'existing_dokumen_indices' => ['nullable', 'array'],
+            'existing_dokumen_indices.*' => ['integer', 'min:0'],
+            'dokumen_links' => ['nullable', 'array', 'max:10'],
+            'dokumen_links.*' => ['nullable', 'url', 'regex:/^https:\/\/(drive|docs)\.google\.com\//i', 'max:2048'],
+            'dokumen_files' => ['nullable', 'array', 'max:10'],
+            'dokumen_files.*' => ['file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png', 'extensions:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png'],
         ]);
+
+        $currentDocuments = $rkatHeader->rkatDetails()->first()?->dokumen_pendukung ?? [];
+        if (!$this->hasSupportingDocuments($request)) {
+            return back()->withErrors(['dokumen_links' => 'Pertahankan atau tambahkan minimal satu tautan/berkas pendukung.'])->withInput();
+        }
 
         try {
             DB::beginTransaction();
+            $uploadedPaths = [];
 
             // LOGIKA REVISI: Simpan versi lama jika status saat ini adalah Revisi
             if ($rkatHeader->status_persetujuan === 'Revisi') {
@@ -539,13 +634,25 @@ class RkatController extends Controller
                 $rkatHeader->nomor_dokumen = RkatHeader::generateNomorDokumen($request->tahun_anggaran, $request->id_unit);
             }
 
+            $totalAnggaran = collect($request->input('rincian_anggaran'))->sum(function ($item) {
+                $volume = (float) $item['vol'];
+                $volume2 = isset($item['vol2']) && $item['vol2'] !== '' ? (float) $item['vol2'] : 1;
+                return round($volume * $volume2 * (float) $item['biaya_satuan'], 2);
+            });
+
             RkatHeader::query()->where('id_header', $rkatHeader->id_header)->update([
                 'tahun_anggaran' => $request->tahun_anggaran,
                 'id_unit' => $request->id_unit,
-                'total_anggaran' => $request->anggaran,
+                'total_anggaran' => $totalAnggaran,
             ]);
 
             $rkatDetail = $rkatHeader->rkatDetails()->first();
+            $documents = $this->buildSupportingDocuments(
+                $request,
+                $currentDocuments,
+                $request->input('existing_dokumen_indices', []),
+                $uploadedPaths
+            );
             RkatDetail::query()->where('id_rkat_detail', $rkatDetail->id_rkat_detail)->update([
                 'judul_kegiatan' => $request->judul_pengajuan,
                 'deskripsi_kegiatan' => $request->deskripsi_kegiatan,
@@ -561,13 +668,13 @@ class RkatController extends Controller
                 'jenis_kegiatan' => $request->jenis_kegiatan,
                 'pjawab' => $request->pjawab,
                 'target' => $request->target,
-                'anggaran' => $request->anggaran,
+                'anggaran' => $totalAnggaran,
                 'jenis_pencairan' => $request->jenis_pencairan,
                 'nama_bank' => $request->nama_bank,
                 'nomor_rekening' => $request->nomor_rekening,
                 'atas_nama' => $request->atas_nama,
                 'nama_penerima' => $request->nama_penerima,
-                'dokumen_pendukung' => $request->dokumen_pendukung,
+                'dokumen_pendukung' => $documents,
             ]);
 
             $rkatDetail->indikators()->delete();
@@ -586,14 +693,19 @@ class RkatController extends Controller
             $rkatDetail->rabItems()->delete();
             foreach ($request->input('rincian_anggaran') as $item) {
                 $kodeAnggaran = (isset($item['kode_anggaran']) && $item['kode_anggaran'] === '__OTHER__') ? null : ($item['kode_anggaran'] ?? null);
+                $volume = (float) $item['vol'];
+                $volume2 = isset($item['vol2']) && $item['vol2'] !== '' ? (float) $item['vol2'] : null;
+                $hargaSatuan = (float) $item['biaya_satuan'];
                 RkatRabItem::create([
                     'id_rkat_detail' => $rkatDetail->id_rkat_detail,
                     'kode_anggaran' => $kodeAnggaran,
                     'deskripsi_item' => $item['kebutuhan'] ?? '-',
-                    'volume' => $item['vol'],
+                    'volume' => $volume,
                     'satuan' => $item['satuan'] ?? '-',
-                    'harga_satuan' => $item['biaya_satuan'],
-                    'sub_total' => $item['jumlah'],
+                    'volume2' => $volume2,
+                    'satuan2' => $item['satuan2'] ?? null,
+                    'harga_satuan' => $hargaSatuan,
+                    'sub_total' => round($volume * ($volume2 ?? 1) * $hargaSatuan, 2),
                 ]);
             }
 
@@ -602,6 +714,7 @@ class RkatController extends Controller
             return redirect()->route('daftar-ajuan.index')->with('success', 'Perubahan RKAT berhasil disimpan.');
         } catch (\Exception $e) {
             DB::rollBack();
+            foreach ($uploadedPaths ?? [] as $path) Storage::disk('local')->delete($path);
             Log::error('[RKAT] Gagal Update: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal memperbarui RKAT: ' . $e->getMessage())->withInput();
         }

@@ -18,6 +18,8 @@ class RkatRabItem extends Model
         'deskripsi_item',
         'volume',
         'satuan',
+        'volume2',
+        'satuan2',
         'harga_satuan',
         'sub_total',
     ];

@@ -8,21 +8,9 @@ import InputError from '@/Components/InputError';
 import TextArea from '@/Components/TextArea';
 import RupiahInput from '@/Components/RupiahInput';
 import DateInput from '@/Components/DateInput';
-import { Plus, Trash2, Save, ArrowLeft, Calculator, Search, ChevronDown, Check } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Calculator, Search, ChevronDown, Check, Link2, Upload, X } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import CustomSelect from '@/Components/CustomSelect';
-import {
-    Combobox,
-    ComboboxChip,
-    ComboboxChips,
-    ComboboxChipsInput,
-    ComboboxContent,
-    ComboboxEmpty,
-    ComboboxItem,
-    ComboboxList,
-    ComboboxValue,
-    useComboboxAnchor,
-} from "@/components/ui/combobox"
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
 import FieldTooltipError from '@/Components/FieldTooltipError';
@@ -64,9 +52,15 @@ const formatRupiah = (angka) => {
                             : "border-gray-300/50 bg-white dark:bg-gray-900 dark:border-gray-700/50 dark:text-gray-300 focus:ring-teal-500 hover:border-teal-400"
                     )}
                 >
-                    <span className="truncate mr-2 text-left">
-                        {selected ? selected.label : placeholder}
-                    </span>
+                    {selected && value !== '__OTHER__' ? (
+                        <span className="mr-2 flex min-w-0 items-center text-left">
+                            <span className="truncate rounded bg-teal-50 px-1.5 py-1 font-mono text-[10px] font-bold text-teal-700 dark:bg-teal-900/50 dark:text-teal-300">
+                                {selected.label.split(' - ')[0]}
+                            </span>
+                        </span>
+                    ) : (
+                        <span className="truncate mr-2 text-left">{selected ? selected.label : placeholder}</span>
+                    )}
                     <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
                 </button>
             </PopoverTrigger>
@@ -166,7 +160,7 @@ const formatRupiah = (angka) => {
         </Popover>
     );
 };
-export default function Create({ auth, tahunAnggarans, units, akunAnggarans, ikus, karyawans = [] }) {
+export default function Create({ auth, tahunAnggarans, units, akunAnggarans, ikus, karyawans = [], jenisKegiatanOptions = [] }) {
     const { user, isAdmin } = usePermission();
 
     // Initial States
@@ -186,6 +180,8 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
         kebutuhan: '',
         vol: 1,
         satuan: 'Paket',
+        vol2: '',
+        satuan2: '',
         biaya_satuan: 0,
         jumlah: 0
     };
@@ -217,8 +213,9 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
         // 5. Output, PJ & Jenis
         target: '',
         pjawab: '',
-        jenis_kegiatan: 'Rutin',
-        dokumen_pendukung: [],
+        jenis_kegiatan: jenisKegiatanOptions[0]?.nama || '',
+        dokumen_links: [],
+        dokumen_files: [],
 
         // 6. Keuangan
         anggaran: 0,
@@ -237,6 +234,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
     const [isManualDeskripsi, setIsManualDeskripsi] = useState(false);
     const [isManualPic, setIsManualPic] = useState(false);
     const [formErrors, setFormErrors] = useState({});
+    const [newDocLink, setNewDocLink] = useState('');
 
     const getFieldError = (field) => formErrors[field] || errors[field];
 
@@ -245,6 +243,35 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
         if (formErrors[field]) {
             setFormErrors(prev => ({ ...prev, [field]: null }));
         }
+    };
+
+    const addDocLink = () => {
+        const link = newDocLink.trim();
+        if (!link) return;
+        setData('dokumen_links', [...data.dokumen_links, link]);
+        setNewDocLink('');
+        setFormErrors(prev => ({ ...prev, dokumen_links: null }));
+    };
+
+    const handleDocFilesChange = (event) => {
+        const allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png'];
+        const selectedFiles = Array.from(event.target.files || []);
+        const validFiles = selectedFiles.filter((file) => {
+            const extension = file.name.split('.').pop()?.toLowerCase();
+            return allowedExtensions.includes(extension) && file.size <= 10 * 1024 * 1024;
+        });
+        const rejectedCount = selectedFiles.length - validFiles.length;
+
+        if (validFiles.length) {
+            setData('dokumen_files', [...data.dokumen_files, ...validFiles]);
+        }
+        if (rejectedCount) {
+            toast.error('Berkas tidak didukung', { description: 'Pilih PDF, Word, Excel, PowerPoint, atau gambar dengan ukuran maksimal 10 MB per berkas.' });
+            setFormErrors(prev => ({ ...prev, dokumen_files: 'Tipe atau ukuran berkas tidak sesuai.' }));
+        } else if (validFiles.length) {
+            setFormErrors(prev => ({ ...prev, dokumen_files: null, dokumen_links: null }));
+        }
+        event.target.value = '';
     };
 
     // --- LOGIC 1: AUTO GENERATE KODE AKUN ---
@@ -326,17 +353,19 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
 
         if (field === 'kode_anggaran') {
             const kode = value;
+            const previousAccount = getReferenceAccount(item.kode_anggaran);
             item.kode_anggaran = kode;
 
             if (isOtherMode(kode)) {
-                // Mode Lainnya: kosongkan kebutuhan & harga, satuan default Paket
-                item.kebutuhan = '';
+                // Pertahankan uraian yang sudah diketik saat pilihan SBO diubah.
                 item.satuan = 'Paket';
                 item.biaya_satuan = 0;
             } else {
                 const akun = getReferenceAccount(kode);
                 if (akun) {
-                    item.kebutuhan = akun.nama_anggaran;
+                    if (!item.kebutuhan || item.kebutuhan === previousAccount?.nama_anggaran) {
+                        item.kebutuhan = akun.nama_anggaran;
+                    }
                     item.satuan = akun.satuan || item.satuan;
                     item.biaya_satuan = parseFloat(akun.nominal) || 0;
                 }
@@ -361,17 +390,18 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
             }
             item.biaya_satuan = inputHarga;
         }
-        else if (field === 'vol') {
+        else if (field === 'vol' || field === 'vol2') {
             const cleanVal = String(value).replace(/[-+eE]/g, '');
-            item.vol = cleanVal;
+            item[field] = cleanVal;
         }
         else {
             item[field] = value;
         }
 
         const vol = parseFloat(item.vol) || 0;
+        const vol2 = item.vol2 === '' ? 1 : (parseFloat(item.vol2) || 0);
         const harga = parseFloat(item.biaya_satuan) || 0;
-        item.jumlah = vol * harga;
+        item.jumlah = vol * vol2 * harga;
 
         list[index] = item;
         const totalAnggaranBaru = list.reduce((acc, curr) => acc + (parseFloat(curr.jumlah) || 0), 0);
@@ -458,8 +488,8 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
             errorsObj.jenis_kegiatan = 'Harap isi bidang ini.';
             missingLabels.push('Jenis Kegiatan');
         }
-        if (!data.dokumen_pendukung || data.dokumen_pendukung.length === 0) {
-            errorsObj.dokumen_pendukung = 'Harap tambahkan minimal 1 dokumen pendukung.';
+        if (!data.dokumen_links.some(link => link.trim()) && data.dokumen_files.length === 0) {
+            errorsObj.dokumen_links = 'Tambahkan minimal satu tautan atau berkas pendukung.';
             missingLabels.push('Dokumen Pendukung');
         }
         if (!data.iku_id) {
@@ -538,7 +568,12 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                 onClick: () => {
                     const toastId = toast.loading("Sedang menyimpan data...");
                     post(route('daftar-ajuan.store'), {
-                        onSuccess: () => {
+                        onSuccess: (page) => {
+                            const serverError = page.props.flash?.error;
+                            if (serverError) {
+                                toast.error("Gagal Menyimpan", { id: toastId, description: serverError });
+                                return;
+                            }
                             toast.success("Berhasil disimpan!", { id: toastId, description: "Pengajuan RKAT telah berhasil disimpan." });
                         },
                         onError: (err) => {
@@ -572,9 +607,6 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
         nominal: a.nominal,
         satuan: a.satuan
     }));
-
-    const dokumenPendukungList = ['Pengajuan Rutin', 'Proposal', 'TOR', 'Usulan'];
-    const anchor = useComboboxAnchor();
 
     return (
         <AuthenticatedLayout
@@ -794,49 +826,38 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                         <CustomSelect
                                             value={data.jenis_kegiatan}
                                             onChange={(e) => handleFieldChange('jenis_kegiatan', e.target.value)}
-                                            options={[
-                                                { value: 'Rutin', label: 'Rutin' },
-                                                { value: 'Inovasi', label: 'Inovasi' }
-                                            ]}
+                                            options={jenisKegiatanOptions.map((option) => ({ value: option.nama, label: option.nama }))}
                                             className={`mt-1 ${getFieldError('jenis_kegiatan') ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
                                         />
                                         <FieldTooltipError message={getFieldError('jenis_kegiatan')} />
                                     </div>
                                     <div className="md:col-span-3 relative pb-2">
                                         <InputLabel value="Dokumen Pendukung" required />
-                                        <div className={`mt-1 rounded-md transition-all ${getFieldError('dokumen_pendukung') ? 'ring-2 ring-rose-500 border border-rose-500' : ''}`}>
-                                            <Combobox
-                                                multiple
-                                                autoHighlight
-                                                items={dokumenPendukungList}
-                                                value={data.dokumen_pendukung}
-                                                onValueChange={(val) => handleFieldChange('dokumen_pendukung', val)}
-                                            >
-                                                <ComboboxChips ref={anchor}>
-                                                    <ComboboxValue>
-                                                        {(values) => (
-                                                            <React.Fragment>
-                                                                {values.map((value) => (
-                                                                    <ComboboxChip key={value}>{value}</ComboboxChip>
-                                                                ))}
-                                                                <ComboboxChipsInput placeholder="Pilih Dokumen..." />
-                                                            </React.Fragment>
-                                                        )}
-                                                    </ComboboxValue>
-                                                </ComboboxChips>
-                                                <ComboboxContent anchor={anchor}>
-                                                    <ComboboxEmpty>Tidak ditemukan.</ComboboxEmpty>
-                                                    <ComboboxList>
-                                                        {dokumenPendukungList.map((item) => (
-                                                            <ComboboxItem key={item} value={item}>
-                                                                {item}
-                                                            </ComboboxItem>
-                                                        ))}
-                                                    </ComboboxList>
-                                                </ComboboxContent>
-                                            </Combobox>
+                                        <div className={`mt-1 space-y-3 rounded-md border p-4 ${getFieldError('dokumen_links') ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-gray-200 dark:border-gray-700'}`}>
+                                            <div className="flex flex-col gap-2 sm:flex-row">
+                                                <TextInput value={newDocLink} onChange={(e) => setNewDocLink(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addDocLink(); } }} className="h-10 flex-1" placeholder="Tempel tautan Google Drive (pastikan akses dibagikan)" />
+                                                <button type="button" onClick={addDocLink} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-teal-600 px-4 text-sm font-semibold text-white hover:bg-teal-700"><Link2 size={16} /> Tambah tautan</button>
+                                            </div>
+                                            {data.dokumen_links.map((link, index) => (
+                                                <div key={`${link}-${index}`} className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-sm dark:bg-gray-900">
+                                                    <Link2 size={15} className="shrink-0 text-teal-600" />
+                                                    <a href={link} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate text-teal-700 hover:underline dark:text-teal-300">{link}</a>
+                                                    <button type="button" onClick={() => setData('dokumen_links', data.dokumen_links.filter((_, itemIndex) => itemIndex !== index))} className="rounded p-1 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700" aria-label="Hapus tautan"><X size={15} /></button>
+                                                </div>
+                                            ))}
+                                            <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-gray-300 px-3 py-3 text-sm text-gray-600 hover:border-teal-400 hover:text-teal-700 dark:border-gray-600 dark:text-gray-300">
+                                                <Upload size={17} />
+                                                <span className="flex-1">Pilih berkas (PDF, Word, Excel, PowerPoint, atau gambar; maks. 10 MB per berkas)</span>
+                                                <input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png" className="sr-only" onChange={handleDocFilesChange} />
+                                            </label>
+                                            {data.dokumen_files.map((file, index) => (
+                                                <div key={`${file.name}-${index}`} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                                    <span className="min-w-0 flex-1 truncate">{file.name}</span>
+                                                    <button type="button" onClick={() => setData('dokumen_files', data.dokumen_files.filter((_, itemIndex) => itemIndex !== index))} className="rounded p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Hapus berkas"><X size={15} /></button>
+                                                </div>
+                                            ))}
                                         </div>
-                                        <FieldTooltipError message={getFieldError('dokumen_pendukung')} />
+                                        <FieldTooltipError message={getFieldError('dokumen_files') || getFieldError('dokumen_files.0') || getFieldError('dokumen_links')} />
                                     </div>
                                 </div>
                             </div>
@@ -927,10 +948,12 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                         <thead className="bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 font-bold uppercase">
                                             <tr>
                                                 <th className="px-2 py-2 w-8 text-center">No</th>
-                                                <th className="px-2 py-2 w-[30%] min-w-[250px]">Standar Biaya Operasional</th>
-                                                <th className="px-2 py-2 min-w-[150px]">Uraian / Kebutuhan</th>
+                                                <th className="px-2 py-2 w-[12%] min-w-[110px]">Kode SBO</th>
+                                                <th className="px-2 py-2 w-[30%] min-w-[300px]">Uraian / Kebutuhan</th>
                                                 <th className="px-2 py-2 w-16 text-center">Vol</th>
                                                 <th className="px-2 py-2 w-20 text-center">Satuan</th>
+                                                <th className="px-2 py-2 w-16 text-center">Vol 2</th>
+                                                <th className="px-2 py-2 w-20 text-center">Satuan 2</th>
                                                 <th className="px-2 py-2 w-32 text-right">Harga (@)</th>
                                                 <th className="px-2 py-2 w-32 text-right">Subtotal</th>
                                                 <th className="px-2 py-2 w-8"></th>
@@ -977,6 +1000,27 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                                             onChange={(e) => handleRincianChange(index, 'satuan', e.target.value)}
                                                             className="w-full h-9 text-xs text-center px-1"
                                                             placeholder="Paket"
+                                                        />
+                                                    </td>
+                                                    <td className="px-2 py-1 align-middle">
+                                                        <TextInput
+                                                            type="number"
+                                                            value={item.vol2}
+                                                            onChange={(e) => handleRincianChange(index, 'vol2', e.target.value)}
+                                                            onKeyDown={(e) => {
+                                                                if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault();
+                                                            }}
+                                                            className="w-full h-9 text-xs text-center px-1"
+                                                            min="1"
+                                                            placeholder="Opsional"
+                                                        />
+                                                    </td>
+                                                    <td className="px-2 py-1 align-middle">
+                                                        <TextInput
+                                                            value={item.satuan2}
+                                                            onChange={(e) => handleRincianChange(index, 'satuan2', e.target.value)}
+                                                            className="w-full h-9 text-xs text-center px-1"
+                                                            placeholder="Opsional"
                                                         />
                                                     </td>
                                                     <td className="px-2 py-1 align-middle">

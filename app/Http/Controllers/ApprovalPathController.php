@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Models\ApprovalPath;
 use App\Models\ApprovalPathStep;
 use App\Models\Unit;
+use Illuminate\Support\Facades\DB;
 
 class ApprovalPathController extends Controller
 {
@@ -14,11 +15,32 @@ class ApprovalPathController extends Controller
     {
         $paths = ApprovalPath::with('steps.unit')->get();
         $units = Unit::select(['id_unit', 'nama_unit'])->get();
+        $lpjApprovalPathId = DB::table('approval_path_settings')->where('key', 'lpj')->value('approval_path_id');
 
         return Inertia::render('Admin/ApprovalPath/Index', [
             'paths' => $paths,
-            'units' => $units
+            'units' => $units,
+            'lpjApprovalPathId' => $lpjApprovalPathId,
         ]);
+    }
+
+    public function updateLpjPath(Request $request)
+    {
+        $validated = $request->validate([
+            'approval_path_id' => ['required', 'exists:approval_paths,id'],
+        ]);
+
+        $path = ApprovalPath::with('steps')->findOrFail($validated['approval_path_id']);
+        if ($path->steps->isEmpty()) {
+            return redirect()->back()->withErrors(['approval_path_id' => 'Alur LPJ harus memiliki minimal satu tahapan.']);
+        }
+
+        DB::table('approval_path_settings')->updateOrInsert(
+            ['key' => 'lpj'],
+            ['approval_path_id' => $path->id, 'updated_at' => now(), 'created_at' => now()]
+        );
+
+        return redirect()->back()->with('success', 'Alur persetujuan LPJ bersama berhasil diperbarui.');
     }
 
     public function store(Request $request)

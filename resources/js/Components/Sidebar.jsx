@@ -74,6 +74,7 @@ const navItems = [
             { name: 'Kelola Pengguna', href: '/user', icon: Users, activePath: '/user', adminOnly: true },
             { name: 'Unit Kerja', href: '/unit', icon: Building2, activePath: '/unit', adminOnly: true },
             { name: 'Alur Persetujuan', href: '/approval-path', icon: Route, activePath: '/approval-path', adminOnly: true },
+            { name: 'Jenis Kegiatan', href: '/jenis-kegiatan', icon: Settings, activePath: '/jenis-kegiatan', adminOnly: true },
         ],
     }
 ];

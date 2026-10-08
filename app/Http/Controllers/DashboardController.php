@@ -84,7 +84,9 @@ class DashboardController extends Controller
      */
     private function getOptimizedSummary(User $user, int $tahunSekarang): array
     {
-        $query = RkatHeader::query()->where('tahun_anggaran', $tahunSekarang);
+        $query = RkatHeader::query()
+            ->where('tahun_anggaran', $tahunSekarang)
+            ->whereNull('parent_id'); // Hanya dokumen live, bukan arsip revisi
 
         if (!$user->isAdmin()) {
             $query->where('id_unit', $user->id_unit);
@@ -103,7 +105,8 @@ class DashboardController extends Controller
 
         $pencairanQuery = PencairanDana::query()
             ->join('rkat_headers', 'pencairan_danas.id_header', '=', 'rkat_headers.id_header', 'inner', false)
-            ->where('rkat_headers.tahun_anggaran', $tahunSekarang);
+            ->where('rkat_headers.tahun_anggaran', $tahunSekarang)
+            ->whereNull('rkat_headers.parent_id'); // Hanya dokumen live, bukan arsip revisi
 
         if (!$user->isAdmin()) {
             $pencairanQuery->where('rkat_headers.id_unit', $user->id_unit);
@@ -123,7 +126,8 @@ class DashboardController extends Controller
         $lpjQuery = Lpj::query()
             ->join('pencairan_danas', 'lpjs.id_pencairan', '=', 'pencairan_danas.id_pencairan', 'inner', false)
             ->join('rkat_headers', 'pencairan_danas.id_header', '=', 'rkat_headers.id_header', 'inner', false)
-            ->where('rkat_headers.tahun_anggaran', $tahunSekarang);
+            ->where('rkat_headers.tahun_anggaran', $tahunSekarang)
+            ->whereNull('rkat_headers.parent_id'); // Hanya dokumen live, bukan arsip revisi
 
         if (!$user->isAdmin()) {
             $lpjQuery->where('rkat_headers.id_unit', $user->id_unit);
@@ -188,8 +192,10 @@ class DashboardController extends Controller
      */
     private function getOptimizedGrafik(User $user, int $tahunSekarang): array
     {
-        // 1. Data RKAT per bulan
-        $queryRkat = RkatHeader::query()->where('tahun_anggaran', '=', $tahunSekarang, 'and');
+        // 1. Data RKAT per bulan (hanya dokumen live, bukan arsip)
+        $queryRkat = RkatHeader::query()
+            ->where('tahun_anggaran', '=', $tahunSekarang, 'and')
+            ->whereNull('parent_id');
         if (!$user->isAdmin()) {
             $queryRkat->where('id_unit', '=', $user->id_unit, 'and');
         }
@@ -201,7 +207,8 @@ class DashboardController extends Controller
         // 2. Data Pencairan per bulan
         $queryPencairan = PencairanDana::query()
             ->join('rkat_headers', 'pencairan_danas.id_header', '=', 'rkat_headers.id_header')
-            ->where('rkat_headers.tahun_anggaran', '=', $tahunSekarang);
+            ->where('rkat_headers.tahun_anggaran', '=', $tahunSekarang)
+            ->whereNull('rkat_headers.parent_id');
         if (!$user->isAdmin()) {
             $queryPencairan->where('rkat_headers.id_unit', '=', $user->id_unit);
         }
@@ -214,7 +221,8 @@ class DashboardController extends Controller
         $queryLpj = Lpj::query()
             ->join('pencairan_danas', 'lpjs.id_pencairan', '=', 'pencairan_danas.id_pencairan')
             ->join('rkat_headers', 'pencairan_danas.id_header', '=', 'rkat_headers.id_header')
-            ->where('rkat_headers.tahun_anggaran', '=', $tahunSekarang);
+            ->where('rkat_headers.tahun_anggaran', '=', $tahunSekarang)
+            ->whereNull('rkat_headers.parent_id');
         if (!$user->isAdmin()) {
             $queryLpj->where('rkat_headers.id_unit', '=', $user->id_unit);
         }

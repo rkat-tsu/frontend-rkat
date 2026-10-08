@@ -674,7 +674,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                         const isPengaju = isBelongsToUnit || isAdmin();
                                         const canEdit = (lpj.status_lpj === 'Draft' || lpj.status_lpj === 'Revisi') && isPengaju;
                                         const canSubmit = (lpj.status_lpj === 'Draft' || lpj.status_lpj === 'Revisi') && isPengaju;
-                                        const canApprove = lpj.status_lpj === 'Diajukan' && (isApprover() || isAdmin());
+                                        const canApprove = Boolean(lpj.can_approve);
 
                                         return (
                                             <tr key={lpj.id_lpj} className="hover:bg-gray-50/80 dark:hover:bg-gray-700/30 transition">
@@ -713,6 +713,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                                 </td>
                                                 <td className="py-3.5 px-4 text-center border-r border-gray-200/80 dark:border-gray-700/50 last:border-r-0">
                                                     <StatusBadge status={lpj.status_lpj} type="lpj" />
+                                                    {lpj.status_lpj === 'Diajukan' && lpj.tahap_persetujuan && <div className="mt-1 text-[10px] text-gray-500">Tahap: {lpj.tahap_persetujuan}</div>}
                                                 </td>
                                                 <td className="py-3.5 px-4 text-center">
                                                     <ActionGroup>
@@ -1158,10 +1159,10 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                         <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-4">
                             <div>
                                 <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <FileCheck2 className="w-5 h-5 text-teal-600" />
+                                    <FileCheck2 className="w-5 h-5 text-teal-600 dark:text-teal-400" />
                                     <span>{selectedLpjDetail.nomor_lpj}</span>
                                 </h3>
-                                <p className="text-xs text-gray-500">{selectedLpjDetail.judul_lpj}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{selectedLpjDetail.judul_lpj}</p>
                             </div>
                             {getStatusBadge(selectedLpjDetail.status_lpj)}
                         </div>
@@ -1187,7 +1188,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                             </div>
                             <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl space-y-1">
                                 <span className="text-gray-400 block">Sisa Pengembalian Dana:</span>
-                                <span className={`font-bold ${selectedLpjDetail.sisa_dana < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                <span className={`font-bold ${selectedLpjDetail.sisa_dana < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                                     {formatCurrency(selectedLpjDetail.sisa_dana)}
                                 </span>
                             </div>
@@ -1205,10 +1206,10 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
 
                         {/* Rincian Items */}
                         <div className="space-y-2">
-                            <h4 className="font-bold text-xs uppercase text-gray-500">Rincian Item Realisasi</h4>
+                            <h4 className="font-bold text-xs uppercase text-gray-500 dark:text-gray-400">Rincian Item Realisasi</h4>
                             <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden text-xs">
-                                <table className="w-full text-left">
-                                    <thead className="bg-gray-100 dark:bg-gray-900 font-semibold">
+                                <table className="w-full text-left text-gray-700 dark:text-gray-200">
+                                    <thead className="bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-200 font-semibold">
                                         <tr>
                                             <th className="p-2.5">Item</th>
                                             <th className="p-2.5 text-right">Vol</th>
@@ -1219,14 +1220,14 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                                         {selectedLpjDetail.items?.map((item, idx) => (
-                                            <tr key={idx}>
-                                                <td className="p-2.5 font-medium">
+                                            <tr key={idx} className="bg-white dark:bg-gray-800">
+                                                <td className="p-2.5 font-medium text-gray-800 dark:text-gray-100">
                                                     {item.pencairan_item?.rkat_rab_item?.deskripsi_item || 'Item'}
                                                 </td>
-                                                <td className="p-2.5 text-right">{item.volume_realisasi}</td>
-                                                <td className="p-2.5 text-right">{formatCurrency(item.harga_satuan_realisasi)}</td>
-                                                <td className="p-2.5 text-right font-bold">{formatCurrency(item.sub_total_realisasi)}</td>
-                                                <td className="p-2.5 text-gray-500">{item.nomor_kwitansi || '-'}</td>
+                                                <td className="p-2.5 text-right text-gray-700 dark:text-gray-200">{item.volume_realisasi}</td>
+                                                <td className="p-2.5 text-right text-gray-700 dark:text-gray-200">{formatCurrency(item.harga_satuan_realisasi)}</td>
+                                                <td className="p-2.5 text-right font-bold text-gray-800 dark:text-gray-100">{formatCurrency(item.sub_total_realisasi)}</td>
+                                                <td className="p-2.5 text-gray-500 dark:text-gray-400">{item.nomor_kwitansi || '-'}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -1248,7 +1249,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                             <button
                                 type="button"
                                 onClick={() => setIsDetailModalOpen(false)}
-                                className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 transition"
+                                className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition"
                             >
                                 Tutup
                             </button>

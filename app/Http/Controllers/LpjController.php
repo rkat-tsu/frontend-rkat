@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use App\Models\ApprovalPath;
 
 class LpjController extends Controller
 {
@@ -115,6 +117,18 @@ class LpjController extends Controller
 
         $perPage = (int) $request->input('per_page', 15);
         $lpjs = $query->paginate($perPage)->onEachSide(0)->withQueryString();
+        $lpjPathId = DB::table('approval_path_settings')->where('key', 'lpj')->value('approval_path_id');
+        $lpjPath = $lpjPathId ? ApprovalPath::with('steps')->find($lpjPathId) : null;
+        $lpjs->getCollection()->transform(function ($lpj) use ($user, $lpjPath) {
+            $step = $lpjPath?->steps->firstWhere('order', $lpj->current_approval_step);
+            if (!$step && $lpj->status_lpj === 'Diajukan' && !$lpj->current_approval_step) {
+                $step = $lpjPath?->steps->sortBy('order')->first();
+            }
+            $unit = $lpj->rkatHeader?->unit ?? $lpj->pencairanDana?->rkatHeader?->unit;
+            $lpj->setAttribute('tahap_persetujuan', $step?->step_name);
+            $lpj->setAttribute('can_approve', $lpj->status_lpj === 'Diajukan' && $this->canApproveLpjStep($user, $step, $unit));
+            return $lpj;
+        });
 
         // Statistical Summaries
         $baseStatsQuery = Lpj::query();
@@ -433,8 +447,16 @@ class LpjController extends Controller
             abort(403, 'Hanya unit pengusul yang memiliki wewenang untuk mengajukan LPJ ini.');
         }
 
+        $pathId = DB::table('approval_path_settings')->where('key', 'lpj')->value('approval_path_id');
+        $path = $pathId ? ApprovalPath::with('steps')->find($pathId) : null;
+        $firstStep = $path?->steps->sortBy('order')->first();
+        if (!$firstStep) {
+            return redirect()->back()->with('error', 'Alur persetujuan LPJ belum diatur oleh Admin.');
+        }
+
         $lpj->update([
             'status_lpj' => 'Diajukan',
+            'current_approval_step' => $firstStep->order,
             'tanggal_pengajuan' => now(),
         ]);
 
@@ -448,10 +470,6 @@ class LpjController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->isApprover() && $user->peran !== 'Admin') {
-            abort(403, 'Anda tidak memiliki hak wewenang untuk menyetujui LPJ ini.');
-        }
-
         $request->validate([
             'aksi' => 'required|in:Disetujui,Revisi,Ditolak',
             'catatan' => 'nullable|string',
@@ -461,14 +479,45 @@ class LpjController extends Controller
             return redirect()->back()->with('error', 'Catatan wajib diisi apabila melakukan revisi atau penolakan.');
         }
 
+        if ($lpj->status_lpj !== 'Diajukan') {
+            return redirect()->back()->with('error', 'LPJ ini sedang tidak menunggu persetujuan.');
+        }
+
+        $pathId = DB::table('approval_path_settings')->where('key', 'lpj')->value('approval_path_id');
+        $path = $pathId ? ApprovalPath::with('steps')->find($pathId) : null;
+        $currentStep = $path?->steps->firstWhere('order', $lpj->current_approval_step);
+        if (!$currentStep && !$lpj->current_approval_step) {
+            $currentStep = $path?->steps->sortBy('order')->first();
+        }
+        if (!$currentStep) {
+            return redirect()->back()->with('error', 'Tahapan persetujuan LPJ tidak ditemukan. Hubungi Admin.');
+        }
+
+        $unitId = $lpj->rkatHeader?->id_unit ?? $lpj->pencairanDana?->rkatHeader?->id_unit;
+        $unit = Unit::find($unitId);
+        if (!$this->canApproveLpjStep($user, $currentStep, $unit)) {
+            abort(403, 'Anda bukan approver pada tahapan LPJ saat ini.');
+        }
+
+        $nextStep = $request->aksi === 'Disetujui'
+            ? $path->steps->first(fn ($step) => $step->order > $currentStep->order)
+            : null;
+        $newStatus = match ($request->aksi) {
+            'Revisi' => 'Revisi',
+            'Ditolak' => 'Ditolak',
+            default => $nextStep ? 'Diajukan' : 'Disetujui',
+        };
+
         $lpj->update([
-            'status_lpj' => $request->aksi,
+            'status_lpj' => $newStatus,
+            'current_approval_step' => $newStatus === 'Diajukan' ? $nextStep->order : null,
             'catatan' => $request->catatan ?? null,
             'disetujui_oleh' => Auth::id(),
-            'tanggal_persetujuan' => now(),
+            'tanggal_persetujuan' => $newStatus === 'Disetujui' ? now() : null,
         ]);
 
-        $msg = match ($request->aksi) {
+        $msg = match ($newStatus) {
+            'Diajukan' => 'Persetujuan LPJ diteruskan ke tahap berikutnya.',
             'Disetujui' => 'Dokumen LPJ berhasil disetujui.',
             'Revisi' => 'Dokumen LPJ dikembalikan untuk revisi.',
             'Ditolak' => 'Dokumen LPJ telah ditolak.',
@@ -501,5 +550,24 @@ class LpjController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal membuat dokumen PDF LPJ: ' . $e->getMessage());
         }
+    }
+
+    private function canApproveLpjStep($user, $step, $unit = null): bool
+    {
+        if ($user->peran === 'Admin') {
+            return true;
+        }
+        if (!$step) {
+            return false;
+        }
+
+        $unitId = $unit?->id_unit;
+        return match ($step->approver_type) {
+            'role' => in_array($step->role_name, $user->getEffectiveRoles(), true),
+            'unit' => $user->isUnitHead() && (int) $step->unit_id === (int) $user->id_unit,
+            'self_unit_head' => $user->isUnitHead() && (int) $unitId === (int) $user->id_unit,
+            'parent_unit' => $user->isUnitHead() && (int) $unit?->parent_id === (int) $user->id_unit,
+            default => false,
+        };
     }
 }

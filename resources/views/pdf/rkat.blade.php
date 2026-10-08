@@ -359,31 +359,25 @@
         </tr>
         <tr>
             <td class="label-col">Jenis Kegiatan</td>
-            <td>
-                <div class="checkbox-group">
-                    <div class="checkbox">{{ $detail->jenis_kegiatan == 'Rutin' ? 'v' : '' }}</div> Rutin
-                </div>
-                <div class="checkbox-group">
-                    <div class="checkbox">{{ $detail->jenis_kegiatan == 'Inovasi' ? 'v' : '' }}</div> Inovasi
-                </div>
-            </td>
+            <td>{{ $detail->jenis_kegiatan ?? '-' }}</td>
         </tr>
         <tr>
             <td class="label-col">Dokumen Pendukung</td>
             <td>
                 @php $docs = $detail->dokumen_pendukung ?? []; @endphp
-                <div class="checkbox-group">
-                    <div class="checkbox">{{ in_array('Pengajuan Rutin', $docs) ? 'v' : '' }}</div> Pengajuan Rutin
-                </div>
-                <div class="checkbox-group">
-                    <div class="checkbox">{{ in_array('Proposal', $docs) ? 'v' : '' }}</div> Proposal
-                </div>
-                <div class="checkbox-group">
-                    <div class="checkbox">{{ in_array('TOR', $docs) ? 'v' : '' }}</div> TOR
-                </div>
-                <div class="checkbox-group">
-                    <div class="checkbox">{{ in_array('Usulan', $docs) ? 'v' : '' }}</div> Usulan
-                </div>
+                @if (is_array($docs) && count($docs))
+                    @foreach ($docs as $index => $doc)
+                        @php
+                            $docName = is_array($doc) ? ($doc['name'] ?? $doc['url'] ?? 'Dokumen') : $doc;
+                            $docUrl = is_array($doc) && ($doc['type'] ?? '') === 'link'
+                                ? ($doc['url'] ?? null)
+                                : (is_array($doc) && ($doc['type'] ?? '') === 'file' ? route('daftar-ajuan.dokumen', [$rkat->uuid, $index]) : null);
+                        @endphp
+                        <div style="margin-bottom: 3px; word-break: break-word;">{{ $docName }} @if ($docUrl) — {{ $docUrl }} @endif</div>
+                    @endforeach
+                @else
+                    -
+                @endif
             </td>
         </tr>
         <tr>

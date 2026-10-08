@@ -13,10 +13,11 @@ import FieldTooltipError from '@/Components/FieldTooltipError';
 import { toast } from 'sonner';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
-export default function Index({ auth, paths, units }) {
+export default function Index({ auth, paths, units, lpjApprovalPathId }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingPath, setEditingPath] = useState(null);
     const [formErrors, setFormErrors] = useState({});
+    const [selectedLpjPath, setSelectedLpjPath] = useState(lpjApprovalPathId ? String(lpjApprovalPathId) : '');
     const [formData, setFormData] = useState({
         name: '',
         description: '',
@@ -144,6 +145,15 @@ export default function Index({ auth, paths, units }) {
         });
     };
 
+    const saveLpjPath = () => {
+        const toastId = toast.loading('Sedang menyimpan alur LPJ...');
+        router.post(route('approval-path.lpj.update'), { approval_path_id: selectedLpjPath }, {
+            preserveScroll: true,
+            onSuccess: () => toast.success('Alur LPJ bersama berhasil diperbarui', { id: toastId }),
+            onError: () => toast.error('Pilih alur yang memiliki tahapan persetujuan', { id: toastId }),
+        });
+    };
+
     const getApproverLabel = (step) => {
         if (step.approver_type === 'role') return step.role_name ? step.role_name.replace(/_/g, ' ') : 'Role';
         if (step.approver_type === 'unit') return step.unit?.nama_unit || 'Unit Spesifik';
@@ -172,7 +182,7 @@ export default function Index({ auth, paths, units }) {
                                 </h1>
                             </div>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Atur hirarki dan urutan pengesahan dokumen RKAT & Keuangan untuk setiap unit kerja.
+                                Atur alur RKA dan pencairan per unit, serta alur LPJ bersama untuk seluruh unit.
                             </p>
                         </div>
                         <button
@@ -182,6 +192,22 @@ export default function Index({ auth, paths, units }) {
                             <Plus className="w-4 h-4" />
                             <span>Tambah Alur Baru</span>
                         </button>
+                    </div>
+
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-indigo-200 dark:border-indigo-900 shadow-sm p-6 border-l-4 border-l-indigo-500">
+                        <div className="flex flex-col md:flex-row md:items-end gap-4">
+                            <div className="flex-1 space-y-1">
+                                <h2 className="font-bold text-gray-900 dark:text-white">Alur Persetujuan LPJ (Semua Unit)</h2>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Semua unit menggunakan alur yang sama. Admin dapat mengubah alur tujuan persetujuannya dari sini.</p>
+                                <CustomSelect
+                                    value={selectedLpjPath}
+                                    onChange={setSelectedLpjPath}
+                                    options={paths.filter(path => path.steps.length > 0).map(path => ({ value: String(path.id), label: path.name }))}
+                                    placeholder="Pilih alur untuk LPJ"
+                                />
+                            </div>
+                            <button type="button" onClick={saveLpjPath} disabled={!selectedLpjPath} className="h-10 px-5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold">Simpan Alur LPJ</button>
+                        </div>
                     </div>
 
                     {/* Main Content Cards */}
@@ -451,4 +477,3 @@ export default function Index({ auth, paths, units }) {
         </AuthenticatedLayout>
     );
 }
-

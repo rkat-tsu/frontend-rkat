@@ -237,26 +237,26 @@ export default function Show({ auth, rkat = {}, history = [], initialTotalAnggar
                             {/* Nilai Awal */}
                             <div className="bg-gray-50 dark:bg-gray-900/60 rounded-xl p-4 border border-gray-100 dark:border-gray-700/60">
                                 <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider block">
-                                    Nilai Usulan Awal
+                                    Nilai Sebelum Revisi
                                 </span>
                                 <span className="text-lg font-extrabold text-gray-800 dark:text-gray-200 mt-1 block">
                                     {formatCurrency(initialBudget)}
                                 </span>
                                 <span className="text-[11px] text-gray-400 mt-1 block">
-                                    Versi awal saat diajukan
+                                    {isBudgetChanged ? 'Nilai asli sebelum perubahan' : 'Belum ada revisi anggaran'}
                                 </span>
                             </div>
 
                             {/* Nilai Terkini / Akhir */}
                             <div className="bg-teal-50/70 dark:bg-teal-900/20 rounded-xl p-4 border border-teal-100 dark:border-teal-800/40">
                                 <span className="text-xs font-medium text-teal-700 dark:text-teal-300 uppercase tracking-wider block">
-                                    Nilai Usulan Terkini (Revisi)
+                                    Nilai Terkini (Setelah Revisi)
                                 </span>
                                 <span className="text-lg font-extrabold text-teal-700 dark:text-teal-300 mt-1 block">
                                     {formatCurrency(currentBudget)}
                                 </span>
                                 <span className="text-[11px] text-teal-600/70 dark:text-teal-400/70 mt-1 block">
-                                    Total nominal RAB saat ini
+                                    {isBudgetChanged ? 'Nilai setelah penyesuaian terakhir' : 'Total nominal RAB saat ini'}
                                 </span>
                             </div>
 
@@ -400,43 +400,34 @@ export default function Show({ auth, rkat = {}, history = [], initialTotalAnggar
                                             {dataDetail?.target || '-'}
                                         </TableRow>
                                         <TableRow label="Jenis Kegiatan">
-                                            <div className="flex gap-6">
-                                                <span className="flex items-center gap-2">
-                                                    <span className={`w-4 h-4 rounded border flex items-center justify-center ${dataDetail?.jenis_kegiatan === 'Rutin' ? 'bg-teal-500 border-teal-500 text-white' : 'border-gray-400'}`}>{dataDetail?.jenis_kegiatan === 'Rutin' && '✓'}</span> Rutin
-                                                </span>
-                                                <span className="flex items-center gap-2">
-                                                    <span className={`w-4 h-4 rounded border flex items-center justify-center ${dataDetail?.jenis_kegiatan === 'Inovasi' ? 'bg-teal-500 border-teal-500 text-white' : 'border-gray-400'}`}>{dataDetail?.jenis_kegiatan === 'Inovasi' && '✓'}</span> Inovasi
-                                                </span>
-                                            </div>
+                                            <span className="rounded-lg bg-teal-50 px-3 py-1.5 font-semibold text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">{dataDetail?.jenis_kegiatan || '-'}</span>
                                         </TableRow>
                                         <TableRow label="Dokumen Pendukung">
-                                            <div className="flex flex-wrap gap-x-6 gap-y-2">
-                                                {['Pengajuan Rutin', 'Proposal', 'TOR', 'Usulan'].map(doc => {
-                                                    let docs = [];
-                                                    if (Array.isArray(dataDetail?.dokumen_pendukung)) {
-                                                        docs = dataDetail.dokumen_pendukung;
-                                                    } else if (dataDetail?.dokumen_pendukung) {
-                                                        try {
-                                                            docs = JSON.parse(dataDetail.dokumen_pendukung);
-                                                        } catch (e) {
-                                                            if (typeof dataDetail.dokumen_pendukung === 'string') {
-                                                                docs = dataDetail.dokumen_pendukung.split(',').map(s => s.trim());
-                                                            }
-                                                        }
-                                                    }
-                                                    
-                                                    if (!Array.isArray(docs)) {
-                                                        docs = typeof docs === 'string' ? [docs] : [];
-                                                    }
-                                                    
-                                                    const isChecked = docs.includes(doc);
-                                                    return (
-                                                        <span key={doc} className="flex items-center gap-2">
-                                                            <span className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? 'bg-teal-500 border-teal-500 text-white' : 'border-gray-400'}`}>{isChecked && '✓'}</span> {doc}
-                                                        </span>
-                                                    )
-                                                })}
-                                            </div>
+                                            {(() => {
+                                                let docs = dataDetail?.dokumen_pendukung || [];
+                                                if (typeof docs === 'string') {
+                                                    try { docs = JSON.parse(docs); } catch { docs = docs.split(',').map((item) => item.trim()); }
+                                                }
+                                                if (!Array.isArray(docs)) docs = [];
+                                                return docs.length ? (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {docs.map((doc, index) => {
+                                                            const isObject = doc && typeof doc === 'object';
+                                                            const label = isObject ? (doc.type === 'link' ? doc.url : (doc.name || 'Dokumen')) : String(doc);
+                                                            const href = isObject && doc.type === 'link'
+                                                                ? doc.url
+                                                                : isObject && doc.type === 'file'
+                                                                    ? route('daftar-ajuan.dokumen', [dataRkat.uuid, index])
+                                                                    : null;
+                                                            return href ? (
+                                                                <a key={`${label}-${index}`} href={href} target="_blank" rel="noreferrer" className="rounded-lg border border-teal-200 px-3 py-1.5 text-sm font-medium text-teal-700 hover:bg-teal-50 dark:border-teal-800 dark:text-teal-300 dark:hover:bg-teal-900/30">{label}</a>
+                                                            ) : (
+                                                                <span key={`${label}-${index}`} className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-300">{label}</span>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : <span className="text-sm text-gray-500">Belum ada dokumen pendukung.</span>;
+                                            })()}
                                         </TableRow>
                                         <TableRow label="Waktu Pelaksanaan">
                                             {formatPelaksanaanText(dataDetail?.jadwal_pelaksanaan_mulai, dataDetail?.jadwal_pelaksanaan_akhir)}
@@ -489,6 +480,8 @@ export default function Show({ auth, rkat = {}, history = [], initialTotalAnggar
                                             <th className="p-3 border-r border-b border-gray-300 dark:border-gray-700">Keterangan</th>
                                             <th className="p-3 border-r border-b border-gray-300 dark:border-gray-700 text-center w-20">Vol</th>
                                             <th className="p-3 border-r border-b border-gray-300 dark:border-gray-700 text-center w-24">Satuan</th>
+                                            <th className="p-3 border-r border-b border-gray-300 dark:border-gray-700 text-center w-20">Vol 2</th>
+                                            <th className="p-3 border-r border-b border-gray-300 dark:border-gray-700 text-center w-24">Satuan 2</th>
                                             <th className="p-3 border-r border-b border-gray-300 dark:border-gray-700 text-right w-36">Biaya Satuan</th>
                                             <th className="p-3 border-b border-gray-300 dark:border-gray-700 text-right w-40">Jumlah</th>
                                         </tr>
@@ -501,17 +494,19 @@ export default function Show({ auth, rkat = {}, history = [], initialTotalAnggar
                                                 <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-300">{rab.deskripsi_item}</td>
                                                 <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-center text-gray-800 dark:text-gray-300">{rab.volume}</td>
                                                 <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-center text-gray-800 dark:text-gray-300">{rab.satuan}</td>
+                                                <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-center text-gray-800 dark:text-gray-300">{rab.volume2 ?? '-'}</td>
+                                                <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-center text-gray-800 dark:text-gray-300">{rab.satuan2 || '-'}</td>
                                                 <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-right text-gray-800 dark:text-gray-300">{formatCurrency(rab.harga_satuan)}</td>
                                                 <td className="p-3 text-right font-medium text-gray-900 dark:text-gray-200">{formatCurrency(rab.sub_total)}</td>
                                             </tr>
                                         ))}
                                         {rabItems.length === 0 && (
-                                            <tr><td colSpan="7" className="p-6 text-center text-gray-500">Tidak ada rincian RAB</td></tr>
+                                            <tr><td colSpan="9" className="p-6 text-center text-gray-500">Tidak ada rincian RAB</td></tr>
                                         )}
                                     </tbody>
                                     <tfoot className="bg-gray-100 dark:bg-gray-800 font-bold">
                                         <tr>
-                                            <td colSpan="6" className="p-3 text-right text-gray-800 dark:text-gray-200 uppercase">Total</td>
+                                            <td colSpan="8" className="p-3 text-right text-gray-800 dark:text-gray-200 uppercase">Total</td>
                                             <td className="p-3 text-right text-teal-700 dark:text-teal-400">
                                                 {formatCurrency(rabItems.reduce((acc, curr) => acc + (parseFloat(curr?.sub_total) || 0), 0))}
                                             </td>

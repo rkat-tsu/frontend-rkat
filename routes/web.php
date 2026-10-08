@@ -7,6 +7,7 @@ use App\Http\Controllers\PencairanDanaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IkuController;
 use App\Http\Controllers\KaryawanController;
+use App\Http\Controllers\JenisKegiatanOptionController;
 use App\Http\Controllers\LpjController;
 use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\ProfileController;
@@ -38,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/daftar-ajuan/{rkatHeader}/submit', [RkatController::class, 'submit'])->name('daftar-ajuan.submit');
     Route::get('/daftar-ajuan/{rkatHeader}/export', [RkatController::class, 'exportPdf'])->name('daftar-ajuan.export');
     Route::post('/daftar-ajuan/{rkatHeader}/komentar', [RkatController::class, 'storeKomentar'])->name('daftar-ajuan.komentar.store');
+    Route::get('/daftar-ajuan/{rkatHeader}/dokumen/{index}', [RkatController::class, 'downloadDocument'])->name('daftar-ajuan.dokumen');
 
     // Karyawan / SDM routes
     Route::get('/karyawan', [KaryawanController::class, 'index'])->name('karyawan.index');
@@ -95,6 +97,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Admin-only routes: Tahun Anggaran and account creation
     Route::middleware(['admin'])->group(function () {
+        Route::get('/jenis-kegiatan', [JenisKegiatanOptionController::class, 'index'])->name('jenis-kegiatan.index');
+        Route::post('/jenis-kegiatan', [JenisKegiatanOptionController::class, 'store'])->name('jenis-kegiatan.store');
+        Route::patch('/jenis-kegiatan/{option}', [JenisKegiatanOptionController::class, 'update'])->name('jenis-kegiatan.update');
+        Route::delete('/jenis-kegiatan/{option}', [JenisKegiatanOptionController::class, 'destroy'])->name('jenis-kegiatan.destroy');
+
         // Tahun Anggaran management (index, create, store, edit, update, destroy)
         Route::get('/tahun', [TahunAnggaranController::class, 'index'])->name('tahun.index');
         Route::get('/tahun/create', fn() => redirect()->route('tahun.index'));
@@ -140,6 +147,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('approval-path', [ApprovalPathController::class, 'index'])->name('approval-path.index');
         Route::get('approval-path/create', fn() => redirect()->route('approval-path.index'));
         Route::post('approval-path', [ApprovalPathController::class, 'store'])->name('approval-path.store');
+        Route::post('approval-path/lpj', [ApprovalPathController::class, 'updateLpjPath'])->name('approval-path.lpj.update');
         Route::get('approval-path/{approvalPath}/edit', fn() => redirect()->route('approval-path.index'));
         Route::patch('approval-path/{approvalPath}', [ApprovalPathController::class, 'update'])->name('approval-path.update');
         Route::delete('approval-path/{approvalPath}', [ApprovalPathController::class, 'destroy'])->name('approval-path.destroy');
