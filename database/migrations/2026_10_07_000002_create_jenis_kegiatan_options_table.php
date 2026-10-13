@@ -11,14 +11,17 @@ return new class extends Migration
     {
         Schema::create('jenis_kegiatan_options', function (Blueprint $table) {
             $table->id();
-            $table->string('nama', 100)->unique();
+            $table->string('grup', 100)->default('Form RKAT');
+            $table->string('kode_grup', 100)->default('jenis_kegiatan');
+            $table->string('nama', 100);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->unique(['kode_grup', 'nama']);
         });
 
         DB::table('jenis_kegiatan_options')->insert([
-            ['nama' => 'Rutin', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
-            ['nama' => 'Inovasi', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['grup' => 'Form RKAT', 'kode_grup' => 'jenis_kegiatan', 'nama' => 'Rutin', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['grup' => 'Form RKAT', 'kode_grup' => 'jenis_kegiatan', 'nama' => 'Inovasi', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         // Replace the fixed ENUM so administrators can add other option values.

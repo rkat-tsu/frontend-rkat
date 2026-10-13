@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Karyawan;
 use App\Models\Unit;
+use App\Models\JenisKegiatanOption;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Redirect;
@@ -63,6 +64,10 @@ class KaryawanController extends Controller
         return Inertia::render('Admin/Karyawan/Index', [
             'karyawans' => $karyawans,
             'units' => $units,
+            'statusPegawaiOptions' => JenisKegiatanOption::query()
+                ->where('kode_grup', 'status_pegawai')
+                ->orderBy('nama')
+                ->get(['nama', 'is_active']),
             'filters' => $request->only(['search', 'unit_id', 'status_pegawai', 'status_aktif', 'per_page', 'sort_by', 'sort_direction']),
         ]);
     }
@@ -78,7 +83,7 @@ class KaryawanController extends Controller
             'no_telepon' => 'nullable|string|max:30',
             'id_unit' => 'nullable|exists:unit,id_unit',
             'jabatan' => 'nullable|string|max:100',
-            'status_pegawai' => 'required|string|max:50',
+            'status_pegawai' => ['required', 'string', 'max:50', Rule::exists('jenis_kegiatan_options', 'nama')->where('kode_grup', 'status_pegawai')->where('is_active', true)],
             'is_aktif' => 'boolean',
         ]);
 
@@ -104,7 +109,7 @@ class KaryawanController extends Controller
             'no_telepon' => 'nullable|string|max:30',
             'id_unit' => 'nullable|exists:unit,id_unit',
             'jabatan' => 'nullable|string|max:100',
-            'status_pegawai' => 'required|string|max:50',
+            'status_pegawai' => ['required', 'string', 'max:50', Rule::exists('jenis_kegiatan_options', 'nama')->where('kode_grup', 'status_pegawai')],
             'is_aktif' => 'boolean',
         ]);
 

@@ -64,7 +64,7 @@ class RkatController extends Controller
             'akunAnggarans' => $akunAnggarans,
             'ikus' => $ikus,
             'karyawans' => $karyawans,
-            'jenisKegiatanOptions' => JenisKegiatanOption::query()->where('is_active', true)->orderBy('nama')->get(['nama']),
+            'jenisKegiatanOptions' => JenisKegiatanOption::query()->where('kode_grup', 'jenis_kegiatan')->where('is_active', true)->orderBy('nama')->get(['nama']),
         ]);
     }
 
@@ -198,7 +198,7 @@ class RkatController extends Controller
             'jadwal_pelaksanaan_mulai' => ['required', 'date', 'after_or_equal:today'],
             'jadwal_pelaksanaan_akhir' => ['required', 'date', 'after_or_equal:jadwal_pelaksanaan_mulai'],
             'lokasi_pelaksanaan' => ['required', 'string'],
-            'jenis_kegiatan' => ['required', 'string', Rule::exists('jenis_kegiatan_options', 'nama')->where('is_active', true)],
+            'jenis_kegiatan' => ['required', 'string', Rule::exists('jenis_kegiatan_options', 'nama')->where('kode_grup', 'jenis_kegiatan')->where('is_active', true)],
             'pjawab' => ['required', 'string'],
             'target' => ['required', 'string'],
             'anggaran' => ['required', 'numeric', 'min:0'],
@@ -513,8 +513,11 @@ class RkatController extends Controller
             'ikus' => $ikus,
             'karyawans' => $karyawans,
             'jenisKegiatanOptions' => JenisKegiatanOption::query()
-                ->where('is_active', true)
-                ->orWhere('nama', $rkatHeader->rkatDetails->first()?->jenis_kegiatan)
+                ->where('kode_grup', 'jenis_kegiatan')
+                ->where(function ($query) use ($rkatHeader) {
+                    $query->where('is_active', true)
+                        ->orWhere('nama', $rkatHeader->rkatDetails->first()?->jenis_kegiatan);
+                })
                 ->orderBy('nama')
                 ->get(['nama']),
         ]);
@@ -565,7 +568,7 @@ class RkatController extends Controller
             'jadwal_pelaksanaan_mulai' => ['required', 'date'],
             'jadwal_pelaksanaan_akhir' => ['required', 'date', 'after_or_equal:jadwal_pelaksanaan_mulai'],
             'lokasi_pelaksanaan' => ['required', 'string'],
-            'jenis_kegiatan' => ['required', 'string', 'exists:jenis_kegiatan_options,nama'],
+            'jenis_kegiatan' => ['required', 'string', Rule::exists('jenis_kegiatan_options', 'nama')->where('kode_grup', 'jenis_kegiatan')],
             'pjawab' => ['required', 'string'],
             'target' => ['required', 'string'],
             'anggaran' => ['required', 'numeric', 'min:0'],

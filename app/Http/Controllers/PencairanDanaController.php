@@ -37,7 +37,7 @@ class PencairanDanaController extends Controller
                 });
 
                 // 2. Yang mana unitnya adalah parent_unit dari unit pengaju
-                if ($user->isUnitHead()) {
+                if ($user->canApproveUnit()) {
                     $q->orWhereHas('rkatHeader.unit', function ($uq) use ($user) {
                         $uq->where('parent_id', $user->id_unit)
                             ->whereHas('pencairanApprovalPath.steps', function ($stepQ) {
@@ -53,7 +53,7 @@ class PencairanDanaController extends Controller
                             ->whereIn('role_name', $effectiveRoles);
                     });
 
-                    if ($user->isUnitHead()) {
+                    if ($user->canApproveUnit()) {
                         $stepQ->orWhere(function ($sq) use ($user) {
                             $sq->where('approver_type', 'unit')
                                 ->where('unit_id', $user->id_unit);
@@ -334,13 +334,13 @@ class PencairanDanaController extends Controller
             'pengaju'
         ]);
 
-        if ($user->peran !== 'Admin' && $user->peran !== 'Rektor' && $pencairan->rkatHeader->id_unit !== $user->id_unit) {
+        if ($user->peran !== 'Admin' && $pencairan->rkatHeader->id_unit !== $user->id_unit) {
             $isParentUnit = false;
             if ($user->unit && $user->isUnitHead()) {
                 $isParentUnit = $user->unit->children()->where('id_unit', $pencairan->rkatHeader->id_unit)->exists();
             }
 
-            $hasAccess = $isParentUnit || $user->isApprover();
+            $hasAccess = $isParentUnit || ($user->peran !== 'Rektorat' && $user->isApprover());
 
             // Check if user is in any step of the dynamic approval path
             if (!$hasAccess && $pencairan->rkatHeader->unit && $pencairan->rkatHeader->unit->pencairanApprovalPath) {
@@ -348,7 +348,7 @@ class PencairanDanaController extends Controller
                 $effectiveRoles = $user->getEffectiveRoles();
                 foreach ($steps as $step) {
                     if ($step->approver_type === 'role' && in_array($step->role_name, $effectiveRoles)) $hasAccess = true;
-                    if ($step->approver_type === 'unit' && $user->isUnitHead() && $step->unit_id === $user->id_unit) $hasAccess = true;
+                    if ($step->approver_type === 'unit' && $user->canApproveUnit() && (int) $step->unit_id === (int) $user->id_unit) $hasAccess = true;
                     if ($step->approver_type === 'self_unit_head' && $user->isUnitHead() && $pencairan->rkatHeader->id_unit === $user->id_unit) $hasAccess = true;
                     if ($step->approver_type === 'parent_unit' && $user->isUnitHead() && ($pencairan->rkatHeader->unit->parent_id === $user->id_unit || $pencairan->rkatHeader->unit->id_unit === $user->id_unit)) $hasAccess = true;
                 }
@@ -415,14 +415,14 @@ class PencairanDanaController extends Controller
 
         $pencairan->load('currentStep', 'rkatHeader.unit.pencairanApprovalPath.steps');
         $currentStep = $pencairan->currentStep;
-        $isAdminOrRektor = in_array($user->peran, ['Admin', 'Rektor']);
+        $isAdminOrRektor = $user->isAdmin();
         $effectiveRoles = $user->getEffectiveRoles();
 
         if (!$isAdminOrRektor) {
             $hasAccess = false;
             if ($currentStep) {
                 if ($currentStep->approver_type === 'role' && in_array($currentStep->role_name, $effectiveRoles)) $hasAccess = true;
-                if ($currentStep->approver_type === 'unit' && $user->isUnitHead() && $currentStep->unit_id === $user->id_unit) $hasAccess = true;
+                if ($currentStep->approver_type === 'unit' && $user->canApproveUnit() && (int) $currentStep->unit_id === (int) $user->id_unit) $hasAccess = true;
                 if ($currentStep->approver_type === 'self_unit_head' && $user->isUnitHead() && $pencairan->rkatHeader->id_unit === $user->id_unit) $hasAccess = true;
                 if ($currentStep->approver_type === 'parent_unit' && $user->isUnitHead() && $pencairan->rkatHeader->unit) {
                     // Normal: prodi/sub-unit mengajukan, unit-induk (kepala) menyetujui
@@ -514,7 +514,7 @@ class PencairanDanaController extends Controller
             'currentStep'
         ]);
 
-        if (in_array($peran, ['Admin', 'Rektor'])) {
+        if ($user->isAdmin()) {
             $query->whereNotNull('current_step_id');
         } else {
             $query->whereNotNull('current_step_id');
@@ -524,7 +524,7 @@ class PencairanDanaController extends Controller
                         ->whereIn('role_name', $effectiveRoles);
                 });
 
-                if ($user->isUnitHead()) {
+                if ($user->canApproveUnit()) {
                     $q->orWhereHas('currentStep', function ($stepQ) use ($user) {
                         $stepQ->where('approver_type', 'unit')
                             ->where('unit_id', $user->id_unit);
@@ -555,13 +555,13 @@ class PencairanDanaController extends Controller
         $pencairans = $query->latest('updated_at')->get();
 
         // Filter di memory
-        if (!in_array($peran, ['Admin', 'Rektor'])) {
+        if (!$user->isAdmin()) {
             $pencairans = $pencairans->filter(function ($pencairan) use ($user, $peran, $effectiveRoles) {
                 $step = $pencairan->currentStep;
                 if (!$step) return false;
 
                 if ($step->approver_type === 'role') return in_array($step->role_name, $effectiveRoles);
-                if ($step->approver_type === 'unit') return $user->isUnitHead() && $step->unit_id === $user->id_unit;
+                if ($step->approver_type === 'unit') return $user->canApproveUnit() && (int) $step->unit_id === (int) $user->id_unit;
                 if ($step->approver_type === 'self_unit_head') return $user->isUnitHead() && $pencairan->rkatHeader->id_unit === $user->id_unit;
                 if ($step->approver_type === 'parent_unit' && $pencairan->rkatHeader->unit) {
                     // Normal: prodi/sub-unit mengajukan, kepala unit-induk menyetujui

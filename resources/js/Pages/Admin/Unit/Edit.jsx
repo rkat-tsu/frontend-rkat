@@ -10,7 +10,7 @@ import FieldTooltipError from '@/Components/FieldTooltipError';
 import { Building2, Save, ArrowLeft, Settings2, UserCircle, Phone, Mail, PencilLine } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function Edit({ auth, unit, users, units, approvalPaths }) {
+export default function Edit({ auth, unit, users, units, approvalPaths, tipeOptions: unitTypes = [] }) {
     const [formErrors, setFormErrors] = useState({});
 
     // 1. SETUP FORM: Ganti 'put' menjadi 'patch'
@@ -78,19 +78,7 @@ export default function Edit({ auth, unit, users, units, approvalPaths }) {
     };
 
     // 2. OPSI DROPDOWN
-    const tipeOptions = [
-        { value: 'Rektorat', label: 'Rektorat' },
-        { value: 'Fakultas', label: 'Fakultas' },
-        { value: 'Prodi', label: 'Program Studi (Prodi)' },
-        { value: 'Biro', label: 'Biro' },
-        { value: 'Lembaga', label: 'Lembaga' },
-        { value: 'UPT', label: 'Unit Pelaksana Teknis (UPT)' },
-        { value: 'Satuan', label: 'Satuan' },
-        { value: 'UKM', label: 'Unit Kegiatan Mahasiswa (UKM)' },
-        { value: 'Unit', label: 'Unit Kerja' },
-        { value: 'Admin', label: 'Administrator' },
-        { value: 'Lainnya', label: 'Lainnya' },
-    ];
+    const tipeOptions = unitTypes.map(({ nama }) => ({ value: nama, label: nama }));
 
     const userOptions = [
         { value: '', label: 'Tanpa Kepala Unit (Kosong)' },

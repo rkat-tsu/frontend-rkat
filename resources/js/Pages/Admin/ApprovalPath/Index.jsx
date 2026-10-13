@@ -150,7 +150,7 @@ export default function Index({ auth, paths, units, lpjApprovalPathId }) {
         router.post(route('approval-path.lpj.update'), { approval_path_id: selectedLpjPath }, {
             preserveScroll: true,
             onSuccess: () => toast.success('Alur LPJ bersama berhasil diperbarui', { id: toastId }),
-            onError: () => toast.error('Pilih alur yang memiliki tahapan persetujuan', { id: toastId }),
+            onError: (errors) => toast.error(errors.approval_path_id || 'Gagal menyimpan alur LPJ.', { id: toastId }),
         });
     };
 
@@ -201,7 +201,7 @@ export default function Index({ auth, paths, units, lpjApprovalPathId }) {
                                 <p className="text-xs text-gray-500 dark:text-gray-400">Semua unit menggunakan alur yang sama. Admin dapat mengubah alur tujuan persetujuannya dari sini.</p>
                                 <CustomSelect
                                     value={selectedLpjPath}
-                                    onChange={setSelectedLpjPath}
+                                    onChange={(event) => setSelectedLpjPath(event.target.value)}
                                     options={paths.filter(path => path.steps.length > 0).map(path => ({ value: String(path.id), label: path.name }))}
                                     placeholder="Pilih alur untuk LPJ"
                                 />
@@ -358,7 +358,7 @@ export default function Index({ auth, paths, units, lpjApprovalPathId }) {
                                             {index + 1}
                                         </div>
                                         <div className="flex-1 space-y-3">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                                 <div className="relative pb-2">
                                                     <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">
                                                         Status / Nama Tahap *
@@ -385,51 +385,48 @@ export default function Index({ auth, paths, units, lpjApprovalPathId }) {
                                                             { value: 'parent_unit', label: 'Atasan Unit Pemohon' },
                                                             { value: 'self_unit_head', label: 'Kepala Unit Pemohon' },
                                                         ]}
+                                                        className="h-10"
                                                     />
                                                     <FieldTooltipError message={formErrors[`step_${index}_approver_type`]} />
                                                 </div>
+                                                <div className="relative pb-2">
+                                                    <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">
+                                                        Target Approver *
+                                                    </label>
+                                                    {step.approver_type === 'role' ? (
+                                                        <>
+                                                            <CustomSelect
+                                                                value={step.role_name}
+                                                                onChange={(val) => updateStep(index, 'role_name', val)}
+                                                                options={[
+                                                                    { value: 'Tim_Renbang', label: 'Tim Renbang' },
+                                                                    { value: 'BAAK', label: 'BAAK' },
+                                                                    { value: 'BAUK', label: 'BAUK' },
+                                                                    { value: 'Sekretaris_Univ', label: 'Sekretaris Univ' },
+                                                                ]}
+                                                                placeholder="Pilih Role..."
+                                                                className={`h-10 ${formErrors[`step_${index}_role_name`] ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`}
+                                                            />
+                                                            <FieldTooltipError message={formErrors[`step_${index}_role_name`]} />
+                                                        </>
+                                                    ) : step.approver_type === 'unit' ? (
+                                                        <>
+                                                            <CustomSelect
+                                                                value={step.unit_id}
+                                                                onChange={(val) => updateStep(index, 'unit_id', val)}
+                                                                options={units.map(u => ({ value: u.id_unit.toString(), label: u.nama_unit }))}
+                                                                placeholder="Pilih Unit..."
+                                                                className={`h-10 ${formErrors[`step_${index}_unit_id`] ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`}
+                                                            />
+                                                            <FieldTooltipError message={formErrors[`step_${index}_unit_id`]} />
+                                                        </>
+                                                    ) : (
+                                                        <div className="flex h-10 items-center rounded-md border border-gray-200 bg-gray-100 px-3 text-xs text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+                                                            {step.approver_type === 'parent_unit' ? 'Unit induk pemohon' : 'Unit pemohon'}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-
-                                            {step.approver_type === 'role' && (
-                                                <div className="relative pb-2">
-                                                    <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">
-                                                        Pilih Role Approver *
-                                                    </label>
-                                                    <CustomSelect
-                                                        value={step.role_name}
-                                                        onChange={(val) => updateStep(index, 'role_name', val)}
-                                                        options={[
-                                                            { value: 'Tim_Renbang', label: 'Tim Renbang' },
-                                                            { value: 'BAAK', label: 'BAAK' },
-                                                            { value: 'BAUK', label: 'BAUK' },
-                                                            { value: 'WR_1', label: 'Wakil Rektor 1' },
-                                                            { value: 'WR_2', label: 'Wakil Rektor 2' },
-                                                            { value: 'WR_3', label: 'Wakil Rektor 3' },
-                                                            { value: 'Sekretaris_Univ', label: 'Sekretaris Univ' },
-                                                            { value: 'Rektor', label: 'Rektor' },
-                                                        ]}
-                                                        placeholder="Pilih Role..."
-                                                        className={formErrors[`step_${index}_role_name`] ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}
-                                                    />
-                                                    <FieldTooltipError message={formErrors[`step_${index}_role_name`]} />
-                                                </div>
-                                            )}
-
-                                            {step.approver_type === 'unit' && (
-                                                <div className="relative pb-2">
-                                                    <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">
-                                                        Pilih Unit Spesifik *
-                                                    </label>
-                                                    <CustomSelect
-                                                        value={step.unit_id}
-                                                        onChange={(val) => updateStep(index, 'unit_id', val)}
-                                                        options={units.map(u => ({ value: u.id_unit.toString(), label: u.nama_unit }))}
-                                                        placeholder="Pilih Unit..."
-                                                        className={formErrors[`step_${index}_unit_id`] ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}
-                                                    />
-                                                    <FieldTooltipError message={formErrors[`step_${index}_unit_id`]} />
-                                                </div>
-                                            )}
                                         </div>
                                         <button
                                             type="button"
@@ -455,7 +452,7 @@ export default function Index({ auth, paths, units, lpjApprovalPathId }) {
                                 className="w-full py-3 border-2 border-dashed border-teal-300 dark:border-teal-700/60 rounded-xl text-teal-600 dark:text-teal-400 hover:bg-teal-50/50 dark:hover:bg-teal-950/30 transition font-bold text-xs flex items-center justify-center gap-2"
                             >
                                 <Plus className="w-4 h-4" />
-                                <span>+ Tambah Tahapan Baru</span>
+                                <span>Tambah Tahapan Baru</span>
                             </button>
                         </div>
 

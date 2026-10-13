@@ -16,29 +16,32 @@ class ProfileUpdateRequest extends FormRequest
     public function rules(): array
     {
         $user = $this->user();
-        
-        // Daftar Peran yang Konsisten dengan RegisteredUserController (Asumsi ENUM DB Anda)
+
+        // Daftar Peran yang Konsisten dengan RegisteredUserController
         $validRoles = [
-            'Inputer', 'Kaprodi', 'Kepala_Unit', 'Dekan', 
-            'WR_1', 'WR_2', 'WR_3', 'Rektor', 'Admin'
+            'Inputer',
+            'Kaprodi',
+            'Kepala_Unit',
+            'Dekan',
+            'Rektorat',
+            'Admin'
         ];
 
         return [
             // 1. Nama Lengkap
-            'nama_lengkap' => ['required', 'string', 'max:100'], // max:100 sesuai skema
-            
+            'nama_lengkap' => ['required', 'string', 'max:100'],
+
             // 2. Username
             'username' => [
-                'nullable', // Menggunakan 'nullable' karena di DB skema adalah nullable
-                'string', 
-                'max:50', // max:50 sesuai skema
-                // PERBAIKAN: Menggunakan id_user sebagai PK dan PK key name di ignore
-                Rule::unique(User::class)->ignore($user->id_user, 'id_user'), 
+                'nullable',
+                'string',
+                'max:50',
+                Rule::unique(User::class)->ignore($user->id_user, 'id_user'),
             ],
-            
+
             // 3. No. Telepon
-            'no_telepon' => ['nullable', 'string', 'max:15'], // <-- PERBAIKAN: Menggunakan 'no_telepon'
-            
+            'no_telepon' => ['nullable', 'string', 'max:15'],
+
             // 4. Email
             'email' => [
                 'required',
@@ -46,10 +49,10 @@ class ProfileUpdateRequest extends FormRequest
                 'lowercase',
                 'email',
                 'max:255',
-                // PERBAIKAN: Menggunakan id_user sebagai PK dan PK key name di ignore
+
                 Rule::unique(User::class)->ignore($user->id_user, 'id_user'),
             ],
-            
+
             // 5. peran (Peran)
             'peran' => [ // <-- PERBAIKAN: Menggunakan 'peran'
                 // Hanya Admin (user yang sedang login) yang diizinkan untuk mengirim field 'peran'.

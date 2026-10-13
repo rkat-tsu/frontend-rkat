@@ -11,11 +11,12 @@ import FieldTooltipError from '@/Components/FieldTooltipError';
 import { UserPlus, Save, ArrowLeft, Shield, Building2, Lock, Phone, Mail, User } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function Create({ auth, units = [] }) {
+export default function Create({ auth, units = [], karyawans = [] }) {
     const [formErrors, setFormErrors] = useState({});
 
     const { data, setData, post, processing, errors, reset } = useForm({
         nama_lengkap: '',
+        id_karyawan: '',
         nik: '',
         username: '', // Field ini ada di state tapi tidak ditampilkan di form asli, dibiarkan saja
         email: '',
@@ -39,10 +40,7 @@ export default function Create({ auth, units = [] }) {
         { value: 'Kepala_Unit', label: 'Kepala Unit' },
         { value: 'Dekan', label: 'Dekan' },
         { value: 'Tim_Renbang', label: 'Tim Renbang' },
-        { value: 'Rektor', label: 'Rektor' },
-        { value: 'WR_1', label: 'Wakil Rektor 1' },
-        { value: 'WR_2', label: 'Wakil Rektor 2' },
-        { value: 'WR_3', label: 'Wakil Rektor 3' },
+        { value: 'Rektorat', label: 'Rektorat (Rektor dan Wakil Rektor)' },
         { value: 'Admin', label: 'Administrator Sistem' },
     ];
 
@@ -51,6 +49,24 @@ export default function Create({ auth, units = [] }) {
         value: u.id_unit,
         label: u.kode_unit ? `${u.kode_unit} - ${u.nama_unit}` : u.nama_unit
     }));
+
+    const employeeOptions = [
+        { value: '', label: 'Input manual / bukan karyawan terdaftar' },
+        ...karyawans.map(k => ({ value: k.id_karyawan, label: `${k.nama}${k.nik ? ` — ${k.nik}` : ''}` })),
+    ];
+
+    const selectEmployee = (value) => {
+        const employee = karyawans.find(k => String(k.id_karyawan) === String(value));
+        setData(current => ({
+            ...current,
+            id_karyawan: value,
+            nama_lengkap: employee?.nama || '',
+            nik: employee?.nik || '',
+            email: employee?.email || '',
+            no_telepon: employee?.no_telepon || '',
+            id_unit: employee?.id_unit || current.id_unit,
+        }));
+    };
 
     const submit = (e) => {
         e.preventDefault();
@@ -150,6 +166,11 @@ export default function Create({ auth, units = [] }) {
                                     <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-200 flex items-center mb-4">
                                         <User className="w-4 h-4 mr-2 text-teal-500" /> Informasi Dasar
                                     </h4>
+                                    <div className="relative mb-5">
+                                        <InputLabel value="Ambil dari Data Karyawan (Opsional)" />
+                                        <CustomSelect value={data.id_karyawan} onChange={(e) => selectEmployee(e.target.value)} options={employeeOptions} className="mt-1" />
+                                        <p className="mt-1 text-xs text-gray-500">Memilih karyawan akan mengisi nama, NIK, email, telepon, dan unit. Semua data tetap dapat disunting.</p>
+                                    </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="relative pb-2">
                                             <InputLabel htmlFor="nama_lengkap" value="Nama Lengkap" required />
@@ -240,7 +261,7 @@ export default function Create({ auth, units = [] }) {
                                                 placeholder="-- Pilih Unit --"
                                                 className="mt-1"
                                             />
-                                            <p className="text-xs text-gray-500 mt-1">Kosongkan jika user adalah Admin Global atau Rektorat tanpa unit spesifik.</p>
+                                            <p className="text-xs text-gray-500 mt-1">Role Rektorat mencakup Rektor dan WR-1 sampai WR-3. Pilih unit untuk menentukan penerima persetujuan.</p>
                                             <FieldTooltipError message={formErrors.id_unit || errors.id_unit} />
                                         </div>
                                     </div>

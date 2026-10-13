@@ -564,7 +564,7 @@ class LpjController extends Controller
         $unitId = $unit?->id_unit;
         return match ($step->approver_type) {
             'role' => in_array($step->role_name, $user->getEffectiveRoles(), true),
-            'unit' => $user->isUnitHead() && (int) $step->unit_id === (int) $user->id_unit,
+            'unit' => $user->canApproveUnit() && (int) $step->unit_id === (int) $user->id_unit,
             'self_unit_head' => $user->isUnitHead() && (int) $unitId === (int) $user->id_unit,
             'parent_unit' => $user->isUnitHead() && (int) $unit?->parent_id === (int) $user->id_unit,
             default => false,

@@ -97,10 +97,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Admin-only routes: Tahun Anggaran and account creation
     Route::middleware(['admin'])->group(function () {
-        Route::get('/jenis-kegiatan', [JenisKegiatanOptionController::class, 'index'])->name('jenis-kegiatan.index');
-        Route::post('/jenis-kegiatan', [JenisKegiatanOptionController::class, 'store'])->name('jenis-kegiatan.store');
-        Route::patch('/jenis-kegiatan/{option}', [JenisKegiatanOptionController::class, 'update'])->name('jenis-kegiatan.update');
-        Route::delete('/jenis-kegiatan/{option}', [JenisKegiatanOptionController::class, 'destroy'])->name('jenis-kegiatan.destroy');
+        Route::get('/pengaturan/opsi-form', [JenisKegiatanOptionController::class, 'index'])->name('pengaturan-opsi-form.index');
+        Route::post('/pengaturan/opsi-form', [JenisKegiatanOptionController::class, 'store'])->name('pengaturan-opsi-form.store');
+        Route::patch('/pengaturan/opsi-form/{option}', [JenisKegiatanOptionController::class, 'update'])->name('pengaturan-opsi-form.update');
+        Route::delete('/pengaturan/opsi-form/{option}', [JenisKegiatanOptionController::class, 'destroy'])->name('pengaturan-opsi-form.destroy');
+        Route::get('/jenis-kegiatan', fn () => redirect()->route('pengaturan-opsi-form.index'));
 
         // Tahun Anggaran management (index, create, store, edit, update, destroy)
         Route::get('/tahun', [TahunAnggaranController::class, 'index'])->name('tahun.index');

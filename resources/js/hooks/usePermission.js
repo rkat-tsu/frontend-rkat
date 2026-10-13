@@ -33,17 +33,17 @@ export const usePermission = () => {
     const isTimRenbang = () => hasRole('Tim_Renbang');
     const isDekan = () => hasRole('Dekan');
     const isKepalaUnit = () => hasRole('Kepala_Unit');
-    const isRektor = () => hasRole('Rektor');
+    const isRektor = () => hasRole('Rektorat') && user?.unit?.nama_unit === 'Rektorat';
     
     // Peran Gabungan (Approver)
     const isApprover = () => {
-        const approverRoles = ['Dekan', 'Kepala_Unit', 'Tim_Renbang', 'WR_1', 'WR_2', 'WR_3', 'Rektor'];
+        const approverRoles = ['Dekan', 'Kepala_Unit', 'Tim_Renbang', 'Rektorat'];
         return hasAnyRole(approverRoles);
     };
 
     // Peran Head (Dekan atau Kepala Unit)
     const isUnitHead = () => {
-        return hasAnyRole(['Dekan', 'Kepala_Unit']);
+        return hasAnyRole(['Dekan', 'Kepala_Unit', 'Rektorat']);
     }
 
     return {

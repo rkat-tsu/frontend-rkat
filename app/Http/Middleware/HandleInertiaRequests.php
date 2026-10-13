@@ -35,7 +35,7 @@ class HandleInertiaRequests extends Middleware
         if ($user) {
             $user->loadMissing('unit');
             $canApprovePencairan = $user->peran === 'Admin' || 
-                $user->peran === 'WR_2' || 
+                ($user->peran === 'Rektorat' && $user->unit?->nama_unit === 'WR-2') ||
                 ($user->unit && $user->isUnitHead() && (
                     stripos($user->unit->nama_unit, 'BAAK') !== false ||
                     stripos($user->unit->nama_unit, 'BAUK') !== false ||

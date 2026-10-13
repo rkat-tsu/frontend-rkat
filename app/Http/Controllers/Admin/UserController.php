@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Unit;
+use App\Models\Karyawan;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
@@ -21,6 +22,7 @@ class UserController extends Controller
     {
         return inertia('Admin/User/Create', [
             'units' => Unit::orderBy('nama_unit', 'asc')->get(),
+            'karyawans' => Karyawan::query()->where('is_aktif', true)->orderBy('nama')->get(['id_karyawan', 'nik', 'nama', 'email', 'no_telepon', 'id_unit']),
         ]);
     }
 
@@ -80,6 +82,7 @@ class UserController extends Controller
 
         $request->validate([
             'nama_lengkap' => 'required|string|max:100',
+            'id_karyawan' => ['nullable', 'exists:karyawans,id_karyawan'],
             'nik' => 'nullable|string|max:30',
             'username' => ['nullable', 'string', 'max:50', Rule::unique(User::class)],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class)],
@@ -91,10 +94,7 @@ class UserController extends Controller
                 'Kepala_Unit',
                 'Dekan',
                 'Tim_Renbang',
-                'WR_1',
-                'WR_2',
-                'WR_3',
-                'Rektor',
+                'Rektorat',
                 'Admin'
             ])],
             'id_unit' => ['nullable', 'exists:unit,id_unit'],
@@ -107,7 +107,8 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'peran' => $request->peran,
-            'id_unit' => $request->id_unit ?? null,
+            'id_unit' => $request->id_unit ?: null,
+            'id_karyawan' => $request->id_karyawan ?: null,
             'is_aktif' => true,
         ]);
 
@@ -145,10 +146,7 @@ class UserController extends Controller
                 'Kepala_Unit',
                 'Dekan',
                 'Tim_Renbang',
-                'WR_1',
-                'WR_2',
-                'WR_3',
-                'Rektor',
+                'Rektorat',
                 'Admin'
             ])],
             'id_unit' => ['nullable', 'exists:unit,id_unit'],
@@ -161,7 +159,7 @@ class UserController extends Controller
             'username' => $request->username,
             'email' => $request->email,
             'peran' => $request->peran,
-            'id_unit' => $request->id_unit ?? null,
+            'id_unit' => $request->id_unit ?: null,
             'is_aktif' => $request->is_aktif,
             'no_telepon' => $request->no_telepon,
         ])->save();

@@ -31,7 +31,7 @@ class UserSeeder extends Seeder
             'username'     => 'rektor',
             'email'        => 'rektor@tsu.ac.id',
             'password'     => $defaultPassword,
-            'peran'        => 'Rektor',
+            'peran'        => 'Rektorat',
             'id_unit'      => $rektorat?->id_unit,
             'is_aktif'     => true,
         ]);
@@ -42,7 +42,7 @@ class UserSeeder extends Seeder
             'username'     => 'wr1',
             'email'        => 'wr1@tsu.ac.id',
             'password'     => $defaultPassword,
-            'peran'        => 'WR_1',
+            'peran'        => 'Rektorat',
             'id_unit'      => $rektorat?->id_unit,
             'is_aktif'     => true,
         ]);
@@ -53,7 +53,7 @@ class UserSeeder extends Seeder
             'username'     => 'wr2',
             'email'        => 'wr2@tsu.ac.id',
             'password'     => $defaultPassword,
-            'peran'        => 'WR_2',
+            'peran'        => 'Rektorat',
             'id_unit'      => $rektorat?->id_unit,
             'is_aktif'     => true,
         ]);
@@ -64,7 +64,7 @@ class UserSeeder extends Seeder
             'username'     => 'wr3',
             'email'        => 'wr3@tsu.ac.id',
             'password'     => $defaultPassword,
-            'peran'        => 'WR_3',
+            'peran'        => 'Rektorat',
             'id_unit'      => $rektorat?->id_unit,
             'is_aktif'     => true,
         ]);
@@ -157,10 +157,10 @@ class UserSeeder extends Seeder
             'Kaprodi'     => $if?->id_unit,        // Simulasi Kaprodi Informatika
             'Kepala_Unit' => $biroKeu?->id_unit,   // Simulasi Kepala Biro Keuangan
             'Dekan'       => $ft?->id_unit,        // Simulasi Dekan Fakultas Teknik
-            'WR_1'        => $rektorat?->id_unit,  // Simulasi WR 1
-            'WR_2'        => $rektorat?->id_unit,  // Simulasi WR 2
-            'WR_3'        => $rektorat?->id_unit,  // Simulasi WR 3
-            'Rektor'      => $rektorat?->id_unit,  // Simulasi Rektor
+            'WR_1'        => Unit::where('nama_unit', 'WR-1')->value('id_unit'),
+            'WR_2'        => Unit::where('nama_unit', 'WR-2')->value('id_unit'),
+            'WR_3'        => Unit::where('nama_unit', 'WR-3')->value('id_unit'),
+            'Rektorat'    => $rektorat?->id_unit,
         ];
 
         foreach ($testerRoles as $role => $unitId) {
@@ -172,7 +172,7 @@ class UserSeeder extends Seeder
                 'username'     => "test_{$roleLower}",
                 'email'        => "tester.{$roleLower}@dummy.tsu.ac.id",
                 'password'     => $defaultPassword,
-                'peran'        => $role,
+                'peran'        => str_starts_with($role, 'WR_') ? 'Rektorat' : $role,
                 'id_unit'      => $unitId,
                 'is_aktif'     => true,
             ]);

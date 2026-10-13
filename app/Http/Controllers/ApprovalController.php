@@ -46,7 +46,7 @@ class ApprovalController extends Controller
             'rkatDetails'
         ]);
 
-        if (in_array($peran, ['Admin', 'Rektor'])) {
+        if ($user->isAdmin()) {
             $query->whereNotNull('current_step_id');
         } else {
             $query->whereNotNull('current_step_id');
@@ -56,7 +56,7 @@ class ApprovalController extends Controller
                           ->whereIn('role_name', $effectiveRoles);
                 });
 
-                if ($user->isUnitHead()) {
+                if ($user->canApproveUnit()) {
                     $q->orWhereHas('currentStep', function ($stepQ) use ($user) {
                         $stepQ->where('approver_type', 'unit')
                               ->where('unit_id', $user->id_unit);
@@ -85,13 +85,13 @@ class ApprovalController extends Controller
         $rkatList = $query->latest('updated_at')->get();
         
         // Filter di memory untuk keamanan ganda jika relasi query kurang presisi
-        if (!in_array($peran, ['Admin', 'Rektor'])) {
+        if (!$user->isAdmin()) {
             $rkatList = $rkatList->filter(function ($rkat) use ($user, $peran, $effectiveRoles) {
                 $step = $rkat->currentStep;
                 if (!$step) return false;
                 
                 if ($step->approver_type === 'role') return in_array($step->role_name, $effectiveRoles);
-                if ($step->approver_type === 'unit') return $user->isUnitHead() && $step->unit_id === $user->id_unit;
+                if ($step->approver_type === 'unit') return $user->canApproveUnit() && (int) $step->unit_id === (int) $user->id_unit;
                 if ($step->approver_type === 'self_unit_head') return $user->isUnitHead() && $rkat->id_unit === $user->id_unit;
                 if ($step->approver_type === 'parent_unit' && $rkat->unit) {
                     // Normal: prodi/sub-unit mengajukan, kepala unit-induk menyetujui
@@ -161,14 +161,14 @@ class ApprovalController extends Controller
         }
 
         $currentStep = $rkatHeader->currentStep;
-        $isAdminOrRektor = in_array($user->peran, ['Admin', 'Rektor']);
+        $isAdminOrRektor = $user->isAdmin();
         $effectiveRoles = $user->getEffectiveRoles();
 
         if (!$isAdminOrRektor) {
             $hasAccess = false;
             if ($currentStep) {
                 if ($currentStep->approver_type === 'role' && in_array($currentStep->role_name, $effectiveRoles)) $hasAccess = true;
-                if ($currentStep->approver_type === 'unit' && $user->isUnitHead() && $currentStep->unit_id === $user->id_unit) $hasAccess = true;
+                if ($currentStep->approver_type === 'unit' && $user->canApproveUnit() && (int) $currentStep->unit_id === (int) $user->id_unit) $hasAccess = true;
                 if ($currentStep->approver_type === 'self_unit_head' && $user->isUnitHead() && $rkatHeader->id_unit === $user->id_unit) $hasAccess = true;
                 if ($currentStep->approver_type === 'parent_unit' && $user->isUnitHead() && $rkatHeader->unit && $rkatHeader->unit->parent_id === $user->id_unit) $hasAccess = true;
             }

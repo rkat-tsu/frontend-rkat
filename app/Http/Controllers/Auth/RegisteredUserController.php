@@ -33,7 +33,7 @@ class RegisteredUserController extends Controller
             'no_telepon' => 'nullable|string|max:15',
             'password' => ['required', 'string', 'max:20', 'confirmed', Rules\Password::defaults()],
             'peran' => ['required','string', Rule::in([
-                'Inputer', 'Kaprodi', 'Kepala_Unit', 'Dekan', 'WR_1', 'WR_2', 'WR_3', 'Rektor', 'Admin'
+                'Inputer', 'Kaprodi', 'Kepala_Unit', 'Dekan', 'Rektorat', 'Admin'
             ])],
         ]);
 

@@ -29,6 +29,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_aktif',
         'no_telepon',
         'signature_path',
+        'id_karyawan',
     ];
 
     /**
@@ -75,7 +76,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isApprover(): bool
     {
-        return in_array($this->peran, ['Dekan', 'Kepala_Unit', 'Tim_Renbang', 'WR_1', 'WR_2', 'WR_3', 'Rektor']);
+        return in_array($this->peran, ['Dekan', 'Kepala_Unit', 'Tim_Renbang', 'Rektorat']);
     }
 
     public function isTimRenbang(): bool
@@ -95,7 +96,12 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isUnitHead(): bool
     {
-        return in_array($this->peran, ['Dekan', 'Kepala_Unit']);
+        return in_array($this->peran, ['Dekan', 'Kepala_Unit', 'Rektorat']);
+    }
+
+    public function canApproveUnit(): bool
+    {
+        return $this->isUnitHead();
     }
 
     public function unit(): BelongsTo
@@ -104,10 +110,18 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(Unit::class, 'id_unit', 'id_unit');
     }
 
+    public function karyawan(): BelongsTo
+    {
+        return $this->belongsTo(Karyawan::class, 'id_karyawan', 'id_karyawan');
+    }
+
     public function getEffectiveRoles(): array
     {
         $roles = [$this->peran];
-        
+        if ($this->peran === 'Rektorat' && $this->unit) {
+            $roles[] = $this->unit->nama_unit;
+        }
+
         if ($this->isUnitHead() && $this->unit) {
             $unitName = $this->unit->nama_unit;
             if (stripos($unitName, 'BAUK') !== false) {

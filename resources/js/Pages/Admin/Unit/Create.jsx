@@ -9,14 +9,14 @@ import FieldTooltipError from '@/Components/FieldTooltipError';
 import { Building2, Save, ArrowLeft, Settings2, UserCircle, Phone, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function Create({ auth, users, units, approvalPaths }) {
+export default function Create({ auth, users, units, approvalPaths, tipeOptions: unitTypes = [] }) {
     const [formErrors, setFormErrors] = useState({});
 
     // 1. SETUP FORM: Sesuai Controller Store Method
     const { data, setData, post, processing, errors, reset } = useForm({
         kode_unit: '',
         nama_unit: '',
-        tipe_unit: 'Unit',              // Default sesuai validasi
+        tipe_unit: '',
         approval_path_id: '',
         pencairan_approval_path_id: '',
         id_kepala: '',
@@ -77,19 +77,7 @@ export default function Create({ auth, users, units, approvalPaths }) {
     };
 
     // 2. OPSI DROPDOWN (Sesuai Validasi Controller)
-    const tipeOptions = [
-        { value: 'Rektorat', label: 'Rektorat' },
-        { value: 'Fakultas', label: 'Fakultas' },
-        { value: 'Prodi', label: 'Program Studi (Prodi)' },
-        { value: 'Biro', label: 'Biro' },
-        { value: 'Lembaga', label: 'Lembaga' },
-        { value: 'UPT', label: 'Unit Pelaksana Teknis (UPT)' },
-        { value: 'Satuan', label: 'Satuan' },
-        { value: 'UKM', label: 'Unit Kegiatan Mahasiswa (UKM)' },
-        { value: 'Unit', label: 'Unit Kerja' },
-        { value: 'Admin', label: 'Administrator' },
-        { value: 'Lainnya', label: 'Lainnya' },
-    ];
+    const tipeOptions = unitTypes.map(({ nama }) => ({ value: nama, label: nama }));
 
     // Mapping Data dari Controller (Users & Units) ke format Select
     const userOptions = [
@@ -197,9 +185,10 @@ export default function Create({ auth, users, units, approvalPaths }) {
                                         value={data.id_kepala}
                                         onChange={(e) => handleFieldChange('id_kepala', e.target.value)}
                                         options={userOptions}
-                                        placeholder="Pilih Pejabat / Kepala Unit"
+                                        placeholder="Atur setelah user ditempatkan ke unit ini"
                                         className="mt-1"
                                     />
+                                    <p className="mt-1 text-xs text-gray-500">Unit baru belum memiliki user. Setelah unit dibuat dan user ditempatkan, kepala unit dapat dipilih dari halaman edit unit.</p>
                                     <FieldTooltipError message={formErrors.id_kepala || errors.id_kepala} />
                                 </div>
 

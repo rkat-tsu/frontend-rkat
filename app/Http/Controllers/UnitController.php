@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Unit;
 use App\Models\User;
 use App\Models\ApprovalPath;
+use App\Models\JenisKegiatanOption;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Redirect;
@@ -32,13 +33,14 @@ class UnitController extends Controller
 
         $units = $query->get();
 
-        $users = User::query()->select(['id_user', 'nama_lengkap'])->orderBy('nama_lengkap', 'asc')->get();
+        $users = collect();
         $allUnits = Unit::query()->select(['id_unit', 'kode_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get();
         $approvalPaths = ApprovalPath::select(['id', 'name'])->get();
 
         return Inertia::render('Admin/Unit/Index', [
             'units' => $units,
             'users' => $users,
+            'tipeOptions' => JenisKegiatanOption::where('kode_grup', 'tipe_unit')->where('is_active', true)->orderBy('nama')->get(['nama']),
             'allUnits' => $allUnits,
             'approvalPaths' => $approvalPaths,
             'filters' => request()->only(['sort_by', 'sort_direction']),
@@ -47,7 +49,7 @@ class UnitController extends Controller
 
     public function create()
     {
-        $users = User::query()->select(['id_user', 'nama_lengkap'])->orderBy('nama_lengkap', 'asc')->get();
+        $users = User::query()->select(['id_user', 'nama_lengkap', 'id_unit'])->orderBy('nama_lengkap', 'asc')->get();
         $units = Unit::query()->select(['id_unit', 'kode_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get();
         $approvalPaths = ApprovalPath::select(['id', 'name'])->get();
 
@@ -55,6 +57,7 @@ class UnitController extends Controller
             'users' => $users,
             'units' => $units,
             'approvalPaths' => $approvalPaths,
+            'tipeOptions' => JenisKegiatanOption::where('kode_grup', 'tipe_unit')->where('is_active', true)->orderBy('nama')->get(['nama']),
         ]);
     }
 
@@ -71,7 +74,7 @@ class UnitController extends Controller
         $validated = $request->validate([
             'kode_unit' => 'required|string|unique:unit,kode_unit',
             'nama_unit' => 'required|string|unique:unit,nama_unit',
-            'tipe_unit' => ['required', Rule::in(['Rektorat', 'Fakultas', 'Prodi', 'Biro', 'Lembaga', 'UPT', 'Satuan', 'UKM', 'Unit', 'Admin', 'Lainnya', 'Atasan'])],
+            'tipe_unit' => ['required', Rule::in(JenisKegiatanOption::where('kode_grup', 'tipe_unit')->where('is_active', true)->pluck('nama')->all())],
             'approval_path_id' => 'required|exists:approval_paths,id',
             'pencairan_approval_path_id' => 'required|exists:approval_paths,id',
             'id_kepala' => 'nullable|exists:users,id_user',
@@ -83,6 +86,9 @@ class UnitController extends Controller
             'kode_unit.unique' => 'Kode Unit ini sudah terdaftar.'
         ]);
 
+        // Unit belum memiliki id saat dibuat; kepala unit ditetapkan setelah user ditempatkan di unit ini.
+        $validated['id_kepala'] = null;
+
         Unit::create($validated);
         Log::info('[Unit] Unit berhasil dibuat: ' . $validated['nama_unit']);
 
@@ -93,7 +99,8 @@ class UnitController extends Controller
     {
         return Inertia::render('Admin/Unit/Edit', [
             'unit' => $unit,
-            'users' => User::query()->select(['id_user', 'nama_lengkap'])->orderBy('nama_lengkap', 'asc')->get(),
+            'users' => User::query()->select(['id_user', 'nama_lengkap', 'id_unit'])->where('id_unit', $unit->id_unit)->orderBy('nama_lengkap', 'asc')->get(),
+            'tipeOptions' => JenisKegiatanOption::where('kode_grup', 'tipe_unit')->where('is_active', true)->orderBy('nama')->get(['nama']),
             'units' => Unit::query()->select(['id_unit', 'kode_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get(),
             'approvalPaths' => ApprovalPath::select(['id', 'name'])->get(),
         ]);
@@ -113,10 +120,10 @@ class UnitController extends Controller
         $validated = $request->validate([
             'kode_unit' => ['required', 'string', Rule::unique('unit', 'kode_unit')->ignore($unit->id_unit, 'id_unit')],
             'nama_unit' => ['required', 'string', Rule::unique('unit', 'nama_unit')->ignore($unit->id_unit, 'id_unit')],
-            'tipe_unit' => ['required', Rule::in(['Rektorat', 'Fakultas', 'Prodi', 'Biro', 'Lembaga', 'UPT', 'Satuan', 'UKM', 'Unit', 'Admin', 'Lainnya', 'Atasan'])],
+            'tipe_unit' => ['required', Rule::in(JenisKegiatanOption::where('kode_grup', 'tipe_unit')->where('is_active', true)->pluck('nama')->all())],
             'approval_path_id' => 'required|exists:approval_paths,id',
             'pencairan_approval_path_id' => 'required|exists:approval_paths,id',
-            'id_kepala' => 'nullable|exists:users,id_user',
+            'id_kepala' => ['nullable', Rule::exists('users', 'id_user')->where('id_unit', $unit->id_unit)],
             'parent_id' => 'nullable|exists:unit,id_unit',
             'no_telepon' => 'nullable|string',
             'email' => 'nullable|email',

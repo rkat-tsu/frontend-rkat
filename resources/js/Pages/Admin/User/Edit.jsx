@@ -53,10 +53,7 @@ export default function Edit({ auth, user, units = [] }) {
         { value: 'Kepala_Unit', label: 'Kepala Unit' },
         { value: 'Dekan', label: 'Dekan' },
         { value: 'Tim_Renbang', label: 'Tim Renbang' },
-        { value: 'Rektor', label: 'Rektor' },
-        { value: 'WR_1', label: 'Wakil Rektor 1' },
-        { value: 'WR_2', label: 'Wakil Rektor 2' },
-        { value: 'WR_3', label: 'Wakil Rektor 3' },
+        { value: 'Rektorat', label: 'Rektorat (Rektor dan Wakil Rektor)' },
         { value: 'Admin', label: 'Administrator Sistem' },
     ];
 

@@ -11,7 +11,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import FieldTooltipError from '@/Components/FieldTooltipError';
 
-export default function Index({ auth, karyawans = {}, units = [], filters = {} }) {
+export default function Index({ auth, karyawans = {}, units = [], filters = {}, statusPegawaiOptions = [] }) {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [unitFilter, setUnitFilter] = useState(filters?.unit_id || '');
     const [statusPegawaiFilter, setStatusPegawaiFilter] = useState(filters?.status_pegawai || '');
@@ -92,7 +92,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
         no_telepon: '',
         id_unit: '',
         jabatan: '',
-        status_pegawai: 'Tetap',
+        status_pegawai: statusPegawaiOptions.find(option => option.is_active && option.nama === 'Tetap')?.nama || statusPegawaiOptions.find(option => option.is_active)?.nama || '',
         is_aktif: true,
     });
 
@@ -103,7 +103,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
         no_telepon: '',
         id_unit: '',
         jabatan: '',
-        status_pegawai: 'Tetap',
+        status_pegawai: statusPegawaiOptions.find(option => option.is_active && option.nama === 'Tetap')?.nama || statusPegawaiOptions.find(option => option.is_active)?.nama || '',
         is_aktif: true,
     });
 
@@ -212,14 +212,13 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
 
     const statusOptions = [
         { value: '', label: 'Semua Status Pegawai' },
-        { value: 'Tetap', label: 'Tetap' },
-        { value: 'Kontrak', label: 'Kontrak' },
-        { value: 'Dosen Tetap', label: 'Dosen Tetap' },
-        { value: 'Dosen LB', label: 'Dosen Luar Biasa (LB)' },
-        { value: 'Tendik', label: 'Tenaga Kependidikan (Tendik)' },
-        { value: 'Honorer', label: 'Honorer' },
-        { value: 'Lainnya', label: 'Lainnya' },
+        ...statusPegawaiOptions.filter(option => option.is_active).map(option => ({ value: option.nama, label: option.nama })),
     ];
+    const createStatusOptions = statusOptions.filter(option => option.value !== '');
+    const editStatusOptions = statusPegawaiOptions.map(option => ({
+        value: option.nama,
+        label: `${option.nama}${option.is_active ? '' : ' (Nonaktif)'}`,
+    }));
 
     return (
         <AuthenticatedLayout header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Data SDM / Karyawan</h2>}>
@@ -600,7 +599,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
                             <CustomSelect
                                 value={createData.status_pegawai}
                                 onChange={(e) => handleCreateChange('status_pegawai', e.target.value)}
-                                options={statusOptions.filter(o => o.value !== '')}
+                                options={createStatusOptions}
                                 placeholder="Pilih Status"
                                 className="h-10 text-sm"
                             />
@@ -740,7 +739,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {} }
                             <CustomSelect
                                 value={editData.status_pegawai}
                                 onChange={(e) => handleEditChange('status_pegawai', e.target.value)}
-                                options={statusOptions.filter(o => o.value !== '')}
+                                options={editStatusOptions}
                                 placeholder="Pilih Status"
                                 className="h-10 text-sm"
                             />
