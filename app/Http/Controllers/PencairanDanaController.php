@@ -9,6 +9,7 @@ use App\Models\Unit;
 use App\Models\ApprovalPathStep;
 use App\Models\RkatRabItem;
 use App\Models\PencairanDanaItem;
+use App\Http\Controllers\Concerns\PreservesPagination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -16,8 +17,11 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class PencairanDanaController extends Controller
 {
+    use PreservesPagination;
+
     public function index(Request $request)
     {
+        $this->rememberPaginationQuery($request, 'pencairan');
         $user = Auth::user();
 
         $query = PencairanDana::with([
@@ -243,7 +247,7 @@ class PencairanDanaController extends Controller
             ]);
         }
 
-        return redirect()->route('pencairan.index')->with('success', 'Pencairan Dana berhasil dibuat sebagai Draft.');
+        return $this->redirectToPaginatedList($request, 'pencairan', 'pencairan.index')->with('success', 'Pencairan Dana berhasil dibuat sebagai Draft.');
     }
 
     public function update(Request $request, PencairanDana $pencairan)
@@ -318,7 +322,7 @@ class PencairanDanaController extends Controller
             ]);
         }
 
-        return redirect()->route('pencairan.index')->with('success', 'Pencairan Dana berhasil diperbarui.');
+        return $this->redirectToPaginatedList($request, 'pencairan', 'pencairan.index')->with('success', 'Pencairan Dana berhasil diperbarui.');
     }
 
     public function show(PencairanDana $pencairan)
@@ -364,7 +368,7 @@ class PencairanDanaController extends Controller
         ]);
     }
 
-    public function submit(PencairanDana $pencairan)
+    public function submit(Request $request, PencairanDana $pencairan)
     {
         if ($pencairan->status_pencairan !== 'Draft' && $pencairan->status_pencairan !== 'Revisi') {
             return redirect()->back()->with('error', 'Hanya dokumen Draft atau Revisi yang dapat diajukan.');
@@ -394,7 +398,7 @@ class PencairanDanaController extends Controller
             'tanggal_pengajuan' => now()
         ])->save();
 
-        return redirect()->route('pencairan.index')->with('success', 'Pencairan Dana berhasil diajukan.');
+        return $this->redirectToPaginatedList($request, 'pencairan', 'pencairan.index')->with('success', 'Pencairan Dana berhasil diajukan.');
     }
 
     // Fungsi Approval

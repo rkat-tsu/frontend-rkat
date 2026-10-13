@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\PreservesPagination;
 use App\Models\User;
 use App\Models\Unit;
 use App\Models\Karyawan;
@@ -18,6 +19,8 @@ use Illuminate\Validation\Rules;
 
 class UserController extends Controller
 {
+    use PreservesPagination;
+
     public function create()
     {
         return inertia('Admin/User/Create', [
@@ -28,6 +31,7 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
+        $this->rememberPaginationQuery($request, 'user');
         Log::debug('[User Admin] Viewing Index', ['search' => $request->get('q'), 'unit' => $request->get('unit')]);
 
         $query = User::with('unit');
@@ -116,12 +120,12 @@ class UserController extends Controller
             event(new Registered($user));
         } catch (\Exception $e) {
             Log::error('[User Admin] Failed to send registration email: ' . $e->getMessage());
-            return Redirect::route('user.index')->with('success', 'User berhasil dibuat, tetapi email verifikasi gagal dikirim karena masalah server email.');
+            return $this->redirectToPaginatedList($request, 'user', 'user.index')->with('success', 'User berhasil dibuat, tetapi email verifikasi gagal dikirim karena masalah server email.');
         }
         
         Log::info('[User Admin] User created successfully', ['new_user_id' => $user->id_user]);
 
-        return Redirect::route('user.index')->with('success', 'User berhasil dibuat.');
+        return $this->redirectToPaginatedList($request, 'user', 'user.index')->with('success', 'User berhasil dibuat.');
     }
 
     public function edit(User $user)
@@ -164,7 +168,7 @@ class UserController extends Controller
             'no_telepon' => $request->no_telepon,
         ])->save();
 
-        return Redirect::route('user.index')->with('success', 'Data user berhasil diperbarui.');
+        return $this->redirectToPaginatedList($request, 'user', 'user.index')->with('success', 'Data user berhasil diperbarui.');
     }
 
     public function updatePassword(Request $request, User $user)
@@ -180,7 +184,7 @@ class UserController extends Controller
         return Redirect::back()->with('success', 'Password user berhasil diganti paksa.');
     }
 
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
         if ($user->id_user === Auth::id()) {
             return Redirect::back()->with('error', 'Anda tidak bisa menghapus akun Anda sendiri.');
@@ -188,6 +192,6 @@ class UserController extends Controller
 
         User::destroy($user->id_user);
 
-        return Redirect::route('user.index')->with('success', 'User berhasil dihapus.');
+        return $this->redirectToPaginatedList($request, 'user', 'user.index')->with('success', 'User berhasil dihapus.');
     }
 }

@@ -678,8 +678,8 @@ export default function Dashboard({
                                                 <div className="font-semibold text-sm text-gray-800 dark:text-gray-200 line-clamp-1">{kegiatan.judul}</div>
                                                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1.5 font-medium">
                                                     <Calendar size={12} className="text-teal-500" />
-                                                    {new Date(kegiatan.mulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                                                    {kegiatan.mulai !== kegiatan.akhir && ` - ${new Date(kegiatan.akhir).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}`}
+                                                    {new Date(`${kegiatan.mulai}T00:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                    {kegiatan.mulai !== kegiatan.akhir && ` - ${new Date(`${kegiatan.akhir}T00:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`}
                                                 </div>
                                             </div>
                                         ))

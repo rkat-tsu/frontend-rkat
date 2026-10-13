@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ActionButton, { ActionGroup } from '@/Components/ActionButton';
-import { Edit2, Trash2, Search, Plus, Save, ArrowUp, ArrowDown, ArrowUpDown, Loader2, X, Users, UserCheck, Phone, Mail, Building2, Briefcase } from 'lucide-react';
+import { Edit2, Trash2, Search, Plus, Save, ArrowUp, ArrowDown, ArrowUpDown, Loader2, X, Users, UserCheck, Phone, Mail, Building2, Briefcase, Copy } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
@@ -61,6 +61,16 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
         applyFilters('', unitFilter, statusPegawaiFilter, statusAktifFilter, perPage, sortBy, sortDirection);
     };
 
+    const copyValue = async (value, label) => {
+        if (!value) return;
+        try {
+            await navigator.clipboard.writeText(value);
+            toast.success(`${label} tersalin`, { description: value });
+        } catch {
+            toast.error(`${label} tidak dapat disalin`, { description: 'Periksa izin clipboard browser Anda.' });
+        }
+    };
+
     // Debounce search input
     useEffect(() => {
         if (searchTerm === (filters?.search || '')) return;
@@ -94,6 +104,8 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
         jabatan: '',
         status_pegawai: statusPegawaiOptions.find(option => option.is_active && option.nama === 'Tetap')?.nama || statusPegawaiOptions.find(option => option.is_active)?.nama || '',
         is_aktif: true,
+        nidn: '',
+        nuptk: '',
     });
 
     const { data: editData, setData: setEditData, patch, processing: editProcessing, errors: editErrors, reset: resetEdit } = useForm({
@@ -105,6 +117,8 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
         jabatan: '',
         status_pegawai: statusPegawaiOptions.find(option => option.is_active && option.nama === 'Tetap')?.nama || statusPegawaiOptions.find(option => option.is_active)?.nama || '',
         is_aktif: true,
+        nidn: '',
+        nuptk: '',
     });
 
     const handleCreateChange = (field, value) => {
@@ -140,6 +154,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
         setCreateFormErrors({});
         const toastId = toast.loading("Menyimpan data SDM...");
         post(route('karyawan.store'), {
+            preserveScroll: true,
             onSuccess: () => {
                 toast.success("Berhasil", { id: toastId, description: `Data SDM ${createData.nama} berhasil ditambahkan.` });
                 setIsCreateModalOpen(false);
@@ -161,6 +176,8 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
             jabatan: item.jabatan || '',
             status_pegawai: item.status_pegawai || 'Tetap',
             is_aktif: item.is_aktif ?? true,
+            nidn: item.nidn || '',
+            nuptk: item.nuptk || '',
         });
         setIsEditModalOpen(true);
     };
@@ -181,6 +198,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
         setEditFormErrors({});
         const toastId = toast.loading("Memperbarui data SDM...");
         patch(route('karyawan.update', editingKaryawan.uuid || editingKaryawan.id_karyawan), {
+            preserveScroll: true,
             onSuccess: () => {
                 toast.success("Berhasil", { id: toastId, description: `Data SDM berhasil diperbarui.` });
                 setIsEditModalOpen(false);
@@ -199,6 +217,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                 onClick: () => {
                     const toastId = toast.loading("Sedang menghapus...");
                     router.delete(route('karyawan.destroy', item.uuid || item.id_karyawan), {
+                        preserveScroll: true,
                         onSuccess: () => toast.success("Berhasil dihapus", { id: toastId }),
                         onError: () => toast.error("Gagal menghapus data", { id: toastId })
                     });
@@ -235,7 +254,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                                 Data SDM / Karyawan
                             </h1>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                Master database profil dosen, staf, dan tenaga kependidikan untuk rujukan PIC kegiatan RKA.
+                                Master database profil dosen, staf, dan tenaga kependidikan.
                             </p>
                         </div>
                         {isAdmin() && (
@@ -363,12 +382,18 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                                                 <div className="font-semibold text-gray-900 dark:text-white">
                                                     {item.nama}
                                                 </div>
-                                                <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                                                    {item.nik && <span className="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">NIK: {item.nik}</span>}
+                                                <div className="mt-1 flex flex-col items-start gap-1 text-xs">
+                                                    {item.nik && (
+                                                        <button type="button" onClick={() => copyValue(item.nik, 'NIK')} title="Salin NIK" className="group inline-flex items-center gap-1 font-mono text-gray-500 transition hover:text-teal-700 dark:text-gray-400 dark:hover:text-teal-300">
+                                                            <span>NIK: {item.nik}</span><Copy size={11} className="opacity-50 group-hover:opacity-100" />
+                                                        </button>
+                                                    )}
                                                     {item.email && (
-                                                        <span className="flex items-center gap-1 truncate max-w-[200px]">
-                                                            <Mail size={12} /> {item.email}
-                                                        </span>
+                                                        <button type="button" onClick={() => copyValue(item.email, 'Email')} title="Salin email" className="group inline-flex max-w-[260px] items-center gap-1.5 rounded-md text-left text-teal-700 transition hover:text-teal-900 dark:text-teal-300 dark:hover:text-teal-100">
+                                                            <Mail size={13} className="shrink-0 text-teal-600 dark:text-teal-400" />
+                                                            <span className="truncate">{item.email}</span>
+                                                            <Copy size={12} className="shrink-0 opacity-60 transition group-hover:opacity-100" />
+                                                        </button>
                                                     )}
                                                 </div>
                                             </td>
@@ -465,6 +490,9 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                                             <Link
                                                 key={k}
                                                 href={link.url}
+                                                only={['karyawans']}
+                                                preserveState
+                                                preserveScroll
                                                 className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${link.active
                                                     ? 'bg-teal-600 text-white shadow-sm'
                                                     : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
@@ -487,36 +515,71 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
             </div>
 
             {/* Modal Detail Karyawan */}
-            <Modal show={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} maxWidth="2xl">
+            <Modal show={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} maxWidth="4xl">
                 {selectedKaryawan && (
-                    <div className="p-6">
-                        <div className="mb-5 flex items-start justify-between border-b border-gray-100 pb-4 dark:border-gray-700">
-                            <div className="flex items-center gap-3">
-                                <div className="rounded-xl bg-teal-50 p-2.5 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300"><Users size={20} /></div>
-                                <div>
-                                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">Detail Karyawan</h2>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Informasi profil SDM / karyawan</p>
+                    <div className="p-6 sm:p-7">
+                        <div className="mb-6 flex items-center justify-between gap-4 border-b border-gray-100 pb-5 dark:border-gray-700">
+                            <div className="flex min-w-0 items-center gap-4">
+                                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300"><Users size={25} /></div>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-300">Profil Karyawan</p>
+                                    <h2 className="mt-1 truncate text-xl font-bold text-gray-900 dark:text-white">{selectedKaryawan.nama || 'Tanpa Nama'}</h2>
+                                    <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{selectedKaryawan.jabatan || selectedKaryawan.status_pegawai || 'Data SDM / Karyawan'}</p>
                                 </div>
                             </div>
-                            <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${selectedKaryawan.is_aktif ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}>
+                            <span className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold ${selectedKaryawan.is_aktif ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}>
                                 {selectedKaryawan.is_aktif ? 'Aktif' : 'Nonaktif'}
                             </span>
                         </div>
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            {[
-                                ['Nama Lengkap & Gelar', selectedKaryawan.nama],
-                                ['NIK / NIDN / NIP', selectedKaryawan.nik],
-                                ['Unit Kerja / Penempatan', selectedKaryawan.unit ? `${selectedKaryawan.unit.kode_unit} - ${selectedKaryawan.unit.nama_unit}` : null],
-                                ['Jabatan / Posisi', selectedKaryawan.jabatan],
-                                ['Status Kepegawaian', selectedKaryawan.status_pegawai],
-                                ['Email', selectedKaryawan.email],
-                                ['No. Telepon / WhatsApp', selectedKaryawan.no_telepon],
-                            ].map(([label, value]) => (
-                                <div key={label} className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900/70">
-                                    <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</div>
-                                    <div className="break-words text-sm font-semibold text-gray-900 dark:text-gray-100">{value || '-'}</div>
+
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                            <section className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4 dark:border-gray-700 dark:bg-gray-900/40">
+                                <h3 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">Identitas & Kontak</h3>
+                                <div className="space-y-3">
+                                    {[
+                                        ['NIK TSU', selectedKaryawan.nik, true],
+                                        ['NIDN', selectedKaryawan.nidn, true],
+                                        ['NUPTK', selectedKaryawan.nuptk, true],
+                                        ['Nomor WA', selectedKaryawan.no_telepon, false],
+                                    ].map(([label, value, copyable]) => (
+                                        <div key={label} className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-4">
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
+                                            {copyable && value ? (
+                                                <button type="button" onClick={() => copyValue(value, label)} title={`Salin ${label}`} className="group inline-flex items-center gap-1.5 break-all text-left text-sm font-semibold text-gray-800 transition hover:text-teal-700 dark:text-gray-100 dark:hover:text-teal-300">
+                                                    <span>{value}</span><Copy size={13} className="shrink-0 opacity-50 group-hover:opacity-100" />
+                                                </button>
+                                            ) : <span className="break-all text-sm font-semibold text-gray-800 dark:text-gray-100">{value || '-'}</span>}
+                                        </div>
+                                    ))}
+                                    <div className="flex flex-col gap-0.5 border-t border-gray-200 pt-3 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">Email</span>
+                                        {selectedKaryawan.email ? (
+                                            <button type="button" onClick={() => copyValue(selectedKaryawan.email, 'Email')} title="Salin email" className="group inline-flex min-w-0 items-center gap-2 text-left text-sm font-semibold text-teal-700 hover:text-teal-900 dark:text-teal-300 dark:hover:text-teal-100">
+                                                <Mail size={14} className="shrink-0" />
+                                                <span className="truncate">{selectedKaryawan.email}</span>
+                                                <Copy size={13} className="shrink-0 opacity-60 group-hover:opacity-100" />
+                                            </button>
+                                        ) : <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">-</span>}
+                                    </div>
                                 </div>
-                            ))}
+                            </section>
+
+                            <section className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4 dark:border-gray-700 dark:bg-gray-900/40">
+                                <h3 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">Penempatan & Kepegawaian</h3>
+                                <div className="space-y-3">
+                                    {[
+                                        ['Unit Kerja', selectedKaryawan.unit ? `${selectedKaryawan.unit.kode_unit} - ${selectedKaryawan.unit.nama_unit}` : null],
+                                        ['Jabatan Struktural', selectedKaryawan.jabatan],
+                                        ['Jenis Pegawai', selectedKaryawan.status_pegawai],
+                                        ['Status', selectedKaryawan.is_aktif ? 'Aktif' : 'Nonaktif'],
+                                    ].map(([label, value]) => (
+                                        <div key={label} className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-4">
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
+                                            <span className="break-words text-sm font-semibold text-gray-800 dark:text-gray-100 sm:text-right">{value || '-'}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
                         </div>
                         <div className="mt-6 flex justify-end border-t border-gray-100 pt-4 dark:border-gray-700">
                             <SecondaryButton type="button" onClick={() => setIsDetailModalOpen(false)}>Tutup</SecondaryButton>
@@ -533,6 +596,11 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                     </h2>
                 </div>
                 <form id="create-karyawan-form" onSubmit={handleCreateSubmit} className="px-6 pt-6 pb-6 space-y-4">
+                    <section className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/60">
+                        <div className="mb-4 border-b border-gray-100 pb-3 dark:border-gray-700">
+                            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">Identitas & Nomor Induk</h3>
+                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Isi nama dan nomor identitas karyawan yang tersedia.</p>
+                        </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -549,7 +617,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                         </div>
                         <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                NIK / NIDN / NIP
+                                NIK
                             </label>
                             <input
                                 type="text"
@@ -561,6 +629,39 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                         </div>
                     </div>
 
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="relative pb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                NIDN
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="Nomor Induk Dosen Nasional"
+                                value={createData.nidn}
+                                onChange={(e) => handleCreateChange('nidn', e.target.value)}
+                                className="w-full bg-gray-50 border border-gray-200 focus:ring-teal-500 focus:border-teal-500 text-gray-900 rounded-xl p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm font-mono" />
+                            <FieldTooltipError message={createErrors.nidn} />
+                        </div>
+                        <div className="relative pb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                NUPTK
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="Nomor Unik Pendidik dan Tenaga Kependidikan"
+                                value={createData.nuptk}
+                                onChange={(e) => handleCreateChange('nuptk', e.target.value)}
+                                className="w-full bg-gray-50 border border-gray-200 focus:ring-teal-500 focus:border-teal-500 text-gray-900 rounded-xl p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm font-mono" />
+                            <FieldTooltipError message={createErrors.nuptk} />
+                        </div>
+                    </div>
+
+                    </section>
+                    <section className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/60">
+                        <div className="mb-4 border-b border-gray-100 pb-3 dark:border-gray-700">
+                            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">Penempatan & Kepegawaian</h3>
+                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Tentukan unit kerja, jabatan, jenis, dan status keaktifan.</p>
+                        </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -622,6 +723,12 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                         </div>
                     </div>
 
+                    </section>
+                    <section className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/60">
+                        <div className="mb-4 border-b border-gray-100 pb-3 dark:border-gray-700">
+                            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">Informasi Kontak</h3>
+                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Masukkan email TSU dan nomor telepon atau WhatsApp.</p>
+                        </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -648,6 +755,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                             />
                         </div>
                     </div>
+                    </section>
 
                 </form>
                 <div className="flex justify-end gap-3 bg-gray-50 px-6 py-4 dark:bg-gray-700 border-t border-gray-100 dark:border-gray-600 rounded-b-lg">
@@ -673,6 +781,11 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                     </h2>
                 </div>
                 <form id="edit-karyawan-form" onSubmit={handleEditSubmit} className="px-6 pt-6 pb-6 space-y-4">
+                    <section className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/60">
+                        <div className="mb-4 border-b border-gray-100 pb-3 dark:border-gray-700">
+                            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">Identitas & Nomor Induk</h3>
+                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Perbarui nama dan nomor identitas karyawan.</p>
+                        </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -689,7 +802,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                         </div>
                         <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                NIK / NIDN / NIP
+                                NIK
                             </label>
                             <input
                                 type="text"
@@ -701,6 +814,39 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                         </div>
                     </div>
 
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="relative pb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                NIDN
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="Nomor Induk Dosen Nasional"
+                                value={editData.nidn}
+                                onChange={(e) => handleEditChange('nidn', e.target.value)}
+                                className="w-full bg-gray-50 border border-gray-200 focus:ring-teal-500 focus:border-teal-500 text-gray-900 rounded-xl p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm font-mono" />
+                            <FieldTooltipError message={editErrors.nidn} />
+                        </div>
+                        <div className="relative pb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                NUPTK
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="Nomor Unik Pendidik dan Tenaga Kependidikan"
+                                value={editData.nuptk}
+                                onChange={(e) => handleEditChange('nuptk', e.target.value)}
+                                className="w-full bg-gray-50 border border-gray-200 focus:ring-teal-500 focus:border-teal-500 text-gray-900 rounded-xl p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm font-mono" />
+                            <FieldTooltipError message={editErrors.nuptk} />
+                        </div>
+                    </div>
+
+                    </section>
+                    <section className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/60">
+                        <div className="mb-4 border-b border-gray-100 pb-3 dark:border-gray-700">
+                            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">Penempatan & Kepegawaian</h3>
+                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Perbarui unit kerja, jabatan, jenis, dan status keaktifan.</p>
+                        </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -762,6 +908,12 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                         </div>
                     </div>
 
+                    </section>
+                    <section className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/60">
+                        <div className="mb-4 border-b border-gray-100 pb-3 dark:border-gray-700">
+                            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">Informasi Kontak</h3>
+                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Perbarui email TSU dan nomor telepon atau WhatsApp.</p>
+                        </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="relative pb-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -788,6 +940,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                             />
                         </div>
                     </div>
+                    </section>
 
                 </form>
                 <div className="flex justify-end gap-3 bg-gray-50 px-6 py-4 dark:bg-gray-700 border-t border-gray-100 dark:border-gray-600 rounded-b-lg">

@@ -22,6 +22,8 @@ class Karyawan extends Model
         'jabatan',
         'status_pegawai',
         'is_aktif',
+        'nidn',
+        'nuptk',
     ];
 
     protected $casts = [

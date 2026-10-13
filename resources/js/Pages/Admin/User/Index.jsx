@@ -322,6 +322,7 @@ export default function Index({ users, filters = {}, units = [] }) {
                                             <Link
                                                 key={k}
                                                 href={link.url}
+                                                only={['users']}
                                                 preserveScroll
                                                 preserveState
                                                 className={`px-3 py-1 text-sm border rounded-md transition-colors ${

@@ -455,6 +455,9 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
                                             <Link
                                                 key={k}
                                                 href={link.url}
+                                                only={[ 'items' ]}
+                                                preserveState
+                                                preserveScroll
                                                 className={`px-3 py-1 text-sm border rounded-md transition-colors ${link.active
                                                     ? 'bg-yellow-500 text-white border-yellow-500'
                                                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'

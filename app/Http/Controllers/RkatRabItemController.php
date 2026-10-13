@@ -5,17 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\RkatHeader;
 use App\Models\TahunAnggaran;
 use App\Models\Unit;
+use App\Http\Controllers\Concerns\PreservesPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 
 class RkatRabItemController extends Controller
 {
+    use PreservesPagination;
+
     /**
      * Halaman RKAT - Menampilkan daftar RKAT dengan Status Global (RKA, Pencairan, LPJ).
      */
     public function index(Request $request)
     {
+        $this->rememberPaginationQuery($request, 'rkat-global');
         $query = RkatHeader::query()
             ->with([
                 'unit:id_unit,kode_unit,nama_unit',

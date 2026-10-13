@@ -252,11 +252,18 @@ class DashboardController extends Controller
      */
     private function getJadwalKegiatan(User $user, int $tahunSekarang): array
     {
+        $today = Carbon::today();
+        $yearStart = Carbon::create($tahunSekarang, 1, 1)->startOfDay();
+        $yearEnd = Carbon::create($tahunSekarang, 12, 31)->endOfDay();
+
         $query = RkatDetail::query()
             ->join('rkat_headers', 'rkat_details.id_header', '=', 'rkat_headers.id_header', 'inner', false)
             ->where('rkat_headers.status_persetujuan', '=', 'Disetujui_Final', 'and')
             ->where('rkat_headers.tahun_anggaran', '=', $tahunSekarang, 'and')
-            ->where('rkat_details.jadwal_pelaksanaan_mulai', '>=', Carbon::today(), 'and')
+            // Tampilkan jadwal dalam tahun kalender terpilih, termasuk kegiatan
+            // yang sudah dimulai tetapi masih berlangsung hari ini.
+            ->whereBetween('rkat_details.jadwal_pelaksanaan_mulai', [$yearStart, $yearEnd])
+            ->where('rkat_details.jadwal_pelaksanaan_akhir', '>=', $today)
             ->orderBy('rkat_details.jadwal_pelaksanaan_mulai', 'asc')
             ->select(['rkat_details.judul_kegiatan', 'rkat_details.jadwal_pelaksanaan_mulai', 'rkat_details.jadwal_pelaksanaan_akhir'])
             ->take(5);

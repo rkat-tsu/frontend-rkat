@@ -791,7 +791,11 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                     <button
                                         key={i}
                                         disabled={!link.url || link.active}
-                                        onClick={() => link.url && router.get(link.url)}
+                                        onClick={() => link.url && router.get(link.url, {}, {
+                                            only: ['lpjs'],
+                                            preserveState: true,
+                                            preserveScroll: true,
+                                        })}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
                                         className={`px-3 py-1.5 text-xs font-medium rounded-lg transition ${
                                             link.active

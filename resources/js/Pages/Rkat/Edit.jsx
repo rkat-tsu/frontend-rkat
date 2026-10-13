@@ -248,6 +248,11 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
     const getFieldError = (field) => formErrors[field] || errors[field];
 
     const handleFieldChange = (field, value) => {
+        if (field === 'tahun_anggaran') {
+            setData(prev => ({ ...prev, tahun_anggaran: value, jadwal_pelaksanaan_mulai: '', jadwal_pelaksanaan_akhir: '' }));
+            setFormErrors(prev => ({ ...prev, tahun_anggaran: null, jadwal_pelaksanaan_mulai: null, jadwal_pelaksanaan_akhir: null }));
+            return;
+        }
         setData(field, value);
         if (formErrors[field]) {
             setFormErrors(prev => ({ ...prev, [field]: null }));
@@ -476,6 +481,16 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
         if (!data.jadwal_pelaksanaan_akhir) {
             errorsObj.jadwal_pelaksanaan_akhir = 'Harap isi bidang ini.';
             missingLabels.push('Tanggal Selesai Kegiatan');
+        }
+        const tahunJadwal = Number(data.tahun_anggaran);
+        if (data.jadwal_pelaksanaan_mulai && new Date(`${data.jadwal_pelaksanaan_mulai}T00:00:00`).getFullYear() !== tahunJadwal) {
+            errorsObj.jadwal_pelaksanaan_mulai = 'Tanggal kegiatan harus berada pada tahun anggaran yang dipilih.';
+        }
+        if (data.jadwal_pelaksanaan_akhir && new Date(`${data.jadwal_pelaksanaan_akhir}T00:00:00`).getFullYear() !== tahunJadwal) {
+            errorsObj.jadwal_pelaksanaan_akhir = 'Tanggal kegiatan harus berada pada tahun anggaran yang dipilih.';
+        }
+        if (data.jadwal_pelaksanaan_mulai && data.jadwal_pelaksanaan_akhir && data.jadwal_pelaksanaan_akhir < data.jadwal_pelaksanaan_mulai) {
+            errorsObj.jadwal_pelaksanaan_akhir = 'Tanggal selesai tidak boleh sebelum tanggal mulai.';
         }
         if (!data.lokasi_pelaksanaan || !data.lokasi_pelaksanaan.trim()) {
             errorsObj.lokasi_pelaksanaan = 'Harap isi bidang ini.';
@@ -731,6 +746,7 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                             value={data.jadwal_pelaksanaan_mulai}
                                             onChange={(val) => handleFieldChange('jadwal_pelaksanaan_mulai', val)}
                                             isError={!!getFieldError('jadwal_pelaksanaan_mulai')}
+                                            allowedYear={data.tahun_anggaran}
                                             className="mt-1 w-full"
                                         />
                                         <FieldTooltipError message={getFieldError('jadwal_pelaksanaan_mulai')} />
@@ -741,6 +757,7 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                             value={data.jadwal_pelaksanaan_akhir}
                                             onChange={(val) => handleFieldChange('jadwal_pelaksanaan_akhir', val)}
                                             isError={!!getFieldError('jadwal_pelaksanaan_akhir')}
+                                            allowedYear={data.tahun_anggaran}
                                             className="mt-1 w-full"
                                         />
                                         <FieldTooltipError message={getFieldError('jadwal_pelaksanaan_akhir')} />

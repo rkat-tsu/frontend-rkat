@@ -674,6 +674,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                         <Link
                                             key={k}
                                             href={link.url}
+                                            only={['pencairans']}
                                             preserveScroll
                                             preserveState
                                             className={`px-3 py-1 text-sm border rounded-md transition-colors ${

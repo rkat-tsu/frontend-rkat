@@ -437,6 +437,9 @@ export default function Index({ auth, rkats = { data: [] }, filters = {}, tahunA
                                             <Link
                                                 key={k}
                                                 href={link.url}
+                                                only={['rkats']}
+                                                preserveState
+                                                preserveScroll
                                                 className={`px-3 py-1 text-sm border rounded-md transition-colors ${link.active
                                                     ? 'bg-indigo-600 text-white border-indigo-600'
                                                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\RincianAnggaran;
+use App\Http\Controllers\Concerns\PreservesPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Redirect;
@@ -11,8 +12,11 @@ use Illuminate\Validation\Rule;
 
 class RincianAnggaranController extends Controller
 {
+    use PreservesPagination;
+
     public function index(Request $request)
     {
+        $this->rememberPaginationQuery($request, 'sbo');
         Log::debug('[RincianAnggaran] Halaman Index.');
         
         $query = RincianAnggaran::query();
@@ -79,7 +83,7 @@ class RincianAnggaranController extends Controller
         RincianAnggaran::create($validated);
         Log::info('[RincianAnggaran] Dibuat: ' . $validated['kode_anggaran']);
 
-        return Redirect::route('sbo.index')->with('success', 'SBO berhasil ditambahkan.');
+        return $this->redirectToPaginatedList($request, 'sbo', 'sbo.index')->with('success', 'SBO berhasil ditambahkan.');
     }
 
     // Modal handles edit
@@ -100,18 +104,18 @@ class RincianAnggaranController extends Controller
             
         Log::info('[RincianAnggaran] Diperbarui: ' . $rincian->kode_anggaran);
 
-        return Redirect::route('sbo.index')->with('success', 'SBO berhasil diperbarui.');
+        return $this->redirectToPaginatedList($request, 'sbo', 'sbo.index')->with('success', 'SBO berhasil diperbarui.');
     }
 
-    public function destroy(RincianAnggaran $rincian)
+    public function destroy(Request $request, RincianAnggaran $rincian)
     {
         Log::warning('[RincianAnggaran] Menghapus: ' . $rincian->kode_anggaran);
         try {
             RincianAnggaran::destroy($rincian->kode_anggaran);
-            return Redirect::route('sbo.index')->with('success', 'SBO berhasil dihapus.');
+            return $this->redirectToPaginatedList($request, 'sbo', 'sbo.index')->with('success', 'SBO berhasil dihapus.');
         } catch (\Exception $e) {
             Log::error('[RincianAnggaran] Kesalahan Hapus: ' . $e->getMessage());
-            return Redirect::route('sbo.index')->with('error', 'Gagal menghapus SBO.');
+            return $this->redirectToPaginatedList($request, 'sbo', 'sbo.index')->with('error', 'Gagal menghapus SBO.');
         }
     }
 }

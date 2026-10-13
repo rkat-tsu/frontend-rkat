@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\TahunAnggaran;
+use App\Http\Controllers\Concerns\PreservesPagination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
@@ -11,8 +12,11 @@ use Inertia\Inertia;
 
 class TahunAnggaranController extends Controller
 {
+    use PreservesPagination;
+
     public function index(Request $request)
     {
+        $this->rememberPaginationQuery($request, 'tahun_anggaran');
         $query = TahunAnggaran::query();
 
         if ($request->search) {
@@ -88,7 +92,7 @@ class TahunAnggaranController extends Controller
             TahunAnggaran::create($validated);
         }
 
-        return Redirect::route('tahun.index')->with('success', 'Tahun Anggaran berhasil ditambahkan.');
+        return $this->redirectToPaginatedList($request, 'tahun_anggaran', 'tahun.index')->with('success', 'Tahun Anggaran berhasil ditambahkan.');
     }
 
 
@@ -119,13 +123,13 @@ class TahunAnggaranController extends Controller
 
         Log::info('[TahunAnggaran] Berhasil update data.');
 
-        return Redirect::route('tahun.index')->with('success', 'Tahun Anggaran berhasil diperbarui.');
+        return $this->redirectToPaginatedList($request, 'tahun_anggaran', 'tahun.index')->with('success', 'Tahun Anggaran berhasil diperbarui.');
     }
 
-    public function destroy(TahunAnggaran $tahun)
+    public function destroy(Request $request, TahunAnggaran $tahun)
     {
         TahunAnggaran::destroy($tahun->id_tahun);
 
-        return Redirect::route('tahun.index')->with('success', 'Data berhasil dihapus.');
+        return $this->redirectToPaginatedList($request, 'tahun_anggaran', 'tahun.index')->with('success', 'Data berhasil dihapus.');
     }
 }

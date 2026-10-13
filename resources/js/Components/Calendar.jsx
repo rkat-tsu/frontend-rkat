@@ -32,11 +32,12 @@ const getPaddingDays = (year, month) => {
 // ====================================================================
 // MAIN COMPONENT
 // ====================================================================
-export default function Calendar({ selectedDate, onDateChange }) {
+export default function Calendar({ selectedDate, onDateChange, allowedYear }) {
+  const constrainedYear = allowedYear ? Number(allowedYear) : null;
   const initialDate =
-    selectedDate instanceof Date && !isNaN(selectedDate)
+    selectedDate instanceof Date && !isNaN(selectedDate) && (!constrainedYear || selectedDate.getFullYear() === constrainedYear)
       ? selectedDate
-      : new Date();
+      : constrainedYear ? new Date(constrainedYear, 0, 1) : new Date();
 
   const [currentMonth, setCurrentMonth] = useState(initialDate.getMonth());
   const [currentYear, setCurrentYear] = useState(initialDate.getFullYear());
@@ -85,6 +86,7 @@ export default function Calendar({ selectedDate, onDateChange }) {
   const handlePrev = () => {
     setTransitionKey((prev) => prev + 1);
     if (viewMode === "day") {
+      if (constrainedYear && currentYear === constrainedYear && currentMonth === 0) return;
       setCurrentMonth((prev) => {
         if (prev === 0) {
           setCurrentYear((prevYear) => prevYear - 1);
@@ -93,8 +95,10 @@ export default function Calendar({ selectedDate, onDateChange }) {
         return prev - 1;
       });
     } else if (viewMode === "year") {
+      if (constrainedYear) return;
       setCurrentYear((prev) => prev - 12);
     } else if (viewMode === "month") {
+      if (constrainedYear) return;
       setCurrentYear((prev) => prev - 1);
     }
   };
@@ -102,6 +106,7 @@ export default function Calendar({ selectedDate, onDateChange }) {
   const handleNext = () => {
     setTransitionKey((prev) => prev + 1);
     if (viewMode === "day") {
+      if (constrainedYear && currentYear === constrainedYear && currentMonth === 11) return;
       setCurrentMonth((prev) => {
         if (prev === 11) {
           setCurrentYear((prevYear) => prevYear + 1);
@@ -110,8 +115,10 @@ export default function Calendar({ selectedDate, onDateChange }) {
         return prev + 1;
       });
     } else if (viewMode === "year") {
+      if (constrainedYear) return;
       setCurrentYear((prev) => prev + 12);
     } else if (viewMode === "month") {
+      if (constrainedYear) return;
       setCurrentYear((prev) => prev + 1);
     }
   };
@@ -157,7 +164,7 @@ export default function Calendar({ selectedDate, onDateChange }) {
 
   const renderYearView = () => {
     const startYear = currentYear - (currentYear % 12);
-    const years = Array.from({ length: 12 }, (_, i) => startYear + i);
+    const years = constrainedYear ? [constrainedYear] : Array.from({ length: 12 }, (_, i) => startYear + i);
     return (
       <div
         key={transitionKey}
@@ -212,7 +219,8 @@ export default function Calendar({ selectedDate, onDateChange }) {
             key={index}
             type="button"
             onClick={() => handleDayClick(day)}
-            className={`w-full h-8 flex items-center justify-center rounded-lg transition duration-150 ${
+            disabled={!!constrainedYear && day.getFullYear() !== constrainedYear}
+            className={`w-full h-8 flex items-center justify-center rounded-lg transition duration-150 disabled:opacity-30 disabled:cursor-not-allowed ${
               isSelected(day)
                 ? "bg-teal-600 text-white font-bold"
                 : "text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -285,7 +293,8 @@ export default function Calendar({ selectedDate, onDateChange }) {
         <button
           type="button"
           onClick={handlePrev}
-          className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition"
+          disabled={!!constrainedYear && (viewMode === "year" || viewMode === "month" || (viewMode === "day" && currentYear === constrainedYear && currentMonth === 0))}
+          className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ChevronLeft size={18} />
         </button>
@@ -298,7 +307,8 @@ export default function Calendar({ selectedDate, onDateChange }) {
         <button
           type="button"
           onClick={handleNext}
-          className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition"
+          disabled={!!constrainedYear && (viewMode === "year" || viewMode === "month" || (viewMode === "day" && currentYear === constrainedYear && currentMonth === 11))}
+          className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ChevronRight size={18} />
         </button>

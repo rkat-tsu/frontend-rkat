@@ -15,6 +15,7 @@ use App\Models\ApprovalPathStep;
 use App\Models\Karyawan;
 use App\Models\RkatKomentar;
 use App\Models\JenisKegiatanOption;
+use App\Http\Controllers\Concerns\PreservesPagination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,9 @@ use Inertia\Inertia;
 
 class RkatController extends Controller
 {
-    public function create()
+    use PreservesPagination;
+
+    public function create(Request $request)
     {
         Log::debug('[RKAT] Permintaan Halaman Buat oleh User: ' . Auth::id());
 
@@ -39,7 +42,7 @@ class RkatController extends Controller
             ->get();
 
         if ($tahunAnggarans->isEmpty()) {
-            return redirect()->route('daftar-ajuan.index')->with('error', 'Maaf, periode penginputan RKAT saat ini sedang ditutup atau sudah melewati batas waktu.');
+            return $this->redirectToPaginatedList($request, 'rkat', 'daftar-ajuan.index')->with('error', 'Maaf, periode penginputan RKAT saat ini sedang ditutup atau sudah melewati batas waktu.');
         }
 
         $units = Unit::query()->select(['id_unit', 'kode_unit', 'nama_unit'])->orderBy('kode_unit', 'asc')->get();
@@ -70,6 +73,7 @@ class RkatController extends Controller
 
     public function index(Request $request)
     {
+        $this->rememberPaginationQuery($request, 'rkat');
         $query = RkatHeader::query()
             ->with([
                 'unit:id_unit,nama_unit',
@@ -162,6 +166,9 @@ class RkatController extends Controller
         if (!$tahun || $tahun->status_rkat === 'Closed') {
             return redirect()->back()->with('error', 'Gagal menyimpan! Periode tahun anggaran ini sudah ditutup.');
         }
+        $akhirTahunAnggaran = preg_match('/^\d{4}$/', (string) $request->input('tahun_anggaran'))
+            ? $request->input('tahun_anggaran') . '-12-31'
+            : '9999-12-31';
 
         // 1. VALIDASI KINERJA
         $request->validate([
@@ -195,8 +202,8 @@ class RkatController extends Controller
             'rasional' => ['required', 'string'],
             'tujuan' => ['required', 'string'],
             'mekanisme' => ['required', 'string'],
-            'jadwal_pelaksanaan_mulai' => ['required', 'date', 'after_or_equal:today'],
-            'jadwal_pelaksanaan_akhir' => ['required', 'date', 'after_or_equal:jadwal_pelaksanaan_mulai'],
+            'jadwal_pelaksanaan_mulai' => ['required', 'date_format:Y-m-d', 'after_or_equal:today', 'before_or_equal:' . $akhirTahunAnggaran],
+            'jadwal_pelaksanaan_akhir' => ['required', 'date_format:Y-m-d', 'after_or_equal:jadwal_pelaksanaan_mulai', 'before_or_equal:' . $akhirTahunAnggaran],
             'lokasi_pelaksanaan' => ['required', 'string'],
             'jenis_kegiatan' => ['required', 'string', Rule::exists('jenis_kegiatan_options', 'nama')->where('kode_grup', 'jenis_kegiatan')->where('is_active', true)],
             'pjawab' => ['required', 'string'],
@@ -305,7 +312,7 @@ class RkatController extends Controller
 
             DB::commit();
 
-            return redirect()->route('daftar-ajuan.index')->with('success', 'Pengajuan RKAT berhasil disimpan sebagai Draft.');
+            return $this->redirectToPaginatedList($request, 'rkat', 'daftar-ajuan.index')->with('success', 'Pengajuan RKAT berhasil disimpan sebagai Draft.');
         } catch (\Exception $e) {
             DB::rollBack();
             foreach ($uploadedPaths ?? [] as $path) Storage::disk('local')->delete($path);
@@ -411,7 +418,7 @@ class RkatController extends Controller
     /**
      * MENGIRIM / MENGAJUKAN RKAT DARI DRAFT KE APPROVAL
      */
-    public function submit(RkatHeader $rkatHeader)
+    public function submit(Request $request, RkatHeader $rkatHeader)
     {
         $rkatHeader->load('tahun_obj');
 
@@ -451,14 +458,14 @@ class RkatController extends Controller
 
             Log::info('[RKAT] Dokumen Berhasil Diajukan', ['id' => $rkatHeader->id_header, 'status' => $firstStep->step_name]);
 
-            return redirect()->route('daftar-ajuan.index')->with('success', 'RKAT berhasil diajukan dan sedang menunggu persetujuan Kepala Unit.');
+            return $this->redirectToPaginatedList($request, 'rkat', 'daftar-ajuan.index')->with('success', 'RKAT berhasil diajukan dan sedang menunggu persetujuan Kepala Unit.');
         } catch (\Exception $e) {
             Log::error('[RKAT] Gagal Submit: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal mengajukan RKAT: ' . $e->getMessage());
         }
     }
 
-    public function edit(RkatHeader $rkatHeader)
+    public function edit(Request $request, RkatHeader $rkatHeader)
     {
         $rkatHeader->load('tahun_obj');
         $taStatus = $rkatHeader->tahun_obj->status_rkat;
@@ -481,7 +488,7 @@ class RkatController extends Controller
         }
 
         if (!$canEdit) {
-            return redirect()->route('daftar-ajuan.index')->with('error', 'Dokumen ini tidak dapat diubah pada tahap ini.');
+            return $this->redirectToPaginatedList($request, 'rkat', 'daftar-ajuan.index')->with('error', 'Dokumen ini tidak dapat diubah pada tahap ini.');
         }
 
         $rkatHeader->load([
@@ -540,8 +547,12 @@ class RkatController extends Controller
         }
 
         if (!$canUpdate) {
-            return redirect()->route('daftar-ajuan.index')->with('error', 'Dokumen tidak dapat diubah.');
+            return $this->redirectToPaginatedList($request, 'rkat', 'daftar-ajuan.index')->with('error', 'Dokumen tidak dapat diubah.');
         }
+
+        $akhirTahunAnggaran = preg_match('/^\d{4}$/', (string) $request->input('tahun_anggaran'))
+            ? $request->input('tahun_anggaran') . '-12-31'
+            : '9999-12-31';
 
         $request->validate([
             'iku_id' => ['required', 'integer', 'exists:ikus,id_iku'],
@@ -565,8 +576,8 @@ class RkatController extends Controller
             'rasional' => ['required', 'string'],
             'tujuan' => ['required', 'string'],
             'mekanisme' => ['required', 'string'],
-            'jadwal_pelaksanaan_mulai' => ['required', 'date'],
-            'jadwal_pelaksanaan_akhir' => ['required', 'date', 'after_or_equal:jadwal_pelaksanaan_mulai'],
+            'jadwal_pelaksanaan_mulai' => ['required', 'date_format:Y-m-d', 'before_or_equal:' . $akhirTahunAnggaran],
+            'jadwal_pelaksanaan_akhir' => ['required', 'date_format:Y-m-d', 'after_or_equal:jadwal_pelaksanaan_mulai', 'before_or_equal:' . $akhirTahunAnggaran],
             'lokasi_pelaksanaan' => ['required', 'string'],
             'jenis_kegiatan' => ['required', 'string', Rule::exists('jenis_kegiatan_options', 'nama')->where('kode_grup', 'jenis_kegiatan')],
             'pjawab' => ['required', 'string'],
@@ -714,7 +725,7 @@ class RkatController extends Controller
 
             DB::commit();
 
-            return redirect()->route('daftar-ajuan.index')->with('success', 'Perubahan RKAT berhasil disimpan.');
+            return $this->redirectToPaginatedList($request, 'rkat', 'daftar-ajuan.index')->with('success', 'Perubahan RKAT berhasil disimpan.');
         } catch (\Exception $e) {
             DB::rollBack();
             foreach ($uploadedPaths ?? [] as $path) Storage::disk('local')->delete($path);

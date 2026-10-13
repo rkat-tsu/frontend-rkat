@@ -10,11 +10,15 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use App\Http\Controllers\Concerns\PreservesPagination;
 
 class KaryawanController extends Controller
 {
+    use PreservesPagination;
+
     public function index(Request $request)
     {
+        $this->rememberPaginationQuery($request, 'karyawan');
         Log::debug('[Karyawan] Halaman Index SDM.');
 
         $query = Karyawan::query()->with(['unit:id_unit,kode_unit,nama_unit']);
@@ -25,6 +29,8 @@ class KaryawanController extends Controller
                 $q->where('nama', 'like', "%{$search}%")
                   ->orWhere('nik', 'like', "%{$search}%")
                   ->orWhere('jabatan', 'like', "%{$search}%")
+                  ->orWhere('nidn', 'like', "%{$search}%")
+                  ->orWhere('nuptk', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
                   ->orWhereHas('unit', function ($uq) use ($search) {
                       $uq->where('nama_unit', 'like', "%{$search}%")
@@ -51,7 +57,7 @@ class KaryawanController extends Controller
         $sortBy = $request->input('sort_by', 'nama');
         $sortDirection = $request->input('sort_direction', 'asc');
 
-        if (in_array($sortBy, ['nik', 'nama', 'email', 'jabatan', 'status_pegawai', 'is_aktif'])) {
+        if (in_array($sortBy, ['nik', 'nama', 'email', 'jabatan', 'status_pegawai', 'is_aktif', 'nidn', 'nuptk'])) {
             $query->orderBy($sortBy, $sortDirection);
         } else {
             $query->orderBy('nama', 'asc');
@@ -85,12 +91,14 @@ class KaryawanController extends Controller
             'jabatan' => 'nullable|string|max:100',
             'status_pegawai' => ['required', 'string', 'max:50', Rule::exists('jenis_kegiatan_options', 'nama')->where('kode_grup', 'status_pegawai')->where('is_active', true)],
             'is_aktif' => 'boolean',
+            'nidn' => 'nullable|string|max:50',
+            'nuptk' => 'nullable|string|max:50',
         ]);
 
         Karyawan::create($validated);
         Log::info('[Karyawan] Dibuat: ' . $validated['nama']);
 
-        return Redirect::route('karyawan.index')->with('success', 'Data SDM / Karyawan berhasil ditambahkan.');
+        return $this->redirectToPaginatedList($request, 'karyawan', 'karyawan.index')->with('success', 'Data SDM / Karyawan berhasil ditambahkan.');
     }
 
     public function update(Request $request, Karyawan $karyawan)
@@ -111,12 +119,14 @@ class KaryawanController extends Controller
             'jabatan' => 'nullable|string|max:100',
             'status_pegawai' => ['required', 'string', 'max:50', Rule::exists('jenis_kegiatan_options', 'nama')->where('kode_grup', 'status_pegawai')],
             'is_aktif' => 'boolean',
+            'nidn' => 'nullable|string|max:50',
+            'nuptk' => 'nullable|string|max:50',
         ]);
 
         $karyawan->update($validated);
         Log::info('[Karyawan] Diperbarui: ' . $karyawan->nama);
 
-        return Redirect::route('karyawan.index')->with('success', 'Data SDM / Karyawan berhasil diperbarui.');
+        return $this->redirectToPaginatedList($request, 'karyawan', 'karyawan.index')->with('success', 'Data SDM / Karyawan berhasil diperbarui.');
     }
 
     public function destroy(Karyawan $karyawan)
@@ -124,10 +134,10 @@ class KaryawanController extends Controller
         Log::warning('[Karyawan] Menghapus: ' . $karyawan->nama);
         try {
             $karyawan->delete();
-            return Redirect::route('karyawan.index')->with('success', 'Data SDM / Karyawan berhasil dihapus.');
+            return $this->redirectToPaginatedList($request, 'karyawan', 'karyawan.index')->with('success', 'Data SDM / Karyawan berhasil dihapus.');
         } catch (\Exception $e) {
             Log::error('[Karyawan] Kesalahan Hapus: ' . $e->getMessage());
-            return Redirect::route('karyawan.index')->with('error', 'Gagal menghapus data SDM.');
+            return $this->redirectToPaginatedList($request, 'karyawan', 'karyawan.index')->with('error', 'Gagal menghapus data SDM.');
         }
     }
 }

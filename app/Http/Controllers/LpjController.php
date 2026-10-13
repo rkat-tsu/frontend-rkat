@@ -15,14 +15,18 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use App\Models\ApprovalPath;
+use App\Http\Controllers\Concerns\PreservesPagination;
 
 class LpjController extends Controller
 {
+    use PreservesPagination;
+
     /**
      * Display a listing of LPJ records.
      */
     public function index(Request $request)
     {
+        $this->rememberPaginationQuery($request, 'lpj');
         $user = Auth::user();
 
         $query = Lpj::with([
@@ -327,7 +331,7 @@ class LpjController extends Controller
             ]);
         }
 
-        return redirect()->route('lpj.index')->with('success', 'Dokumen LPJ berhasil dibuat sebagai Draft.');
+        return $this->redirectToPaginatedList($request, 'lpj', 'lpj.index')->with('success', 'Dokumen LPJ berhasil dibuat sebagai Draft.');
     }
 
     /**
@@ -427,13 +431,13 @@ class LpjController extends Controller
             ]);
         }
 
-        return redirect()->route('lpj.index')->with('success', 'Dokumen LPJ berhasil diperbarui.');
+        return $this->redirectToPaginatedList($request, 'lpj', 'lpj.index')->with('success', 'Dokumen LPJ berhasil diperbarui.');
     }
 
     /**
      * Submit LPJ to status 'Diajukan'.
      */
-    public function submit(Lpj $lpj)
+    public function submit(Request $request, Lpj $lpj)
     {
         $user = Auth::user();
 
@@ -460,7 +464,7 @@ class LpjController extends Controller
             'tanggal_pengajuan' => now(),
         ]);
 
-        return redirect()->route('lpj.index')->with('success', 'Dokumen LPJ berhasil diajukan untuk persetujuan.');
+        return $this->redirectToPaginatedList($request, 'lpj', 'lpj.index')->with('success', 'Dokumen LPJ berhasil diajukan untuk persetujuan.');
     }
 
     /**
@@ -523,7 +527,7 @@ class LpjController extends Controller
             'Ditolak' => 'Dokumen LPJ telah ditolak.',
         };
 
-        return redirect()->route('lpj.index')->with('success', $msg);
+        return $this->redirectToPaginatedList($request, 'lpj', 'lpj.index')->with('success', $msg);
     }
 
     /**

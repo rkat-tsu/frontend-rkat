@@ -6,6 +6,7 @@ use App\Models\Unit;
 use App\Models\User;
 use App\Models\ApprovalPath;
 use App\Models\JenisKegiatanOption;
+use App\Http\Controllers\Concerns\PreservesPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Redirect;
@@ -15,8 +16,11 @@ use Illuminate\Validation\Rule;
 
 class UnitController extends Controller
 {
-    public function index()
+    use PreservesPagination;
+
+    public function index(Request $request)
     {
+        $this->rememberPaginationQuery($request, 'unit');
         Log::debug('[Unit] Melihat Index');
         $sortBy = request()->input('sort_by', 'nama_unit');
         $sortDirection = request()->input('sort_direction', 'asc');
@@ -92,7 +96,7 @@ class UnitController extends Controller
         Unit::create($validated);
         Log::info('[Unit] Unit berhasil dibuat: ' . $validated['nama_unit']);
 
-        return Redirect::route('unit.index')->with('success', 'Unit berhasil ditambahkan.');
+        return $this->redirectToPaginatedList($request, 'unit', 'unit.index')->with('success', 'Unit berhasil ditambahkan.');
     }
 
     public function edit(Unit $unit)
@@ -134,19 +138,19 @@ class UnitController extends Controller
 
         Unit::query()->where('id_unit', $unit->id_unit)->update($validated);
 
-        return Redirect::route('unit.index')->with('success', 'Unit berhasil diperbarui.');
+        return $this->redirectToPaginatedList($request, 'unit', 'unit.index')->with('success', 'Unit berhasil diperbarui.');
     }
 
-    public function destroy(Unit $unit)
+    public function destroy(Request $request, Unit $unit)
     {
         Log::warning('[Unit] Mencoba menghapus: ' . $unit->nama_unit);
         try {
             Unit::query()->where('id_unit', $unit->id_unit)->delete();
             Log::info('[Unit] Berhasil dihapus.');
-            return Redirect::route('unit.index')->with('success', 'Unit berhasil dihapus.');
+            return $this->redirectToPaginatedList($request, 'unit', 'unit.index')->with('success', 'Unit berhasil dihapus.');
         } catch (\Exception $e) {
             Log::error('[Unit] Gagal Menghapus: ' . $e->getMessage());
-            return Redirect::route('unit.index')->with('error', 'Gagal menghapus unit. Pastikan tidak ada relasi yang mengunci.');
+            return $this->redirectToPaginatedList($request, 'unit', 'unit.index')->with('error', 'Gagal menghapus unit. Pastikan tidak ada relasi yang mengunci.');
         }
     }
 }

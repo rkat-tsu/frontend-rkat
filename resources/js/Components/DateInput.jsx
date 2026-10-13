@@ -3,7 +3,7 @@ import Calendar from "./Calendar";
 import TextInput from "./TextInput";
 import { CalendarDays } from "lucide-react"; 
 
-export default function DateInput({ id, value, onChange, className = "", inputClassName = "", position = "right", isError = false }) {
+export default function DateInput({ id, value, onChange, className = "", inputClassName = "", position = "right", isError = false, allowedYear }) {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef(null);
   const inputRef = useRef(null);
@@ -89,7 +89,7 @@ export default function DateInput({ id, value, onChange, className = "", inputCl
           className={`absolute z-[999] top-0 ${popupPositionClass} animate-fade-in-up`}
           style={{ transformOrigin }}
         >
-          <Calendar selectedDate={dateValue} onDateChange={handleDateSelect} />
+          <Calendar selectedDate={dateValue} onDateChange={handleDateSelect} allowedYear={allowedYear} />
         </div>
       )}
     </div>

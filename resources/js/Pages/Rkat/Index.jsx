@@ -565,6 +565,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                         <Link
                                             key={index}
                                             href={link.url}
+                                            only={['rkats']}
                                             preserveScroll
                                             preserveState
                                             className={`px-3 py-1 text-sm border rounded-md transition-colors ${link.active
