@@ -25,10 +25,10 @@ class PencairanDanaController extends Controller
         $user = Auth::user();
 
         $query = PencairanDana::with([
-            'rkatHeader.unit',
-            'rkatHeader.rkatDetails',
-            'pengaju',
-            'items'
+            'rkatHeader:id_header,uuid,nomor_dokumen,id_unit',
+            'rkatHeader.unit:id_unit,nama_unit',
+            'rkatHeader.rkatDetails:id_rkat_detail,id_header,jadwal_pelaksanaan_mulai,jadwal_pelaksanaan_akhir',
+            'items:id_pencairan_item,id_pencairan,id_rkat_rab_item,volume_pencairan,volume_pencairan2,nominal_pencairan,sub_total_pencairan',
         ]);
 
         $effectiveRoles = $user->getEffectiveRoles();
@@ -129,11 +129,40 @@ class PencairanDanaController extends Controller
         $statuses = array_values(array_unique(array_merge(['Draft', 'Revisi', 'Disetujui_Final', 'Ditolak'], $dynamicSteps)));
 
         // --- Fetch RKAT List for Modal ---
-        $rkatQuery = RkatHeader::with(['unit', 'rkatDetails.rabItems.pencairanDanaItems' => function ($q) {
-            $q->whereHas('pencairanDana', function ($q2) {
-                $q2->where('status_pencairan', '!=', 'Ditolak');
-            });
-        }])->where('status_persetujuan', 'Disetujui_Final');
+        $rkatQuery = RkatHeader::with([
+            'unit:id_unit,nama_unit',
+            'rkatDetails:id_rkat_detail,id_header',
+            'rkatDetails.rabItems' => function ($q) {
+                $q->select([
+                    'id',
+                    'id_rkat_detail',
+                    'deskripsi_item',
+                    'volume',
+                    'satuan',
+                    'volume2',
+                    'satuan2',
+                    'harga_satuan',
+                    'sub_total',
+                ]);
+
+                $notRejected = function ($itemsQuery) {
+                    $itemsQuery->whereHas('pencairanDana', function ($pencairanQuery) {
+                        $pencairanQuery->where('status_pencairan', '!=', 'Ditolak');
+                    });
+                };
+
+                $q->withSum(['pencairanDanaItems as used_volume' => $notRejected], 'volume_pencairan')
+                    ->withSum(['pencairanDanaItems as used_volume2' => $notRejected], 'volume_pencairan2')
+                    ->withSum(['pencairanDanaItems as used_nominal' => $notRejected], 'sub_total_pencairan')
+                    ->withExists([
+                        'pencairanDanaItems as has_editable_pencairan' => function ($itemsQuery) {
+                            $itemsQuery->whereHas('pencairanDana', function ($pencairanQuery) {
+                                $pencairanQuery->whereIn('status_pencairan', ['Draft', 'Revisi']);
+                            });
+                        },
+                    ]);
+            },
+        ])->where('status_persetujuan', 'Disetujui_Final');
 
         if ($user->peran !== 'Admin') {
             $rkatQuery->where('id_unit', $user->id_unit);
@@ -145,22 +174,30 @@ class PencairanDanaController extends Controller
             $items = [];
             foreach ($rkat->rkatDetails as $detail) {
                 foreach ($detail->rabItems as $item) {
-                    $usedVolume = $item->pencairanDanaItems->sum('volume_pencairan');
-                    $usedNominal = $item->pencairanDanaItems->sum('sub_total_pencairan');
+                    $usedVolume = (float) ($item->used_volume ?? 0);
+                    $usedVolume2 = (float) ($item->used_volume2 ?? 0);
+                    $usedNominal = (float) ($item->used_nominal ?? 0);
                     $total_anggaran += $item->sub_total;
                     $total_tercairkan += $usedNominal;
+                    $hasEditablePencairan = (bool) $item->has_editable_pencairan;
 
-                    if (($item->sub_total > $usedNominal) && (($item->volume - $usedVolume) > 0)) {
+                    if ((($item->sub_total > $usedNominal) && ((($item->volume - $usedVolume) > 0) || ($item->volume2 !== null && ($item->volume2 - $usedVolume2) > 0))) || $hasEditablePencairan) {
                         $items[] = [
                             'id' => $item->id,
                             'deskripsi_item' => $item->deskripsi_item,
                             'harga_satuan' => $item->harga_satuan,
                             'volume' => $item->volume,
+                            'remaining_volume2' => $item->volume2 === null ? 0 : max(0, $item->volume2 - $usedVolume2),
+                            'can_disburse_volume2' => $item->volume2 !== null,
+                            'satuan' => $item->satuan,
+                            'volume2' => $item->volume2,
+                            'satuan2' => $item->satuan2,
                             'sub_total' => $item->sub_total,
                             'used_volume' => $usedVolume,
                             'used_nominal' => $usedNominal,
                             'remaining_volume' => $item->volume - $usedVolume,
-                            'remaining_nominal' => $item->sub_total - $usedNominal,
+                            'remaining_nominal' => max(0, $item->sub_total - $usedNominal),
+                            'has_editable_pencairan' => $hasEditablePencairan,
                         ];
                     }
                 }
@@ -197,7 +234,8 @@ class PencairanDanaController extends Controller
             'nama_pencairan' => 'required|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.id' => 'required|exists:rkat_rab_items,id',
-            'items.*.volume_pencairan' => 'required|numeric|min:1',
+            'items.*.volume_pencairan' => 'required|numeric|min:0',
+            'items.*.volume_pencairan2' => 'required|numeric|min:0',
             'items.*.nominal_pencairan' => 'required|numeric|min:0',
         ]);
 
@@ -207,22 +245,33 @@ class PencairanDanaController extends Controller
             abort(403, 'Anda tidak memiliki wewenang untuk mengajukan pencairan untuk unit ini.');
         }
 
-        // Validate items remaining budget
+        $rabItems = $this->loadRabItemsForDisbursement(
+            collect($request->items)->pluck('id')->all(),
+            $rkat->id_header
+        );
+
+        // Validate items remaining budget using one aggregated query for all items.
         foreach ($request->items as $reqItem) {
-            $rabItem = RkatRabItem::findOrFail($reqItem['id']);
-            $usedVolume = $rabItem->pencairanDanaItems()->whereHas('pencairanDana', function ($q) {
-                $q->where('status_pencairan', '!=', 'Ditolak');
-            })->sum('volume_pencairan');
-            $usedSubTotal = $rabItem->pencairanDanaItems()->whereHas('pencairanDana', function ($q) {
-                $q->where('status_pencairan', '!=', 'Ditolak');
-            })->sum('sub_total_pencairan');
+            $rabItem = $rabItems->get($reqItem['id']);
+            abort_if(!$rabItem, 404);
+            $usedVolume = (float) ($rabItem->used_volume ?? 0);
+            $usedVolume2 = (float) ($rabItem->used_volume2 ?? 0);
+            $usedSubTotal = (float) ($rabItem->used_sub_total ?? 0);
 
             $remainingVolume = $rabItem->volume - $usedVolume;
             $remainingSubTotal = $rabItem->sub_total - $usedSubTotal;
-            $reqSubTotal = $reqItem['volume_pencairan'] * $reqItem['nominal_pencairan'];
+            $volume1 = (float) $reqItem['volume_pencairan'];
+            $volume2 = (float) $reqItem['volume_pencairan2'];
+            if (($volume1 > 0) === ($volume2 > 0)) {
+                return redirect()->back()->with('error', 'Isi volume 1 atau volume 2 saja untuk setiap item pencairan.');
+            }
+            $reqSubTotal = ($volume1 > 0 ? $volume1 : $volume2) * $reqItem['nominal_pencairan'];
 
             if ($reqItem['volume_pencairan'] > $remainingVolume) {
                 return redirect()->back()->with('error', 'Volume pencairan untuk "' . $rabItem->deskripsi_item . '" melebihi sisa volume (Sisa: ' . $remainingVolume . ').');
+            }
+            if ($volume2 > 0 && ($rabItem->volume2 === null || $volume2 > ($rabItem->volume2 - $usedVolume2))) {
+                return redirect()->back()->with('error', 'Volume kedua pencairan untuk "' . $rabItem->deskripsi_item . '" melebihi sisa volume.');
             }
             if ($reqSubTotal > $remainingSubTotal) {
                 return redirect()->back()->with('error', 'Sub total pencairan untuk "' . $rabItem->deskripsi_item . '" melebihi sisa anggaran.');
@@ -237,11 +286,14 @@ class PencairanDanaController extends Controller
         ]);
 
         foreach ($request->items as $reqItem) {
-            $subTotal = $reqItem['volume_pencairan'] * $reqItem['nominal_pencairan'];
+            $subTotal = ((float) $reqItem['volume_pencairan'] > 0
+                ? $reqItem['volume_pencairan']
+                : $reqItem['volume_pencairan2']) * $reqItem['nominal_pencairan'];
             PencairanDanaItem::create([
                 'id_pencairan' => $pencairan->id_pencairan,
                 'id_rkat_rab_item' => $reqItem['id'],
                 'volume_pencairan' => $reqItem['volume_pencairan'],
+                'volume_pencairan2' => $reqItem['volume_pencairan2'],
                 'nominal_pencairan' => $reqItem['nominal_pencairan'],
                 'sub_total_pencairan' => $subTotal,
             ]);
@@ -268,7 +320,8 @@ class PencairanDanaController extends Controller
             'nama_pencairan' => 'required|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.id' => 'required|exists:rkat_rab_items,id',
-            'items.*.volume_pencairan' => 'required|numeric|min:1',
+            'items.*.volume_pencairan' => 'required|numeric|min:0',
+            'items.*.volume_pencairan2' => 'required|numeric|min:0',
             'items.*.nominal_pencairan' => 'required|numeric|min:0',
         ]);
 
@@ -278,24 +331,34 @@ class PencairanDanaController extends Controller
             abort(403, 'Anda tidak memiliki wewenang untuk mengajukan pencairan untuk unit ini.');
         }
 
-        // Validate items remaining budget
+        $rabItems = $this->loadRabItemsForDisbursement(
+            collect($request->items)->pluck('id')->all(),
+            $rkat->id_header,
+            $pencairan->id_pencairan
+        );
+
+        // Validate items remaining budget using one aggregated query for all items.
         foreach ($request->items as $reqItem) {
-            $rabItem = RkatRabItem::findOrFail($reqItem['id']);
-            $usedVolume = $rabItem->pencairanDanaItems()->whereHas('pencairanDana', function ($q) use ($pencairan) {
-                $q->where('status_pencairan', '!=', 'Ditolak')
-                    ->where('id_pencairan', '!=', $pencairan->id_pencairan);
-            })->sum('volume_pencairan');
-            $usedSubTotal = $rabItem->pencairanDanaItems()->whereHas('pencairanDana', function ($q) use ($pencairan) {
-                $q->where('status_pencairan', '!=', 'Ditolak')
-                    ->where('id_pencairan', '!=', $pencairan->id_pencairan);
-            })->sum('sub_total_pencairan');
+            $rabItem = $rabItems->get($reqItem['id']);
+            abort_if(!$rabItem, 404);
+            $usedVolume = (float) ($rabItem->used_volume ?? 0);
+            $usedVolume2 = (float) ($rabItem->used_volume2 ?? 0);
+            $usedSubTotal = (float) ($rabItem->used_sub_total ?? 0);
 
             $remainingVolume = $rabItem->volume - $usedVolume;
             $remainingSubTotal = $rabItem->sub_total - $usedSubTotal;
-            $reqSubTotal = $reqItem['volume_pencairan'] * $reqItem['nominal_pencairan'];
+            $volume1 = (float) $reqItem['volume_pencairan'];
+            $volume2 = (float) $reqItem['volume_pencairan2'];
+            if (($volume1 > 0) === ($volume2 > 0)) {
+                return redirect()->back()->with('error', 'Isi volume 1 atau volume 2 saja untuk setiap item pencairan.');
+            }
+            $reqSubTotal = ($volume1 > 0 ? $volume1 : $volume2) * $reqItem['nominal_pencairan'];
 
             if ($reqItem['volume_pencairan'] > $remainingVolume) {
                 return redirect()->back()->with('error', 'Volume pencairan untuk "' . $rabItem->deskripsi_item . '" melebihi sisa volume (Sisa: ' . $remainingVolume . ').');
+            }
+            if ($volume2 > 0 && ($rabItem->volume2 === null || $volume2 > ($rabItem->volume2 - $usedVolume2))) {
+                return redirect()->back()->with('error', 'Volume kedua pencairan untuk "' . $rabItem->deskripsi_item . '" melebihi sisa volume.');
             }
             if ($reqSubTotal > $remainingSubTotal) {
                 return redirect()->back()->with('error', 'Sub total pencairan untuk "' . $rabItem->deskripsi_item . '" melebihi sisa anggaran.');
@@ -312,17 +375,45 @@ class PencairanDanaController extends Controller
 
         // Add new items
         foreach ($request->items as $reqItem) {
-            $subTotal = $reqItem['volume_pencairan'] * $reqItem['nominal_pencairan'];
+            $subTotal = ((float) $reqItem['volume_pencairan'] > 0
+                ? $reqItem['volume_pencairan']
+                : $reqItem['volume_pencairan2']) * $reqItem['nominal_pencairan'];
             PencairanDanaItem::create([
                 'id_pencairan' => $pencairan->id_pencairan,
                 'id_rkat_rab_item' => $reqItem['id'],
                 'volume_pencairan' => $reqItem['volume_pencairan'],
+                'volume_pencairan2' => $reqItem['volume_pencairan2'],
                 'nominal_pencairan' => $reqItem['nominal_pencairan'],
                 'sub_total_pencairan' => $subTotal,
             ]);
         }
 
         return $this->redirectToPaginatedList($request, 'pencairan', 'pencairan.index')->with('success', 'Pencairan Dana berhasil diperbarui.');
+    }
+
+    /**
+     * Ambil item RAB beserta total volume dan nominal yang sudah diajukan.
+     * Satu query ini menggantikan pencarian dan tiga SUM berulang per item.
+     */
+    private function loadRabItemsForDisbursement(array $itemIds, int $headerId, ?int $excludePencairanId = null)
+    {
+        $eligibleItems = function ($query) use ($excludePencairanId) {
+            $query->whereHas('pencairanDana', function ($pencairanQuery) use ($excludePencairanId) {
+                $pencairanQuery->where('status_pencairan', '!=', 'Ditolak');
+                if ($excludePencairanId !== null) {
+                    $pencairanQuery->where('id_pencairan', '!=', $excludePencairanId);
+                }
+            });
+        };
+
+        return RkatRabItem::query()
+            ->whereIn('id', $itemIds)
+            ->whereHas('rkatDetail', fn($query) => $query->where('id_header', $headerId))
+            ->withSum(['pencairanDanaItems as used_volume' => $eligibleItems], 'volume_pencairan')
+            ->withSum(['pencairanDanaItems as used_volume2' => $eligibleItems], 'volume_pencairan2')
+            ->withSum(['pencairanDanaItems as used_sub_total' => $eligibleItems], 'sub_total_pencairan')
+            ->get()
+            ->keyBy('id');
     }
 
     public function show(PencairanDana $pencairan)

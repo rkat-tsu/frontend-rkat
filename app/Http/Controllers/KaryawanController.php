@@ -129,7 +129,7 @@ class KaryawanController extends Controller
         return $this->redirectToPaginatedList($request, 'karyawan', 'karyawan.index')->with('success', 'Data SDM / Karyawan berhasil diperbarui.');
     }
 
-    public function destroy(Karyawan $karyawan)
+    public function destroy(Request $request, Karyawan $karyawan)
     {
         Log::warning('[Karyawan] Menghapus: ' . $karyawan->nama);
         try {

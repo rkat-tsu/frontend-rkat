@@ -124,7 +124,8 @@ export default function Show({ auth, pencairan, flash = {} }) {
                                     <thead className="bg-gray-50 dark:bg-gray-700">
                                         <tr>
                                             <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-300 uppercase">Item RAB</th>
-                                            <th className="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-300 uppercase">Vol</th>
+                                            <th className="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-300 uppercase">Vol 1</th>
+                                            <th className="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-300 uppercase">Vol 2</th>
                                             <th className="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-300 uppercase">Harga Satuan</th>
                                             <th className="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-300 uppercase">Sub Total Cair</th>
                                         </tr>
@@ -133,7 +134,8 @@ export default function Show({ auth, pencairan, flash = {} }) {
                                         {items.map((item, idx) => (
                                             <tr key={idx}>
                                                 <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{item.rkat_rab_item?.deskripsi_item}</td>
-                                                <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{item.volume_pencairan}</td>
+                                                <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{item.volume_pencairan} {item.rkat_rab_item?.satuan || ''}</td>
+                                                <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{Number(item.volume_pencairan2) > 0 ? `${item.volume_pencairan2} ${item.rkat_rab_item?.satuan2 || ''}` : '—'}</td>
                                                 <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{formatCurrency(item.nominal_pencairan)}</td>
                                                 <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-gray-100">{formatCurrency(item.sub_total_pencairan)}</td>
                                             </tr>
@@ -141,7 +143,7 @@ export default function Show({ auth, pencairan, flash = {} }) {
                                     </tbody>
                                     <tfoot className="bg-gray-50 dark:bg-gray-700/50">
                                         <tr>
-                                            <td colSpan="3" className="px-4 py-3 text-right font-bold text-gray-700 dark:text-gray-200">Total:</td>
+                                            <td colSpan="4" className="px-4 py-3 text-right font-bold text-gray-700 dark:text-gray-200">Total:</td>
                                             <td className="px-4 py-3 text-right font-bold text-teal-600 dark:text-teal-400 text-base">{formatCurrency(totalCair)}</td>
                                         </tr>
                                     </tfoot>

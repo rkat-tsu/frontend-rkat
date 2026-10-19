@@ -89,22 +89,6 @@ export default function Dashboard({
         },
     };
 
-    const handleContactSupport = (e) => {
-        e.preventDefault();
-        const email = 'pikdi@tsu.ac.id';
-
-        if (navigator.clipboard) {
-            navigator.clipboard.writeText(email);
-        }
-
-        window.open(`mailto:${email}?subject=Bantuan%20Sistem%20RKAT`, '_blank');
-
-        toast.success("Alamat Email Disalin!", {
-            description: `Email (${email}) berhasil disalin ke clipboard. Jika aplikasi email tidak terbuka otomatis, Anda dapat langsung menempelkannya di email Anda.`,
-            duration: 6000
-        });
-    };
-
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -671,7 +655,7 @@ export default function Dashboard({
                                     <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                                 </div>
                             }>
-                                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
+                                <div className="max-h-80 min-h-0 overflow-y-auto overscroll-contain custom-scrollbar pr-2 space-y-3">
                                     {kegiatanTerdekat && kegiatanTerdekat.length > 0 ? (
                                         kegiatanTerdekat.map((kegiatan, idx) => (
                                             <div key={idx} className="p-3 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700">
@@ -699,21 +683,20 @@ export default function Dashboard({
                                     <h4 className="font-bold text-base">Butuh Bantuan?</h4>
                                 </div>
                                 <p className="text-sm text-indigo-50 leading-relaxed mb-4">
-                                    Jika mengalami kendala teknis dalam penginputan RKAT atau filter tahun, silakan hubungi Tim IT TSU via email resmi:
+                                    Jika mengalami kendala saat menggunakan web Rekat, hubungi Tim Rekat melalui email atau telepon. Sertakan keluhan Anda agar kami dapat membantu.
                                 </p>
-                                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 text-xs font-mono font-semibold text-white">
-                                    <Mail size={14} className="text-indigo-200" />
-                                    <span>rekat@tsu.ac.id</span>
+                                <div className="flex flex-col items-start gap-2">
+                                    <a href="mailto:rekat@tsu.ac.id?subject=Bantuan%20Sistem%20RKAT&body=Halo%20Tim%20Rekat%2C%20saya%20ingin%20menyampaikan%20keluhan%20di%20web%20Rekat%20dengan%20keluhan%20%3A%20" className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 text-xs font-mono font-semibold text-white hover:bg-white/20">
+                                        <Mail size={14} className="text-indigo-200" />
+                                        <span>rekat@tsu.ac.id</span>
+                                    </a>
+                                    <a href="https://wa.me/6285111415175?text=Halo%20Tim%20Rekat%2C%20saya%20ingin%20menyampaikan%20keluhan%20di%20web%20Rekat%20dengan%20keluhan%20%3A%20" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 text-xs font-mono font-semibold text-white hover:bg-white/20">
+                                    <MessageCircle size={14} className="text-indigo-200" />
+                                    <span>0851-1141-5175</span>
+                                    </a>
                                 </div>
                             </div>
                             <div className="mt-5 flex flex-wrap items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={handleContactSupport}
-                                    className="inline-flex items-center gap-2 text-xs font-bold bg-white text-indigo-600 px-4 py-2.5 rounded-xl hover:bg-indigo-50 transition-all shadow-sm cursor-pointer"
-                                >
-                                    <Mail size={14} /> Hubungi IT Support <ArrowRight size={14} />
-                                </button>
                                 <button
                                     type="button"
                                     onClick={() => {

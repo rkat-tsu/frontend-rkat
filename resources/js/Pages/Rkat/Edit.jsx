@@ -403,6 +403,9 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
         else if (field === 'vol' || field === 'vol2') {
             const cleanVal = String(value).replace(/[-+eE]/g, '');
             item[field] = cleanVal;
+            if (cleanVal === '0') {
+                toast.warning('Volume tidak boleh 0', { description: 'Isi volume minimal 1. Jika tidak ada volume kedua, biarkan kolomnya kosong.' });
+            }
         }
         else {
             item[field] = value;

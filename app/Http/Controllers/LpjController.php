@@ -30,12 +30,14 @@ class LpjController extends Controller
         $user = Auth::user();
 
         $query = Lpj::with([
-            'rkatHeader.unit',
-            'pencairanDana.rkatHeader.unit',
-            'pencairanDana.items.rkatRabItem',
-            'pengaju',
-            'approver',
-            'items.pencairanItem.rkatRabItem'
+            'rkatHeader:id_header,uuid,nomor_dokumen,id_unit',
+            'rkatHeader.unit:id_unit,nama_unit',
+            'pencairanDana:id_pencairan,uuid,id_header,nama_pencairan',
+            'pencairanDana.rkatHeader:id_header,uuid,nomor_dokumen,id_unit',
+            'pencairanDana.rkatHeader.unit:id_unit,nama_unit',
+            'items:id_lpj_item,id_lpj,id_pencairan_item,volume_realisasi,harga_satuan_realisasi,sub_total_realisasi',
+            'items.pencairanItem:id_pencairan_item,id_rkat_rab_item,sub_total_pencairan',
+            'items.pencairanItem.rkatRabItem:id,deskripsi_item,satuan',
         ]);
 
         // Filter berdasarkan wewenang Unit / Peran
@@ -146,25 +148,39 @@ class LpjController extends Controller
             });
         }
 
-        $allLpjs = $baseStatsQuery->get();
+        $lpjStats = $baseStatsQuery->selectRaw("
+            COUNT(*) as total_lpj,
+            COALESCE(SUM(total_pencairan), 0) as total_pencairan,
+            COALESCE(SUM(total_realisasi), 0) as total_realisasi,
+            COALESCE(SUM(sisa_dana), 0) as total_sisa,
+            SUM(CASE WHEN status_lpj = 'Draft' THEN 1 ELSE 0 END) as draft,
+            SUM(CASE WHEN status_lpj = 'Diajukan' THEN 1 ELSE 0 END) as diajukan,
+            SUM(CASE WHEN status_lpj = 'Disetujui' THEN 1 ELSE 0 END) as disetujui,
+            SUM(CASE WHEN status_lpj = 'Revisi' THEN 1 ELSE 0 END) as revisi,
+            SUM(CASE WHEN status_lpj = 'Ditolak' THEN 1 ELSE 0 END) as ditolak
+        ")->first();
         $stats = [
-            'total_lpj' => $allLpjs->count(),
-            'total_pencairan' => $allLpjs->sum('total_pencairan'),
-            'total_realisasi' => $allLpjs->sum('total_realisasi'),
-            'total_sisa' => $allLpjs->sum('sisa_dana'),
-            'draft' => $allLpjs->where('status_lpj', 'Draft')->count(),
-            'diajukan' => $allLpjs->where('status_lpj', 'Diajukan')->count(),
-            'disetujui' => $allLpjs->where('status_lpj', 'Disetujui')->count(),
-            'revisi' => $allLpjs->where('status_lpj', 'Revisi')->count(),
-            'ditolak' => $allLpjs->where('status_lpj', 'Ditolak')->count(),
+            'total_lpj' => (int) $lpjStats->total_lpj,
+            'total_pencairan' => (float) $lpjStats->total_pencairan,
+            'total_realisasi' => (float) $lpjStats->total_realisasi,
+            'total_sisa' => (float) $lpjStats->total_sisa,
+            'draft' => (int) $lpjStats->draft,
+            'diajukan' => (int) $lpjStats->diajukan,
+            'disetujui' => (int) $lpjStats->disetujui,
+            'revisi' => (int) $lpjStats->revisi,
+            'ditolak' => (int) $lpjStats->ditolak,
         ];
 
         // Fetch Pencairan Dana yang siap dibuatkan LPJ (status_pencairan = Disetujui_Final dan belum punya LPJ aktif/non-Ditolak)
         $pencairanQuery = PencairanDana::with([
-            'rkatHeader.unit',
-            'items.rkatRabItem',
-            'lpj'
-        ])->where('status_pencairan', 'Disetujui_Final');
+            'rkatHeader:id_header,uuid,nomor_dokumen,tahun_anggaran,id_unit',
+            'rkatHeader.unit:id_unit,nama_unit',
+            'items:id_pencairan_item,id_pencairan,id_rkat_rab_item,volume_pencairan,volume_pencairan2,nominal_pencairan,sub_total_pencairan',
+            'items.rkatRabItem:id,deskripsi_item,satuan,satuan2',
+        ])->where('status_pencairan', 'Disetujui_Final')
+            ->whereDoesntHave('lpj', function ($q) {
+                $q->where('status_lpj', '!=', 'Ditolak');
+            });
 
         // Hanya unit pengusul yang dapat membuat LPJ (berdasarkan id_unit). 
         // Tim Renbang / Reviewer yang tidak memiliki unit pengusul tidak boleh memuat pencairan milik unit lain untuk dibuatkan LPJ.
@@ -178,9 +194,7 @@ class LpjController extends Controller
             }
         }
 
-        $allApprovedPencairans = $pencairanQuery->get()->filter(function ($pencairan) {
-            return !$pencairan->lpj || $pencairan->lpj->status_lpj === 'Ditolak';
-        });
+        $allApprovedPencairans = $pencairanQuery->get();
 
         // Group pencairans by RKA (id_header) to build combined packages
         $groupedByRkat = $allApprovedPencairans->groupBy('id_header');

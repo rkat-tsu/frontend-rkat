@@ -6,6 +6,8 @@ use App\Models\TahunAnggaran;
 use App\Models\Unit;
 use App\Models\RkatHeader;
 use App\Models\Iku;
+use App\Models\PencairanDana;
+use App\Models\Lpj;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -24,73 +26,85 @@ class MonitoringController extends Controller
         $activeYear = $tahunOptions->first(fn($t) => $t->status_rkat !== 'Closed')?->tahun_anggaran ?? date('Y');
         $selectedYear = $request->input('tahun') ?: $activeYear;
 
-        // 3. Ambil Data Unit beserta RKAT, Pencairan, dan LPJ Header-nya pada tahun terpilih
-        $monitoringData = Unit::query()
+        // Agregasikan angka di database agar tidak memuat seluruh RKAT, detail,
+        // pencairan, item pencairan, dan LPJ ke memori sekaligus.
+        $unitQuery = Unit::query()
             ->select(['id_unit', 'kode_unit', 'nama_unit', 'id_kepala'])
+            ->with('kepala:id_user,nama_lengkap')
             ->orderBy('kode_unit', 'asc')
-            ->with([
-                'kepala:id_user,nama_lengkap',
-                'rkatHeaders' => function ($query) use ($selectedYear) {
-                    $query->where('tahun_anggaran', $selectedYear)
-                          ->whereNull('parent_id')
-                          ->with([
-                              'rkatDetails',
-                              'pencairanDanas.items',
-                              'pencairanDanas.lpj'
-                          ]);
-                }
-            ])
+            ->get();
+
+        $rkatStats = RkatHeader::query()
+            ->where('tahun_anggaran', $selectedYear)
+            ->whereNull('parent_id')
+            ->select('id_unit')
+            ->selectRaw("COUNT(*) as count_rkat,
+                COALESCE(SUM(CASE WHEN status_persetujuan = 'Draft' THEN 1 ELSE 0 END), 0) as count_draft,
+                COALESCE(SUM(CASE WHEN status_persetujuan = 'Revisi' THEN 1 ELSE 0 END), 0) as count_revisi,
+                COALESCE(SUM(CASE WHEN status_persetujuan = 'Ditolak' THEN 1 ELSE 0 END), 0) as count_tolak,
+                COALESCE(SUM(CASE WHEN status_persetujuan = 'Disetujui_Final' THEN 1 ELSE 0 END), 0) as count_final,
+                COALESCE(SUM(CASE WHEN status_persetujuan IS NULL OR status_persetujuan NOT IN ('Draft', 'Revisi', 'Ditolak', 'Disetujui_Final') THEN 1 ELSE 0 END), 0) as count_proses,
+                COALESCE(SUM(CASE WHEN total_anggaran > 0 THEN total_anggaran ELSE
+                    COALESCE((SELECT SUM(rkat_details.anggaran) FROM rkat_details WHERE rkat_details.id_header = rkat_headers.id_header), 0)
+                END), 0) as total_anggaran_rkat")
+            ->groupBy('id_unit')
             ->get()
-            ->map(function ($unit) {
-                $rkats = $unit->rkatHeaders;
+            ->keyBy('id_unit');
 
-                // 1. RKAT (Jumlah Kegiatan & Total Anggaran RKAT)
-                $count_rkat = $rkats->count();
-                $total_anggaran_rkat = (float) $rkats->sum(function ($header) {
-                    $tot = (float) $header->total_anggaran;
-                    if ($tot > 0) return $tot;
-                    return (float) ($header->rkatDetails ? $header->rkatDetails->sum('anggaran') : 0);
-                });
+        $pencairanStats = PencairanDana::query()
+            ->join('rkat_headers', 'pencairan_danas.id_header', '=', 'rkat_headers.id_header')
+            ->where('rkat_headers.tahun_anggaran', $selectedYear)
+            ->whereNull('rkat_headers.parent_id')
+            ->select('rkat_headers.id_unit')
+            ->selectRaw('COUNT(DISTINCT pencairan_danas.id_pencairan) as count_pencairan,
+                COALESCE(SUM((SELECT SUM(pencairan_dana_items.sub_total_pencairan)
+                    FROM pencairan_dana_items
+                    WHERE pencairan_dana_items.id_pencairan = pencairan_danas.id_pencairan)), 0) as total_anggaran_pencairan')
+            ->groupBy('rkat_headers.id_unit')
+            ->get()
+            ->keyBy('id_unit');
 
-                // 2. Pencairan (Jumlah Pencairan & Total Nominal Pencairan)
-                $allPencairan = $rkats->pluck('pencairanDanas')->flatten();
-                $count_pencairan = $allPencairan->count();
-                $total_anggaran_pencairan = (float) $allPencairan->sum(function ($pencairan) {
-                    return (float) ($pencairan->items ? $pencairan->items->sum('sub_total_pencairan') : 0);
-                });
+        $lpjStats = Lpj::query()
+            ->join('pencairan_danas', 'lpjs.id_pencairan', '=', 'pencairan_danas.id_pencairan')
+            ->join('rkat_headers', 'pencairan_danas.id_header', '=', 'rkat_headers.id_header')
+            ->where('rkat_headers.tahun_anggaran', $selectedYear)
+            ->whereNull('rkat_headers.parent_id')
+            ->select('rkat_headers.id_unit')
+            ->selectRaw('COUNT(DISTINCT lpjs.id_lpj) as count_laporan,
+                COALESCE(SUM(lpjs.total_realisasi), 0) as total_anggaran_laporan')
+            ->groupBy('rkat_headers.id_unit')
+            ->get()
+            ->keyBy('id_unit');
 
-                // 3. Laporan (Jumlah LPJ & Total Realisasi LPJ)
-                $allLpj = $allPencairan->pluck('lpj')->filter();
-                $count_laporan = $allLpj->count();
-                $total_anggaran_laporan = (float) $allLpj->sum('total_realisasi');
+        $monitoringData = $unitQuery->map(function ($unit) use ($rkatStats, $pencairanStats, $lpjStats) {
+            $rkat = $rkatStats->get($unit->id_unit);
+            $pencairan = $pencairanStats->get($unit->id_unit);
+            $lpj = $lpjStats->get($unit->id_unit);
+            $countRkat = (int) ($rkat->count_rkat ?? 0);
+            $totalAnggaranRkat = (float) ($rkat->total_anggaran_rkat ?? 0);
+            $countProses = (int) ($rkat->count_proses ?? 0);
+            $countFinal = (int) ($rkat->count_final ?? 0);
 
-                return [
-                    'id_unit' => $unit->id_unit,
-                    'kode_unit' => $unit->kode_unit,
-                    'nama_unit' => $unit->nama_unit,
-                    'kepala_unit' => $unit->kepala ? $unit->kepala->nama_lengkap : '-',
-
-                    // Metrics per kategori
-                    'count_rkat' => $count_rkat,
-                    'total_anggaran_rkat' => $total_anggaran_rkat,
-
-                    'count_pencairan' => $count_pencairan,
-                    'total_anggaran_pencairan' => $total_anggaran_pencairan,
-
-                    'count_laporan' => $count_laporan,
-                    'total_anggaran_laporan' => $total_anggaran_laporan,
-
-                    // Stats persetujuan
-                    'count_draft' => $rkats->where('status_persetujuan', 'Draft')->count(),
-                    'count_revisi' => $rkats->where('status_persetujuan', 'Revisi')->count(),
-                    'count_tolak' => $rkats->where('status_persetujuan', 'Ditolak')->count(),
-                    'count_final' => $rkats->where('status_persetujuan', 'Disetujui_Final')->count(),
-                    'count_proses' => $rkats->whereNotIn('status_persetujuan', ['Draft', 'Revisi', 'Ditolak', 'Disetujui_Final'])->count(),
-                    
-                    'total_rkat' => $count_rkat,
-                    'total_anggaran' => $total_anggaran_rkat,
-                ];
-            });
+            return [
+                'id_unit' => $unit->id_unit,
+                'kode_unit' => $unit->kode_unit,
+                'nama_unit' => $unit->nama_unit,
+                'kepala_unit' => $unit->kepala?->nama_lengkap ?? '-',
+                'count_rkat' => $countRkat,
+                'total_anggaran_rkat' => $totalAnggaranRkat,
+                'count_pencairan' => (int) ($pencairan->count_pencairan ?? 0),
+                'total_anggaran_pencairan' => (float) ($pencairan->total_anggaran_pencairan ?? 0),
+                'count_laporan' => (int) ($lpj->count_laporan ?? 0),
+                'total_anggaran_laporan' => (float) ($lpj->total_anggaran_laporan ?? 0),
+                'count_draft' => (int) ($rkat->count_draft ?? 0),
+                'count_revisi' => (int) ($rkat->count_revisi ?? 0),
+                'count_tolak' => (int) ($rkat->count_tolak ?? 0),
+                'count_final' => $countFinal,
+                'count_proses' => $countProses,
+                'total_rkat' => $countRkat,
+                'total_anggaran' => $totalAnggaranRkat,
+            ];
+        });
 
         // 4. Hitung Statistik Ringkas
         $stats = [

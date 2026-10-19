@@ -42,6 +42,7 @@ class ApprovalController extends Controller
 
         $query = RkatHeader::with([
             'unit:id_unit,nama_unit,approval_path_id,parent_id',
+            'tahun_obj',
             'currentStep',
             'rkatDetails'
         ]);

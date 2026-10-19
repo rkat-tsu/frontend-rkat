@@ -111,6 +111,15 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
     };
 
     const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+    const getVolumeLabel = (item, second = false) => second
+        ? (item.satuan2 || '—')
+        : (item.satuan || 'Satuan');
+    const getPayoutSubtotal = (item) => {
+        const volume1 = Number(item.volume_pencairan) || 0;
+        const volume2 = Number(item.volume_pencairan2) || 0;
+        const nominal = Number(item.nominal_pencairan) || 0;
+        return (volume1 > 0 ? volume1 : volume2) * nominal;
+    };
 
     useEffect(() => {
         if (selectedHeaderId) {
@@ -118,18 +127,22 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
             if (selectedRkat && selectedRkat.rab_items) {
                 setItems(selectedRkat.rab_items.map(item => {
                     let volumePencairan = 0;
+                    let volumePencairan2 = 0;
                     let nominalPencairan = item.harga_satuan;
                     let isSelected = false;
                     let remainingVol = item.remaining_volume;
+                    let remainingVol2 = item.remaining_volume2;
                     let remainingNom = item.remaining_nominal;
 
                     if (editingPencairanObj && editingPencairanObj.items) {
                         const editItem = editingPencairanObj.items.find(i => i.id_rkat_rab_item === item.id);
                         if (editItem) {
                             volumePencairan = parseFloat(editItem.volume_pencairan);
+                            volumePencairan2 = parseFloat(editItem.volume_pencairan2) || 0;
                             nominalPencairan = parseFloat(editItem.nominal_pencairan);
                             isSelected = true;
                             remainingVol += volumePencairan;
+                            remainingVol2 += volumePencairan2;
                             remainingNom += parseFloat(editItem.sub_total_pencairan);
                         }
                     }
@@ -139,6 +152,8 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                         remaining_volume: remainingVol,
                         remaining_nominal: remainingNom,
                         volume_pencairan: volumePencairan,
+                        volume_pencairan2: volumePencairan2,
+                        remaining_volume2: remainingVol2,
                         nominal_pencairan: nominalPencairan,
                         is_selected: isSelected
                     };
@@ -163,7 +178,9 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
     const toggleItem = (id) => {
         setItems(items.map(item => {
             if (item.id === id) {
-                return { ...item, is_selected: !item.is_selected, volume_pencairan: !item.is_selected ? item.remaining_volume : 0 };
+                const select = !item.is_selected;
+                const useVolume1 = select && item.remaining_volume > 0;
+                return { ...item, is_selected: select, volume_pencairan: useVolume1 ? item.remaining_volume : 0, volume_pencairan2: select && !useVolume1 ? item.remaining_volume2 : 0 };
             }
             return item;
         }));
@@ -171,11 +188,11 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
 
     const toggleSelectAll = () => {
         const allSelected = items.length > 0 && items.every(item => item.is_selected);
-        setItems(items.map(item => ({
-            ...item,
-            is_selected: !allSelected,
-            volume_pencairan: !allSelected ? item.remaining_volume : 0
-        })));
+        setItems(items.map(item => {
+            const select = !allSelected;
+            const useVolume1 = select && item.remaining_volume > 0;
+            return { ...item, is_selected: select, volume_pencairan: useVolume1 ? item.remaining_volume : 0, volume_pencairan2: select && !useVolume1 ? item.remaining_volume2 : 0 };
+        }));
     };
 
     const handleSubmitCreate = (e) => {
@@ -191,10 +208,42 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
             return;
         }
 
-        const selectedItems = items.filter(i => i.is_selected && i.volume_pencairan > 0);
+        const selectedItems = items.filter(i => i.is_selected && (Number(i.volume_pencairan) > 0 || Number(i.volume_pencairan2) > 0));
         
         if (selectedItems.length === 0) {
             toast.error('Pilih minimal 1 item untuk dicairkan dan tentukan volumenya');
+            return;
+        }
+
+        const itemMelebihiSisa = selectedItems.find((item) => {
+            const volume = Number(item.volume_pencairan);
+            const volume2 = Number(item.volume_pencairan2);
+            const subtotal = getPayoutSubtotal(item);
+            return (volume > 0 && volume2 > 0) || volume > Number(item.remaining_volume) || volume2 > Number(item.remaining_volume2) || subtotal > Number(item.remaining_nominal);
+        });
+
+        if (itemMelebihiSisa) {
+            const volume = Number(itemMelebihiSisa.volume_pencairan);
+            const volume2 = Number(itemMelebihiSisa.volume_pencairan2);
+            const subtotal = getPayoutSubtotal(itemMelebihiSisa);
+            const batas = [];
+
+            if (volume > 0 && volume2 > 0) {
+                toast.error('Isi volume 1 atau volume 2 saja untuk setiap item pencairan.');
+                return;
+            }
+
+            if (volume > Number(itemMelebihiSisa.remaining_volume)) {
+                batas.push(`volume maksimal ${itemMelebihiSisa.remaining_volume}`);
+            }
+            if (volume2 > Number(itemMelebihiSisa.remaining_volume2)) {
+                batas.push(`volume kedua maksimal ${itemMelebihiSisa.remaining_volume2}`);
+            }
+            if (subtotal > Number(itemMelebihiSisa.remaining_nominal)) {
+                batas.push(`nominal maksimal ${formatCurrency(itemMelebihiSisa.remaining_nominal)}`);
+            }
+
+            toast.error(`Pengajuan untuk "${itemMelebihiSisa.deskripsi_item}" melebihi sisa: ${batas.join(' dan ')}.`);
             return;
         }
 
@@ -204,11 +253,12 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
             items: selectedItems.map(i => ({
                 id: i.id,
                 volume_pencairan: parseFloat(i.volume_pencairan),
+                volume_pencairan2: parseFloat(i.volume_pencairan2),
                 nominal_pencairan: parseFloat(i.nominal_pencairan)
             }))
         };
 
-        const totalCair = selectedItems.reduce((sum, item) => sum + (parseFloat(item.volume_pencairan) * parseFloat(item.nominal_pencairan)), 0);
+        const totalCair = selectedItems.reduce((sum, item) => sum + getPayoutSubtotal(item), 0);
 
         toast("Konfirmasi Simpan", {
             description: `Yakin ingin menyimpan pengajuan pencairan ini? Total pencairan adalah ${formatCurrency(totalCair)}.`,
@@ -698,7 +748,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                 </div>
             </div>
 
-            <Modal show={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} maxWidth="5xl">
+            <Modal show={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} maxWidth="7xl">
                 <div className="p-6">
                     <div className="mb-4 flex items-center justify-between pb-3">
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white">Pengajuan Pencairan Dana</h3>
@@ -714,7 +764,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                         <Info className="shrink-0 mt-0.5" size={18} />
                         <div>
                             <p className="font-semibold mb-1">Pencairan Bertahap</p>
-                            <p>Anda dapat mengajukan pencairan dana berkali-kali untuk RKAT yang sama, selama sisa anggaran item belum habis dicairkan. Pilih item dan tentukan volume yang ingin dicairkan pada tahap ini.</p>
+                            <p>Anda dapat mengajukan pencairan dana berkali-kali untuk RKAT yang sama. Setiap pengajuan mengurangi sisa volume dan sisa nominal item; tahap berikutnya dapat diajukan selama keduanya masih tersedia.</p>
                         </div>
                     </div>
 
@@ -767,11 +817,23 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                         {items.every(i => i.is_selected) ? 'Batal Pilih Semua' : 'Pilih Semua Item'}
                                     </button>
                                 </div>
-                                <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                                <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                                    Isikan volume 1 atau volume 2 saja per item. Jika volume 1 sudah habis, isi 0 pada volume 1 lalu masukkan jumlah volume 2 yang akan dicairkan.
+                                </p>
+                                <div className="max-w-full touch-pan-x overflow-x-auto overscroll-x-contain rounded-lg border border-gray-200 dark:border-gray-700">
+                                    <table className="min-w-[1080px] w-full table-fixed divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                                        <colgroup>
+                                            <col className="w-14" />
+                                            <col className="w-[250px]" />
+                                            <col className="w-[180px]" />
+                                            <col className="w-[125px]" />
+                                            <col className="w-[190px]" />
+                                            <col className="w-[155px]" />
+                                            <col className="w-[125px]" />
+                                        </colgroup>
                                         <thead className="bg-gray-50 dark:bg-gray-700">
                                             <tr>
-                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
+                                                <th className="px-2.5 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
                                                     <div className="flex items-center gap-2">
                                                         <input
                                                             type="checkbox"
@@ -783,17 +845,18 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                                         <span>PILIH</span>
                                                     </div>
                                                 </th>
-                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Item & Harga Satuan Asli</th>
-                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Sisa Volume (Max)</th>
-                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Volume Dicairkan</th>
-                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Harga Satuan Pencairan</th>
-                                                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Sub Total Cair</th>
+                                                <th className="px-2.5 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Item & Harga Satuan Asli</th>
+                                                <th className="px-2.5 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Sisa Volume 1 & 2</th>
+                                                <th className="px-2.5 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Sisa Nominal</th>
+                                                <th className="px-2.5 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Volume Dicairkan 1 & 2</th>
+                                                <th className="px-2.5 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Harga Satuan Pencairan</th>
+                                                <th className="px-2.5 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">Sub Total Cair</th>
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                             {items.map((item) => (
                                                 <tr key={item.id} className={item.is_selected ? 'bg-teal-50 dark:bg-teal-900/10' : ''}>
-                                                    <td className="px-4 py-4 whitespace-nowrap text-center">
+                                                    <td className="px-2.5 py-2 text-center">
                                                         <input
                                                             type="checkbox"
                                                             checked={item.is_selected}
@@ -801,31 +864,56 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                                             className="w-4 h-4 text-teal-600 rounded border-gray-300 focus:ring-teal-500 cursor-pointer"
                                                         />
                                                     </td>
-                                                    <td className="px-4 py-4">
-                                                        <div className="font-medium text-gray-900 dark:text-gray-100">{item.deskripsi_item}</div>
-                                                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatCurrency(item.harga_satuan)}</div>
+                                                    <td className="px-2.5 py-2 whitespace-normal">
+                                                        <div className="font-semibold leading-5 text-gray-900 dark:text-gray-100">{item.deskripsi_item}</div>
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Harga satuan RAB: {formatCurrency(item.harga_satuan)}</div>
                                                     </td>
-                                                    <td className="px-4 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">
-                                                        <span className="font-semibold">{item.remaining_volume}</span> (dari total {item.volume})
+                                                    <td className="px-2.5 py-2 text-xs text-gray-600 dark:text-gray-300">
+                                                        <div className="space-y-1">
+                                                            <div><span className="font-semibold text-gray-900 dark:text-white">Vol 1:</span> {item.remaining_volume} / {item.volume} {getVolumeLabel(item)}</div>
+                                                            <div><span className="font-semibold text-gray-900 dark:text-white">Vol 2:</span> {item.can_disburse_volume2 ? `${item.remaining_volume2} / ${item.volume2} ${getVolumeLabel(item, true)}` : '—'}</div>
+                                                        </div>
                                                     </td>
-                                                    <td className="px-4 py-4 whitespace-nowrap">
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            max={item.remaining_volume}
-                                                            step="any"
-                                                            value={item.volume_pencairan}
-                                                            onChange={(e) => handleItemChange(item.id, 'volume_pencairan', e.target.value)}
-                                                            onKeyDown={(e) => {
-                                                                if (['-', '+', 'e', 'E'].includes(e.key)) {
-                                                                    e.preventDefault();
-                                                                }
-                                                            }}
-                                                            disabled={!item.is_selected}
-                                                            className="w-24 rounded-md text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm disabled:opacity-50"
-                                                        />
+                                                    <td className="px-2.5 py-2 whitespace-nowrap text-right text-gray-500 dark:text-gray-400">
+                                                        <span className="font-semibold">{formatCurrency(item.remaining_nominal)}</span>
                                                     </td>
-                                                    <td className="px-4 py-4 whitespace-nowrap">
+                                                    <td className="px-2.5 py-2">
+                                                        <div className="space-y-1.5">
+                                                            <div>
+                                                                <label className="mb-0.5 block text-[10px] font-medium text-gray-500 dark:text-gray-400">Volume 1 · {getVolumeLabel(item)}</label>
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    max={item.remaining_volume}
+                                                                    step="any"
+                                                                    value={item.volume_pencairan}
+                                                                    onChange={(e) => handleItemChange(item.id, 'volume_pencairan', e.target.value)}
+                                                                    onKeyDown={(e) => {
+                                                                        if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault();
+                                                                    }}
+                                                                    disabled={!item.is_selected}
+                                                                    className="h-8 w-full rounded-md border-gray-300 bg-white px-2 py-1 text-right text-sm font-medium text-gray-900 shadow-sm transition focus:border-teal-500 focus:ring-teal-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:opacity-50"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="mb-0.5 block text-[10px] font-medium text-gray-500 dark:text-gray-400">Volume 2 · {getVolumeLabel(item, true)}</label>
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    max={item.remaining_volume2}
+                                                                    step="any"
+                                                                    value={item.volume_pencairan2}
+                                                                    onChange={(e) => handleItemChange(item.id, 'volume_pencairan2', e.target.value)}
+                                                                    onKeyDown={(e) => {
+                                                                        if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault();
+                                                                    }}
+                                                                    disabled={!item.is_selected || !item.can_disburse_volume2}
+                                                                    className="h-8 w-full rounded-md border-gray-300 bg-white px-2 py-1 text-right text-sm font-medium text-gray-900 shadow-sm transition focus:border-teal-500 focus:ring-teal-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:opacity-50"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-2.5 py-2 whitespace-nowrap">
                                                         <input
                                                             type="number"
                                                             min="0"
@@ -837,20 +925,20 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                                                 }
                                                             }}
                                                             disabled={!item.is_selected}
-                                                            className="w-32 rounded-md text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm disabled:opacity-50"
+                                                            className="h-8 w-full rounded-md border-gray-300 bg-white px-2 py-1 text-right text-sm font-medium text-gray-900 shadow-sm transition focus:border-teal-500 focus:ring-teal-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:opacity-50"
                                                         />
                                                     </td>
-                                                    <td className="px-4 py-4 whitespace-nowrap text-right font-bold text-gray-900 dark:text-white">
-                                                        {formatCurrency((parseFloat(item.volume_pencairan) || 0) * (parseFloat(item.nominal_pencairan) || 0))}
+                                                    <td className="px-2.5 py-2 whitespace-nowrap text-right font-bold text-gray-900 dark:text-white">
+                                                        {formatCurrency(getPayoutSubtotal(item))}
                                                     </td>
                                                 </tr>
                                             ))}
                                         </tbody>
                                         <tfoot className="bg-gray-50 dark:bg-gray-700/50">
                                             <tr>
-                                                <td colSpan="5" className="px-4 py-4 text-right font-bold text-gray-700 dark:text-gray-300">Total Pengajuan Tahap Ini:</td>
+                                                <td colSpan="6" className="px-4 py-4 text-right font-bold text-gray-700 dark:text-gray-300">Total Pengajuan Tahap Ini:</td>
                                                 <td className="px-4 py-4 text-right font-bold text-teal-600 dark:text-teal-400 text-lg">
-                                                    {formatCurrency(items.filter(i => i.is_selected).reduce((sum, item) => sum + ((parseFloat(item.volume_pencairan) || 0) * (parseFloat(item.nominal_pencairan) || 0)), 0))}
+                                                    {formatCurrency(items.filter(i => i.is_selected).reduce((sum, item) => sum + getPayoutSubtotal(item), 0))}
                                                 </td>
                                             </tr>
                                         </tfoot>

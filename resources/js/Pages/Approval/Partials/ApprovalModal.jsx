@@ -8,6 +8,11 @@ export default function ApprovalModal({ show, onClose, rkat }) {
 
     if (!rkat) return null;
 
+    const documentTitle = rkat.rkat_details
+        ?.map((detail) => detail.judul_kegiatan)
+        .filter(Boolean)
+        .join(', ') || rkat.nama_kegiatan || rkat.judul_rkat || '-';
+
     const handleConfirm = ({ action, catatan }) => {
         if (processing) return;
         toast.dismiss();
@@ -45,10 +50,10 @@ export default function ApprovalModal({ show, onClose, rkat }) {
             onClose={onClose}
             title="Persetujuan Dokumen RKAT"
             documentNumber={rkat.nomor_dokumen || 'Tanpa Nomor'}
-            documentTitle={rkat.nama_kegiatan || rkat.judul_rkat || '-'}
+            documentTitle={documentTitle}
             details={[
                 { label: 'Unit Kerja', value: rkat.unit?.nama_unit || '-' },
-                { label: 'Tahun Anggaran', value: rkat.tahun_anggaran?.tahun || '-' },
+                { label: 'Tahun Anggaran', value: rkat.tahun_obj?.tahun_anggaran || '-' },
                 { label: 'Total Anggaran', value: rkat.total_anggaran ? `Rp ${Number(rkat.total_anggaran).toLocaleString('id-ID')}` : '-' },
                 { label: 'Status Saat Ini', value: rkat.status_persetujuan?.replace(/_/g, ' ') || '-' }
             ]}

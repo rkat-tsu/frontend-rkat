@@ -17,6 +17,7 @@ class PencairanDanaItem extends Model
         'id_pencairan',
         'id_rkat_rab_item',
         'volume_pencairan',
+        'volume_pencairan2',
         'nominal_pencairan',
         'sub_total_pencairan',
     ];
