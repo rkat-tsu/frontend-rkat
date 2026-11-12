@@ -432,8 +432,10 @@
                         <th style="width: 25px;">No.</th>
                         <th style="width: 80px;">Kode Akun</th>
                         <th>Keterangan</th>
-                        <th style="width: 30px;">Vol</th>
-                        <th style="width: 40px;">Satuan</th>
+                        <th style="width: 30px;">Vol 1</th>
+                        <th style="width: 40px;">Satuan 1</th>
+                        <th style="width: 30px;">Vol 2</th>
+                        <th style="width: 40px;">Satuan 2</th>
                         <th style="width: 80px;">Biaya Satuan</th>
                         <th style="width: 80px;">Jumlah</th>
                     </tr>
@@ -444,8 +446,10 @@
                             <td class="text-center">{{ $idx + 1 }}</td>
                             <td class="text-center">{{ $rab->kode_anggaran }}</td>
                             <td>{{ $rab->deskripsi_item }}</td>
-                            <td class="text-center">{{ number_format($rab->volume, 2, '.', ',') }}</td>
-                            <td class="text-center">{{ $rab->satuan }}</td>
+                            <td class="text-center">{{ rtrim(rtrim(number_format($rab->volume ?? 0, 2, ',', '.'), '0'), ',') }}</td>
+                            <td class="text-center">{{ $rab->satuan ?? '-' }}</td>
+                            <td class="text-center">{{ rtrim(rtrim(number_format($rab->volume2 ?? 0, 2, ',', '.'), '0'), ',') }}</td>
+                            <td class="text-center">{{ $rab->satuan2 ?? '-' }}</td>
                             <td class="text-right">{{ number_format($rab->harga_satuan, 0, ',', '.') }}</td>
                             <td class="text-right">{{ number_format($rab->sub_total, 0, ',', '.') }}</td>
                         </tr>
@@ -453,7 +457,7 @@
                 </tbody>
                 <tfoot>
                     <tr class="font-bold">
-                        <td colspan="6" class="text-right">Total</td>
+                        <td colspan="8" class="text-right">Total</td>
                         <td class="text-right">{{ number_format($rabTotal, 0, ',', '.') }}</td>
                     </tr>
                 </tfoot>

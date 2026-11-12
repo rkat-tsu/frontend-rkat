@@ -26,6 +26,7 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
             route('sbo.index'),
             { search: newSearch, kelompok: newKelompok, per_page: newPerPage, sort_by: newSortBy, sort_direction: newSortDirection },
             { 
+                only: ['items'],
                 preserveState: true, 
                 preserveScroll: true, 
                 replace: true,
@@ -99,21 +100,6 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
         kelompok_anggaran: '',
         nominal: '',
     });
-
-    // Debounce untuk pengetikan pencarian (delay 700ms agar pengguna dapat menyelesaikan ketikan sebelum query dikirim)
-    useEffect(() => {
-        if (searchTerm === (filters?.search || '')) return;
-
-        setIsSearching(true);
-        const timeoutId = setTimeout(() => {
-            applyFilters(searchTerm, kelompokFilter, perPage, sortBy, sortDirection);
-        }, 700);
-
-        return () => {
-            clearTimeout(timeoutId);
-            setIsSearching(false);
-        };
-    }, [searchTerm]);
 
     // Data dari server
     const filtered = items.data || [];

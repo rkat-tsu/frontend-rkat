@@ -4,7 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import CustomSelect from '@/Components/CustomSelect';
 import StatusBadge from '@/Components/StatusBadge';
 import ActionButton, { ActionGroup } from '@/Components/ActionButton';
-import { Search, Plus, Edit2, Trash2, CheckCircle, XCircle, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, CheckCircle, XCircle, ArrowUp, ArrowDown, ArrowUpDown, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { usePermission } from '@/hooks/usePermission';
 import { toast } from 'sonner';
@@ -22,7 +22,7 @@ export default function Index({ users, filters = {}, units = [] }) {
         router.get(
             route('user.index'),
             { q, unit, per_page: pp, sort_by: sb, sort_direction: sd },
-            { preserveState: true, preserveScroll: true, replace: true }
+            { only: ['users'], preserveState: true, preserveScroll: true, replace: true }
         );
     };
 
@@ -39,6 +39,8 @@ export default function Index({ users, filters = {}, units = [] }) {
             applyFilters(searchTerm, selectedUnit, perPage, sortBy, sortDirection);
         }
     };
+
+    const resetSearch = () => { setSearchTerm(''); applyFilters('', selectedUnit, perPage, sortBy, sortDirection); };
 
     // Unit dan perPage langsung trigger (tidak perlu debounce)
     const handleUnitChange = (val) => {
@@ -83,12 +85,13 @@ export default function Index({ users, filters = {}, units = [] }) {
                                 </div>
                                 <input 
                                     type="text" 
-                                    placeholder="Cari nama, email, atau peran..." 
+                                    placeholder="Cari nama atau email..." 
                                     value={searchTerm} 
                                     onChange={(e) => setSearchTerm(e.target.value)} 
                                     onKeyDown={handleSearchKeyDown}
-                                    className="pl-10 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
+                                    className="pl-10 pr-11 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
                                 />
+                                {searchTerm && <button type="button" onClick={resetSearch} aria-label="Reset pencarian" title="Reset pencarian" className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-white"><X size={18} /></button>}
                             </div>
                             
                             {/* Tombol Action */}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Search, Package, Plus, ArrowUp, ArrowDown, ArrowUpDown, FileText, FileSpreadsheet } from 'lucide-react';
+import { Search, Package, Plus, ArrowUp, ArrowDown, ArrowUpDown, FileText, FileSpreadsheet, X } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import StatusBadge from '@/Components/StatusBadge';
 import ActionButton, { ActionGroup } from '@/Components/ActionButton';
@@ -56,7 +56,7 @@ export default function Index({ auth, rkats = { data: [] }, filters = {}, tahunA
         router.get(
             route('rkat.index'),
             { search: newSearch, tahun: newTahun, unit_id: newUnitId, status: newStatus, per_page: newPerPage, sort_by: newSortBy, sort_direction: newSortDirection },
-            { preserveState: true, replace: true, preserveScroll: true }
+            { only: ['rkats'], preserveState: true, replace: true, preserveScroll: true }
         );
     };
 
@@ -77,6 +77,8 @@ export default function Index({ auth, rkats = { data: [] }, filters = {}, tahunA
             applyFilters(searchTerm, tahun, unitId, status, perPage, sortBy, sortDirection);
         }
     };
+
+    const resetSearch = () => { setSearchTerm(''); applyFilters('', tahun, unitId, status, perPage, sortBy, sortDirection); };
 
     const handleExportExcel = () => {
         if (!rkats?.data || rkats.data.length === 0) return;
@@ -161,12 +163,13 @@ export default function Index({ auth, rkats = { data: [] }, filters = {}, tahunA
                                 </div>
                                 <input
                                     type="text"
-                                    className="pl-10 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
+                                    className="pl-10 pr-11 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
                                     placeholder="Cari kegiatan, dokumen..."
                                     value={searchTerm}
                                     onChange={handleSearch}
                                     onKeyDown={handleSearchKeyDown}
                                 />
+                                {searchTerm && <button type="button" onClick={resetSearch} aria-label="Reset pencarian" title="Reset pencarian" className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-white"><X size={18} /></button>}
                             </div>
 
                             {/* Tombol Export Excel */}

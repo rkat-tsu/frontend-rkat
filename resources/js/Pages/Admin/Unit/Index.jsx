@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, router, Head } from '@inertiajs/react';
 import CustomSelect from '@/Components/CustomSelect';
-import { Plus, Search, Edit2, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, ArrowUp, ArrowDown, ArrowUpDown, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
@@ -118,8 +118,9 @@ export default function Index({ auth, units = [], users = [], allUnits = [], app
                                     placeholder="Cari unit atau kode..." 
                                     value={searchTerm} 
                                     onChange={e => setSearchTerm(e.target.value)} 
-                                    className="pl-10 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-yellow-500 focus:bg-white focus:ring-4 focus:ring-yellow-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
+                                    className="pl-10 pr-11 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-yellow-500 focus:bg-white focus:ring-4 focus:ring-yellow-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
                                 />
+                                {searchTerm && <button type="button" onClick={() => setSearchTerm('')} aria-label="Reset pencarian" title="Reset pencarian" className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-white"><X size={18} /></button>}
                             </div>
                             
                             {/* Tombol Action */}

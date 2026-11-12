@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ActionButton, { ActionGroup } from '@/Components/ActionButton';
-import { Edit2, Trash2, Search, Plus, Save, ArrowUp, ArrowDown, ArrowUpDown, Loader2, X, Users, UserCheck, Phone, Mail, Building2, Briefcase, Copy } from 'lucide-react';
+import { Edit2, Trash2, Search, Plus, Save, ArrowUp, ArrowDown, ArrowUpDown, Loader2, X, Users, UserCheck, Phone, Mail, Building2, Briefcase, Copy, FileSpreadsheet, Upload, Download, CheckCircle2, AlertCircle, RefreshCw, FileUp, HelpCircle, Info, Check } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
@@ -10,6 +10,8 @@ import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import FieldTooltipError from '@/Components/FieldTooltipError';
+import * as XLSX from 'xlsx';
+import { exportToExcel } from '@/Utils/exportToExcel';
 
 export default function Index({ auth, karyawans = {}, units = [], filters = {}, statusPegawaiOptions = [] }) {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
@@ -37,6 +39,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                 sort_direction: newSortDirection
             },
             {
+                only: ['karyawans'],
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
@@ -70,21 +73,6 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
             toast.error(`${label} tidak dapat disalin`, { description: 'Periksa izin clipboard browser Anda.' });
         }
     };
-
-    // Debounce search input
-    useEffect(() => {
-        if (searchTerm === (filters?.search || '')) return;
-
-        setIsSearching(true);
-        const timeoutId = setTimeout(() => {
-            applyFilters(searchTerm, unitFilter, statusPegawaiFilter, statusAktifFilter, perPage, sortBy, sortDirection);
-        }, 650);
-
-        return () => {
-            clearTimeout(timeoutId);
-            setIsSearching(false);
-        };
-    }, [searchTerm]);
 
     // Modal state
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -239,6 +227,497 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
         label: `${option.nama}${option.is_active ? '' : ' (Nonaktif)'}`,
     }));
 
+    // Modal & Import Excel States
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [importFile, setImportFile] = useState(null);
+    const [importedRows, setImportedRows] = useState([]);
+    const [importStats, setImportStats] = useState({ total: 0, newCount: 0, updateCount: 0, invalidCount: 0 });
+    const [replaceExisting, setReplaceExisting] = useState(true);
+    const [isImporting, setIsImporting] = useState(false);
+    const [isParsing, setIsParsing] = useState(false);
+    const [isDragOver, setIsDragOver] = useState(false);
+
+    const handleExportData = () => {
+        if (!items || items.length === 0) {
+            toast.warning('Tidak ada data karyawan untuk diexport.');
+            return;
+        }
+        const exportData = items.map((k, index) => ({
+            'No': index + 1,
+            'NIK': k.nik || '',
+            'Nama Lengkap': k.nama || '',
+            'Email': k.email || '',
+            'No Telepon': k.no_telepon || '',
+            'Kode Unit': k.unit?.kode_unit || '',
+            'Nama Unit Kerja': k.unit?.nama_unit || '',
+            'Jabatan': k.jabatan || '',
+            'Status Pegawai': k.status_pegawai || '',
+            'Status Aktif': k.is_aktif ? 'Aktif' : 'Nonaktif',
+            'NIDN': k.nidn || '',
+            'NUPTK': k.nuptk || '',
+        }));
+        exportToExcel(exportData, `Data_Karyawan_${new Date().toISOString().slice(0, 10)}.xlsx`, 'Data Karyawan');
+        toast.success('Data Karyawan berhasil diexport!');
+    };
+
+    const handleDownloadTemplate = () => {
+        try {
+            const wb = XLSX.utils.book_new();
+
+            const templateData = [
+                {
+                    'NO': 1,
+                    '(Gelar Depan)': 'Dr. Ir.',
+                    'NAMA LENGKAP': 'Budi Santoso, M.Kom.',
+                    'EMAIL TSU': 'budi.santoso@tsu.ac.id',
+                    'NOMOR WA': '081234567890',
+                    'JENIS PEGAWAI': 'Dosen Tetap',
+                    'JABATAN STRUKTURAL': 'Dekan FTI',
+                    'UNIT': '',
+                    'JENIS KELAMIN': 'Laki-laki',
+                    'NIK TSU': '202301001',
+                    'NIDN': '0123456789',
+                    'NUPTK': '',
+                    'REKOMENDATOR': '',
+                    'JABATAN FUNGSIONAL': 'Lektor Kepala',
+                    'PANGKAT JABATAN FUNGSIONAL': 'Pembina / IV a',
+                    'STATUS': 'Aktif'
+                },
+                {
+                    'NO': 2,
+                    '(Gelar Depan)': '',
+                    'NAMA LENGKAP': 'Siti Aminah, S.E., M.M.',
+                    'EMAIL TSU': 'siti.aminah@tsu.ac.id',
+                    'NOMOR WA': '081298765432',
+                    'JENIS PEGAWAI': 'Tendik',
+                    'JABATAN STRUKTURAL': 'Kepala Bagian Keuangan',
+                    'UNIT': '',
+                    'JENIS KELAMIN': 'Perempuan',
+                    'NIK TSU': '202302002',
+                    'NIDN': '',
+                    'NUPTK': '1234567890123456',
+                    'REKOMENDATOR': '',
+                    'JABATAN FUNGSIONAL': '',
+                    'PANGKAT JABATAN FUNGSIONAL': '',
+                    'STATUS': 'Aktif'
+                },
+                {
+                    'NO': 3,
+                    '(Gelar Depan)': '',
+                    'NAMA LENGKAP': 'Ahmad Fauzi, S.Kom., M.T.',
+                    'EMAIL TSU': 'ahmad.fauzi@tsu.ac.id',
+                    'NOMOR WA': '085712345678',
+                    'JENIS PEGAWAI': 'Kontrak',
+                    'JABATAN STRUKTURAL': 'Dosen Pengajar',
+                    'UNIT': '',
+                    'JENIS KELAMIN': 'Laki-laki',
+                    'NIK TSU': '202403003',
+                    'NIDN': '0987654321',
+                    'NUPTK': '',
+                    'REKOMENDATOR': '',
+                    'JABATAN FUNGSIONAL': 'Asisten Ahli',
+                    'PANGKAT JABATAN FUNGSIONAL': 'Penata Muda / III a',
+                    'STATUS': 'Aktif'
+                }
+            ];
+
+            const ws = XLSX.utils.json_to_sheet(templateData);
+            ws['!cols'] = [
+                { wch: 6 },  // NO
+                { wch: 14 }, // (Gelar Depan)
+                { wch: 30 }, // NAMA LENGKAP
+                { wch: 28 }, // EMAIL TSU
+                { wch: 18 }, // NOMOR WA
+                { wch: 18 }, // JENIS PEGAWAI
+                { wch: 26 }, // JABATAN STRUKTURAL
+                { wch: 14 }, // UNIT
+                { wch: 15 }, // JENIS KELAMIN
+                { wch: 16 }, // NIK TSU
+                { wch: 15 }, // NIDN
+                { wch: 18 }, // NUPTK
+                { wch: 16 }, // REKOMENDATOR
+                { wch: 22 }, // JABATAN FUNGSIONAL
+                { wch: 26 }, // PANGKAT JABATAN FUNGSIONAL
+                { wch: 12 }, // STATUS
+            ];
+            XLSX.utils.book_append_sheet(wb, ws, 'Data Karyawan');
+
+            XLSX.writeFile(wb, 'Template_Dokumen_Karyawan.xlsx');
+            toast.success('Template Excel berhasil diunduh!');
+        } catch (err) {
+            console.error('Error generating template:', err);
+            toast.error('Gagal membuat template Excel.');
+        }
+    };
+
+    const cleanAcademicTitles = (str) => {
+        return String(str || '')
+            .toLowerCase()
+            .replace(/\b(prof|dr|dra|drs|ir|s\.kom|m\.kom|s\.e|m\.e|m\.si|s\.t|m\.eng|m\.cs|s\.sn|m\.hum|s\.m|m\.acc|akt|dea)\b/gi, '')
+            .replace(/[^a-z0-9]/g, '');
+    };
+
+    const cleanImportIdentifier = (value) => {
+        if (value === null || value === undefined) return null;
+        const normalized = String(value).trim();
+        if (!normalized || /^[-–—]+$/.test(normalized) || ['n/a', 'na', 'null', 'undefined'].includes(normalized.toLowerCase())) {
+            return null;
+        }
+        return normalized;
+    };
+
+    const normalizeImportedRow = (rawRow, nikLookup = {}) => {
+        const row = {
+            nik: null,
+            nama: null,
+            email: null,
+            no_telepon: null,
+            id_unit: null,
+            unit: null,
+            jabatan: null,
+            status_pegawai: null,
+            is_aktif: true,
+            nidn: null,
+            nuptk: null,
+        };
+
+        let gelarDepan = '';
+        let namaLengkap = '';
+        let jabatanStruktural = '';
+        let jabatanLain = '';
+
+        for (const [key, val] of Object.entries(rawRow)) {
+            const cleanKey = String(key).toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (val === null || val === undefined || String(val).trim() === '') continue;
+            const strVal = String(val).trim();
+
+            // NIK: NIK TSU, NIK, No Induk, No KTP
+            if (cleanKey === 'niktsu' || cleanKey === 'nik' || ['noinduk', 'noktp', 'nomorindukkaryawan'].includes(cleanKey) || (cleanKey.includes('nik') && !cleanKey.includes('klinik'))) {
+                row.nik = cleanImportIdentifier(strVal);
+            }
+            // Gelar Depan: (Gelar Depan), Gelar Depan
+            else if (cleanKey.includes('gelardepan') || cleanKey === 'gelar') {
+                gelarDepan = strVal;
+            }
+            // Nama Lengkap: NAMA LENGKAP, Nama, Fullname
+            else if (cleanKey.includes('namalengkap') || cleanKey.includes('nama') || ['name', 'fullname'].includes(cleanKey)) {
+                namaLengkap = strVal;
+            }
+            // Email: EMAIL TSU, Email, Surel
+            else if (cleanKey.includes('email') || cleanKey.includes('surel') || cleanKey === 'mail') {
+                row.email = cleanImportIdentifier(strVal);
+            }
+            // Jenis Pegawai: JENIS PEGAWAI, Status Kepegawaian
+            else if (cleanKey.includes('jenispegawai') || cleanKey.includes('statuspegawai') || cleanKey.includes('kepegawaian')) {
+                row.status_pegawai = strVal;
+            }
+            // Nomor Telepon / WA: NOMOR WA, No Telp, HP, Phone (tidak boleh mencocokkan 'wa' pada 'pegawai')
+            else if (cleanKey === 'wa' || cleanKey === 'nomorwa' || cleanKey === 'nowa' || cleanKey.includes('whatsapp') || cleanKey.includes('telepon') || cleanKey.includes('telp') || ['hp', 'nohp', 'phone'].includes(cleanKey)) {
+                row.no_telepon = strVal;
+            }
+            // Jabatan Struktural (diprioritaskan sesuai instruksi: jabatan yg dipake adalah JABATAN STRUKTURAL)
+            else if (cleanKey.includes('struktural') || cleanKey === 'jabatanstruktural') {
+                jabatanStruktural = strVal;
+            }
+            // Abaikan Jabatan Fungsional
+            else if (cleanKey.includes('fungsional')) {
+                continue;
+            }
+            // Jabatan umum jika tidak ada kolom struktural
+            else if (cleanKey.includes('jabatan') || cleanKey.includes('posisi') || cleanKey.includes('role')) {
+                jabatanLain = strVal;
+            }
+            // Status Keaktifan: STATUS, Status Aktif
+            else if (cleanKey === 'status' || cleanKey.includes('aktif') || cleanKey.includes('statusaktif') || cleanKey.includes('keaktifan') || cleanKey === 'isaktif') {
+                const lowerVal = strVal.toLowerCase();
+                if (['nonaktif', 'non aktif', 'tidak aktif', 'pensiun', 'keluar', 'tidak', '0', 'false'].includes(lowerVal)) {
+                    row.is_aktif = false;
+                } else {
+                    row.is_aktif = true;
+                }
+            }
+            // NIDN
+            else if (cleanKey.includes('nidn')) {
+                row.nidn = cleanImportIdentifier(strVal);
+            }
+            // NUPTK
+            else if (cleanKey.includes('nuptk')) {
+                row.nuptk = cleanImportIdentifier(strVal);
+            }
+            // Unit: (Sesuai instruksi: untuk unitnya kosongan aja dulu)
+            else if (cleanKey.includes('unit') || cleanKey.includes('prodi') || cleanKey.includes('fakultas')) {
+                row.unit = null;
+                row.id_unit = null;
+            }
+        }
+
+        // Tentukan Jabatan yang dipakai (Jabatan Struktural diprioritaskan, bersihkan karakter '-')
+        let finalJabatan = jabatanStruktural || jabatanLain || null;
+        if (finalJabatan === '-' || finalJabatan === '--' || finalJabatan === '---') {
+            finalJabatan = null;
+        }
+        row.jabatan = finalJabatan;
+
+        // Gabungkan Gelar Depan dengan Nama Lengkap jika ada
+        if (gelarDepan && namaLengkap) {
+            if (!namaLengkap.toLowerCase().startsWith(gelarDepan.toLowerCase())) {
+                row.nama = `${gelarDepan} ${namaLengkap}`.trim();
+            } else {
+                row.nama = namaLengkap;
+            }
+        } else {
+            row.nama = namaLengkap || null;
+        }
+
+        // Auto-lookup NIK jika NIK kosong dan terdapat referensi NIK (seperti dari sheet URUTAN NIK)
+        if (!row.nik && row.nama && nikLookup) {
+            const exactKey = row.nama.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const cleanKey = cleanAcademicTitles(row.nama);
+            row.nik = (nikLookup.exact && nikLookup.exact[exactKey]) || (nikLookup.clean && nikLookup.clean[cleanKey]) || null;
+        }
+
+        return row;
+    };
+
+    const processFile = (file) => {
+        setIsParsing(true);
+        setImportFile(file);
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            try {
+                const bstr = evt.target.result;
+                const wb = XLSX.read(bstr, { type: 'binary' });
+
+                // Cari sheet data utama (misal: 'REKAP', 'KARYAWAN', 'DATA', atau sheet pertama)
+                let targetSheetName = wb.SheetNames[0];
+                const preferredSheet = wb.SheetNames.find(s => ['rekap', 'karyawan', 'data', 'dosen'].includes(s.toLowerCase()));
+                if (preferredSheet) {
+                    targetSheetName = preferredSheet;
+                }
+                const ws = wb.Sheets[targetSheetName];
+
+                if (!ws) {
+                    toast.error('Berkas Excel tidak memiliki sheet yang dapat dibaca.');
+                    setIsParsing(false);
+                    return;
+                }
+
+                // Ekstrak referensi NIK jika ada sheet 'URUTAN NIK'
+                const nikLookup = { exact: {}, clean: {} };
+                const urutanSheetName = wb.SheetNames.find(s => s.toLowerCase().includes('urutan') || s.toLowerCase() === 'nik');
+                if (urutanSheetName && wb.Sheets[urutanSheetName]) {
+                    const urutanRows = XLSX.utils.sheet_to_json(wb.Sheets[urutanSheetName], { header: 1, defval: '' });
+                    let uNameIdx = 1;
+                    let uNikIdx = 2;
+                    for (let r = 0; r < Math.min(urutanRows.length, 5); r++) {
+                        const row = urutanRows[r];
+                        if (!row) continue;
+                        row.forEach((cell, idx) => {
+                            const str = String(cell).toLowerCase().replace(/[^a-z0-9]/g, '');
+                            if (str === 'nama' || str.includes('namalengkap')) uNameIdx = idx;
+                            if (str.includes('nik')) uNikIdx = idx;
+                        });
+                    }
+
+                    for (let r = 0; r < urutanRows.length; r++) {
+                        const row = urutanRows[r];
+                        if (!row) continue;
+                        const nameVal = row[uNameIdx];
+                        const nikVal = row[uNikIdx];
+                        if (nameVal && nikVal && String(nameVal).trim() !== '' && String(nikVal).trim() !== '') {
+                            const rawName = String(nameVal).trim();
+                            const rawNik = String(nikVal).trim();
+                            nikLookup.exact[rawName.toLowerCase().replace(/[^a-z0-9]/g, '')] = rawNik;
+                            nikLookup.clean[cleanAcademicTitles(rawName)] = rawNik;
+                        }
+                    }
+                }
+
+                // Baca sheet utama sebagai 2D array untuk mendeteksi baris header secara dinamis
+                const raw2D = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+                if (!raw2D || raw2D.length === 0) {
+                    toast.error('Berkas Excel kosong atau tidak memiliki baris data.');
+                    setIsParsing(false);
+                    return;
+                }
+
+                // Deteksi indeks baris header (mencari kolom kunci seperti NAMA LENGKAP, NIK, JABATAN)
+                let headerRowIndex = 0;
+                let detectedHeaders = [];
+
+                for (let r = 0; r < Math.min(raw2D.length, 15); r++) {
+                    const row = raw2D[r] || [];
+                    const joined = row.map(c => String(c).toLowerCase().replace(/[^a-z0-9]/g, '')).join(' ');
+                    if (joined.includes('namalengkap') || (joined.includes('nama') && (joined.includes('nik') || joined.includes('jabatan') || joined.includes('pegawai')))) {
+                        headerRowIndex = r;
+                        detectedHeaders = row;
+                        break;
+                    }
+                }
+
+                if (detectedHeaders.length === 0 && raw2D.length > 0) {
+                    headerRowIndex = 0;
+                    detectedHeaders = raw2D[0];
+                }
+
+                // Susun data baris
+                const rawData = [];
+                for (let r = headerRowIndex + 1; r < raw2D.length; r++) {
+                    const rowCells = raw2D[r];
+                    if (!rowCells) continue;
+
+                    // Lewati baris yang benar-benar kosong
+                    const hasAnyContent = rowCells.some(c => c !== null && c !== undefined && String(c).trim() !== '');
+                    if (!hasAnyContent) continue;
+
+                    // Lewati baris catatan / footer
+                    const firstCell = String(rowCells[0] || '').trim().toLowerCase();
+                    if (firstCell.startsWith('catatan') || firstCell.startsWith('total') || firstCell.startsWith('keterangan')) {
+                        continue;
+                    }
+
+                    const rowObj = {};
+                    detectedHeaders.forEach((colName, cIdx) => {
+                        const cleanCol = String(colName || '').trim();
+                        if (cleanCol) {
+                            rowObj[cleanCol] = rowCells[cIdx] !== undefined ? rowCells[cIdx] : '';
+                        } else if (cIdx === 1) {
+                            rowObj['(Gelar Depan)'] = rowCells[cIdx] !== undefined ? rowCells[cIdx] : '';
+                        }
+                    });
+
+                    rawData.push({ obj: rowObj, rowNum: r + 1 });
+                }
+
+                if (rawData.length === 0) {
+                    toast.error('Tidak ditemukan baris data karyawan yang valid di dalam berkas.');
+                    setIsParsing(false);
+                    return;
+                }
+
+                // Kumpulan data eksisting untuk cek replace / insert baru
+                const existingNikSet = new Set(items.filter(k => k.nik).map(k => String(k.nik).trim().toLowerCase()));
+                const existingEmailSet = new Set(items.filter(k => k.email).map(k => String(k.email).trim().toLowerCase()));
+                const existingNidnSet = new Set(items.filter(k => k.nidn).map(k => String(k.nidn).trim().toLowerCase()));
+                const existingNuptkSet = new Set(items.filter(k => k.nuptk).map(k => String(k.nuptk).trim().toLowerCase()));
+                const existingNameSet = new Set(items.filter(k => k.nama).map(k => String(k.nama).trim().toLowerCase()));
+
+                let newCount = 0;
+                let updateCount = 0;
+                let invalidCount = 0;
+
+                const parsed = rawData.map(({ obj, rowNum }) => {
+                    const norm = normalizeImportedRow(obj, nikLookup);
+                    const hasName = Boolean(norm.nama && norm.nama.trim());
+
+                    if (!hasName) {
+                        invalidCount++;
+                        return { ...norm, _status: 'invalid', _rowNumber: rowNum };
+                    }
+
+                    const isNikMatch = norm.nik && existingNikSet.has(norm.nik.toLowerCase());
+                    const isEmailMatch = norm.email && existingEmailSet.has(norm.email.toLowerCase());
+                    const isNidnMatch = norm.nidn && existingNidnSet.has(norm.nidn.toLowerCase());
+                    const isNuptkMatch = norm.nuptk && existingNuptkSet.has(norm.nuptk.toLowerCase());
+                    const isNameMatch = norm.nama && existingNameSet.has(norm.nama.toLowerCase());
+
+                    const isUpdate = isNikMatch || isEmailMatch || isNidnMatch || isNuptkMatch || isNameMatch;
+
+                    if (isUpdate) {
+                        updateCount++;
+                        return { ...norm, _status: 'update', _rowNumber: rowNum };
+                    } else {
+                        newCount++;
+                        return { ...norm, _status: 'new', _rowNumber: rowNum };
+                    }
+                });
+
+                setImportedRows(parsed);
+                setImportStats({
+                    total: parsed.length,
+                    newCount,
+                    updateCount,
+                    invalidCount
+                });
+                setIsParsing(false);
+                toast.success(`Berhasil membaca ${parsed.length} data karyawan dari ${file.name}`);
+            } catch (err) {
+                console.error('Error reading excel:', err);
+                toast.error('Gagal membaca berkas Excel. Pastikan format berkas valid.');
+                setIsParsing(false);
+            }
+        };
+        reader.onerror = () => {
+            toast.error('Gagal membaca file.');
+            setIsParsing(false);
+        };
+        reader.readAsBinaryString(file);
+    };
+
+    const handleFileUpload = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        processFile(file);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        const file = e.dataTransfer.files?.[0];
+        if (!file) return;
+        processFile(file);
+    };
+
+    const handleExecuteImport = () => {
+        if (!importedRows || importedRows.length === 0) {
+            toast.warning('Tidak ada data untuk diimpor.');
+            return;
+        }
+
+        const validRows = importedRows.filter(r => r._status !== 'invalid');
+        if (validRows.length === 0) {
+            toast.error('Semua baris dalam berkas tidak valid (Nama Lengkap wajib terisi).');
+            return;
+        }
+
+        setIsImporting(true);
+        const toastId = toast.loading('Sedang mengimpor dan memperbarui data SDM ke database...');
+
+        router.post(
+            route('karyawan.import'),
+            {
+                rows: validRows.map(({ _status, _rowNumber, ...data }) => data),
+                replace_existing: replaceExisting
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsImporting(false);
+                    setIsImportModalOpen(false);
+                    setImportFile(null);
+                    setImportedRows([]);
+                    toast.success('Impor Berhasil Diselesaikan!', { id: toastId });
+                },
+                onError: (err) => {
+                    setIsImporting(false);
+                    toast.error('Gagal Mengimpor Data', {
+                        id: toastId,
+                        description: err?.message || 'Terjadi kesalahan saat memproses data pada database.'
+                    });
+                }
+            }
+        );
+    };
+
+    const handleCloseImportModal = () => {
+        if (isImporting) return;
+        setIsImportModalOpen(false);
+        setImportFile(null);
+        setImportedRows([]);
+        setImportStats({ total: 0, newCount: 0, updateCount: 0, invalidCount: 0 });
+    };
+
     return (
         <AuthenticatedLayout header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Data SDM / Karyawan</h2>}>
             <Head title="Data SDM / Karyawan" />
@@ -246,7 +725,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
             <div className="py-8">
                 <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 space-y-6">
 
-                    {/* Header Judul & Tombol Tambah */}
+                    {/* Header Judul & Tombol Aksi */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
@@ -257,14 +736,41 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                                 Master database profil dosen, staf, dan tenaga kependidikan.
                             </p>
                         </div>
-                        {isAdmin() && (
+                        <div className="flex flex-wrap items-center gap-2.5">
                             <button
-                                onClick={() => setIsCreateModalOpen(true)}
-                                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-bold transition shadow-md shadow-teal-600/20"
+                                type="button"
+                                onClick={handleExportData}
+                                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl text-sm font-semibold transition shadow-sm"
+                                title="Export data karyawan ke file Excel"
                             >
-                                <Plus size={18} /> Tambah Data SDM
+                                <Download size={17} className="text-emerald-600 dark:text-emerald-400" />
+                                <span>Export Excel</span>
                             </button>
-                        )}
+                            {isAdmin() && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setImportFile(null);
+                                            setImportedRows([]);
+                                            setImportStats({ total: 0, newCount: 0, updateCount: 0, invalidCount: 0 });
+                                            setIsImportModalOpen(true);
+                                        }}
+                                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 rounded-xl text-sm font-bold transition shadow-sm"
+                                        title="Impor data karyawan dari dokumen Excel"
+                                    >
+                                        <FileSpreadsheet size={17} className="text-emerald-600 dark:text-emerald-400" />
+                                        <span>Import Excel</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setIsCreateModalOpen(true)}
+                                        className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-bold transition shadow-md shadow-teal-600/20"
+                                    >
+                                        <Plus size={18} /> Tambah Data SDM
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
 
                     {/* Filter Card */}
@@ -954,6 +1460,266 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                         className="flex items-center justify-center gap-2 px-6 py-2.5 shadow-teal-200 hover:shadow-teal-400"
                     >
                         <Save size={18} /> Simpan Perubahan
+                    </PrimaryButton>
+                </div>
+            </Modal>
+
+            {/* Modal Impor Excel Data SDM / Karyawan */}
+            <Modal show={isImportModalOpen} onClose={handleCloseImportModal} maxWidth="4xl">
+                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                            <FileSpreadsheet size={22} />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                                Impor Dokumen Excel Data Karyawan
+                            </h2>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Unggah dokumen spreadsheet (.xlsx, .xls, .csv) untuk menambah atau memperbarui data SDM.
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={handleCloseImportModal}
+                        disabled={isImporting}
+                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+
+                <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+                    {/* Kotak Panduan & Unduh Template */}
+                    <div className="p-4 rounded-2xl bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200/70 dark:border-teal-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                            <Info size={20} className="text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+                            <div className="text-xs text-teal-900 dark:text-teal-200 space-y-1">
+                                <p className="font-semibold text-sm">Format Dokumen Excel Sesuai Data Anda</p>
+                                <p className="text-teal-700 dark:text-teal-300 leading-relaxed">
+                                    Sistem mendukung langsung susunan kolom Excel Anda (<code className="font-mono bg-teal-100 dark:bg-teal-900/50 px-1 py-0.5 rounded">Gelar Depan</code>, <code className="font-mono bg-teal-100 dark:bg-teal-900/50 px-1 py-0.5 rounded">NAMA LENGKAP</code>, <code className="font-mono bg-teal-100 dark:bg-teal-900/50 px-1 py-0.5 rounded">EMAIL TSU</code>, <code className="font-mono bg-teal-100 dark:bg-teal-900/50 px-1 py-0.5 rounded">NOMOR WA</code>, <code className="font-mono bg-teal-100 dark:bg-teal-900/50 px-1 py-0.5 rounded">JENIS PEGAWAI</code>, <code className="font-mono bg-teal-100 dark:bg-teal-900/50 px-1 py-0.5 rounded">JABATAN STRUKTURAL</code>, <code className="font-mono bg-teal-100 dark:bg-teal-900/50 px-1 py-0.5 rounded">NIK TSU</code>, <code className="font-mono bg-teal-100 dark:bg-teal-900/50 px-1 py-0.5 rounded">NIDN</code>, <code className="font-mono bg-teal-100 dark:bg-teal-900/50 px-1 py-0.5 rounded">NUPTK</code>, <code className="font-mono bg-teal-100 dark:bg-teal-900/50 px-1 py-0.5 rounded">STATUS</code>). Kolom unit otomatis dikosongkan dan jabatan menggunakan Jabatan Struktural.
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleDownloadTemplate}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition shadow-sm shrink-0"
+                        >
+                            <Download size={15} /> Unduh Template Excel
+                        </button>
+                    </div>
+
+                    {/* Area Unggah Berkas Drag & Drop */}
+                    {!importFile ? (
+                        <div
+                            onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                            onDragLeave={() => setIsDragOver(false)}
+                            onDrop={handleDrop}
+                            className={`border-2 border-dashed rounded-2xl p-8 text-center transition flex flex-col items-center justify-center cursor-pointer ${
+                                isDragOver
+                                    ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20'
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-emerald-400 bg-gray-50/50 dark:bg-gray-800/40'
+                            }`}
+                            onClick={() => document.getElementById('karyawan-excel-file-input')?.click()}
+                        >
+                            <input
+                                id="karyawan-excel-file-input"
+                                type="file"
+                                accept=".xlsx, .xls, .csv"
+                                className="hidden"
+                                onChange={handleFileUpload}
+                            />
+                            <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
+                                {isParsing ? <Loader2 size={26} className="animate-spin" /> : <Upload size={26} />}
+                            </div>
+                            <h3 className="font-bold text-gray-800 dark:text-gray-200 text-sm mb-1">
+                                {isParsing ? 'Membaca dan memproses berkas...' : 'Tarik & lepas file spreadsheet di sini, atau klik untuk memilih'}
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Mendukung format .xlsx, .xls, dan .csv (Maksimal 10 MB)
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                                    <FileSpreadsheet size={20} />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">
+                                        {importFile.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        {(importFile.size / 1024).toFixed(1)} KB &bull; {importedRows.length} baris data terbaca
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                disabled={isImporting}
+                                onClick={() => {
+                                    setImportFile(null);
+                                    setImportedRows([]);
+                                    setImportStats({ total: 0, newCount: 0, updateCount: 0, invalidCount: 0 });
+                                }}
+                                className="text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400 px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition shrink-0 self-start sm:self-auto"
+                            >
+                                Ganti Berkas
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Ringkasan & Pengaturan Replace Data */}
+                    {importedRows.length > 0 && (
+                        <div className="space-y-4">
+                            {/* Kartu Statistik */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div className="p-3.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-center">
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">Total Baris</span>
+                                    <p className="text-xl font-bold text-gray-800 dark:text-gray-200">{importStats.total}</p>
+                                </div>
+                                <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800 text-center">
+                                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Data Baru</span>
+                                    <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300">+{importStats.newCount}</p>
+                                </div>
+                                <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-800 text-center">
+                                    <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">Akan Di-replace</span>
+                                    <p className="text-xl font-bold text-amber-700 dark:text-amber-300">{importStats.updateCount}</p>
+                                </div>
+                                <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-800 text-center">
+                                    <span className="text-xs text-rose-600 dark:text-rose-400 font-medium">Tidak Valid</span>
+                                    <p className="text-xl font-bold text-rose-700 dark:text-rose-300">{importStats.invalidCount}</p>
+                                </div>
+                            </div>
+
+                            {/* Opsi Timpa / Replace Data */}
+                            <div className="p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-800/60">
+                                <label className="inline-flex items-start gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={replaceExisting}
+                                        onChange={(e) => setReplaceExisting(e.target.checked)}
+                                        className="mt-0.5 rounded border-amber-400 text-amber-600 shadow-sm focus:ring-amber-500"
+                                    />
+                                    <div className="text-xs text-amber-900 dark:text-amber-200">
+                                        <p className="font-bold text-sm">Optimalkan & Timpa (Replace) data yang sudah ada</p>
+                                        <p className="text-amber-700 dark:text-amber-300 mt-0.5 leading-relaxed">
+                                            Jika dicentang, data SDM yang memiliki kecocokan NIK, NIDN, NUPTK, atau Email dengan database akan langsung diperbarui dengan nilai terbaru dari dokumen Excel.
+                                        </p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            {/* Pratinjau Tabel Data */}
+                            <div className="border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden">
+                                <div className="px-4 py-2.5 bg-gray-50/80 dark:bg-gray-800/80 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                                        Pratinjau Data (Menampilkan {Math.min(importedRows.length, 10)} dari {importedRows.length} baris)
+                                    </span>
+                                    {importedRows.length > 10 && (
+                                        <span className="text-[11px] text-gray-500 dark:text-gray-400 italic">
+                                            Seluruh {importedRows.length} baris akan diproses saat impor
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="overflow-x-auto max-h-60">
+                                    <table className="min-w-full text-xs text-left text-gray-600 dark:text-gray-300">
+                                        <thead className="bg-gray-100/70 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold sticky top-0">
+                                            <tr>
+                                                <th className="px-3 py-2 text-center w-12">Baris</th>
+                                                <th className="px-3 py-2 text-center">Status</th>
+                                                <th className="px-3 py-2">NIK</th>
+                                                <th className="px-3 py-2">Nama Lengkap</th>
+                                                <th className="px-3 py-2">Unit Kerja</th>
+                                                <th className="px-3 py-2">Jabatan</th>
+                                                <th className="px-3 py-2">Status Pegawai</th>
+                                                <th className="px-3 py-2 text-center">Status Aktif</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                            {importedRows.slice(0, 10).map((row, idx) => (
+                                                <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                                    <td className="px-3 py-2 text-center text-gray-400 font-mono">
+                                                        {row._rowNumber}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-center">
+                                                        {row._status === 'new' && (
+                                                            <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                                                Baru
+                                                            </span>
+                                                        )}
+                                                        {row._status === 'update' && (
+                                                            <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                                                                Replace
+                                                            </span>
+                                                        )}
+                                                        {row._status === 'invalid' && (
+                                                            <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+                                                                Nama Kosong
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3 py-2 font-mono text-gray-700 dark:text-gray-300">
+                                                        {row.nik || '-'}
+                                                    </td>
+                                                    <td className="px-3 py-2 font-semibold text-gray-900 dark:text-gray-100">
+                                                        {row.nama || <span className="text-rose-500 italic font-normal">[Wajib Diisi]</span>}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400">
+                                                        {row.unit || '-'}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400">
+                                                        {row.jabatan || '-'}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400">
+                                                        {row.status_pegawai || 'Tetap'}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-center">
+                                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
+                                                            row.is_aktif !== false
+                                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                                                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                                                        }`}>
+                                                            {row.is_aktif !== false ? 'Aktif' : 'Nonaktif'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex justify-between items-center gap-3 bg-gray-50 px-6 py-4 dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 rounded-b-lg">
+                    <SecondaryButton
+                        type="button"
+                        onClick={handleCloseImportModal}
+                        disabled={isImporting}
+                    >
+                        Batal
+                    </SecondaryButton>
+                    <PrimaryButton
+                        type="button"
+                        onClick={handleExecuteImport}
+                        disabled={isImporting || importedRows.length === 0 || importStats.total === importStats.invalidCount}
+                        className="flex items-center justify-center gap-2 px-6 py-2.5 shadow-emerald-200 hover:shadow-emerald-400 bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
+                    >
+                        {isImporting ? (
+                            <>
+                                <Loader2 size={17} className="animate-spin" />
+                                <span>Sedang Mengimpor...</span>
+                            </>
+                        ) : (
+                            <>
+                                <FileUp size={17} />
+                                <span>Proses Impor ({importStats.total - importStats.invalidCount} Data)</span>
+                            </>
+                        )}
                     </PrimaryButton>
                 </div>
             </Modal>

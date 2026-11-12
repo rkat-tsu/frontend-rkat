@@ -64,15 +64,16 @@ const SboSelectPopover = ({ value, onChange, options, placeholder = "Pilih SBO..
                 </button>
             </PopoverTrigger>
             <PopoverContent className="w-[550px] p-0 shadow-2xl border border-teal-100 dark:border-teal-900 bg-white dark:bg-gray-900 z-[100]" align="start">
-                <div className="flex items-center border-b border-gray-100 dark:border-gray-700 px-3 py-2 bg-gray-50/50 dark:bg-gray-800/50">
+                <div className="relative flex items-center border-b border-gray-100 dark:border-gray-700 px-3 py-2 bg-gray-50/50 dark:bg-gray-800/50">
                     <Search className="mr-2 h-4 w-4 shrink-0 opacity-50 text-teal-600" />
                     <input
-                        className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex h-10 w-full rounded-md bg-transparent py-3 pr-8 text-sm outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
                         placeholder="Cari Kode atau Nama Anggaran..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         autoFocus
                     />
+                    {search && <button type="button" onClick={() => setSearch('')} aria-label="Reset pencarian" title="Reset pencarian" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 dark:hover:text-white"><X size={16} /></button>}
                 </div>
                 <div className="max-h-[350px] overflow-y-auto p-1 custom-scrollbar">
                     {filteredOptions.length > 0 ? (
@@ -174,7 +175,7 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
     };
 
     const initialRAB = {
-        id: Date.now() + 1,
+        id: `new-${Date.now()}-${Math.random()}`,
         kode_anggaran: '',
         kebutuhan: '',
         vol: 1,
@@ -224,7 +225,8 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
             future_capaian: i.future_capaian || ''
         })) : [initialIndikator],
         rincian_anggaran: detail.rab_items ? detail.rab_items.map(r => ({
-            id: r.id_rab_item,
+            id: r.id,
+            rab_item_id: r.id,
             // Jika kode_anggaran null di DB, berarti item "Lainnya" -> restore ke '__OTHER__'
             kode_anggaran: r.kode_anggaran === null ? '__OTHER__' : r.kode_anggaran,
             kebutuhan: r.deskripsi_item,
@@ -334,18 +336,14 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
     };
 
     const addRabItem = () => {
-        setData('rincian_anggaran', [...data.rincian_anggaran, { ...initialRAB, id: Date.now() }]);
+        setData('rincian_anggaran', [...data.rincian_anggaran, { ...initialRAB, id: `new-${Date.now()}-${Math.random()}` }]);
         if (formErrors.rincian_anggaran) setFormErrors(prev => ({ ...prev, rincian_anggaran: null }));
     };
 
     const removeRabItem = (id) => {
         const list = data.rincian_anggaran.filter(item => item.id !== id);
-        if (list.length === 0) {
-            setData('rincian_anggaran', [{ ...initialRAB, id: Date.now() }]);
-        } else {
-            const totalBaru = list.reduce((acc, curr) => acc + (parseFloat(curr.jumlah) || 0), 0);
-            setData(prev => ({ ...prev, rincian_anggaran: list, anggaran: totalBaru }));
-        }
+        const totalBaru = list.reduce((acc, curr) => acc + (parseFloat(curr.jumlah) || 0), 0);
+        setData({ ...data, rincian_anggaran: list, anggaran: totalBaru });
         if (formErrors.rincian_anggaran) setFormErrors(prev => ({ ...prev, rincian_anggaran: null }));
     };
 
@@ -505,15 +503,11 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
         }
         if (!data.target || !data.target.trim()) {
             errorsObj.target = 'Harap isi bidang ini.';
-            missingLabels.push('Target Peserta');
+            missingLabels.push('Target');
         }
         if (!data.jenis_kegiatan) {
             errorsObj.jenis_kegiatan = 'Harap isi bidang ini.';
             missingLabels.push('Jenis Kegiatan');
-        }
-        if (!data.existing_dokumen_indices.length && !data.dokumen_links.some(link => link.trim()) && data.dokumen_files.length === 0) {
-            errorsObj.dokumen_links = 'Pertahankan atau tambahkan minimal satu tautan/berkas pendukung.';
-            missingLabels.push('Dokumen Pendukung');
         }
         if (!data.iku_id) {
             errorsObj.iku_id = 'Harap isi bidang ini.';
@@ -562,10 +556,9 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
             setFormErrors(errorsObj);
             let desc = '';
             if (missingLabels.length <= 4) {
-                desc = `Harap lengkapi bidang yang belum diisi: ${missingLabels.join(', ')}.`;
+                desc = `Bidang yang belum diisi: ${missingLabels.join(', ')}.`;
             } else {
-                const first4 = missingLabels.slice(0, 4).join(', ');
-                desc = `Harap lengkapi ${missingLabels.length} isian yang belum diisi, yaitu: ${first4}, dan lainnya.`;
+                desc = `${missingLabels.length} bidang belum diisi: ${missingLabels.join(', ')}.`;
             }
             toast.error("Gagal Menyimpan (Belum Lengkap)", {
                 description: desc,
@@ -600,10 +593,12 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                             toast.success("Berhasil diperbarui!", { id: toastId });
                         },
                         onError: (err) => {
+                            const firstError = Object.values(err || {}).flat()[0];
                             toast.error("Gagal Memperbarui", {
                                 id: toastId,
-                                description: "Terdapat kesalahan input. Periksa form yang berwarna merah."
+                                description: firstError || "Terdapat kesalahan input. Periksa kolom uraian/kebutuhan yang ditandai."
                             });
+                            setTimeout(() => document.querySelector('.border-rose-500, .ring-rose-500')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
                         }
                     });
                 }
@@ -678,9 +673,11 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                     <TextArea
                                         value={data.judul_pengajuan}
                                         onChange={(e) => handleFieldChange('judul_pengajuan', e.target.value)}
+                                        maxLength={255}
                                         className={`mt-1 block w-full ${getFieldError('judul_pengajuan') ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
                                         rows={2}
                                     />
+                                    <p className="mt-1 text-right text-xs text-gray-500">{data.judul_pengajuan.length}/255 karakter</p>
                                     <FieldTooltipError message={getFieldError('judul_pengajuan')} />
                                 </div>
                             </div>
@@ -740,6 +737,16 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                             className={`mt-1 w-full ${getFieldError('mekanisme') ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
                                         />
                                         <FieldTooltipError message={getFieldError('mekanisme')} />
+                                    </div>
+                                    <div className="relative pb-2">
+                                        <InputLabel value="Target" required />
+                                        <TextArea
+                                            value={data.target}
+                                            onChange={(e) => handleFieldChange('target', e.target.value)}
+                                            rows={4}
+                                            className={`mt-1 w-full ${getFieldError('target') ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
+                                        />
+                                        <FieldTooltipError message={getFieldError('target')} />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t pt-4">
@@ -813,26 +820,18 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                                     { value: '__MANUAL__', label: '✏️ Input Manual / Lain-lain...' }
                                                 ]}
                                                 placeholder="Pilih PIC Kegiatan"
-                                                className={`mt-1 h-11 text-sm ${getFieldError('pjawab') ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`}
+                                                searchable
+                                                className={`mt-1 box-border !h-11 !min-h-11 w-full text-sm ${getFieldError('pjawab') ? 'border-rose-500 ring-2 ring-rose-500/20' : ''}`}
                                             />
                                         ) : (
                                             <TextInput
                                                 value={data.pjawab}
                                                 onChange={(e) => handleFieldChange('pjawab', e.target.value)}
-                                                className={`mt-1 w-full h-11 ${getFieldError('pjawab') ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
+                                                className={`mt-1 box-border w-full !h-11 !min-h-11 text-sm ${getFieldError('pjawab') ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
                                                 placeholder="Ketik Nama Penanggung Jawab (Manual)"
                                             />
                                         )}
                                         <FieldTooltipError message={getFieldError('pjawab')} />
-                                    </div>
-                                    <div className="relative pb-2">
-                                        <InputLabel value="Target Peserta" required />
-                                        <TextInput
-                                            value={data.target}
-                                            onChange={(e) => handleFieldChange('target', e.target.value)}
-                                            className={`mt-1 w-full h-11 ${getFieldError('target') ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
-                                        />
-                                        <FieldTooltipError message={getFieldError('target')} />
                                     </div>
                                     <div className="relative pb-2">
                                         <InputLabel value="Jenis Kegiatan" required />
@@ -840,20 +839,21 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                             value={data.jenis_kegiatan}
                                             onChange={(e) => handleFieldChange('jenis_kegiatan', e.target.value)}
                                             options={jenisKegiatanOptions.map((option) => ({ value: option.nama, label: option.nama }))}
-                                            className={`mt-1 ${getFieldError('jenis_kegiatan') ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
+                                            className={`mt-1 !h-11 !min-h-11 w-full ${getFieldError('jenis_kegiatan') ? 'border-rose-500 ring-2 ring-rose-500/20 focus:ring-rose-500 focus:border-rose-500' : ''}`}
                                         />
                                         <FieldTooltipError message={getFieldError('jenis_kegiatan')} />
                                     </div>
                                     <div className="md:col-span-3 relative pb-2">
-                                        <InputLabel value="Dokumen Pendukung" required />
+                                        <InputLabel value="Dokumen Pendukung" />
                                         <div className={`mt-1 space-y-3 rounded-md border p-4 ${getFieldError('dokumen_links') ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-gray-200 dark:border-gray-700'}`}>
                                             <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Dokumen yang tersimpan</div>
                                             {data.existing_dokumen_indices.map((originalIndex) => {
                                                 const doc = existingDocuments[originalIndex];
                                                 const isObject = doc && typeof doc === 'object';
-                                                const label = isObject ? (doc.type === 'link' ? doc.url : (doc.name || 'Dokumen')) : String(doc);
-                                                const href = isObject && doc.type === 'link'
-                                                    ? doc.url
+                                                const legacyLink = typeof doc === 'string' && /^https?:\/\//i.test(doc);
+                                                const label = isObject ? (doc.type === 'link' ? doc.url : (doc.name || doc.url || 'Dokumen')) : String(doc);
+                                                const href = (isObject && (doc.type === 'link' || doc.url)) || legacyLink
+                                                    ? (isObject ? doc.url : doc)
                                                     : isObject && doc.type === 'file'
                                                         ? route('daftar-ajuan.dokumen', [rkat.uuid, originalIndex])
                                                         : null;
@@ -982,8 +982,8 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                                 <th className="px-2 py-2 w-[30%] min-w-[300px]">Uraian / Kebutuhan</th>
                                                 <th className="px-2 py-2 w-16 text-center">Vol</th>
                                                 <th className="px-2 py-2 w-20 text-center">Satuan</th>
-                                                <th className="px-2 py-2 w-16 text-center">Vol 2</th>
-                                                <th className="px-2 py-2 w-20 text-center">Satuan 2</th>
+                                                <th className="px-2 py-2 w-16 text-center">Vol</th>
+                                                <th className="px-2 py-2 w-20 text-center">Satuan</th>
                                                 <th className="px-2 py-2 w-32 text-right">Harga (@)</th>
                                                 <th className="px-2 py-2 w-32 text-right">Subtotal</th>
                                                 <th className="px-2 py-2 w-8"></th>
@@ -992,8 +992,8 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                         <tbody className="">
                                             {data.rincian_anggaran.map((item, index) => (
                                                 <tr key={item.id} className="bg-white dark:bg-gray-800 hover:bg-yellow-50 dark:hover:bg-yellow-900/30 transition-colors">
-                                                    <td className="px-2 py-1 text-center font-medium text-gray-500 dark:text-gray-400 align-middle">{index + 1}</td>
-                                                    <td className="px-2 py-1 align-middle">
+                                                    <td className="px-2 py-1 text-center font-medium text-gray-500 dark:text-gray-400 align-top">{index + 1}</td>
+                                                    <td className="px-2 py-1 align-top">
                                                         <SboSelectPopover
                                                             value={item.kode_anggaran}
                                                             onChange={(e) => handleRincianChange(index, 'kode_anggaran', e.target.value)}
@@ -1001,15 +1001,21 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                                             placeholder="Pilih SBO..."
                                                         />
                                                     </td>
-                                                    <td className="px-2 py-1 align-middle">
-                                                        <TextInput
-                                                            value={item.kebutuhan}
-                                                            onChange={(e) => handleRincianChange(index, 'kebutuhan', e.target.value)}
-                                                            className="w-full h-9 text-xs px-2"
-                                                            placeholder="Deskripsi..."
-                                                        />
+                                                    <td className="px-2 py-1 align-top">
+                                                        <div className="flex flex-col">
+                                                            <TextInput
+                                                                value={item.kebutuhan}
+                                                                onChange={(e) => handleRincianChange(index, 'kebutuhan', e.target.value)}
+                                                                maxLength={255}
+                                                                className="w-full h-9 text-xs px-2"
+                                                                placeholder="Deskripsi..."
+                                                            />
+                                                            <div className={`mt-1 text-[10px] ${getFieldError(`rincian_anggaran.${index}.kebutuhan`) ? 'text-rose-600' : 'text-gray-500'}`}>
+                                                                {getFieldError(`rincian_anggaran.${index}.kebutuhan`) || `${(item.kebutuhan || '').length}/255 karakter`}
+                                                            </div>
+                                                        </div>
                                                     </td>
-                                                    <td className="px-2 py-1 align-middle">
+                                                    <td className="px-2 py-1 align-top">
                                                         <TextInput
                                                             type="number"
                                                             value={item.vol}
@@ -1024,7 +1030,7 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                                             placeholder="0"
                                                         />
                                                     </td>
-                                                    <td className="px-2 py-1 align-middle">
+                                                    <td className="px-2 py-1 align-top">
                                                         <TextInput
                                                             value={item.satuan}
                                                             onChange={(e) => handleRincianChange(index, 'satuan', e.target.value)}
@@ -1032,7 +1038,7 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                                             placeholder="Paket"
                                                         />
                                                     </td>
-                                                    <td className="px-2 py-1 align-middle">
+                                                    <td className="px-2 py-1 align-top">
                                                         <TextInput
                                                             type="number"
                                                             value={item.vol2}
@@ -1045,7 +1051,7 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                                             placeholder="Opsional"
                                                         />
                                                     </td>
-                                                    <td className="px-2 py-1 align-middle">
+                                                    <td className="px-2 py-1 align-top">
                                                         <TextInput
                                                             value={item.satuan2}
                                                             onChange={(e) => handleRincianChange(index, 'satuan2', e.target.value)}
@@ -1053,7 +1059,7 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                                             placeholder="Opsional"
                                                         />
                                                     </td>
-                                                    <td className="px-2 py-1 align-middle">
+                                                    <td className="px-2 py-1 align-top">
                                                         <div className="flex flex-col">
                                                             <RupiahInput
                                                                 value={item.biaya_satuan}
@@ -1062,8 +1068,8 @@ export default function Edit({ auth, rkat, tahunAnggarans, units, akunAnggarans,
                                                             />
                                                         </div>
                                                     </td>
-                                                    <td className="px-2 py-1 text-right font-semibold text-gray-700 dark:text-gray-200 align-middle">{formatRupiah(item.jumlah)}</td>
-                                                    <td className="px-2 py-1 text-center align-middle">
+                                                    <td className="px-2 pt-3 pb-1 text-right font-semibold text-gray-700 dark:text-gray-200 align-top">{formatRupiah(item.jumlah)}</td>
+                                                    <td className="px-2 py-1 text-center align-top">
                                                         <button type="button" onClick={() => removeRabItem(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"><Trash2 size={16} /></button>
                                                     </td>
                                                 </tr>

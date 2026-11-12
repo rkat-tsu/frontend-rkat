@@ -304,7 +304,8 @@
                     <thead>
                         <tr style="background-color: #f9fafb;">
                             <th style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: left;">Deskripsi</th>
-                            <th style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: right;">Volume</th>
+                            <th style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: right;">Volume 1 / Satuan 1</th>
+                            <th style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: right;">Volume 2 / Satuan 2</th>
                             <th style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: right;">Harga Satuan</th>
                             <th style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: right;">Sub Total</th>
                         </tr>
@@ -313,7 +314,8 @@
                         @foreach($pencairan->items as $item)
                             <tr>
                                 <td style="border: 1px solid #ccc; padding: 4px; font-size: 8pt;">{{ $item->rkatRabItem->deskripsi_item ?? '-' }}</td>
-                                <td style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: right;">{{ $item->volume_pencairan }}</td>
+                                <td style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: right;">{{ rtrim(rtrim(number_format($item->volume_pencairan ?? 0, 2, ',', '.'), '0'), ',') }} {{ $item->rkatRabItem->satuan ?? '' }}</td>
+                                <td style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: right;">{{ rtrim(rtrim(number_format($item->volume_pencairan2 ?? 0, 2, ',', '.'), '0'), ',') }} {{ $item->rkatRabItem->satuan2 ?? '' }}</td>
                                 <td style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: right;">{{ number_format($item->nominal_pencairan, 0, ',', '.') }}</td>
                                 <td style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: right;">{{ number_format($item->sub_total_pencairan, 0, ',', '.') }}</td>
                             </tr>

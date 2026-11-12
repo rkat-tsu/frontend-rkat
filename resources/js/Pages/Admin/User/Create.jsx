@@ -168,7 +168,7 @@ export default function Create({ auth, units = [], karyawans = [] }) {
                                     </h4>
                                     <div className="relative mb-5">
                                         <InputLabel value="Ambil dari Data Karyawan (Opsional)" />
-                                        <CustomSelect value={data.id_karyawan} onChange={(e) => selectEmployee(e.target.value)} options={employeeOptions} className="mt-1" />
+                                        <CustomSelect value={data.id_karyawan} onChange={(e) => selectEmployee(e.target.value)} options={employeeOptions} searchable className="mt-1" />
                                         <p className="mt-1 text-xs text-gray-500">Memilih karyawan akan mengisi nama, NIK, email, telepon, dan unit. Semua data tetap dapat disunting.</p>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

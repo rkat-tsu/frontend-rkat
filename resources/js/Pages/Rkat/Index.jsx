@@ -3,7 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ActionButton, { ActionGroup } from '@/Components/ActionButton';
 import StatusBadge from '@/Components/StatusBadge';
-import { ArrowRight, Plus, Lock, Search, Download, Send, AlertCircle, Edit2, FileDown, Eye, ArrowUp, ArrowDown, ArrowUpDown, FileSpreadsheet } from 'lucide-react';
+import { ArrowRight, Plus, Lock, Search, Download, Send, AlertCircle, Edit2, FileDown, Eye, ArrowUp, ArrowDown, ArrowUpDown, FileSpreadsheet, X } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
@@ -73,7 +73,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
         router.get(
             route('daftar-ajuan.index'),
             { search: newSearch, tahun: newTahun, bulan: newBulan, status: newStatus, unit_id: newUnitId, per_page: newPerPage, sort_by: newSortBy, sort_direction: newSortDirection },
-            { preserveState: true, preserveScroll: true, replace: true }
+            { only: ['rkats'], preserveState: true, preserveScroll: true, replace: true }
         );
     };
 
@@ -94,6 +94,11 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
             e.preventDefault();
             applyFilters(searchTerm, tahun, bulan, status, unitId, perPage, sortBy, sortDirection);
         }
+    };
+
+    const resetSearch = () => {
+        setSearchTerm('');
+        applyFilters('', tahun, bulan, status, unitId, perPage, sortBy, sortDirection);
     };
 
     useEffect(() => {
@@ -187,6 +192,26 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
         });
     };
 
+    const handleDeleteDraft = (item) => {
+        toast.dismiss();
+        toast("Hapus Draft RKAT?", {
+            description: `Draft ${item.nomor_dokumen || ''} akan dihapus permanen beserta rincian dan dokumen pendukungnya.`,
+            action: {
+                label: "Ya, Hapus",
+                onClick: () => {
+                    router.delete(route('daftar-ajuan.destroy', item.uuid), {
+                        preserveScroll: true,
+                        onError: () => toast.error("Draft gagal dihapus."),
+                    });
+                },
+            },
+            cancel: {
+                label: "Batal",
+                onClick: () => toast.dismiss(),
+            },
+        });
+    };
+
     // Cek status tahun anggaran
     const tahunList = (tahunAnggarans || []).map(th => 
         typeof th === 'object' ? th : { tahun_anggaran: String(th), status_rkat: 'Submission' }
@@ -231,9 +256,10 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                     value={searchTerm}
                                     onChange={handleSearchChange}
                                     onKeyDown={handleSearchKeyDown}
-                                    placeholder="Cari nomor dokumen atau unit..."
-                                    className="pl-10 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
+                                    placeholder="Cari nama kegiatan..."
+                                    className="pl-10 pr-11 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
                                 />
+                                {searchTerm && <button type="button" onClick={resetSearch} aria-label="Reset pencarian" title="Reset pencarian" className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-white"><X size={18} /></button>}
                             </div>
 
                             {/* Tombol Action */}
@@ -287,7 +313,10 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                         className="h-11 w-full"
                                         options={[
                                             { value: '', label: 'Semua Tahun' },
-                                            ...(tahunAnggarans || []).map(th => ({ value: th, label: th }))
+                                            ...(tahunAnggarans || []).map(th => {
+                                                const year = typeof th === 'object' ? th.tahun_anggaran : th;
+                                                return { value: String(year), label: String(year) };
+                                            })
                                         ]}
                                     />
                                 </div>
@@ -503,6 +532,14 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                                             variant="edit"
                                                             tooltip="Edit RKAT"
                                                             href={route('daftar-ajuan.edit', item.uuid)}
+                                                        />
+                                                    )}
+
+                                                    {item.status_persetujuan === 'Draft' && (
+                                                        <ActionButton
+                                                            variant="delete"
+                                                            tooltip="Hapus Draft RKAT"
+                                                            onClick={() => handleDeleteDraft(item)}
                                                         />
                                                     )}
 

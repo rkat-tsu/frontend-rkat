@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ActionButton, { ActionGroup } from '@/Components/ActionButton';
-import { Edit2, Trash2, Search, Plus, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Edit2, Trash2, Search, Plus, ArrowUp, ArrowDown, ArrowUpDown,CalendarPlus, Save, CalendarClock, X, PencilLine  } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
@@ -14,7 +14,6 @@ import InputError from '@/Components/InputError';
 import CustomSelect from '@/Components/CustomSelect'; 
 import DateInput from '@/Components/DateInput';
 import FieldTooltipError from '@/Components/FieldTooltipError';
-import { CalendarPlus, Save, CalendarClock, X, PencilLine } from 'lucide-react';
 
 export default function Index({ tahunAnggarans, filters = {} }) {
     const { isAdmin, user: authUser } = usePermission();
@@ -26,7 +25,7 @@ export default function Index({ tahunAnggarans, filters = {} }) {
         router.get(
             route('tahun.index'),
             { search: newSearch, sort_by: newSortBy, sort_direction: newSortDirection },
-            { preserveState: true, preserveScroll: true, replace: true }
+            { only: ['tahunAnggarans'], preserveState: true, preserveScroll: true, replace: true }
         );
     };
 
@@ -36,16 +35,6 @@ export default function Index({ tahunAnggarans, filters = {} }) {
         setSortDirection(newDirection);
         applyFilters(search, field, newDirection);
     };
-
-    React.useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            if (search !== (filters?.search || '')) {
-                applyFilters(search, sortBy, sortDirection);
-            }
-        }, 300);
-
-        return () => clearTimeout(timeoutId);
-    }, [search]);
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [createFormErrors, setCreateFormErrors] = useState({});
@@ -316,11 +305,18 @@ export default function Index({ tahunAnggarans, filters = {} }) {
                                 </div>
                                 <input 
                                     type="text" 
-                                    placeholder="Cari tahun atau status..." 
+                                    placeholder="Cari tahun anggaran..." 
                                     value={search} 
                                     onChange={(e) => setSearch(e.target.value)} 
-                                    className="pl-10 block w-full h-11 bg-gray-100 border-transparent rounded-lg focus:border-teal-500 focus:bg-white focus:ring-0 text-sm dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            applyFilters(search, sortBy, sortDirection);
+                                        }
+                                    }}
+                                    className="pl-10 pr-11 block w-full h-11 bg-gray-100 border-transparent rounded-lg focus:border-teal-500 focus:bg-white focus:ring-0 text-sm dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                                 />
+                                {search && <button type="button" onClick={() => { setSearch(''); applyFilters(''); }} aria-label="Reset pencarian" title="Reset pencarian" className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-white"><X size={18} /></button>}
                             </div>
                             
                             <div className="flex items-center gap-3 w-full md:w-auto">

@@ -32,7 +32,7 @@ import {
     FileCheck2, Plus, Search, Send, Edit2, FileDown, Eye, Save,
     CheckCircle2, XCircle, AlertTriangle, AlertCircle, Clock, Wallet, ArrowUpRight,
     Building2, Calendar, FileText, Receipt, Check, RefreshCw, Paperclip,
-    ArrowUp, ArrowDown, ArrowUpDown
+    ArrowUp, ArrowDown, ArrowUpDown, X
 } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import DateInput from '@/Components/DateInput';
@@ -129,8 +129,14 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
             sort_direction: sortDirection,
             ...newFilters
         };
-        router.get(route('lpj.index'), queryParams, { preserveState: true, replace: true });
+        router.get(route('lpj.index'), queryParams, {
+            only: ['lpjs'],
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
     };
+
 
     const handleSortColumn = (field) => {
         let direction = 'asc';
@@ -528,8 +534,9 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleFilterChange()}
-                                    className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:focus:ring-teal-400 text-gray-900 dark:text-white placeholder-gray-400 transition"
+                                    className="w-full pl-10 pr-11 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:focus:ring-teal-400 text-gray-900 dark:text-white placeholder-gray-400 transition"
                                 />
+                                {searchTerm && <button type="button" onClick={() => { setSearchTerm(''); handleFilterChange({ search: '' }); }} aria-label="Reset pencarian" title="Reset pencarian" className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-white"><X size={18} /></button>}
                             </div>
 
                             {/* Tahun Anggaran */}

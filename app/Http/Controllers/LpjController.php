@@ -570,6 +570,11 @@ class LpjController extends Controller
         }
     }
 
+    /**
+     * @param \App\Models\User $user
+     * @param \App\Models\ApprovalPathStep|null $step
+     * @param \App\Models\Unit|null $unit
+     */
     private function canApproveLpjStep($user, $step, $unit = null): bool
     {
         if ($user->peran === 'Admin') {

@@ -4,9 +4,10 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { ArrowLeft, CheckCircle2, Clock, XCircle, AlertCircle, Printer, Send, Download } from 'lucide-react';
 import PrimaryButton from '@/Components/PrimaryButton';
 import StatusBadge from '@/Components/StatusBadge';
+import PencairanApprovalModal from './Partials/PencairanApprovalModal';
 import { toast } from 'sonner';
 
-export default function Show({ auth, pencairan, flash = {} }) {
+export default function Show({ auth, pencairan, flash = {}, canApprove = false }) {
     useEffect(() => {
         if (flash?.success) toast.success(flash.success);
         if (flash?.error) toast.error(flash.error);
@@ -19,6 +20,7 @@ export default function Show({ auth, pencairan, flash = {} }) {
 
     const totalCair = items.reduce((sum, item) => sum + parseFloat(item.sub_total_pencairan || 0), 0);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [isApprovalModalOpen, setIsApprovalModalOpen] = React.useState(false);
 
     const handleSubmit = () => {
         if (isSubmitting) return;
@@ -134,8 +136,8 @@ export default function Show({ auth, pencairan, flash = {} }) {
                                         {items.map((item, idx) => (
                                             <tr key={idx}>
                                                 <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{item.rkat_rab_item?.deskripsi_item}</td>
-                                                <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{item.volume_pencairan} {item.rkat_rab_item?.satuan || ''}</td>
-                                                <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{Number(item.volume_pencairan2) > 0 ? `${item.volume_pencairan2} ${item.rkat_rab_item?.satuan2 || ''}` : '—'}</td>
+                                                <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(Number(item.volume_pencairan) || 0)} {item.rkat_rab_item?.satuan || ''}</td>
+                                                <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{Number(item.volume_pencairan2) > 0 ? `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(Number(item.volume_pencairan2))} ${item.rkat_rab_item?.satuan2 || ''}` : '—'}</td>
                                                 <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{formatCurrency(item.nominal_pencairan)}</td>
                                                 <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-gray-100">{formatCurrency(item.sub_total_pencairan)}</td>
                                             </tr>
@@ -169,6 +171,16 @@ export default function Show({ auth, pencairan, flash = {} }) {
                                 <Download size={18} /> Export PDF
                             </a>
 
+                            {canApprove && (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsApprovalModalOpen(true)}
+                                    className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                                >
+                                    <CheckCircle2 size={18} /> Persetujuan
+                                </button>
+                            )}
+
                             {(pencairan.status_pencairan === 'Draft' || pencairan.status_pencairan === 'Revisi') && auth.user.id_user === pencairan.diajukan_oleh && (
                                 <button
                                     type="button"
@@ -183,6 +195,11 @@ export default function Show({ auth, pencairan, flash = {} }) {
                     </div>
                 </div>
             </div>
+            <PencairanApprovalModal
+                show={isApprovalModalOpen}
+                onClose={() => setIsApprovalModalOpen(false)}
+                pencairan={pencairan}
+            />
         </AuthenticatedLayout>
     );
 }

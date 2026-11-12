@@ -30,9 +30,10 @@ class ErrorBoundary extends Component {
 }
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Plus, Search, Send, Edit2, FileDown, Eye, Save, Info, ArrowUp, ArrowDown, ArrowUpDown, FileSpreadsheet } from 'lucide-react';
+import { Plus, Search, Send, Edit2, FileDown, Eye, Save, Info, ArrowUp, ArrowDown, ArrowUpDown, FileSpreadsheet, X } from 'lucide-react';
 import CustomSelect from '@/Components/CustomSelect';
 import DateInput from '@/Components/DateInput';
+import FieldTooltipError from '@/Components/FieldTooltipError';
 import ActionButton, { ActionGroup } from '@/Components/ActionButton';
 import StatusBadge from '@/Components/StatusBadge';
 import Modal from '@/Components/Modal';
@@ -98,7 +99,9 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
     const [editingPencairanObj, setEditingPencairanObj] = useState(null);
     const [selectedHeaderId, setSelectedHeaderId] = useState('');
     const [namaPencairan, setNamaPencairan] = useState('');
+    const [namaPencairanError, setNamaPencairanError] = useState('');
     const [items, setItems] = useState([]);
+    const [volumeErrors, setVolumeErrors] = useState({});
 
     const getStatusColor = (status) => {
         if (!status) return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
@@ -111,6 +114,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
     };
 
     const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+    const formatVolume = (value) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(Number(value) || 0);
     const getVolumeLabel = (item, second = false) => second
         ? (item.satuan2 || '—')
         : (item.satuan || 'Satuan');
@@ -118,7 +122,8 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
         const volume1 = Number(item.volume_pencairan) || 0;
         const volume2 = Number(item.volume_pencairan2) || 0;
         const nominal = Number(item.nominal_pencairan) || 0;
-        return (volume1 > 0 ? volume1 : volume2) * nominal;
+        const quantity = volume1 > 0 && volume2 > 0 ? volume1 * volume2 : volume1 || volume2;
+        return quantity * nominal;
     };
 
     useEffect(() => {
@@ -167,6 +172,32 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
     }, [selectedHeaderId, rkatList, editingPencairanObj]);
 
     const handleItemChange = (id, field, value) => {
+        const item = items.find((currentItem) => currentItem.id === id);
+        if (item && (field === 'volume_pencairan' || field === 'volume_pencairan2')) {
+            const nextItem = { ...item, [field]: value };
+            const volume1 = Number(nextItem.volume_pencairan) || 0;
+            const volume2 = Number(nextItem.volume_pencairan2) || 0;
+            const subtotal = getPayoutSubtotal(nextItem);
+            const errorKey1 = `${id}_volume_pencairan`;
+            const errorKey2 = `${id}_volume_pencairan2`;
+            const max1 = Number(item.remaining_volume) || 0;
+            const max2 = Number(item.remaining_volume2) || 0;
+            const nextErrors = {};
+
+            if (volume1 > max1) nextErrors[errorKey1] = `Nilai maksimal adalah ${formatVolume(max1)}.`;
+            if (volume2 > max2) nextErrors[errorKey2] = `Nilai maksimal adalah ${formatVolume(max2)}.`;
+            if (subtotal > Number(item.remaining_nominal)) {
+                const amountErrorKey = field === 'volume_pencairan2' ? errorKey2 : errorKey1;
+                nextErrors[amountErrorKey] = `Melebihi sisa nominal ${formatCurrency(item.remaining_nominal)}.`;
+            }
+
+            setVolumeErrors((currentErrors) => {
+                const updatedErrors = { ...currentErrors };
+                delete updatedErrors[errorKey1];
+                delete updatedErrors[errorKey2];
+                return { ...updatedErrors, ...nextErrors };
+            });
+        }
         setItems(items.map(item => {
             if (item.id === id) {
                 return { ...item, [field]: value };
@@ -179,8 +210,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
         setItems(items.map(item => {
             if (item.id === id) {
                 const select = !item.is_selected;
-                const useVolume1 = select && item.remaining_volume > 0;
-                return { ...item, is_selected: select, volume_pencairan: useVolume1 ? item.remaining_volume : 0, volume_pencairan2: select && !useVolume1 ? item.remaining_volume2 : 0 };
+                return { ...item, is_selected: select, volume_pencairan: select ? item.remaining_volume : 0, volume_pencairan2: select && item.can_disburse_volume2 ? item.remaining_volume2 : 0 };
             }
             return item;
         }));
@@ -190,8 +220,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
         const allSelected = items.length > 0 && items.every(item => item.is_selected);
         setItems(items.map(item => {
             const select = !allSelected;
-            const useVolume1 = select && item.remaining_volume > 0;
-            return { ...item, is_selected: select, volume_pencairan: useVolume1 ? item.remaining_volume : 0, volume_pencairan2: select && !useVolume1 ? item.remaining_volume2 : 0 };
+            return { ...item, is_selected: select, volume_pencairan: select ? item.remaining_volume : 0, volume_pencairan2: select && item.can_disburse_volume2 ? item.remaining_volume2 : 0 };
         }));
     };
 
@@ -204,9 +233,10 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
         }
 
         if (!namaPencairan.trim()) {
-            toast.error('Masukkan nama pencairan (Misal: Tahap 1)');
+            setNamaPencairanError('Harap isi bidang ini.');
             return;
         }
+        setNamaPencairanError('');
 
         const selectedItems = items.filter(i => i.is_selected && (Number(i.volume_pencairan) > 0 || Number(i.volume_pencairan2) > 0));
         
@@ -219,31 +249,28 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
             const volume = Number(item.volume_pencairan);
             const volume2 = Number(item.volume_pencairan2);
             const subtotal = getPayoutSubtotal(item);
-            return (volume > 0 && volume2 > 0) || volume > Number(item.remaining_volume) || volume2 > Number(item.remaining_volume2) || subtotal > Number(item.remaining_nominal);
+            return volume > Number(item.remaining_volume) || volume2 > Number(item.remaining_volume2) || subtotal > Number(item.remaining_nominal);
         });
 
         if (itemMelebihiSisa) {
-            const volume = Number(itemMelebihiSisa.volume_pencairan);
-            const volume2 = Number(itemMelebihiSisa.volume_pencairan2);
-            const subtotal = getPayoutSubtotal(itemMelebihiSisa);
-            const batas = [];
+            const errors = {};
+            selectedItems.forEach((item) => {
+                const volume1 = Number(item.volume_pencairan) || 0;
+                const volume2 = Number(item.volume_pencairan2) || 0;
+                const subtotal = getPayoutSubtotal(item);
 
-            if (volume > 0 && volume2 > 0) {
-                toast.error('Isi volume 1 atau volume 2 saja untuk setiap item pencairan.');
-                return;
-            }
-
-            if (volume > Number(itemMelebihiSisa.remaining_volume)) {
-                batas.push(`volume maksimal ${itemMelebihiSisa.remaining_volume}`);
-            }
-            if (volume2 > Number(itemMelebihiSisa.remaining_volume2)) {
-                batas.push(`volume kedua maksimal ${itemMelebihiSisa.remaining_volume2}`);
-            }
-            if (subtotal > Number(itemMelebihiSisa.remaining_nominal)) {
-                batas.push(`nominal maksimal ${formatCurrency(itemMelebihiSisa.remaining_nominal)}`);
-            }
-
-            toast.error(`Pengajuan untuk "${itemMelebihiSisa.deskripsi_item}" melebihi sisa: ${batas.join(' dan ')}.`);
+                if (volume1 > Number(item.remaining_volume)) {
+                    errors[`${item.id}_volume_pencairan`] = `Nilai maksimal adalah ${formatVolume(item.remaining_volume)}.`;
+                }
+                if (volume2 > Number(item.remaining_volume2)) {
+                    errors[`${item.id}_volume_pencairan2`] = `Nilai maksimal adalah ${formatVolume(item.remaining_volume2)}.`;
+                }
+                if (subtotal > Number(item.remaining_nominal)) {
+                    const targetField = volume2 > 0 ? 'volume_pencairan2' : 'volume_pencairan';
+                    errors[`${item.id}_${targetField}`] = `Melebihi sisa nominal ${formatCurrency(item.remaining_nominal)}.`;
+                }
+            });
+            setVolumeErrors(errors);
             return;
         }
 
@@ -298,7 +325,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
         router.get(
             route('pencairan.index'),
             { search: newSearch, tahun: newTahun, bulan: newBulan, status: newStatus, unit_id: newUnitId, per_page: newPerPage, sort_by: newSortBy, sort_direction: newSortDirection },
-            { preserveState: true, preserveScroll: true, replace: true }
+            { only: ['pencairans'], preserveState: true, preserveScroll: true, replace: true }
         );
     };
 
@@ -319,6 +346,8 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
             applyFilters(searchTerm, tahun, bulan, status, unitId, perPage, sortBy, sortDirection);
         }
     };
+
+    const resetSearch = () => { setSearchTerm(''); applyFilters('', tahun, bulan, status, unitId, perPage, sortBy, sortDirection); };
 
     const handlePerPageChange = (val) => {
         setPerPage(val);
@@ -441,8 +470,9 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                     onChange={handleSearchChange}
                                     onKeyDown={handleSearchKeyDown}
                                     placeholder="Cari nomor dokumen rkat atau unit..."
-                                    className="pl-10 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
+                                    className="pl-10 pr-11 h-11 block w-full bg-gray-50 border-gray-200 rounded-lg focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-all"
                                 />
+                                {searchTerm && <button type="button" onClick={resetSearch} aria-label="Reset pencarian" title="Reset pencarian" className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-white"><X size={18} /></button>}
                             </div>
 
                             <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
@@ -785,23 +815,28 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                         }))
                                     ]}
                                     className="h-11"
+                                    dropdownModal={false}
                                 />
                                 {rkatList?.length === 0 && (
                                     <p className="mt-2 text-sm text-red-500">Tidak ada RKAT yang memenuhi syarat pencairan saat ini (Sisa anggaran sudah habis atau tidak ada RKAT).</p>
                                 )}
                             </div>
-                            <div>
+                            <div className="relative">
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Nama/Keterangan Pencairan <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="text"
                                     value={namaPencairan}
-                                    onChange={(e) => setNamaPencairan(e.target.value)}
+                                    onChange={(e) => {
+                                        setNamaPencairan(e.target.value);
+                                        if (e.target.value.trim()) setNamaPencairanError('');
+                                    }}
                                     placeholder="Contoh: Pencairan Tahap 1"
-                                    className="h-11 w-full rounded-md text-gray-900 dark:text-white border-gray-300 dark:border-gray-700 dark:bg-gray-900 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
-                                    required
+                                    className={`h-11 w-full rounded-md text-gray-900 dark:text-white border-gray-300 dark:border-gray-700 dark:bg-gray-900 focus:border-teal-500 focus:ring-teal-500 shadow-sm ${namaPencairanError ? 'border-rose-500 ring-2 ring-rose-500/20 focus:border-rose-500 focus:ring-rose-500' : ''}`}
+                                    aria-invalid={!!namaPencairanError}
                                 />
+                                <FieldTooltipError message={namaPencairanError} />
                             </div>
                         </div>
 
@@ -818,7 +853,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                     </button>
                                 </div>
                                 <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
-                                    Isikan volume 1 atau volume 2 saja per item. Jika volume 1 sudah habis, isi 0 pada volume 1 lalu masukkan jumlah volume 2 yang akan dicairkan.
+                                    Volume 1 dan volume 2 dapat diisi bersamaan. Jika keduanya diisi, subtotal dihitung dari volume 1 × volume 2 × harga satuan. Sisa tiap volume dan sisa nominal diperiksa terpisah.
                                 </p>
                                 <div className="max-w-full touch-pan-x overflow-x-auto overscroll-x-contain rounded-lg border border-gray-200 dark:border-gray-700">
                                     <table className="min-w-[1080px] w-full table-fixed divide-y divide-gray-200 dark:divide-gray-700 text-sm">
@@ -870,8 +905,8 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                                     </td>
                                                     <td className="px-2.5 py-2 text-xs text-gray-600 dark:text-gray-300">
                                                         <div className="space-y-1">
-                                                            <div><span className="font-semibold text-gray-900 dark:text-white">Vol 1:</span> {item.remaining_volume} / {item.volume} {getVolumeLabel(item)}</div>
-                                                            <div><span className="font-semibold text-gray-900 dark:text-white">Vol 2:</span> {item.can_disburse_volume2 ? `${item.remaining_volume2} / ${item.volume2} ${getVolumeLabel(item, true)}` : '—'}</div>
+                                                            <div><span className="font-semibold text-gray-900 dark:text-white">Vol 1:</span> {formatVolume(item.remaining_volume)} / {formatVolume(item.volume)} {getVolumeLabel(item)}</div>
+                                                            <div><span className="font-semibold text-gray-900 dark:text-white">Vol 2:</span> {item.can_disburse_volume2 ? `${formatVolume(item.remaining_volume2)} / ${formatVolume(item.volume2)} ${getVolumeLabel(item, true)}` : '—'}</div>
                                                         </div>
                                                     </td>
                                                     <td className="px-2.5 py-2 whitespace-nowrap text-right text-gray-500 dark:text-gray-400">
@@ -879,12 +914,11 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                                     </td>
                                                     <td className="px-2.5 py-2">
                                                         <div className="space-y-1.5">
-                                                            <div>
+                                                            <div className="relative">
                                                                 <label className="mb-0.5 block text-[10px] font-medium text-gray-500 dark:text-gray-400">Volume 1 · {getVolumeLabel(item)}</label>
                                                                 <input
                                                                     type="number"
                                                                     min="0"
-                                                                    max={item.remaining_volume}
                                                                     step="any"
                                                                     value={item.volume_pencairan}
                                                                     onChange={(e) => handleItemChange(item.id, 'volume_pencairan', e.target.value)}
@@ -892,15 +926,15 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                                                         if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault();
                                                                     }}
                                                                     disabled={!item.is_selected}
-                                                                    className="h-8 w-full rounded-md border-gray-300 bg-white px-2 py-1 text-right text-sm font-medium text-gray-900 shadow-sm transition focus:border-teal-500 focus:ring-teal-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:opacity-50"
+                                                                    className={`h-8 w-full rounded-md border-gray-300 bg-white px-2 py-1 text-right text-sm font-medium text-gray-900 shadow-sm transition focus:border-teal-500 focus:ring-teal-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:opacity-50 ${volumeErrors[`${item.id}_volume_pencairan`] ? 'border-rose-500 ring-2 ring-rose-500/20 focus:border-rose-500 focus:ring-rose-500' : ''}`}
                                                                 />
+                                                                <FieldTooltipError message={volumeErrors[`${item.id}_volume_pencairan`]} />
                                                             </div>
-                                                            <div>
+                                                            <div className="relative">
                                                                 <label className="mb-0.5 block text-[10px] font-medium text-gray-500 dark:text-gray-400">Volume 2 · {getVolumeLabel(item, true)}</label>
                                                                 <input
                                                                     type="number"
                                                                     min="0"
-                                                                    max={item.remaining_volume2}
                                                                     step="any"
                                                                     value={item.volume_pencairan2}
                                                                     onChange={(e) => handleItemChange(item.id, 'volume_pencairan2', e.target.value)}
@@ -908,8 +942,9 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                                                                         if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault();
                                                                     }}
                                                                     disabled={!item.is_selected || !item.can_disburse_volume2}
-                                                                    className="h-8 w-full rounded-md border-gray-300 bg-white px-2 py-1 text-right text-sm font-medium text-gray-900 shadow-sm transition focus:border-teal-500 focus:ring-teal-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:opacity-50"
+                                                                    className={`h-8 w-full rounded-md border-gray-300 bg-white px-2 py-1 text-right text-sm font-medium text-gray-900 shadow-sm transition focus:border-teal-500 focus:ring-teal-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:opacity-50 ${volumeErrors[`${item.id}_volume_pencairan2`] ? 'border-rose-500 ring-2 ring-rose-500/20 focus:border-rose-500 focus:ring-rose-500' : ''}`}
                                                                 />
+                                                                <FieldTooltipError message={volumeErrors[`${item.id}_volume_pencairan2`]} />
                                                             </div>
                                                         </div>
                                                     </td>

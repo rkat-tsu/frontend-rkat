@@ -854,8 +854,9 @@ export default function Index({
                                 value={logSearch}
                                 onChange={(e) => setLogSearch(e.target.value)}
                                 placeholder="Cari berdasarkan nama IKU, IKK, atau nama user pengubah..."
-                                className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                                className="w-full pl-9 pr-10 py-2 text-xs rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                             />
+                            {logSearch && <button type="button" onClick={() => setLogSearch('')} aria-label="Reset pencarian" title="Reset pencarian" className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-white"><X size={16} /></button>}
                         </div>
 
                         <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">

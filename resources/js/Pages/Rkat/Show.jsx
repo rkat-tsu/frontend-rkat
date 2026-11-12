@@ -7,6 +7,7 @@ import {
     ArrowRight, TrendingUp, TrendingDown, RefreshCw, CornerDownRight 
 } from 'lucide-react';
 import { toast } from 'sonner';
+import ApprovalModal from '@/Pages/Approval/Partials/ApprovalModal';
 
 const formatCurrency = (amount) => {
     if (!amount) return 'Rp 0';
@@ -19,6 +20,12 @@ const formatCurrency = (amount) => {
     } catch (e) {
         return 'Rp ' + amount;
     }
+};
+
+const formatVolume = (volume) => {
+    if (volume === null || volume === undefined || volume === '') return '-';
+    const value = Number(volume);
+    return Number.isFinite(value) ? new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(value) : volume;
 };
 
 const formatDate = (dateString) => {
@@ -82,7 +89,7 @@ const getStatusColor = (status) => {
     return 'bg-blue-100 text-blue-800 border-blue-200';
 };
 
-export default function Show({ auth, rkat = {}, history = [], initialTotalAnggaran = null, komentars = [] }) {
+export default function Show({ auth, rkat = {}, history = [], initialTotalAnggaran = null, komentars = [], canApprove = false }) {
     const dataRkat = rkat.data || rkat;
     const rawDetail = dataRkat?.rkat_details || dataRkat?.rkatDetails || dataRkat?.detail;
     const dataDetail = Array.isArray(rawDetail) ? (rawDetail[0] || {}) : (rawDetail || {});
@@ -103,6 +110,7 @@ export default function Show({ auth, rkat = {}, history = [], initialTotalAnggar
     const [pesanKomentar, setPesanKomentar] = useState('');
     const [isSendingKomentar, setIsSendingKomentar] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
 
     const handleKirimKomentar = (e) => {
         e.preventDefault();
@@ -492,9 +500,9 @@ export default function Show({ auth, rkat = {}, history = [], initialTotalAnggar
                                                 <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-center text-gray-600 dark:text-gray-400">{i + 1}</td>
                                                 <td className="p-3 border-r border-gray-200 dark:border-gray-700 font-mono text-gray-800 dark:text-gray-300 text-xs">{rab.kode_anggaran || '-'}</td>
                                                 <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-300">{rab.deskripsi_item}</td>
-                                                <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-center text-gray-800 dark:text-gray-300">{rab.volume}</td>
+                                                <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-center text-gray-800 dark:text-gray-300">{formatVolume(rab.volume)}</td>
                                                 <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-center text-gray-800 dark:text-gray-300">{rab.satuan}</td>
-                                                <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-center text-gray-800 dark:text-gray-300">{rab.volume2 ?? '-'}</td>
+                                                <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-center text-gray-800 dark:text-gray-300">{formatVolume(rab.volume2)}</td>
                                                 <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-center text-gray-800 dark:text-gray-300">{rab.satuan2 || '-'}</td>
                                                 <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-right text-gray-800 dark:text-gray-300">{formatCurrency(rab.harga_satuan)}</td>
                                                 <td className="p-3 text-right font-medium text-gray-900 dark:text-gray-200">{formatCurrency(rab.sub_total)}</td>
@@ -765,6 +773,16 @@ export default function Show({ auth, rkat = {}, history = [], initialTotalAnggar
                                 <Download size={18} /> Export PDF
                             </a>
 
+                            {canApprove && (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsApprovalModalOpen(true)}
+                                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white shadow-md transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                                >
+                                    <CheckCircle2 size={18} /> Persetujuan
+                                </button>
+                            )}
+
                             {/* Tombol Edit di sebelah kanan tombol Export PDF saat status Draft / Revisi */}
                             {canEdit && (
                                 <Link
@@ -790,6 +808,11 @@ export default function Show({ auth, rkat = {}, history = [], initialTotalAnggar
                     </div>
                 </div>
             </div>
+            <ApprovalModal
+                show={isApprovalModalOpen}
+                onClose={() => setIsApprovalModalOpen(false)}
+                rkat={dataRkat}
+            />
         </AuthenticatedLayout>
     );
 }

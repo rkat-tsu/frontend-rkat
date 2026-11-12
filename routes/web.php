@@ -28,6 +28,7 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     // dashboard route
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/notifications', fn () => Inertia::render('Notifications/Index'))->name('notifications.index');
 
     // === ROUTE DAFTAR AJUAN (RKA Headers) ===
     Route::get('/daftar-ajuan/input', [RkatController::class, 'create'])->name('daftar-ajuan.create');
@@ -36,6 +37,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/daftar-ajuan/{rkatHeader}', [RkatController::class, 'show'])->name('daftar-ajuan.show');
     Route::get('/daftar-ajuan/{rkatHeader}/edit', [RkatController::class, 'edit'])->name('daftar-ajuan.edit');
     Route::patch('/daftar-ajuan/{rkatHeader}', [RkatController::class, 'update'])->name('daftar-ajuan.update');
+    Route::delete('/daftar-ajuan/{rkatHeader}', [RkatController::class, 'destroy'])->name('daftar-ajuan.destroy');
     Route::post('/daftar-ajuan/{rkatHeader}/submit', [RkatController::class, 'submit'])->name('daftar-ajuan.submit');
     Route::get('/daftar-ajuan/{rkatHeader}/export', [RkatController::class, 'exportPdf'])->name('daftar-ajuan.export');
     Route::post('/daftar-ajuan/{rkatHeader}/komentar', [RkatController::class, 'storeKomentar'])->name('daftar-ajuan.komentar.store');
@@ -43,6 +45,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Karyawan / SDM routes
     Route::get('/karyawan', [KaryawanController::class, 'index'])->name('karyawan.index');
+    Route::post('/karyawan/import', [KaryawanController::class, 'import'])->name('karyawan.import');
     Route::post('/karyawan', [KaryawanController::class, 'store'])->name('karyawan.store');
     Route::patch('/karyawan/{karyawan}', [KaryawanController::class, 'update'])->name('karyawan.update');
     Route::delete('/karyawan/{karyawan}', [KaryawanController::class, 'destroy'])->name('karyawan.destroy');

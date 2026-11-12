@@ -262,10 +262,11 @@ class PencairanDanaController extends Controller
             $remainingSubTotal = $rabItem->sub_total - $usedSubTotal;
             $volume1 = (float) $reqItem['volume_pencairan'];
             $volume2 = (float) $reqItem['volume_pencairan2'];
-            if (($volume1 > 0) === ($volume2 > 0)) {
-                return redirect()->back()->with('error', 'Isi volume 1 atau volume 2 saja untuk setiap item pencairan.');
+            if ($volume1 <= 0 && $volume2 <= 0) {
+                return redirect()->back()->with('error', 'Isi minimal satu volume untuk setiap item pencairan.');
             }
-            $reqSubTotal = ($volume1 > 0 ? $volume1 : $volume2) * $reqItem['nominal_pencairan'];
+            $quantity = $volume1 > 0 && $volume2 > 0 ? $volume1 * $volume2 : ($volume1 > 0 ? $volume1 : $volume2);
+            $reqSubTotal = $quantity * (float) $reqItem['nominal_pencairan'];
 
             if ($reqItem['volume_pencairan'] > $remainingVolume) {
                 return redirect()->back()->with('error', 'Volume pencairan untuk "' . $rabItem->deskripsi_item . '" melebihi sisa volume (Sisa: ' . $remainingVolume . ').');
@@ -286,9 +287,10 @@ class PencairanDanaController extends Controller
         ]);
 
         foreach ($request->items as $reqItem) {
-            $subTotal = ((float) $reqItem['volume_pencairan'] > 0
-                ? $reqItem['volume_pencairan']
-                : $reqItem['volume_pencairan2']) * $reqItem['nominal_pencairan'];
+            $volume1 = (float) $reqItem['volume_pencairan'];
+            $volume2 = (float) $reqItem['volume_pencairan2'];
+            $quantity = $volume1 > 0 && $volume2 > 0 ? $volume1 * $volume2 : ($volume1 > 0 ? $volume1 : $volume2);
+            $subTotal = $quantity * (float) $reqItem['nominal_pencairan'];
             PencairanDanaItem::create([
                 'id_pencairan' => $pencairan->id_pencairan,
                 'id_rkat_rab_item' => $reqItem['id'],
@@ -349,10 +351,11 @@ class PencairanDanaController extends Controller
             $remainingSubTotal = $rabItem->sub_total - $usedSubTotal;
             $volume1 = (float) $reqItem['volume_pencairan'];
             $volume2 = (float) $reqItem['volume_pencairan2'];
-            if (($volume1 > 0) === ($volume2 > 0)) {
-                return redirect()->back()->with('error', 'Isi volume 1 atau volume 2 saja untuk setiap item pencairan.');
+            if ($volume1 <= 0 && $volume2 <= 0) {
+                return redirect()->back()->with('error', 'Isi minimal satu volume untuk setiap item pencairan.');
             }
-            $reqSubTotal = ($volume1 > 0 ? $volume1 : $volume2) * $reqItem['nominal_pencairan'];
+            $quantity = $volume1 > 0 && $volume2 > 0 ? $volume1 * $volume2 : ($volume1 > 0 ? $volume1 : $volume2);
+            $reqSubTotal = $quantity * (float) $reqItem['nominal_pencairan'];
 
             if ($reqItem['volume_pencairan'] > $remainingVolume) {
                 return redirect()->back()->with('error', 'Volume pencairan untuk "' . $rabItem->deskripsi_item . '" melebihi sisa volume (Sisa: ' . $remainingVolume . ').');
@@ -375,9 +378,10 @@ class PencairanDanaController extends Controller
 
         // Add new items
         foreach ($request->items as $reqItem) {
-            $subTotal = ((float) $reqItem['volume_pencairan'] > 0
-                ? $reqItem['volume_pencairan']
-                : $reqItem['volume_pencairan2']) * $reqItem['nominal_pencairan'];
+            $volume1 = (float) $reqItem['volume_pencairan'];
+            $volume2 = (float) $reqItem['volume_pencairan2'];
+            $quantity = $volume1 > 0 && $volume2 > 0 ? $volume1 * $volume2 : ($volume1 > 0 ? $volume1 : $volume2);
+            $subTotal = $quantity * (float) $reqItem['nominal_pencairan'];
             PencairanDanaItem::create([
                 'id_pencairan' => $pencairan->id_pencairan,
                 'id_rkat_rab_item' => $reqItem['id'],
@@ -418,15 +422,17 @@ class PencairanDanaController extends Controller
 
     public function show(PencairanDana $pencairan)
     {
+        /** @var \App\Models\User|null $user */
         $user = Auth::user();
         $pencairan->load([
-            'rkatHeader.unit',
+            'rkatHeader.unit.pencairanApprovalPath.steps',
             'rkatHeader.rkatDetails.iku',
             'rkatHeader.rkatDetails.ikk',
             'rkatHeader.rkatDetails.indikators',
             'rkatHeader.rkatDetails.rabItems',
             'items.rkatRabItem',
-            'pengaju'
+            'pengaju',
+            'currentStep',
         ]);
 
         if ($user->peran !== 'Admin' && $pencairan->rkatHeader->id_unit !== $user->id_unit) {
@@ -454,8 +460,30 @@ class PencairanDanaController extends Controller
             }
         }
 
+        $currentStep = $pencairan->currentStep;
+        $canApprove = false;
+        if ($currentStep) {
+            if ($user->isAdmin()) {
+                $canApprove = true;
+            } else {
+                $effectiveRoles = $user->getEffectiveRoles();
+                $unit = $pencairan->rkatHeader->unit;
+                $canApprove = match ($currentStep->approver_type) {
+                    'role' => in_array($currentStep->role_name, $effectiveRoles),
+                    'unit' => $user->canApproveUnit() && (int) $currentStep->unit_id === (int) $user->id_unit,
+                    'self_unit_head' => $user->isUnitHead() && (int) $pencairan->rkatHeader->id_unit === (int) $user->id_unit,
+                    'parent_unit' => $user->isUnitHead() && (
+                        (int) $unit?->parent_id === (int) $user->id_unit ||
+                        (int) $unit?->id_unit === (int) $user->id_unit
+                    ),
+                    default => false,
+                };
+            }
+        }
+
         return Inertia::render('Pencairan/Show', [
-            'pencairan' => $pencairan
+            'pencairan' => $pencairan,
+            'canApprove' => $canApprove,
         ]);
     }
 

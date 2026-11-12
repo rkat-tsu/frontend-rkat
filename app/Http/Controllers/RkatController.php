@@ -74,6 +74,17 @@ class RkatController extends Controller
     public function index(Request $request)
     {
         $this->rememberPaginationQuery($request, 'rkat');
+        $tahunAnggarans = TahunAnggaran::query()
+            ->select(['id_tahun', 'tahun_anggaran', 'status_rkat'])
+            ->orderBy('tahun_anggaran', 'desc')
+            ->get();
+        $selectedYear = $request->input('tahun');
+        if (!$request->query->has('tahun')) {
+            $selectedYear = $tahunAnggarans
+                ->first(fn ($tahun) => $tahun->status_rkat !== 'Closed')
+                ?->tahun_anggaran;
+        }
+
         $query = RkatHeader::query()
             ->with([
                 'unit:id_unit,nama_unit',
@@ -94,14 +105,13 @@ class RkatController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('rkat_headers.nomor_dokumen', 'like', "%{$search}%")
-                    ->orWhereHas('unit', function ($q) use ($search) {
-                        $q->where('nama_unit', 'like', "%{$search}%");
-                    });
+                $q->whereHas('rkatDetails', function ($details) use ($search) {
+                    $details->where('judul_kegiatan', 'like', "%{$search}%");
+                });
             });
         }
-        if ($request->filled('tahun')) {
-            $query->where('rkat_headers.tahun_anggaran', $request->tahun);
+        if ($selectedYear !== null && $selectedYear !== '') {
+            $query->where('rkat_headers.tahun_anggaran', $selectedYear);
         }
         if ($request->filled('bulan')) {
             $query->whereMonth('rkat_headers.tanggal_pengajuan', $request->bulan);
@@ -139,10 +149,6 @@ class RkatController extends Controller
 
         $rkats = $query->paginate($perPage)->onEachSide(0)->withQueryString();
 
-        $tahunAnggarans = TahunAnggaran::query()
-            ->select(['id_tahun', 'tahun_anggaran', 'status_rkat'])
-            ->orderBy('tahun_anggaran', 'desc')
-            ->get();
         $units = Unit::query()->select(['id_unit', 'nama_unit'])->orderBy('nama_unit', 'asc')->get();
 
         $dynamicSteps = ApprovalPathStep::select('step_name')->distinct()->pluck('step_name')->toArray();
@@ -150,7 +156,10 @@ class RkatController extends Controller
 
         return Inertia::render('Rkat/Index', [
             'rkats' => $rkats,
-            'filters' => $request->only(['search', 'tahun', 'bulan', 'status', 'unit_id', 'sort_by', 'sort_direction']),
+            'filters' => array_merge(
+                $request->only(['search', 'bulan', 'status', 'unit_id', 'sort_by', 'sort_direction']),
+                ['tahun' => $selectedYear ?? '']
+            ),
             'tahunAnggarans' => $tahunAnggarans,
             'units' => $units,
             'statuses' => $statuses,
@@ -196,7 +205,7 @@ class RkatController extends Controller
             'tahun_anggaran' => ['required', 'exists:tahun_anggarans,tahun_anggaran'],
             'id_unit' => ['required', 'exists:unit,id_unit'],
             'kode_akun' => ['required', 'string'],
-            'judul_pengajuan' => ['required', 'string'],
+            'judul_pengajuan' => ['required', 'string', 'max:255'],
             'deskripsi_kegiatan' => ['required', 'string'],
             'latar_belakang' => ['required', 'string'],
             'rasional' => ['required', 'string'],
@@ -219,10 +228,6 @@ class RkatController extends Controller
             'dokumen_files' => ['nullable', 'array', 'max:10'],
             'dokumen_files.*' => ['file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png', 'extensions:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png'],
         ]);
-
-        if (!$this->hasSupportingDocuments($request)) {
-            return back()->withErrors(['dokumen_links' => 'Tambahkan minimal satu tautan Google Drive atau berkas pendukung.'])->withInput();
-        }
 
         try {
             DB::beginTransaction();
@@ -327,6 +332,7 @@ class RkatController extends Controller
         $rkatHeader->load([
             'unit.approvalPath.steps',
             'tahun_obj',
+            'currentStep',
             'rkatDetails.iku',
             'rkatDetails.ikk',
             'rkatDetails.rabItems',
@@ -358,11 +364,30 @@ class RkatController extends Controller
         // History menampilkan semua arsip, diurutkan terbaru dulu
         $history = $archives->sortByDesc('created_at')->values();
 
+        $user = Auth::user();
+        $currentStep = $rkatHeader->currentStep;
+        $canApprove = false;
+        if ($currentStep && ($user->isAdmin() || $rkatHeader->tahun_obj?->status_rkat === 'Approved')) {
+            if ($user->isAdmin()) {
+                $canApprove = true;
+            } else {
+                $effectiveRoles = $user->getEffectiveRoles();
+                $canApprove = match ($currentStep->approver_type) {
+                    'role' => in_array($currentStep->role_name, $effectiveRoles),
+                    'unit' => $user->canApproveUnit() && (int) $currentStep->unit_id === (int) $user->id_unit,
+                    'self_unit_head' => $user->isUnitHead() && (int) $rkatHeader->id_unit === (int) $user->id_unit,
+                    'parent_unit' => $user->isUnitHead() && (int) $rkatHeader->unit?->parent_id === (int) $user->id_unit,
+                    default => false,
+                };
+            }
+        }
+
         return Inertia::render('Rkat/Show', [
             'rkat' => $rkatHeader,
             'history' => $history,
             'initialTotalAnggaran' => $initialTotalAnggaran,
             'komentars' => $rkatHeader->komentars,
+            'canApprove' => $canApprove,
         ]);
     }
 
@@ -553,6 +578,7 @@ class RkatController extends Controller
         $akhirTahunAnggaran = preg_match('/^\d{4}$/', (string) $request->input('tahun_anggaran'))
             ? $request->input('tahun_anggaran') . '-12-31'
             : '9999-12-31';
+        $rkatDetailId = $rkatHeader->rkatDetails()->value('id_rkat_detail');
 
         $request->validate([
             'iku_id' => ['required', 'integer', 'exists:ikus,id_iku'],
@@ -560,6 +586,7 @@ class RkatController extends Controller
             'indikator_kinerja' => ['required', 'array', 'min:1'],
             'indikator_kinerja.*.indikator' => ['required', 'string'],
             'rincian_anggaran' => ['required', 'array', 'min:1'],
+            'rincian_anggaran.*.rab_item_id' => ['nullable', 'integer', 'distinct', Rule::exists('rkat_rab_items', 'id')->where('id_rkat_detail', $rkatDetailId)],
             'rincian_anggaran.*.kode_anggaran' => ['nullable', 'string'],
             'rincian_anggaran.*.kebutuhan' => ['nullable', 'string', 'max:255'],
             'rincian_anggaran.*.vol' => ['required', 'numeric', 'min:1'],
@@ -570,7 +597,7 @@ class RkatController extends Controller
             'rincian_anggaran.*.jumlah' => ['required', 'numeric', 'min:0'],
             'tahun_anggaran' => ['required', 'exists:tahun_anggarans,tahun_anggaran'],
             'id_unit' => ['required', 'exists:unit,id_unit'],
-            'judul_pengajuan' => ['required', 'string'],
+            'judul_pengajuan' => ['required', 'string', 'max:255'],
             'deskripsi_kegiatan' => ['required', 'string'],
             'latar_belakang' => ['required', 'string'],
             'rasional' => ['required', 'string'],
@@ -597,10 +624,6 @@ class RkatController extends Controller
         ]);
 
         $currentDocuments = $rkatHeader->rkatDetails()->first()?->dokumen_pendukung ?? [];
-        if (!$this->hasSupportingDocuments($request)) {
-            return back()->withErrors(['dokumen_links' => 'Pertahankan atau tambahkan minimal satu tautan/berkas pendukung.'])->withInput();
-        }
-
         try {
             DB::beginTransaction();
             $uploadedPaths = [];
@@ -704,14 +727,13 @@ class RkatController extends Controller
                 ]);
             }
 
-            $rkatDetail->rabItems()->delete();
+            $rabItemIdsToKeep = [];
             foreach ($request->input('rincian_anggaran') as $item) {
                 $kodeAnggaran = (isset($item['kode_anggaran']) && $item['kode_anggaran'] === '__OTHER__') ? null : ($item['kode_anggaran'] ?? null);
                 $volume = (float) $item['vol'];
                 $volume2 = isset($item['vol2']) && $item['vol2'] !== '' ? (float) $item['vol2'] : null;
                 $hargaSatuan = (float) $item['biaya_satuan'];
-                RkatRabItem::create([
-                    'id_rkat_detail' => $rkatDetail->id_rkat_detail,
+                $rabAttributes = [
                     'kode_anggaran' => $kodeAnggaran,
                     'deskripsi_item' => $item['kebutuhan'] ?? '-',
                     'volume' => $volume,
@@ -720,8 +742,17 @@ class RkatController extends Controller
                     'satuan2' => $item['satuan2'] ?? null,
                     'harga_satuan' => $hargaSatuan,
                     'sub_total' => round($volume * ($volume2 ?? 1) * $hargaSatuan, 2),
-                ]);
+                ];
+
+                if (!empty($item['rab_item_id'])) {
+                    $rabItem = $rkatDetail->rabItems()->whereKey($item['rab_item_id'])->firstOrFail();
+                    $rabItem->update($rabAttributes);
+                } else {
+                    $rabItem = $rkatDetail->rabItems()->create($rabAttributes);
+                }
+                $rabItemIdsToKeep[] = $rabItem->getKey();
             }
+            $rkatDetail->rabItems()->whereNotIn('id', $rabItemIdsToKeep)->delete();
 
             DB::commit();
 
@@ -733,6 +764,41 @@ class RkatController extends Controller
             return redirect()->back()->with('error', 'Gagal memperbarui RKAT: ' . $e->getMessage())->withInput();
         }
     }
+    public function destroy(RkatHeader $rkatHeader)
+    {
+        $user = Auth::user();
+        abort_unless($user->isAdmin() || (int) $user->id_unit === (int) $rkatHeader->id_unit, 403);
+        abort_unless($rkatHeader->status_persetujuan === 'Draft', 403, 'Hanya dokumen Draft yang dapat dihapus.');
+
+        $headerIds = [(int) $rkatHeader->id_header];
+        $pendingHeaderIds = $headerIds;
+        while ($pendingHeaderIds) {
+            $childIds = RkatHeader::query()
+                ->whereIn('parent_id', $pendingHeaderIds)
+                ->pluck('id_header')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+            $headerIds = array_merge($headerIds, $childIds);
+            $pendingHeaderIds = $childIds;
+        }
+
+        $documents = RkatDetail::query()
+            ->whereIn('id_header', $headerIds)
+            ->get(['dokumen_pendukung'])
+            ->flatMap(fn (RkatDetail $detail) => $detail->dokumen_pendukung ?? []);
+
+        DB::transaction(fn () => $rkatHeader->delete());
+
+        foreach ($documents as $document) {
+            if (is_array($document) && ($document['type'] ?? null) === 'file' && !empty($document['path'])) {
+                Storage::disk('local')->delete($document['path']);
+            }
+        }
+
+        return $this->redirectToPaginatedList(request(), 'rkat', 'daftar-ajuan.index')
+            ->with('success', 'Draft RKAT berhasil dihapus.');
+    }
+
     public function exportPdf(RkatHeader $rkatHeader)
     {
         try {

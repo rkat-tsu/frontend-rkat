@@ -1,6 +1,7 @@
-import React from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, Check, Search } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
     DropdownMenu,
     DropdownMenuTrigger,
@@ -15,10 +16,74 @@ export default function CustomSelect({
     placeholder = "Pilih...",
     className,
     disabled = false,
-    isMarquee = false // Prop baru untuk mengaktifkan efek teks berjalan
+    isMarquee = false, // Prop baru untuk mengaktifkan efek teks berjalan
+    searchable = false,
+    dropdownModal = true
 }) {
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const selectedOption = options.find(opt => String(opt.value) === String(value));
     const displayLabel = selectedOption ? selectedOption.label : placeholder;
+    const filteredOptions = options.filter(opt => String(opt.label).toLowerCase().includes(searchQuery.trim().toLowerCase()));
+
+    if (searchable) {
+        return (
+            <Popover open={searchOpen} onOpenChange={(open) => {
+                setSearchOpen(open);
+                if (!open) setSearchQuery('');
+            }}>
+                <PopoverTrigger asChild>
+                    <button
+                        type="button"
+                        disabled={disabled}
+                        aria-haspopup="listbox"
+                        aria-expanded={searchOpen}
+                        className={cn(
+                            "group flex h-11 w-full items-center justify-between rounded-md border border-gray-300/50 bg-white px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-900 dark:border-gray-700/50 dark:text-gray-300 dark:focus:ring-teal-600 dark:focus:border-teal-600/50 transition-all shadow-sm",
+                            className
+                        )}
+                    >
+                        <span className={cn("flex-1 text-left truncate mr-2", !selectedOption ? 'text-gray-500 font-normal' : 'font-semibold text-gray-900 dark:text-gray-100')}>
+                            {displayLabel}
+                        </span>
+                        <ChevronDown className="h-4 w-4 opacity-50 flex-shrink-0" />
+                    </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[--radix-popover-trigger-width] p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2 rounded-md border border-gray-200 px-2 dark:border-gray-700">
+                        <Search className="h-4 w-4 shrink-0 text-gray-400" />
+                        <input
+                            autoFocus
+                            value={searchQuery}
+                            onChange={(event) => setSearchQuery(event.target.value)}
+                            placeholder="Cari nama atau NIK..."
+                            className="h-9 min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-gray-400 focus:ring-0 dark:text-gray-100"
+                        />
+                    </div>
+                    <div role="listbox" className="mt-1 max-h-60 overflow-y-auto">
+                        {filteredOptions.length === 0 ? (
+                            <div className="px-3 py-6 text-center text-sm text-gray-500">Karyawan tidak ditemukan.</div>
+                        ) : filteredOptions.map((opt) => (
+                            <button
+                                key={opt.value}
+                                type="button"
+                                role="option"
+                                aria-selected={String(opt.value) === String(value)}
+                                onClick={() => {
+                                    onChange?.({ target: { value: opt.value } });
+                                    setSearchOpen(false);
+                                }}
+                                className="flex w-full items-center justify-between gap-2 rounded-sm px-3 py-2.5 text-left text-sm text-gray-900 hover:bg-teal-50 hover:text-teal-700 dark:text-gray-200 dark:hover:bg-teal-900/20 dark:hover:text-teal-300"
+                            >
+                                <span className="truncate">{opt.label}</span>
+                                {String(opt.value) === String(value) && <Check className="h-4 w-4 shrink-0 text-teal-600" />}
+                            </button>
+                        ))}
+                    </div>
+                </PopoverContent>
+            </Popover>
+        );
+    }
 
     return (
         <>
@@ -32,7 +97,7 @@ export default function CustomSelect({
                 `}} />
             )}
 
-            <DropdownMenu>
+            <DropdownMenu modal={dropdownModal}>
                 <DropdownMenuTrigger disabled={disabled} className={cn(
                     "group flex h-11 w-full items-center justify-between rounded-md border border-gray-300/50 bg-white px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-900 dark:border-gray-700/50 dark:text-gray-300 dark:focus:ring-teal-600 dark:focus:border-teal-600/50 transition-all shadow-sm",
                     className
