@@ -7,6 +7,7 @@ import ActionButton, { ActionGroup } from '@/Components/ActionButton';
 import StatusBadge from '@/Components/StatusBadge';
 import ApprovalModal from './Partials/ApprovalModal'; 
 import { Search, Eye, CheckCircle2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { useResizableTable } from '@/hooks/useResizableTable';
 
 const formatDate = (value) => {
     if (!value) return '-';
@@ -37,6 +38,7 @@ const formatPelaksanaan = (mulai, akhir) => {
 };
 
 export default function ApproverDashboard({ auth, rkatMenunggu, currentRole, flash, filters }) {
+    const { tableRef } = useResizableTable('approval_dashboard');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedRkat, setSelectedRkat] = useState(null);
     const [sortBy, setSortBy] = useState(filters?.sort_by || 'updated_at');
@@ -114,53 +116,56 @@ export default function ApproverDashboard({ auth, rkatMenunggu, currentRole, fla
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm border border-gray-200 dark:border-gray-700 divide-x">
+                                <table ref={tableRef} className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm border border-gray-200 dark:border-gray-700 divide-x">
                                     <thead className="bg-gray-50 dark:bg-gray-700 divide-x divide-gray-200 dark:divide-gray-700">
                                         <tr>
-                                            <th 
-                                                className="px-6 py-4 text-left font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group border-r border-gray-200 dark:border-gray-700"
-                                                onClick={() => handleSort('nomor_dokumen')}
-                                            >
-                                                <div className="flex items-center justify-between">
+                                            <th className="px-6 py-4 text-left font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs select-none border-r border-gray-200 dark:border-gray-700">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('nomor_dokumen')}
+                                                    className="inline-flex items-center gap-1.5 font-semibold text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-600/50"
+                                                >
                                                     <span>No. Dokumen / Unit</span>
-                                                    <div className="flex flex-col ml-1">
+                                                    <span className="flex flex-col ml-1">
                                                         {sortBy === 'nomor_dokumen' ? (
                                                             sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
                                                         ) : (
                                                             <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                         )}
-                                                    </div>
-                                                </div>
+                                                    </span>
+                                                </button>
                                             </th>
-                                            <th 
-                                                className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group border-r border-gray-200 dark:border-gray-700"
-                                                onClick={() => handleSort('status_persetujuan')}
-                                            >
-                                                <div className="flex items-center justify-center">
+                                            <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs select-none border-r border-gray-200 dark:border-gray-700">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('status_persetujuan')}
+                                                    className="inline-flex items-center justify-center gap-1.5 font-semibold text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-600/50"
+                                                >
                                                     <span>Status Saat Ini</span>
-                                                    <div className="flex flex-col ml-1">
+                                                    <span className="flex flex-col ml-1">
                                                         {sortBy === 'status_persetujuan' ? (
                                                             sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
                                                         ) : (
                                                             <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                         )}
-                                                    </div>
-                                                </div>
+                                                    </span>
+                                                </button>
                                             </th>
-                                            <th 
-                                                className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group border-r border-gray-200 dark:border-gray-700"
-                                                onClick={() => handleSort('tanggal_pengajuan')}
-                                            >
-                                                <div className="flex items-center justify-center">
+                                            <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs select-none border-r border-gray-200 dark:border-gray-700">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('tanggal_pengajuan')}
+                                                    className="inline-flex items-center justify-center gap-1.5 font-semibold text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-600/50"
+                                                >
                                                     <span>Tgl Pengajuan</span>
-                                                    <div className="flex flex-col ml-1">
+                                                    <span className="flex flex-col ml-1">
                                                         {sortBy === 'tanggal_pengajuan' ? (
                                                             sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
                                                         ) : (
                                                             <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                         )}
-                                                    </div>
-                                                </div>
+                                                    </span>
+                                                </button>
                                             </th>
                                             <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs border-r border-gray-200 dark:border-gray-700">Tanggal Pelaksanaan</th>
                                             <th className="px-6 py-4 text-center font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-xs">Aksi</th>

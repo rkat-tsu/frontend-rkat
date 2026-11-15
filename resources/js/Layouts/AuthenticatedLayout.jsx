@@ -168,7 +168,16 @@ export default function AuthenticatedLayout({ header, children }) {
                                     {approvalNotificationCount > 0 && <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-bold leading-none text-white ring-2 ring-white dark:ring-gray-800">{approvalNotificationCount > 99 ? '99+' : approvalNotificationCount}</span>}
                                 </button>
                                 {notificationsOpen && (
-                                    <div className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
+                                    <>
+                                        {/* Backdrop untuk mobile */}
+                                        <div
+                                            className="fixed inset-0 z-40 bg-black/25 backdrop-blur-[1px] sm:hidden"
+                                            onClick={() => setNotificationsOpen(false)}
+                                            aria-hidden="true"
+                                        />
+
+                                        {/* Pop up Notifikasi */}
+                                        <div className="fixed inset-x-3 top-16 z-50 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800 sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[22rem]">
                                             <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-700">
                                                 <div>
                                                     <p className="text-sm font-bold text-gray-900 dark:text-white">Notifikasi Dokumen</p>
@@ -199,7 +208,8 @@ export default function AuthenticatedLayout({ header, children }) {
                                             <div className="border-t border-gray-100 p-2 text-center dark:border-gray-700">
                                                 <Link href={route('notifications.index')} onClick={() => setNotificationsOpen(false)} className="block rounded-lg py-2 text-xs font-bold text-teal-700 hover:bg-teal-50 dark:text-teal-300 dark:hover:bg-teal-900/20">Lihat semua notifikasi</Link>
                                             </div>
-                                    </div>
+                                        </div>
+                                    </>
                                 )}
                             </div>
                             <div className="relative group h-16 flex items-center">

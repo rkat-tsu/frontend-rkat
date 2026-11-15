@@ -43,6 +43,7 @@ import Modal from '@/Components/Modal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
+import { useResizableTable } from '@/hooks/useResizableTable';
 
 const formatDate = (value) => {
     if (!value) return '-';
@@ -76,6 +77,7 @@ export default function Index(props) {
 
 function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {}, tahunAnggarans = [], units = [], flash = {} }) {
     const { isAdmin, isApprover } = usePermission();
+    const { tableRef } = useResizableTable('lpj_index');
 
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [tahun, setTahun] = useState(filters?.tahun || '');
@@ -603,71 +605,79 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                 {/* --- DATA TABLE --- */}
                 <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left text-gray-600 dark:text-gray-300 border-collapse">
+                        <table ref={tableRef} className="w-full text-sm text-left text-gray-600 dark:text-gray-300 border-collapse">
                             <thead className="text-xs uppercase bg-gray-50/80 dark:bg-gray-900/60 text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 font-semibold tracking-wider select-none">
                                 <tr>
                                     <th className="py-3.5 px-4 text-center w-12 border-r border-gray-200 dark:border-gray-700/60 last:border-r-0">No</th>
                                     
-                                    <th 
-                                        onClick={() => handleSortColumn('nomor_lpj')}
-                                        className="py-3.5 px-4 text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition border-r border-gray-200 dark:border-gray-700/60 last:border-r-0"
-                                    >
-                                        <div className="flex items-center justify-center">
+                                    <th className="py-3.5 px-4 text-center border-r border-gray-200 dark:border-gray-700/60 last:border-r-0 select-none">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSortColumn('nomor_lpj')}
+                                            className="inline-flex items-center justify-center gap-1 font-semibold text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-800"
+                                        >
                                             <span>Dokumen LPJ</span>
                                             {renderSortIcon('nomor_lpj')}
-                                        </div>
+                                        </button>
                                     </th>
 
-                                    <th 
-                                        onClick={(isAdmin() || isApprover()) ? () => handleSortColumn('unit') : undefined}
-                                        className={`py-3.5 px-4 text-center border-r border-gray-200 dark:border-gray-700/60 last:border-r-0 ${
-                                            (isAdmin() || isApprover()) ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition' : ''
-                                        }`}
-                                    >
-                                        <div className="flex items-center justify-center">
+                                    <th className="py-3.5 px-4 text-center border-r border-gray-200 dark:border-gray-700/60 last:border-r-0 select-none">
+                                        {(isAdmin() || isApprover()) ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSortColumn('unit')}
+                                                className="inline-flex items-center justify-center gap-1 font-semibold text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-800"
+                                            >
+                                                <span>Unit Kerja</span>
+                                                {renderSortIcon('unit')}
+                                            </button>
+                                        ) : (
                                             <span>Unit Kerja</span>
-                                            {(isAdmin() || isApprover()) && renderSortIcon('unit')}
-                                        </div>
+                                        )}
                                     </th>
 
-                                    <th 
-                                        onClick={() => handleSortColumn('pencairan')}
-                                        className="py-3.5 px-4 text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition border-r border-gray-200 dark:border-gray-700/60 last:border-r-0"
-                                    >
-                                        <div className="flex items-center justify-center">
+                                    <th className="py-3.5 px-4 text-center border-r border-gray-200 dark:border-gray-700/60 last:border-r-0 select-none">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSortColumn('pencairan')}
+                                            className="inline-flex items-center justify-center gap-1 font-semibold text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-800"
+                                        >
                                             <span>Ref. Pencairan</span>
                                             {renderSortIcon('pencairan')}
-                                        </div>
+                                        </button>
                                     </th>
 
-                                    <th 
-                                        onClick={() => handleSortColumn('total_realisasi')}
-                                        className="py-3.5 px-4 text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition border-r border-gray-200 dark:border-gray-700/60 last:border-r-0"
-                                    >
-                                        <div className="flex items-center justify-center">
+                                    <th className="py-3.5 px-4 text-center border-r border-gray-200 dark:border-gray-700/60 last:border-r-0 select-none">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSortColumn('total_realisasi')}
+                                            className="inline-flex items-center justify-center gap-1 font-semibold text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-800"
+                                        >
                                             <span>Realisasi</span>
                                             {renderSortIcon('total_realisasi')}
-                                        </div>
+                                        </button>
                                     </th>
 
-                                    <th 
-                                        onClick={() => handleSortColumn('sisa_dana')}
-                                        className="py-3.5 px-4 text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition border-r border-gray-200 dark:border-gray-700/60 last:border-r-0"
-                                    >
-                                        <div className="flex items-center justify-center">
+                                    <th className="py-3.5 px-4 text-center border-r border-gray-200 dark:border-gray-700/60 last:border-r-0 select-none">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSortColumn('sisa_dana')}
+                                            className="inline-flex items-center justify-center gap-1 font-semibold text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-800"
+                                        >
                                             <span>Sisa Pengembalian</span>
                                             {renderSortIcon('sisa_dana')}
-                                        </div>
+                                        </button>
                                     </th>
 
-                                    <th 
-                                        onClick={() => handleSortColumn('status_lpj')}
-                                        className="py-3.5 px-4 text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition border-r border-gray-200 dark:border-gray-700/60 last:border-r-0"
-                                    >
-                                        <div className="flex items-center justify-center">
+                                    <th className="py-3.5 px-4 text-center border-r border-gray-200 dark:border-gray-700/60 last:border-r-0 select-none">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSortColumn('status_lpj')}
+                                            className="inline-flex items-center justify-center gap-1 font-semibold text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-800"
+                                        >
                                             <span>Status</span>
                                             {renderSortIcon('status_lpj')}
-                                        </div>
+                                        </button>
                                     </th>
 
                                     <th className="py-3.5 px-4 text-center w-36">Aksi</th>

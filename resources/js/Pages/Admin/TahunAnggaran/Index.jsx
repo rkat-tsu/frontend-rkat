@@ -14,9 +14,11 @@ import InputError from '@/Components/InputError';
 import CustomSelect from '@/Components/CustomSelect'; 
 import DateInput from '@/Components/DateInput';
 import FieldTooltipError from '@/Components/FieldTooltipError';
+import { useResizableTable } from '@/hooks/useResizableTable';
 
 export default function Index({ tahunAnggarans, filters = {} }) {
     const { isAdmin, user: authUser } = usePermission();
+    const { tableRef } = useResizableTable('admin_tahun_anggaran');
     const [search, setSearch] = useState(filters?.search || '');
     const [sortBy, setSortBy] = useState(filters?.sort_by || 'tahun_anggaran');
     const [sortDirection, setSortDirection] = useState(filters?.sort_direction || 'desc');
@@ -332,68 +334,72 @@ export default function Index({ tahunAnggarans, filters = {} }) {
                         </div>
 
                         <div className="overflow-x-auto rounded-lg border border-gray-300 dark:border-gray-700">
-                            <table className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
+                            <table ref={tableRef} className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
                                 <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                     <tr>
-                                        <th 
-                                            className="px-2 py-3 border-b border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                            onClick={() => handleSort('tahun_anggaran')}
-                                        >
-                                            <div className="flex items-center justify-center">
+                                        <th className="px-2 py-3 border-b border-gray-300 dark:border-gray-600 font-medium text-center select-none">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSort('tahun_anggaran')}
+                                                className="inline-flex items-center justify-center gap-1 font-medium text-gray-800 dark:text-gray-200 hover:text-teal-600 dark:hover:text-teal-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-600/50"
+                                            >
                                                 <span>Tahun Anggaran</span>
-                                                <div className="flex flex-col ml-1">
+                                                <span className="flex flex-col ml-1">
                                                     {sortBy === 'tahun_anggaran' ? (
                                                         sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
                                                     ) : (
                                                         <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     )}
-                                                </div>
-                                            </div>
+                                                </span>
+                                            </button>
                                         </th>
-                                        <th 
-                                            className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                            onClick={() => handleSort('tanggal_mulai')}
-                                        >
-                                            <div className="flex items-center justify-center">
+                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center select-none">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSort('tanggal_mulai')}
+                                                className="inline-flex items-center justify-center gap-1 font-medium text-gray-800 dark:text-gray-200 hover:text-teal-600 dark:hover:text-teal-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-600/50"
+                                            >
                                                 <span>Tanggal Mulai</span>
-                                                <div className="flex flex-col ml-1">
+                                                <span className="flex flex-col ml-1">
                                                     {sortBy === 'tanggal_mulai' ? (
                                                         sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
                                                     ) : (
                                                         <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     )}
-                                                </div>
-                                            </div>
+                                                </span>
+                                            </button>
                                         </th>
-                                        <th 
-                                            className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                            onClick={() => handleSort('tanggal_akhir')}
-                                        >
-                                            <div className="flex items-center justify-center">
+                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center select-none">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSort('tanggal_akhir')}
+                                                className="inline-flex items-center justify-center gap-1 font-medium text-gray-800 dark:text-gray-200 hover:text-teal-600 dark:hover:text-teal-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-600/50"
+                                            >
                                                 <span>Tanggal Akhir</span>
-                                                <div className="flex flex-col ml-1">
+                                                <span className="flex flex-col ml-1">
                                                     {sortBy === 'tanggal_akhir' ? (
                                                         sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
                                                     ) : (
                                                         <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     )}
-                                                </div>
-                                            </div>
+                                                </span>
+                                            </button>
                                         </th>
-                                        <th 
-                                            className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                            onClick={() => handleSort('status_rkat')}
-                                        >
-                                            <div className="flex items-center justify-center">
+                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center select-none">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSort('status_rkat')}
+                                                className="inline-flex items-center justify-center gap-1 font-medium text-gray-800 dark:text-gray-200 hover:text-teal-600 dark:hover:text-teal-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-600/50"
+                                            >
                                                 <span>Status</span>
-                                                <div className="flex flex-col ml-1">
+                                                <span className="flex flex-col ml-1">
                                                     {sortBy === 'status_rkat' ? (
                                                         sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
                                                     ) : (
                                                         <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     )}
-                                                </div>
-                                            </div>
+                                                </span>
+                                            </button>
                                         </th>
                                         <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>
                                     </tr>

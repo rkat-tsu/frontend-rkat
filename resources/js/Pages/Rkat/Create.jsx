@@ -14,6 +14,7 @@ import CustomSelect from '@/Components/CustomSelect';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
 import FieldTooltipError from '@/Components/FieldTooltipError';
+import { useResizableTable } from '@/hooks/useResizableTable';
 import {
     Popover,
     PopoverContent,
@@ -186,6 +187,9 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
         biaya_satuan: 0,
         jumlah: 0
     };
+
+    const { tableRef: indikatorTableRef } = useResizableTable('rkat_create_indikator');
+    const { tableRef: rabTableRef } = useResizableTable('rkat_create_rab');
 
     // Setup Form
     const { data, setData, post, processing, errors, isDirty } = useForm({
@@ -847,7 +851,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                         <div className={`mt-1 space-y-3 rounded-md border p-4 ${getFieldError('dokumen_links') ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-gray-200 dark:border-gray-700'}`}>
                                             <div className="flex flex-col gap-2 sm:flex-row">
                                                 <TextInput value={newDocLink} onChange={(e) => setNewDocLink(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addDocLink(); } }} className="h-10 flex-1" placeholder="Tempel tautan Google Drive (pastikan akses dibagikan)" />
-                                                <button type="button" onClick={addDocLink} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-teal-600 px-4 text-sm font-semibold text-white hover:bg-teal-700"><Link2 size={16} /> Tambah tautan</button>
+                                                <button type="button" onClick={addDocLink} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-teal-600 px-4 text-sm font-semibold text-white hover:bg-teal-700"><Link2 size={16} /> Simpan tautan</button>
                                             </div>
                                             {data.dokumen_links.map((link, index) => (
                                                 <div key={`${link}-${index}`} className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-sm dark:bg-gray-900">
@@ -914,7 +918,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                         const labels = selectedTahunData?.indikator_labels || { past: '2025', current: 'Tahun 2026', future: 'Akhir 2029' };
                                         
                                         return (
-                                            <table className="min-w-full">
+                                            <table ref={indikatorTableRef} className="min-w-full">
                                                 <thead className="bg-gray-50 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300">
                                                     <tr>
                                                         <th className="px-2 py-3 text-xs text-center">No</th>
@@ -955,7 +959,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">4. Rincian Anggaran Belanja (RAB)</h3>
                             <div className="relative pb-2">
                                 <div className={`overflow-x-auto rounded-lg mb-4 ${getFieldError('rincian_anggaran') ? 'border-2 border-rose-500 ring-2 ring-rose-500/20' : ''}`}>
-                                    <table className="w-full text-xs text-left">
+                                    <table ref={rabTableRef} className="w-full text-xs text-left">
                                         <thead className="bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 font-bold uppercase">
                                             <tr>
                                                 <th className="px-2 py-2 w-8 text-center">No</th>

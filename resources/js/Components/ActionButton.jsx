@@ -47,6 +47,7 @@ export default function ActionButton({
     size = 'md', // 'sm' | 'md' | 'lg'
     className = '',
     disabled = false,
+    tooltipSide = 'top',
     children,
     ...props
 }) {
@@ -100,7 +101,7 @@ export default function ActionButton({
                 <TooltipTrigger asChild>
                     {element}
                 </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs font-medium bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 border-none shadow-md">
+                <TooltipContent side={tooltipSide} className="text-xs font-medium bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 border-none shadow-md">
                     {tooltipText}
                 </TooltipContent>
             </Tooltip>
@@ -108,9 +109,9 @@ export default function ActionButton({
     );
 }
 
-export function ActionGroup({ children, className = '' }) {
+export function ActionGroup({ children, className = '', vertical = false }) {
     return (
-        <div className={`flex items-center justify-center gap-1.5 ${className}`}>
+        <div className={`flex ${vertical ? 'flex-col' : 'items-center'} items-center justify-center gap-1.5 ${className}`}>
             {children}
         </div>
     );

@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Comp
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
 import { exportToExcel } from '@/Utils/exportToExcel';
+import { useResizableTable } from '@/hooks/useResizableTable';
 
 const formatDate = (value) => {
     if (!value) return '-';
@@ -46,6 +47,7 @@ const formatRupiah = (angka) => {
 // Tambahkan prop 'flash' untuk menangkap pesan error/success dari Controller
 export default function Index({ auth, rkats, filters, tahunAnggarans, units = [], flash = {}, statuses = [] }) {
     const { isAdmin } = usePermission();
+    const { tableRef } = useResizableTable('daftar_pengajuan_rkat');
 
     const getStatusColor = (status) => {
         if (!status) return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
@@ -377,99 +379,105 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                     </div>
                     {/* Tabel Data */}
                     <div className="overflow-x-auto rounded-lg border border-gray-300 dark:border-gray-700">
-                        <table className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
+                        <table ref={tableRef} className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
                             <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                 <tr>
                                     <th className="px-4 py-3 border-b border-gray-300 dark:border-gray-600 font-medium text-center">No</th>
-                                    <th 
-                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                        onClick={() => handleSort('nomor_dokumen')}
-                                    >
-                                        <div className="flex items-center gap-1">
-                                            Nama Kegiatan / No. Dokumen
-                                            <div className="flex flex-col ml-1">
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium select-none">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSort('nomor_dokumen')}
+                                            className="inline-flex items-center gap-1.5 font-medium text-gray-800 dark:text-gray-200 hover:text-teal-600 dark:hover:text-teal-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-600/50 text-left"
+                                        >
+                                            <span>Nama Kegiatan / No. Dokumen</span>
+                                            <span className="flex flex-col ml-0.5">
                                                 {sortBy === 'nomor_dokumen' ? (
                                                     sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
                                                 ) : (
                                                     <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 )}
-                                            </div>
-                                        </div>
+                                            </span>
+                                        </button>
                                     </th>
-                                    <th 
-                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                        onClick={() => handleSort('unit')}
-                                    >
-                                        <div className="flex items-center gap-1">
-                                            Unit
-                                            <div className="flex flex-col ml-1">
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium select-none">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSort('unit')}
+                                            className="inline-flex items-center gap-1.5 font-medium text-gray-800 dark:text-gray-200 hover:text-teal-600 dark:hover:text-teal-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-600/50 text-left"
+                                        >
+                                            <span>Unit</span>
+                                            <span className="flex flex-col ml-0.5">
                                                 {sortBy === 'unit' ? (
                                                     sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
                                                 ) : (
                                                     <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 )}
-                                            </div>
-                                        </div>
+                                            </span>
+                                        </button>
                                     </th>
-                                    <th 
-                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                        onClick={() => handleSort('pelaksanaan')}
-                                    >
-                                        <div className="flex items-center justify-center gap-1">
-                                            Tanggal Pelaksanaan
-                                            <div className="flex flex-col ml-1">
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center select-none">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSort('pelaksanaan')}
+                                            className="inline-flex items-center justify-center gap-1.5 font-medium text-gray-800 dark:text-gray-200 hover:text-teal-600 dark:hover:text-teal-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-600/50"
+                                        >
+                                            <span>Tanggal Pelaksanaan</span>
+                                            <span className="flex flex-col ml-0.5">
                                                 {sortBy === 'pelaksanaan' ? (
                                                     sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
                                                 ) : (
                                                     <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 )}
-                                            </div>
-                                        </div>
+                                            </span>
+                                        </button>
                                     </th>
-                                    <th 
-                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-right cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                        onClick={() => handleSort('total_anggaran')}
-                                    >
-                                        <div className="flex items-center justify-end gap-1">
-                                            Anggaran
-                                            <div className="flex flex-col ml-1">
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-right select-none">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSort('total_anggaran')}
+                                            className="inline-flex items-center justify-end gap-1.5 font-medium text-gray-800 dark:text-gray-200 hover:text-teal-600 dark:hover:text-teal-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-600/50"
+                                        >
+                                            <span>Anggaran</span>
+                                            <span className="flex flex-col ml-0.5">
                                                 {sortBy === 'total_anggaran' ? (
                                                     sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
                                                 ) : (
                                                     <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 )}
-                                            </div>
-                                        </div>
+                                            </span>
+                                        </button>
                                     </th>
-                                    <th 
-                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                        onClick={() => handleSort('status_persetujuan')}
-                                    >
-                                        <div className="flex items-center justify-center gap-1">
-                                            Status Dokumen
-                                            <div className="flex flex-col ml-1">
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center select-none">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSort('status_persetujuan')}
+                                            className="inline-flex items-center justify-center gap-1.5 font-medium text-gray-800 dark:text-gray-200 hover:text-teal-600 dark:hover:text-teal-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-600/50"
+                                        >
+                                            <span>Status Dokumen</span>
+                                            <span className="flex flex-col ml-0.5">
                                                 {sortBy === 'status_persetujuan' ? (
                                                     sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
                                                 ) : (
                                                     <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 )}
-                                            </div>
-                                        </div>
+                                            </span>
+                                        </button>
                                     </th>
-                                    <th 
-                                        className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                        onClick={() => handleSort('tanggal_pengajuan')}
-                                    >
-                                        <div className="flex items-center justify-center gap-1">
-                                            Tanggal Pengajuan
-                                            <div className="flex flex-col ml-1">
+                                    <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center select-none">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSort('tanggal_pengajuan')}
+                                            className="inline-flex items-center justify-center gap-1.5 font-medium text-gray-800 dark:text-gray-200 hover:text-teal-600 dark:hover:text-teal-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-600/50"
+                                        >
+                                            <span>Tanggal Pengajuan</span>
+                                            <span className="flex flex-col ml-0.5">
                                                 {sortBy === 'tanggal_pengajuan' ? (
                                                     sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600 dark:text-teal-400" /> : <ArrowDown size={14} className="text-teal-600 dark:text-teal-400" />
                                                 ) : (
                                                     <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 )}
-                                            </div>
-                                        </div>
+                                            </span>
+                                        </button>
                                     </th>
                                     <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>
                                 </tr>
@@ -510,11 +518,12 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                             </td>
                                             <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">{formatDate(item.tanggal_pengajuan)}</td>
                                             <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                <ActionGroup>
+                                                <ActionGroup vertical>
                                                     {/* --- DETAIL --- */}
                                                     <ActionButton
                                                         variant="detail"
                                                         tooltip="Detail RKAT"
+                                                        tooltipSide="left"
                                                         href={route('daftar-ajuan.show', item.uuid)}
                                                     />
 
@@ -522,6 +531,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                                     <ActionButton
                                                         variant="export"
                                                         tooltip="Export PDF"
+                                                        tooltipSide="left"
                                                         href={route('daftar-ajuan.export', item.uuid)}
                                                         target="_blank"
                                                     />
@@ -531,6 +541,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                                         <ActionButton
                                                             variant="edit"
                                                             tooltip="Edit RKAT"
+                                                            tooltipSide="left"
                                                             href={route('daftar-ajuan.edit', item.uuid)}
                                                         />
                                                     )}
@@ -539,6 +550,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                                         <ActionButton
                                                             variant="delete"
                                                             tooltip="Hapus Draft RKAT"
+                                                            tooltipSide="left"
                                                             onClick={() => handleDeleteDraft(item)}
                                                         />
                                                     )}
@@ -548,6 +560,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                                         <ActionButton
                                                             variant="submit"
                                                             tooltip="Ajukan RKAT"
+                                                            tooltipSide="left"
                                                             disabled={submittingId === item.uuid || isLocked}
                                                             onClick={() => handleAjukan(item)}
                                                         />

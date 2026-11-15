@@ -7,9 +7,11 @@ import { toast } from 'sonner';
 import { usePermission } from '@/hooks/usePermission';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ActionButton, { ActionGroup } from '@/Components/ActionButton';
+import { useResizableTable } from '@/hooks/useResizableTable';
 
 export default function Index({ auth, units = [], users = [], allUnits = [], approvalPaths = [], flash = {}, filters = {} }) {
     const { isAdmin } = usePermission();
+    const { tableRef } = useResizableTable('admin_units');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTipe, setSelectedTipe] = useState('');
     const [selectedParent, setSelectedParent] = useState('');
@@ -178,53 +180,56 @@ export default function Index({ auth, units = [], users = [], allUnits = [], app
 
                         {/* Table */}
                         <div className="overflow-x-auto rounded-lg border border-gray-300 dark:border-gray-700">
-                            <table className="min-w-[480px] w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
+                            <table ref={tableRef} className="min-w-[480px] w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
                                 <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                     <tr>
-                                        <th 
-                                            className="w-[110px] min-w-[110px] px-3 py-3 border-b border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                            onClick={() => handleSort('kode_unit')}
-                                        >
-                                            <div className="flex items-center justify-between">
+                                        <th className="w-[110px] min-w-[110px] px-3 py-3 border-b border-gray-300 dark:border-gray-600 font-medium select-none">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSort('kode_unit')}
+                                                className="inline-flex items-center gap-1 font-medium text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-600/50"
+                                            >
                                                 <span>Unit</span>
-                                                <div className="flex flex-col ml-1">
+                                                <span className="flex flex-col ml-1">
                                                     {sortBy === 'kode_unit' ? (
                                                         sortDirection === 'asc' ? <ArrowUp size={14} className="text-blue-600 dark:text-blue-400" /> : <ArrowDown size={14} className="text-blue-600 dark:text-blue-400" />
                                                     ) : (
                                                         <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     )}
-                                                </div>
-                                            </div>
+                                                </span>
+                                            </button>
                                         </th>
-                                        <th 
-                                            className="w-[125px] min-w-[125px] px-3 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                            onClick={() => handleSort('tipe_unit')}
-                                        >
-                                            <div className="flex items-center justify-between">
+                                        <th className="w-[125px] min-w-[125px] px-3 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium select-none">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSort('tipe_unit')}
+                                                className="inline-flex items-center gap-1 font-medium text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-600/50"
+                                            >
                                                 <span>Biro Unit</span>
-                                                <div className="flex flex-col ml-1">
+                                                <span className="flex flex-col ml-1">
                                                     {sortBy === 'tipe_unit' ? (
                                                         sortDirection === 'asc' ? <ArrowUp size={14} className="text-blue-600 dark:text-blue-400" /> : <ArrowDown size={14} className="text-blue-600 dark:text-blue-400" />
                                                     ) : (
                                                         <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     )}
-                                                </div>
-                                            </div>
+                                                </span>
+                                            </button>
                                         </th>
-                                        <th 
-                                            className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                            onClick={() => handleSort('nama_unit')}
-                                        >
-                                            <div className="flex items-center justify-between">
+                                        <th className="px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium select-none">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSort('nama_unit')}
+                                                className="inline-flex items-center gap-1 font-medium text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 group cursor-pointer transition-colors p-1 -m-1 rounded hover:bg-gray-100/70 dark:hover:bg-gray-600/50"
+                                            >
                                                 <span>Nama Unit</span>
-                                                <div className="flex flex-col ml-1">
+                                                <span className="flex flex-col ml-1">
                                                     {sortBy === 'nama_unit' ? (
                                                         sortDirection === 'asc' ? <ArrowUp size={14} className="text-blue-600 dark:text-blue-400" /> : <ArrowDown size={14} className="text-blue-600 dark:text-blue-400" />
                                                     ) : (
                                                         <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     )}
-                                                </div>
-                                            </div>
+                                                </span>
+                                            </button>
                                         </th>
                                         <th className="w-[240px] min-w-[240px] px-6 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Kepala Unit</th>
                                         <th className="w-[180px] min-w-[180px] px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Alur Persetujuan RKA</th>
