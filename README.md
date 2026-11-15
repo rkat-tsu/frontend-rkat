@@ -268,7 +268,7 @@ Buka peramban Anda di: **`http://127.0.0.1:8000`**
 
 Platform Sistem RKAT Kampus ini dikembangkan dan dikelola oleh:
 
-- **Fauzi Adam Prasetyo** — *Frontend Developer*
+- **Fauzi Adam Prasetyo** — *Fullstack Developer and Team Leader*
 - **Java Dewangga** — *Backend Developer*
 - **Alifudin Nurhafidzi** — *Backend Developer*
 - **Rhenaldy T.D.P** — *UI/UX Designer*
