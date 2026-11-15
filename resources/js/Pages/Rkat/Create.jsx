@@ -915,7 +915,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                 <div className={`overflow-x-auto rounded-lg mb-4 ${getFieldError('indikator_kinerja') ? 'border-2 border-rose-500 ring-2 ring-rose-500/20' : ''}`}>
                                     {(() => {
                                         const selectedTahunData = tahunAnggarans.find(t => String(t.tahun_anggaran) === String(data.tahun_anggaran));
-                                        const labels = selectedTahunData?.indikator_labels || { past: '2025', current: 'Tahun 2026', future: 'Akhir 2029' };
+                                        const tahunAnggaran = Number(selectedTahunData?.tahun_anggaran || data.tahun_anggaran) || new Date().getFullYear();
                                         
                                         return (
                                             <table ref={indikatorTableRef} className="min-w-full">
@@ -923,11 +923,11 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                                     <tr>
                                                         <th className="px-2 py-3 text-xs text-center">No</th>
                                                         <th className="px-4 py-3 text-xs text-left min-w-[200px]">Indikator</th>
-                                                        <th className="px-4 py-3 text-xs text-center min-w-[100px]">Kondisi {labels.past}</th>
-                                                        <th className="px-4 py-3 text-xs text-center">Target {labels.current}</th>
-                                                        <th className="px-4 py-3 text-xs text-center">Capaian {labels.current}</th>
-                                                        <th className="px-4 py-3 text-xs text-center">Target {labels.future}</th>
-                                                        <th className="px-4 py-3 text-xs text-center">Capaian {labels.future}</th>
+                                                        <th className="px-4 py-3 text-xs text-center min-w-[100px]">Kondisi {tahunAnggaran - 1}</th>
+                                                        <th className="px-4 py-3 text-xs text-center">Target Tahun {tahunAnggaran}</th>
+                                                        <th className="px-4 py-3 text-xs text-center">Kontribusi Akreditasi</th>
+                                                        <th className="px-4 py-3 text-xs text-center">Kontribusi GAP</th>
+                                                        <th className="px-4 py-3 text-xs text-center">Kontribusi KPI</th>
                                                         <th></th>
                                                     </tr>
                                                 </thead>
