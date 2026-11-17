@@ -64,21 +64,23 @@ class TahunAnggaranController extends Controller
             'tanggal_akhir' => 'required|date|after_or_equal:tanggal_mulai',
             'status_rkat' => ['required', Rule::in(['Drafting', 'Submission', 'Approved', 'Closed'])],
             'indikator_labels' => 'nullable|array',
-            'indikator_labels.past' => 'nullable|string|max:100',
-            'indikator_labels.current' => 'nullable|string|max:100',
-            'indikator_labels.future' => 'nullable|string|max:100',
+            'indikator_labels.col_kondisi' => 'nullable|string|max:150',
+            'indikator_labels.col_renstra' => 'nullable|string|max:150',
+            'indikator_labels.col_akreditasi' => 'nullable|string|max:150',
+            'indikator_labels.col_gap' => 'nullable|string|max:150',
+            'indikator_labels.col_kpi' => 'nullable|string|max:150',
         ], [
             'tahun_anggaran.unique' => 'Tahun Anggaran ini sudah terdaftar dan masih aktif.',
         ]);
 
         $y = (int) $validated['tahun_anggaran'];
-        if (empty($validated['indikator_labels']) || empty($validated['indikator_labels']['past'])) {
-            $validated['indikator_labels'] = [
-                'past' => (string) ($y - 1),
-                'current' => "Tahun {$y}",
-                'future' => "Akhir " . ($y + 3),
-            ];
-        }
+        $validated['indikator_labels'] = array_merge([
+            'col_kondisi' => "Kondisi Tahun " . ($y - 1),
+            'col_renstra' => "RENSTRA Tahun {$y}",
+            'col_akreditasi' => 'Kontribusi Akreditasi',
+            'col_gap' => 'Kontribusi GAP',
+            'col_kpi' => 'Kontribusi KPI',
+        ], $validated['indikator_labels'] ?? []);
 
         $existingRecord = TahunAnggaran::withTrashed()
             ->where('tahun_anggaran', $validated['tahun_anggaran'])
@@ -105,19 +107,21 @@ class TahunAnggaranController extends Controller
             'tanggal_akhir' => 'required|date|after_or_equal:tanggal_mulai',
             'status_rkat' => ['required', Rule::in(['Drafting', 'Submission', 'Approved', 'Closed'])],
             'indikator_labels' => 'nullable|array',
-            'indikator_labels.past' => 'nullable|string|max:100',
-            'indikator_labels.current' => 'nullable|string|max:100',
-            'indikator_labels.future' => 'nullable|string|max:100',
+            'indikator_labels.col_kondisi'    => 'nullable|string|max:150',
+            'indikator_labels.col_renstra'    => 'nullable|string|max:150',
+            'indikator_labels.col_akreditasi' => 'nullable|string|max:150',
+            'indikator_labels.col_gap'        => 'nullable|string|max:150',
+            'indikator_labels.col_kpi'        => 'nullable|string|max:150',
         ]);
 
         $y = (int) $tahun->tahun_anggaran;
-        if (empty($validated['indikator_labels']) || empty($validated['indikator_labels']['past'])) {
-            $validated['indikator_labels'] = [
-                'past' => (string) ($y - 1),
-                'current' => "Tahun {$y}",
-                'future' => "Akhir " . ($y + 3),
-            ];
-        }
+        $validated['indikator_labels'] = array_merge([
+            'col_kondisi' => "Kondisi Tahun " . ($y - 1),
+            'col_renstra' => "RENSTRA Tahun {$y}",
+            'col_akreditasi' => 'Kontribusi Akreditasi',
+            'col_gap' => 'Kontribusi GAP',
+            'col_kpi' => 'Kontribusi KPI',
+        ], $validated['indikator_labels'] ?? []);
 
         $tahun->fill($validated)->save();
 

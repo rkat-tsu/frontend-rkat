@@ -15,6 +15,7 @@ use App\Models\ApprovalPathStep;
 use App\Models\Karyawan;
 use App\Models\RkatKomentar;
 use App\Models\JenisKegiatanOption;
+use App\Support\DatabaseErrorMessage;
 use App\Http\Controllers\Concerns\PreservesPagination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -89,7 +90,9 @@ class RkatController extends Controller
             ->with([
                 'unit:id_unit,nama_unit',
                 'tahun_obj:id_tahun,tahun_anggaran,status_rkat',
-                'rkatDetails:id_rkat_detail,id_header,judul_kegiatan,deskripsi_kegiatan,jadwal_pelaksanaan_mulai,jadwal_pelaksanaan_akhir,anggaran',
+                'rkatDetails:id_rkat_detail,id_header,id_iku,id_ikk,judul_kegiatan,deskripsi_kegiatan,jadwal_pelaksanaan_mulai,jadwal_pelaksanaan_akhir,anggaran',
+                'rkatDetails.iku:id_iku,nama_iku',
+                'rkatDetails.ikk:id_ikk,nama_ikk',
                 'pencairanDanas:id_pencairan,id_header,status_pencairan,nama_pencairan',
                 'pencairanDanas.lpj:id_lpj,id_pencairan,status_lpj'
             ])
@@ -292,8 +295,11 @@ class RkatController extends Controller
 
             // D. SIMPAN RAB
             $totalAnggaran = 0;
+            $nonSboIndex = 0;
             foreach ($request->input('rincian_anggaran') as $item) {
-                $kodeAnggaran = (isset($item['kode_anggaran']) && $item['kode_anggaran'] === '__OTHER__') ? null : ($item['kode_anggaran'] ?? null);
+                $kodeAnggaran = (isset($item['kode_anggaran']) && $item['kode_anggaran'] === '__OTHER__')
+                    ? 'NON-SBO/NS.' . ++$nonSboIndex
+                    : ($item['kode_anggaran'] ?? null);
                 $volume = (float) $item['vol'];
                 $volume2 = isset($item['vol2']) && $item['vol2'] !== '' ? (float) $item['vol2'] : null;
                 $hargaSatuan = (float) $item['biaya_satuan'];
@@ -323,7 +329,7 @@ class RkatController extends Controller
             foreach ($uploadedPaths ?? [] as $path) Storage::disk('local')->delete($path);
             Log::error('[RKAT] Kesalahan: ' . $e->getMessage());
 
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat memproses data: ' . $e->getMessage())->withInput();
+            return redirect()->back()->with('error', 'Gagal menyimpan RKAT: ' . DatabaseErrorMessage::forUser($e, 'Terjadi kesalahan. Silakan coba lagi atau hubungi administrator.'))->withInput();
         }
     }
 
@@ -486,7 +492,7 @@ class RkatController extends Controller
             return $this->redirectToPaginatedList($request, 'rkat', 'daftar-ajuan.index')->with('success', 'RKAT berhasil diajukan dan sedang menunggu persetujuan Kepala Unit.');
         } catch (\Exception $e) {
             Log::error('[RKAT] Gagal Submit: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Gagal mengajukan RKAT: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengajukan RKAT: ' . DatabaseErrorMessage::forUser($e, 'Terjadi kesalahan. Silakan coba lagi atau hubungi administrator.'));
         }
     }
 
@@ -728,8 +734,11 @@ class RkatController extends Controller
             }
 
             $rabItemIdsToKeep = [];
+            $nonSboIndex = 0;
             foreach ($request->input('rincian_anggaran') as $item) {
-                $kodeAnggaran = (isset($item['kode_anggaran']) && $item['kode_anggaran'] === '__OTHER__') ? null : ($item['kode_anggaran'] ?? null);
+                $kodeAnggaran = (isset($item['kode_anggaran']) && $item['kode_anggaran'] === '__OTHER__')
+                    ? 'NON-SBO/NS.' . ++$nonSboIndex
+                    : ($item['kode_anggaran'] ?? null);
                 $volume = (float) $item['vol'];
                 $volume2 = isset($item['vol2']) && $item['vol2'] !== '' ? (float) $item['vol2'] : null;
                 $hargaSatuan = (float) $item['biaya_satuan'];
@@ -761,7 +770,8 @@ class RkatController extends Controller
             DB::rollBack();
             foreach ($uploadedPaths ?? [] as $path) Storage::disk('local')->delete($path);
             Log::error('[RKAT] Gagal Update: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Gagal memperbarui RKAT: ' . $e->getMessage())->withInput();
+            $message = 'Gagal memperbarui RKAT: ' . DatabaseErrorMessage::forUser($e, 'Terjadi kesalahan. Silakan coba lagi atau hubungi administrator.');
+            return redirect()->back()->with('error', $message)->withInput();
         }
     }
     public function destroy(RkatHeader $rkatHeader)
@@ -819,11 +829,10 @@ class RkatController extends Controller
 
             return $pdf->download('RKAT_' . str_replace(['/', '\\'], '-', $rkatHeader->nomor_dokumen) . '.pdf');
         } catch (\Exception $e) {
+            $databaseMessage = DatabaseErrorMessage::explain($e);
             return response()->json([
                 'error' => 'Export Failed',
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'message' => $databaseMessage ?? 'Gagal membuat PDF RKAT. Silakan coba lagi atau hubungi administrator.',
             ], 500);
         }
     }

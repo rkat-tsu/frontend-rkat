@@ -916,6 +916,12 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                     {(() => {
                                         const selectedTahunData = tahunAnggarans.find(t => String(t.tahun_anggaran) === String(data.tahun_anggaran));
                                         const tahunAnggaran = Number(selectedTahunData?.tahun_anggaran || data.tahun_anggaran) || new Date().getFullYear();
+                                        const lbl = selectedTahunData?.indikator_labels || {};
+                                        const colKondisi    = lbl.col_kondisi    || `Kondisi Tahun ${tahunAnggaran - 1}`;
+                                        const colRenstra    = lbl.col_renstra    || `RENSTRA Tahun ${tahunAnggaran}`;
+                                        const colAkreditasi = lbl.col_akreditasi || 'Kontribusi Akreditasi';
+                                        const colGap        = lbl.col_gap        || 'Kontribusi GAP';
+                                        const colKpi        = lbl.col_kpi        || 'Kontribusi KPI';
                                         
                                         return (
                                             <table ref={indikatorTableRef} className="min-w-full">
@@ -923,11 +929,11 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                                     <tr>
                                                         <th className="px-2 py-3 text-xs text-center">No</th>
                                                         <th className="px-4 py-3 text-xs text-left min-w-[200px]">Indikator</th>
-                                                        <th className="px-4 py-3 text-xs text-center min-w-[100px]">Kondisi {tahunAnggaran - 1}</th>
-                                                        <th className="px-4 py-3 text-xs text-center">Target Tahun {tahunAnggaran}</th>
-                                                        <th className="px-4 py-3 text-xs text-center">Kontribusi Akreditasi</th>
-                                                        <th className="px-4 py-3 text-xs text-center">Kontribusi GAP</th>
-                                                        <th className="px-4 py-3 text-xs text-center">Kontribusi KPI</th>
+                                                        <th className="px-4 py-3 text-xs text-left min-w-[100px]">{colKondisi}</th>
+                                                        <th className="px-4 py-3 text-xs text-left">{colRenstra}</th>
+                                                        <th className="px-4 py-3 text-xs text-left">{colAkreditasi}</th>
+                                                        <th className="px-4 py-3 text-xs text-left">{colGap}</th>
+                                                        <th className="px-4 py-3 text-xs text-left">{colKpi}</th>
                                                         <th></th>
                                                     </tr>
                                                 </thead>
@@ -936,11 +942,11 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
                                                         <tr key={item.id} className="hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors">
                                                             <td className="px-2 py-3 text-sm text-center align-top pt-4">{index + 1}</td>
                                                             <td className="p-2 align-top"><TextArea value={item.indikator} onChange={(e) => handleIndikatorChange(index, 'indikator', e.target.value)} className="w-full text-sm min-h-[80px]" rows="3" placeholder="Indikator..." /></td>
-                                                            <td className="p-2 align-top"><TextArea value={item.past_capaian} onChange={(e) => handleIndikatorChange(index, 'past_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                            <td className="p-2 align-top"><TextArea value={item.current_target} onChange={(e) => handleIndikatorChange(index, 'current_target', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                            <td className="p-2 align-top"><TextArea value={item.current_capaian} onChange={(e) => handleIndikatorChange(index, 'current_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                            <td className="p-2 align-top"><TextArea value={item.future_target} onChange={(e) => handleIndikatorChange(index, 'future_target', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
-                                                            <td className="p-2 align-top"><TextArea value={item.future_capaian} onChange={(e) => handleIndikatorChange(index, 'future_capaian', e.target.value)} className="w-full text-sm text-center min-h-[80px]" rows="3" /></td>
+                                                            <td className="p-2 align-top"><TextArea value={item.past_capaian} onChange={(e) => handleIndikatorChange(index, 'past_capaian', e.target.value)} className="w-full text-sm text-left min-h-[80px]" rows="3" /></td>
+                                                            <td className="p-2 align-top"><TextArea value={item.current_target} onChange={(e) => handleIndikatorChange(index, 'current_target', e.target.value)} className="w-full text-sm text-left min-h-[80px]" rows="3" /></td>
+                                                            <td className="p-2 align-top"><TextArea value={item.current_capaian} onChange={(e) => handleIndikatorChange(index, 'current_capaian', e.target.value)} className="w-full text-sm text-left min-h-[80px]" rows="3" /></td>
+                                                            <td className="p-2 align-top"><TextArea value={item.future_target} onChange={(e) => handleIndikatorChange(index, 'future_target', e.target.value)} className="w-full text-sm text-left min-h-[80px]" rows="3" /></td>
+                                                            <td className="p-2 align-top"><TextArea value={item.future_capaian} onChange={(e) => handleIndikatorChange(index, 'future_capaian', e.target.value)} className="w-full text-sm text-left min-h-[80px]" rows="3" /></td>
                                                             <td className="p-2 pt-4 align-top"><button type="button" onClick={() => removeIndikatorRow(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"><Trash2 size={16} /></button></td>
                                                         </tr>
                                                     ))}

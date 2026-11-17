@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PencairanDana;
+use App\Support\DatabaseErrorMessage;
 use App\Models\RkatHeader;
 use App\Models\TahunAnggaran;
 use App\Models\Unit;
@@ -740,7 +741,7 @@ class PencairanDanaController extends Controller
 
             return $pdf->download('Pencairan_Dana_' . $pencairan->rkatHeader->nomor_dokumen . '.pdf');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal export PDF: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal export PDF: ' . DatabaseErrorMessage::forUser($e, 'Terjadi kesalahan. Silakan coba lagi atau hubungi administrator.'));
         }
     }
 }

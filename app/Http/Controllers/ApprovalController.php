@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\LogPersetujuan;
 use App\Models\RkatHeader;
 use App\Models\TahunAnggaran;
+use App\Support\DatabaseErrorMessage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -248,9 +249,10 @@ class ApprovalController extends Controller
             return Redirect::route('approval.index')->with('success', "RKAT #{$rkatHeader->id_header} berhasil di{$aksi}.");
         } catch (\Exception $e) {
             Log::error('[Approval] Gagal memproses aksi: ' . $e->getMessage());
+            $message = 'Gagal memproses persetujuan: ' . DatabaseErrorMessage::forUser($e, 'Terjadi kesalahan. Silakan coba lagi atau hubungi administrator.');
             return Redirect::back()->withErrors([
-                'error' => 'Gagal memproses persetujuan: ' . $e->getMessage(),
-            ])->with('error', 'Gagal memproses persetujuan: ' . $e->getMessage());
+                'error' => $message,
+            ])->with('error', $message);
         }
     }
 }

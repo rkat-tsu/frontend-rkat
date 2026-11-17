@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lpj;
+use App\Support\DatabaseErrorMessage;
 use App\Models\LpjItem;
 use App\Models\PencairanDana;
 use App\Models\RkatHeader;
@@ -566,7 +567,7 @@ class LpjController extends Controller
             $filename = 'LPJ_' . str_replace('/', '_', $lpj->nomor_lpj) . '.pdf';
             return $pdf->download($filename);
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal membuat dokumen PDF LPJ: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal membuat dokumen PDF LPJ: ' . DatabaseErrorMessage::forUser($e, 'Terjadi kesalahan. Silakan coba lagi atau hubungi administrator.'));
         }
     }
 

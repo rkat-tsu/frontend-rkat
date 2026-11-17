@@ -7,6 +7,7 @@ use App\Models\Iku;
 use App\Models\Ikk; 
 use App\Models\TahunAnggaran;
 use App\Models\IkuChangeLog;
+use App\Support\DatabaseErrorMessage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -171,7 +172,7 @@ class IkuController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('[IKU] Store Master Error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Gagal menyimpan IKU: ' . $e->getMessage())->withInput();
+            return redirect()->back()->with('error', 'Gagal menyimpan IKU: ' . DatabaseErrorMessage::forUser($e, 'Terjadi kesalahan. Silakan coba lagi atau hubungi administrator.'))->withInput();
         }
     }
 
@@ -241,7 +242,7 @@ class IkuController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('[IKU] Store Annual Error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage())->withInput();
+            return redirect()->back()->with('error', 'Gagal menyimpan IKU dan IKK: ' . DatabaseErrorMessage::forUser($e, 'Terjadi kesalahan. Silakan coba lagi atau hubungi administrator.'))->withInput();
         }
     }
 
@@ -276,7 +277,7 @@ class IkuController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('[IKU] Destroy Error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Gagal menghapus IKU: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal menghapus IKU: ' . DatabaseErrorMessage::forUser($e, 'Terjadi kesalahan. Silakan coba lagi atau hubungi administrator.'));
         }
     }
 
@@ -398,7 +399,7 @@ class IkuController extends Controller
 
             return redirect()
                 ->back()
-                ->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage())
+                ->with('error', 'Gagal menyimpan daftar IKK: ' . DatabaseErrorMessage::forUser($e, 'Terjadi kesalahan. Silakan coba lagi atau hubungi administrator.'))
                 ->withInput();
         }
     }
@@ -474,7 +475,7 @@ class IkuController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('[IKU] Copy Year Error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Gagal menyalin data: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal menyalin data: ' . DatabaseErrorMessage::forUser($e, 'Terjadi kesalahan. Silakan coba lagi atau hubungi administrator.'));
         }
     }
 
@@ -566,7 +567,7 @@ class IkuController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('[IKU] Update Unified Error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Gagal memperbarui IKU: ' . $e->getMessage())->withInput();
+            return redirect()->back()->with('error', 'Gagal memperbarui IKU: ' . DatabaseErrorMessage::forUser($e, 'Terjadi kesalahan. Silakan coba lagi atau hubungi administrator.'))->withInput();
         }
     }
 }

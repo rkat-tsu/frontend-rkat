@@ -14,6 +14,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use App\Support\DatabaseErrorMessage;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -52,9 +53,10 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             if (in_array($statusCode, [500, 503, 404, 403, 405])) {
+                $databaseMessage = DatabaseErrorMessage::explain($e);
                 return Inertia::render('Error', [
                     'status' => $statusCode,
-                    'message' => config('app.debug') ? $e->getMessage() : 'Terjadi kesalahan internal server.',
+                    'message' => $databaseMessage ?? (config('app.debug') ? $e->getMessage() : 'Terjadi kesalahan internal server.'),
                 ])->toResponse($request)->setStatusCode($statusCode);
             }
 

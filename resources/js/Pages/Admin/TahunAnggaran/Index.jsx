@@ -45,12 +45,14 @@ export default function Index({ tahunAnggarans, filters = {} }) {
     const computeIndikatorLabels = (yearVal) => {
         const y = parseInt(yearVal, 10);
         if (!y || isNaN(y)) {
-            return { past: '', current: '', future: '' };
+            return { col_kondisi: '', col_renstra: '', col_akreditasi: 'Kontribusi Akreditasi', col_gap: 'Kontribusi GAP', col_kpi: 'Kontribusi KPI' };
         }
         return {
-            past: String(y - 1),
-            current: `Tahun ${y}`,
-            future: `Akhir ${y + 3}`
+            col_kondisi: `Kondisi Tahun ${y - 1}`,
+            col_renstra: `RENSTRA Tahun ${y}`,
+            col_akreditasi: 'Kontribusi Akreditasi',
+            col_gap: 'Kontribusi GAP',
+            col_kpi: 'Kontribusi KPI',
         };
     };
 
@@ -59,11 +61,7 @@ export default function Index({ tahunAnggarans, filters = {} }) {
         status_rkat: 'Drafting',
         tanggal_mulai: '',
         tanggal_akhir: '',
-        indikator_labels: {
-            past: '',
-            current: '',
-            future: ''
-        }
+        indikator_labels: computeIndikatorLabels('')
     });
 
     const handleCreateChange = (field, value) => {
@@ -164,11 +162,7 @@ export default function Index({ tahunAnggarans, filters = {} }) {
         status_rkat: 'Drafting',
         tanggal_mulai: '',
         tanggal_akhir: '',
-        indikator_labels: {
-            past: '',
-            current: '',
-            future: ''
-        }
+        indikator_labels: computeIndikatorLabels('')
     });
 
     const formatInputDate = (isoString) => {
@@ -189,9 +183,8 @@ export default function Index({ tahunAnggarans, filters = {} }) {
             tanggal_mulai: formatInputDate(tahun.tanggal_mulai),
             tanggal_akhir: formatInputDate(tahun.tanggal_akhir),
             indikator_labels: {
-                past: tahun.indikator_labels?.past || computed.past,
-                current: tahun.indikator_labels?.current || computed.current,
-                future: tahun.indikator_labels?.future || computed.future,
+                ...computed,
+                ...tahun.indikator_labels,
             }
         });
         setIsEditModalOpen(true);
@@ -572,42 +565,52 @@ export default function Index({ tahunAnggarans, filters = {} }) {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                <div className="flex flex-col h-full">
-                                    <InputLabel value="Tahun Lalu (Capaian)" />
-                                    <div className="mt-auto pt-1">
-                                        <TextInput
-                                            type="text"
-                                            value={data.indikator_labels?.past || ''}
-                                            onChange={(e) => setData('indikator_labels', { ...data.indikator_labels, past: e.target.value })}
-                                            className="block w-full"
-                                            placeholder="Contoh: 2025"
-                                        />
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                {[
+                                    ['col_kondisi', 'Kondisi Tahun Sebelumnya', `Kondisi Tahun ${(data.tahun_anggaran || new Date().getFullYear()) - 1}`],
+                                    ['col_renstra', 'RENSTRA Tahun Anggaran', `RENSTRA Tahun ${data.tahun_anggaran || new Date().getFullYear()}`],
+                                    ['col_akreditasi', 'Kontribusi Akreditasi', 'Kontribusi Akreditasi'],
+                                    ['col_gap', 'Kontribusi GAP', 'Kontribusi GAP'],
+                                    ['col_kpi', 'Kontribusi KPI', 'Kontribusi KPI'],
+                                ].map(([key, label, placeholder], index) => (
+                                    <div className="flex flex-col h-full" key={key}>
+                                        <InputLabel value={`Kolom ${index + 1} — ${label}`} />
+                                        <div className="mt-auto pt-1">
+                                            <TextInput
+                                                type="text"
+                                                value={data.indikator_labels?.[key] || ''}
+                                                onChange={(e) => setData('indikator_labels', { ...data.indikator_labels, [key]: e.target.value })}
+                                                className="block w-full"
+                                                placeholder={`Contoh: ${placeholder}`}
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="flex flex-col h-full">
-                                    <InputLabel value="Tahun Berjalan (Target & Capaian)" />
-                                    <div className="mt-auto pt-1">
-                                        <TextInput
-                                            type="text"
-                                            value={data.indikator_labels?.current || ''}
-                                            onChange={(e) => setData('indikator_labels', { ...data.indikator_labels, current: e.target.value })}
-                                            className="block w-full"
-                                            placeholder="Contoh: Tahun 2026"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="flex flex-col h-full">
-                                    <InputLabel value="Tahun Mendatang (Target & Capaian)" />
-                                    <div className="mt-auto pt-1">
-                                        <TextInput
-                                            type="text"
-                                            value={data.indikator_labels?.future || ''}
-                                            onChange={(e) => setData('indikator_labels', { ...data.indikator_labels, future: e.target.value })}
-                                            className="block w-full"
-                                            placeholder="Contoh: Akhir 2029"
-                                        />
-                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-6">
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview kolom pada form RKAT</p>
+                                <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                                    <table className="min-w-full text-left text-xs">
+                                        <thead className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+                                            <tr>
+                                                <th className="px-3 py-2 font-semibold">No</th>
+                                                <th className="px-3 py-2 font-semibold">Indikator</th>
+                                                {['col_kondisi', 'col_renstra', 'col_akreditasi', 'col_gap', 'col_kpi'].map((key, index) => (
+                                                    <th key={key} className="px-3 py-2 font-semibold whitespace-nowrap">{index + 1}. {data.indikator_labels?.[key] || ''}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr className="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                                                <td className="px-3 py-3 border-t border-gray-200 dark:border-gray-700">1</td>
+                                                <td className="px-3 py-3 border-t border-gray-200 dark:border-gray-700">Contoh indikator</td>
+                                                {[1, 2, 3, 4, 5].map((column) => (
+                                                    <td key={column} className="px-3 py-3 border-t border-gray-200 dark:border-gray-700">Isi indikator</td>
+                                                ))}
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -748,47 +751,98 @@ export default function Index({ tahunAnggarans, filters = {} }) {
                                 </div>
                                 <div>
                                     <h3 className="text-md font-medium text-gray-900 dark:text-white">
-                                        Pengaturan Tahun Indikator Keberhasilan
+                                        Pengaturan Label Kolom Indikator Kinerja
                                     </h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Label kolom yang tampil pada form RKAT</p>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                                 <div className="flex flex-col h-full">
-                                    <InputLabel value="Tahun Lalu (Capaian)" />
+                                    <InputLabel value="Kolom 1 — Kondisi Tahun Sebelumnya" />
                                     <div className="mt-auto pt-1">
                                         <TextInput
                                             type="text"
-                                            value={editForm.data.indikator_labels?.past || ''}
-                                            onChange={(e) => editForm.setData('indikator_labels', { ...editForm.data.indikator_labels, past: e.target.value })}
+                                            value={editForm.data.indikator_labels?.col_kondisi || ''}
+                                            onChange={(e) => editForm.setData('indikator_labels', { ...editForm.data.indikator_labels, col_kondisi: e.target.value })}
                                             className="block w-full"
-                                            placeholder="Contoh: 2025"
+                                            placeholder={`Contoh: Kondisi Tahun ${(editForm.data.tahun_anggaran || new Date().getFullYear()) - 1}`}
                                         />
                                     </div>
                                 </div>
                                 <div className="flex flex-col h-full">
-                                    <InputLabel value="Tahun Berjalan (Target & Capaian)" />
+                                    <InputLabel value="Kolom 2 — RENSTRA Tahun Anggaran" />
                                     <div className="mt-auto pt-1">
                                         <TextInput
                                             type="text"
-                                            value={editForm.data.indikator_labels?.current || ''}
-                                            onChange={(e) => editForm.setData('indikator_labels', { ...editForm.data.indikator_labels, current: e.target.value })}
+                                            value={editForm.data.indikator_labels?.col_renstra || ''}
+                                            onChange={(e) => editForm.setData('indikator_labels', { ...editForm.data.indikator_labels, col_renstra: e.target.value })}
                                             className="block w-full"
-                                            placeholder="Contoh: Tahun 2026"
+                                            placeholder={`Contoh: RENSTRA Tahun ${editForm.data.tahun_anggaran || new Date().getFullYear()}`}
                                         />
                                     </div>
                                 </div>
                                 <div className="flex flex-col h-full">
-                                    <InputLabel value="Tahun Mendatang (Target & Capaian)" />
+                                    <InputLabel value="Kolom 3 — Kontribusi Akreditasi" />
                                     <div className="mt-auto pt-1">
                                         <TextInput
                                             type="text"
-                                            value={editForm.data.indikator_labels?.future || ''}
-                                            onChange={(e) => editForm.setData('indikator_labels', { ...editForm.data.indikator_labels, future: e.target.value })}
+                                            value={editForm.data.indikator_labels?.col_akreditasi || ''}
+                                            onChange={(e) => editForm.setData('indikator_labels', { ...editForm.data.indikator_labels, col_akreditasi: e.target.value })}
                                             className="block w-full"
-                                            placeholder="Contoh: Akhir 2029"
+                                            placeholder="Contoh: Kontribusi Akreditasi"
                                         />
                                     </div>
+                                </div>
+                                <div className="flex flex-col h-full">
+                                    <InputLabel value="Kolom 4 — Kontribusi GAP" />
+                                    <div className="mt-auto pt-1">
+                                        <TextInput
+                                            type="text"
+                                            value={editForm.data.indikator_labels?.col_gap || ''}
+                                            onChange={(e) => editForm.setData('indikator_labels', { ...editForm.data.indikator_labels, col_gap: e.target.value })}
+                                            className="block w-full"
+                                            placeholder="Contoh: Kontribusi GAP"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex flex-col h-full">
+                                    <InputLabel value="Kolom 5 — Kontribusi KPI" />
+                                    <div className="mt-auto pt-1">
+                                        <TextInput
+                                            type="text"
+                                            value={editForm.data.indikator_labels?.col_kpi || ''}
+                                            onChange={(e) => editForm.setData('indikator_labels', { ...editForm.data.indikator_labels, col_kpi: e.target.value })}
+                                            className="block w-full"
+                                            placeholder="Contoh: Kontribusi KPI"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-6">
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview kolom pada form RKAT</p>
+                                <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                                    <table className="min-w-full text-left text-xs">
+                                        <thead className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+                                            <tr>
+                                                <th className="px-3 py-2 font-semibold">No</th>
+                                                <th className="px-3 py-2 font-semibold">Indikator</th>
+                                                {['col_kondisi', 'col_renstra', 'col_akreditasi', 'col_gap', 'col_kpi'].map((key, index) => (
+                                                    <th key={key} className="px-3 py-2 font-semibold whitespace-nowrap">{index + 1}. {editForm.data.indikator_labels?.[key] || ''}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr className="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                                                <td className="px-3 py-3 border-t border-gray-200 dark:border-gray-700">1</td>
+                                                <td className="px-3 py-3 border-t border-gray-200 dark:border-gray-700">Contoh indikator</td>
+                                                {[1, 2, 3, 4, 5].map((column) => (
+                                                    <td key={column} className="px-3 py-3 border-t border-gray-200 dark:border-gray-700">Isi indikator</td>
+                                                ))}
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>

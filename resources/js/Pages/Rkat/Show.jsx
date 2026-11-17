@@ -343,37 +343,40 @@ export default function Show({ auth, rkat = {}, history = [], initialTotalAnggar
                                             <td colSpan={2} className="p-0">
                                                 <div className="overflow-x-auto m-0 border-l-0">
                                                     {(() => {
-                                                        const labels = dataRkat?.tahun_obj?.indikator_labels || { past: '2025', current: 'Tahun 2026', future: 'Akhir 2029' };
+                                                        const tahun = Number(dataRkat?.tahun_obj?.tahun_anggaran) || new Date().getFullYear();
+                                                        const configuredLabels = dataRkat?.tahun_obj?.indikator_labels || {};
+                                                        const labels = {
+                                                            col_kondisi: configuredLabels.col_kondisi || `Kondisi Tahun ${tahun - 1}`,
+                                                            col_renstra: configuredLabels.col_renstra || `RENSTRA Tahun ${tahun}`,
+                                                            col_akreditasi: configuredLabels.col_akreditasi || 'Kontribusi Akreditasi',
+                                                            col_gap: configuredLabels.col_gap || 'Kontribusi GAP',
+                                                            col_kpi: configuredLabels.col_kpi || 'Kontribusi KPI',
+                                                        };
                                                         return (
                                                             <table className="w-full text-xs border-collapse">
                                                                 <thead className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                                                                     <tr>
-                                                                        <th rowSpan="2" className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-center">Indikator</th>
-                                                                        <th className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-center w-20">{labels.past}</th>
-                                                                        <th colSpan="2" className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-center">{labels.current}</th>
-                                                                        <th colSpan="2" className="p-2 border-b border-gray-300 dark:border-gray-700 text-center">{labels.future}</th>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-center">Capaian</th>
-                                                                        <th className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-center">Target</th>
-                                                                        <th className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-center">Capaian</th>
-                                                                        <th className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-center">Target</th>
-                                                                        <th className="p-2 border-b border-gray-300 dark:border-gray-700 text-center">Capaian</th>
+                                                                        <th className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-center">No</th>
+                                                                        <th className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-center">Indikator</th>
+                                                                        {[labels.col_kondisi, labels.col_renstra, labels.col_akreditasi, labels.col_gap, labels.col_kpi].map((label, index) => (
+                                                                            <th key={index} className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-left">{label}</th>
+                                                                        ))}
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
                                                                     {indikators.map((ind, i) => (
                                                                         <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                                                            <td className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-center text-gray-700 dark:text-gray-300">{i + 1}</td>
                                                                             <td className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">{ind.nama_indikator}</td>
-                                                                            <td className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-center text-gray-700 dark:text-gray-300">{ind.past_capaian || '-'}</td>
-                                                                            <td className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-center text-gray-700 dark:text-gray-300">{ind.current_target || '-'}</td>
-                                                                            <td className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-center text-gray-700 dark:text-gray-300">{ind.current_capaian || '-'}</td>
-                                                                            <td className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-center text-gray-700 dark:text-gray-300">{ind.future_target || '-'}</td>
-                                                                            <td className="p-2 border-b border-gray-300 dark:border-gray-700 text-center text-gray-700 dark:text-gray-300">{ind.future_capaian || '-'}</td>
+                                                                            <td className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-left text-gray-700 dark:text-gray-300">{ind.past_capaian || '-'}</td>
+                                                                            <td className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-left text-gray-700 dark:text-gray-300">{ind.current_target || '-'}</td>
+                                                                            <td className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-left text-gray-700 dark:text-gray-300">{ind.current_capaian || '-'}</td>
+                                                                            <td className="p-2 border-r border-b border-gray-300 dark:border-gray-700 text-left text-gray-700 dark:text-gray-300">{ind.future_target || '-'}</td>
+                                                                            <td className="p-2 border-b border-gray-300 dark:border-gray-700 text-left text-gray-700 dark:text-gray-300">{ind.future_capaian || '-'}</td>
                                                                         </tr>
                                                                     ))}
                                                                     {indikators.length === 0 && (
-                                                                        <tr><td colSpan="6" className="p-4 text-center text-gray-500 border-b border-gray-300 dark:border-gray-700">Tidak ada indikator</td></tr>
+                                                                        <tr><td colSpan="7" className="p-4 text-center text-gray-500 border-b border-gray-300 dark:border-gray-700">Tidak ada indikator</td></tr>
                                                                     )}
                                                                 </tbody>
                                                             </table>
@@ -495,10 +498,14 @@ export default function Show({ auth, rkat = {}, history = [], initialTotalAnggar
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {rabItems.map((rab, i) => (
+                                        {(() => {
+                                            let nonSboIndex = 0;
+                                            return rabItems.map((rab, i) => {
+                                                const kodeAnggaran = rab.kode_anggaran || `NON-SBO/NS.${++nonSboIndex}`;
+                                                return (
                                             <tr key={i} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
                                                 <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-center text-gray-600 dark:text-gray-400">{i + 1}</td>
-                                                <td className="p-3 border-r border-gray-200 dark:border-gray-700 font-mono text-gray-800 dark:text-gray-300 text-xs">{rab.kode_anggaran || '-'}</td>
+                                                <td className="p-3 border-r border-gray-200 dark:border-gray-700 font-mono text-gray-800 dark:text-gray-300 text-xs">{kodeAnggaran}</td>
                                                 <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-300">{rab.deskripsi_item}</td>
                                                 <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-center text-gray-800 dark:text-gray-300">{formatVolume(rab.volume)}</td>
                                                 <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-center text-gray-800 dark:text-gray-300">{rab.satuan}</td>
@@ -507,7 +514,9 @@ export default function Show({ auth, rkat = {}, history = [], initialTotalAnggar
                                                 <td className="p-3 border-r border-gray-200 dark:border-gray-700 text-right text-gray-800 dark:text-gray-300">{formatCurrency(rab.harga_satuan)}</td>
                                                 <td className="p-3 text-right font-medium text-gray-900 dark:text-gray-200">{formatCurrency(rab.sub_total)}</td>
                                             </tr>
-                                        ))}
+                                                );
+                                            });
+                                        })()}
                                         {rabItems.length === 0 && (
                                             <tr><td colSpan="9" className="p-6 text-center text-gray-500">Tidak ada rincian RAB</td></tr>
                                         )}

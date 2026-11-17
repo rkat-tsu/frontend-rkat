@@ -441,10 +441,11 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @php($nonSboIndex = 0)
                     @foreach ($detail->rabItems as $idx => $rab)
                         <tr>
                             <td class="text-center">{{ $idx + 1 }}</td>
-                            <td class="text-center">{{ $rab->kode_anggaran }}</td>
+                            <td class="text-center">{{ $rab->kode_anggaran ?: 'NON-SBO/NS.' . (++$nonSboIndex) }}</td>
                             <td>{{ $rab->deskripsi_item }}</td>
                             <td class="text-center">{{ rtrim(rtrim(number_format($rab->volume ?? 0, 2, ',', '.'), '0'), ',') }}</td>
                             <td class="text-center">{{ $rab->satuan ?? '-' }}</td>

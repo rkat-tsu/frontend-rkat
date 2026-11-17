@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Karyawan;
+use App\Support\DatabaseErrorMessage;
 use App\Models\Unit;
 use App\Models\JenisKegiatanOption;
 use Illuminate\Http\Request;
@@ -418,11 +419,11 @@ class KaryawanController extends Controller
             if ($request->wantsJson() && !$request->header('X-Inertia')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Gagal memproses impor: ' . $e->getMessage(),
+                    'message' => 'Gagal memproses impor: ' . DatabaseErrorMessage::forUser($e, 'Periksa format berkas dan coba lagi.'),
                 ], 500);
             }
 
-            return back()->with('error', 'Gagal memproses berkas impor: ' . $e->getMessage());
+            return back()->with('error', 'Gagal memproses berkas impor: ' . DatabaseErrorMessage::forUser($e, 'Periksa format berkas dan coba lagi.'));
         }
     }
 

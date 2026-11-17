@@ -133,6 +133,8 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
         const exportData = rkats.data.map((item, index) => {
             const details = item.rkat_details || item.rkatDetails || [];
             const firstDetail = details[0];
+            const namaIkus = [...new Set(details.map(detail => detail.iku?.nama_iku).filter(Boolean))].join(', ');
+            const namaIkks = [...new Set(details.map(detail => detail.ikk?.nama_ikk).filter(Boolean))].join(', ');
             const calculatedAnggaran = Number(item.total_anggaran) > 0
                 ? Number(item.total_anggaran)
                 : details.reduce((acc, d) => acc + (parseFloat(d.anggaran) || 0), 0);
@@ -148,6 +150,8 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                 'No': (rkats.from || 1) + index,
                 'No. Dokumen': item.nomor_dokumen || '-',
                 'Unit Kerja': item.unit?.nama_unit || '-',
+                'IKU': namaIkus || '-',
+                'IKK': namaIkks || '-',
                 'Tahun Anggaran': item.tahun_anggaran || '-',
                 'Tanggal Pengajuan': formatDate(item.tanggal_pengajuan),
                 'Tanggal Pelaksanaan': tglPelak,
