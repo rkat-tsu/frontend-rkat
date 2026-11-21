@@ -845,178 +845,176 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                         </div>
                     </div>
 
-                    {/* Table Card */}
-                    <div className="bg-white dark:bg-gray-800 shadow-sm rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table ref={tableRef} className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
-                                <thead className="bg-gray-50/80 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-b border-gray-100 dark:border-gray-700 font-semibold">
-                                    <tr>
-                                        <th className="w-12 px-4 py-3.5 text-center">No</th>
-                                        <th className="px-4 py-3.5">
-                                            <button type="button" onClick={() => handleSort('nama')} className="inline-flex items-center gap-1 select-none group w-full">
-                                                <span>Nama Lengkap &amp; NIK</span>
-                                                {sortBy === 'nama' ? (
-                                                    sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600" /> : <ArrowDown size={14} className="text-teal-600" />
-                                                ) : (
-                                                    <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {/* Tabel Data */}
+                    <div className="overflow-x-auto rounded-lg border border-gray-300 dark:border-gray-700">
+                        <table ref={tableRef} className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
+                            <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                                <tr>
+                                    <th className="w-12 px-4 py-3 border-b border-gray-300 dark:border-gray-600 font-medium text-center">No</th>
+                                    <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium select-none">
+                                        <button type="button" onClick={() => handleSort('nama')} className="inline-flex items-center gap-1 select-none group w-full">
+                                            <span>Nama Lengkap &amp; NIK</span>
+                                            {sortBy === 'nama' ? (
+                                                sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600" /> : <ArrowDown size={14} className="text-teal-600" />
+                                            ) : (
+                                                <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            )}
+                                        </button>
+                                    </th>
+                                    <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Unit Kerja</th>
+                                    <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium select-none">
+                                        <button type="button" onClick={() => handleSort('jabatan')} className="inline-flex items-center gap-1 select-none group w-full">
+                                            <span>Jabatan / Posisi</span>
+                                            {sortBy === 'jabatan' ? (
+                                                sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600" /> : <ArrowDown size={14} className="text-teal-600" />
+                                            ) : (
+                                                <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            )}
+                                        </button>
+                                    </th>
+                                    <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">Status Pegawai</th>
+                                    <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Status</th>
+                                    <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center w-28">Detail / Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white dark:bg-gray-800">
+                                {items.length > 0 ? items.map((item, idx) => (
+                                    <tr key={item.id_karyawan} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                                        <td className="px-4 py-3 border-b border-gray-300 dark:border-gray-700 text-center text-gray-500 font-medium">
+                                            {(karyawans.from || 1) + idx}
+                                        </td>
+                                        <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700">
+                                            <div className="font-semibold text-gray-900 dark:text-white">
+                                                {item.nama}
+                                            </div>
+                                            <div className="mt-1 flex flex-col items-start gap-1 text-xs">
+                                                {item.nik && (
+                                                    <button type="button" onClick={() => copyValue(item.nik, 'NIK')} title="Salin NIK" className="group inline-flex items-center gap-1 font-mono text-gray-500 transition hover:text-teal-700 dark:text-gray-400 dark:hover:text-teal-300">
+                                                        <span>NIK: {item.nik}</span><Copy size={11} className="opacity-50 group-hover:opacity-100" />
+                                                    </button>
                                                 )}
-                                            </button>
-                                        </th>
-                                        <th className="px-4 py-3.5">Unit Kerja</th>
-                                        <th className="px-4 py-3.5">
-                                            <button type="button" onClick={() => handleSort('jabatan')} className="inline-flex items-center gap-1 select-none group w-full">
-                                                <span>Jabatan / Posisi</span>
-                                                {sortBy === 'jabatan' ? (
-                                                    sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600" /> : <ArrowDown size={14} className="text-teal-600" />
-                                                ) : (
-                                                    <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                {item.email && (
+                                                    <button type="button" onClick={() => copyValue(item.email, 'Email')} title="Salin email" className="group inline-flex max-w-[260px] items-center gap-1.5 rounded-md text-left text-teal-700 transition hover:text-teal-900 dark:text-teal-300 dark:hover:text-teal-100">
+                                                        <Mail size={13} className="shrink-0 text-teal-600 dark:text-teal-400" />
+                                                        <span className="truncate">{item.email}</span>
+                                                        <Copy size={12} className="shrink-0 opacity-60 transition group-hover:opacity-100" />
+                                                    </button>
                                                 )}
-                                            </button>
-                                        </th>
-                                        <th className="px-4 py-3.5">Status Pegawai</th>
-                                        <th className="px-4 py-3.5 text-center">Status</th>
-                                        <th className="px-4 py-3.5 text-center w-28">Detail / Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                    {items.length > 0 ? items.map((item, idx) => (
-                                        <tr key={item.id_karyawan} className="hover:bg-teal-50/30 dark:hover:bg-gray-700/50 transition">
-                                            <td className="px-4 py-3.5 text-center text-gray-400 font-medium">
-                                                {(karyawans.from || 1) + idx}
-                                            </td>
-                                            <td className="px-4 py-3.5">
-                                                <div className="font-semibold text-gray-900 dark:text-white">
-                                                    {item.nama}
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700">
+                                            {item.unit ? (
+                                                <div>
+                                                    <span className="font-medium text-gray-800 dark:text-gray-200">{item.unit.nama_unit}</span>
+                                                    <span className="text-xs text-gray-400 ml-1">({item.unit.kode_unit})</span>
                                                 </div>
-                                                <div className="mt-1 flex flex-col items-start gap-1 text-xs">
-                                                    {item.nik && (
-                                                        <button type="button" onClick={() => copyValue(item.nik, 'NIK')} title="Salin NIK" className="group inline-flex items-center gap-1 font-mono text-gray-500 transition hover:text-teal-700 dark:text-gray-400 dark:hover:text-teal-300">
-                                                            <span>NIK: {item.nik}</span><Copy size={11} className="opacity-50 group-hover:opacity-100" />
-                                                        </button>
-                                                    )}
-                                                    {item.email && (
-                                                        <button type="button" onClick={() => copyValue(item.email, 'Email')} title="Salin email" className="group inline-flex max-w-[260px] items-center gap-1.5 rounded-md text-left text-teal-700 transition hover:text-teal-900 dark:text-teal-300 dark:hover:text-teal-100">
-                                                            <Mail size={13} className="shrink-0 text-teal-600 dark:text-teal-400" />
-                                                            <span className="truncate">{item.email}</span>
-                                                            <Copy size={12} className="shrink-0 opacity-60 transition group-hover:opacity-100" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3.5">
-                                                {item.unit ? (
-                                                    <div>
-                                                        <span className="font-medium text-gray-800 dark:text-gray-200">{item.unit.nama_unit}</span>
-                                                        <span className="text-xs text-gray-400 ml-1">({item.unit.kode_unit})</span>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-gray-400 italic">-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3.5 text-gray-700 dark:text-gray-300">
-                                                {item.jabatan || '-'}
-                                            </td>
-                                            <td className="px-4 py-3.5">
-                                                <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                                                    {item.status_pegawai}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3.5 text-center">
-                                                <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${item.is_aktif ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
-                                                    {item.is_aktif ? 'Aktif' : 'Nonaktif'}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3.5 text-center">
-                                                <ActionGroup>
+                                            ) : (
+                                                <span className="text-gray-400 italic">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300">
+                                            {item.jabatan || '-'}
+                                        </td>
+                                        <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700">
+                                            <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                                                {item.status_pegawai}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center">
+                                            <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${item.is_aktif ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
+                                                {item.is_aktif ? 'Aktif' : 'Nonaktif'}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-700 text-center">
+                                            <ActionGroup>
+                                                <ActionButton
+                                                    variant="detail"
+                                                    tooltip="Lihat Detail Karyawan"
+                                                    onClick={() => { setSelectedKaryawan(item); setIsDetailModalOpen(true); }}
+                                                />
+                                                {isAdmin() && <>
                                                     <ActionButton
-                                                        variant="detail"
-                                                        tooltip="Lihat Detail Karyawan"
-                                                        onClick={() => { setSelectedKaryawan(item); setIsDetailModalOpen(true); }}
+                                                        variant="edit"
+                                                        tooltip="Edit Data SDM"
+                                                        onClick={() => openEditModal(item)}
                                                     />
-                                                    {isAdmin() && <>
-                                                        <ActionButton
-                                                            variant="edit"
-                                                            tooltip="Edit Data SDM"
-                                                            onClick={() => openEditModal(item)}
-                                                        />
-                                                        <ActionButton
-                                                            variant="delete"
-                                                            tooltip="Hapus Data SDM"
-                                                            onClick={() => handleDelete(item)}
-                                                        />
-                                                    </>}
-                                                </ActionGroup>
-                                            </td>
-                                        </tr>
-                                    )) : (
-                                        <tr>
-                                            <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
-                                                <div className="flex flex-col items-center justify-center gap-2">
-                                                    <Users size={36} className="text-gray-300 dark:text-gray-600" />
-                                                    <p className="text-sm">Tidak ada data SDM / Karyawan yang sesuai.</p>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* Pagination */}
-                        {karyawans.links && (
-                            <div className="p-4 border-t border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                                    <div className="flex items-center gap-2">
-                                        <span>Tampilkan</span>
-                                        <div className="w-20">
-                                            <CustomSelect
-                                                value={perPage}
-                                                onChange={(e) => {
-                                                    setPerPage(e.target.value);
-                                                    applyFilters(searchTerm, unitFilter, statusPegawaiFilter, statusAktifFilter, e.target.value, sortBy, sortDirection);
-                                                }}
-                                                options={[
-                                                    { value: '10', label: '10' },
-                                                    { value: '15', label: '15' },
-                                                    { value: '25', label: '25' },
-                                                    { value: '50', label: '50' },
-                                                    { value: 'all', label: 'Semua' }
-                                                ]}
-                                                className="h-8 text-xs py-1 px-2"
-                                            />
-                                        </div>
-                                    </div>
-                                    <span>
-                                        Menampilkan <span className="font-bold text-gray-700 dark:text-gray-300">{karyawans.from || 0}</span> - <span className="font-bold text-gray-700 dark:text-gray-300">{karyawans.to || 0}</span> dari <span className="font-bold text-gray-700 dark:text-gray-300">{karyawans.total || 0}</span> data
-                                    </span>
-                                </div>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {karyawans.links.map((link, k) => (
-                                        link.url ? (
-                                            <Link
-                                                key={k}
-                                                href={link.url}
-                                                only={['karyawans']}
-                                                preserveState
-                                                preserveScroll
-                                                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${link.active
-                                                    ? 'bg-teal-600 text-white shadow-sm'
-                                                    : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
-                                                    }`}
-                                                dangerouslySetInnerHTML={{ __html: link.label }}
-                                            />
-                                        ) : (
-                                            <span
-                                                key={k}
-                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed"
-                                                dangerouslySetInnerHTML={{ __html: link.label }}
-                                            />
-                                        )
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                                                    <ActionButton
+                                                        variant="delete"
+                                                        tooltip="Hapus Data SDM"
+                                                        onClick={() => handleDelete(item)}
+                                                    />
+                                                </>}
+                                            </ActionGroup>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400 border-b border-gray-300 dark:border-gray-700">
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <Users size={36} className="text-gray-300 dark:text-gray-600" />
+                                                <p className="text-sm">Tidak ada data SDM / Karyawan yang sesuai.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
+
+                    {/* Pagination */}
+                    {karyawans.links && (
+                        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">Tampilkan</span>
+                                    <div className="w-20">
+                                        <CustomSelect
+                                            value={perPage}
+                                            onChange={(e) => {
+                                                setPerPage(e.target.value);
+                                                applyFilters(searchTerm, unitFilter, statusPegawaiFilter, statusAktifFilter, e.target.value, sortBy, sortDirection);
+                                            }}
+                                            options={[
+                                                { value: '10', label: '10' },
+                                                { value: '15', label: '15' },
+                                                { value: '25', label: '25' },
+                                                { value: '50', label: '50' },
+                                                { value: 'all', label: 'Semua' }
+                                            ]}
+                                            className="h-8 text-xs py-1 px-2"
+                                        />
+                                    </div>
+                                </div>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    Menampilkan <span className="font-medium text-gray-900 dark:text-white">{karyawans.from || 0}</span> sampai <span className="font-medium text-gray-900 dark:text-white">{karyawans.to || 0}</span> dari <span className="font-medium text-gray-900 dark:text-white">{karyawans.total || 0}</span> data
+                                </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {karyawans.links.map((link, k) => (
+                                    link.url ? (
+                                        <Link
+                                            key={k}
+                                            href={link.url}
+                                            only={['karyawans']}
+                                            preserveState
+                                            preserveScroll
+                                            className={`px-3 py-1 text-sm border rounded-md transition-colors ${link.active
+                                                ? 'bg-teal-600 text-white border-teal-600'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
+                                                }`}
+                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                        />
+                                    ) : (
+                                        <span
+                                            key={k}
+                                            className="px-3 py-1 text-sm border rounded-md bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600"
+                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                        />
+                                    )
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
