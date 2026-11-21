@@ -11,6 +11,7 @@ import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import FieldTooltipError from '@/Components/FieldTooltipError';
+import { useResizableTable } from '@/hooks/useResizableTable';
 
 export default function Index({ auth, items = {}, filters = {}, kelompoks = [], flash = {} }) {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
@@ -19,6 +20,7 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
     const [sortBy, setSortBy] = useState(filters?.sort_by || 'kode_anggaran');
     const [sortDirection, setSortDirection] = useState(filters?.sort_direction || 'asc');
     const [isSearching, setIsSearching] = useState(false);
+    const { tableRef } = useResizableTable('admin_sbo');
 
     const applyFilters = (newSearch, newKelompok, newPerPage, newSortBy = sortBy, newSortDirection = sortDirection) => {
         setIsSearching(true);
@@ -209,7 +211,7 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
             <Head title="SBO" />
 
             <div className="py-8">
-                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+                <div className="w-full max-w-none px-2 sm:px-6 lg:px-8">
 
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
                         Standar Biaya Operasional (SBO)
@@ -286,69 +288,57 @@ export default function Index({ auth, items = {}, filters = {}, kelompoks = [], 
 
                         {/* Tabel */}
                         <div className="overflow-x-auto rounded-lg border border-gray-300 dark:border-gray-700">
-                            <table className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
+                            <table ref={tableRef} className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
                                 <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                     <tr>
                                         <th className="w-8 border-b border-gray-300 dark:border-gray-600"></th>
-                                        <th 
-                                            className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                            onClick={() => handleSort('kode_anggaran')}
-                                        >
-                                            <div className="flex items-center justify-center">
+                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">
+                                            <button type="button" onClick={() => handleSort('kode_anggaran')} className="inline-flex items-center justify-center gap-1 w-full select-none group">
                                                 <span>Kode Item</span>
-                                                <div className="flex flex-col ml-1">
+                                                <span className="flex flex-col ml-1">
                                                     {sortBy === 'kode_anggaran' ? (
                                                         sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
                                                     ) : (
                                                         <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     )}
-                                                </div>
-                                            </div>
+                                                </span>
+                                            </button>
                                         </th>
-                                        <th 
-                                            className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                            onClick={() => handleSort('nama_anggaran')}
-                                        >
-                                            <div className="flex items-center justify-between">
+                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium">
+                                            <button type="button" onClick={() => handleSort('nama_anggaran')} className="inline-flex items-center justify-between gap-1 w-full select-none group">
                                                 <span>Keterangan</span>
-                                                <div className="flex flex-col ml-1">
+                                                <span className="flex flex-col ml-1">
                                                     {sortBy === 'nama_anggaran' ? (
                                                         sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
                                                     ) : (
                                                         <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     )}
-                                                </div>
-                                            </div>
+                                                </span>
+                                            </button>
                                         </th>
-                                        <th 
-                                            className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                            onClick={() => handleSort('satuan')}
-                                        >
-                                            <div className="flex items-center justify-center">
+                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">
+                                            <button type="button" onClick={() => handleSort('satuan')} className="inline-flex items-center justify-center gap-1 w-full select-none group">
                                                 <span>Satuan</span>
-                                                <div className="flex flex-col ml-1">
+                                                <span className="flex flex-col ml-1">
                                                     {sortBy === 'satuan' ? (
                                                         sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
                                                     ) : (
                                                         <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     )}
-                                                </div>
-                                            </div>
+                                                </span>
+                                            </button>
                                         </th>
-                                        <th 
-                                            className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none group"
-                                            onClick={() => handleSort('nominal')}
-                                        >
-                                            <div className="flex items-center justify-center">
+                                        <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">
+                                            <button type="button" onClick={() => handleSort('nominal')} className="inline-flex items-center justify-center gap-1 w-full select-none group">
                                                 <span>Pagu Anggaran</span>
-                                                <div className="flex flex-col ml-1">
+                                                <span className="flex flex-col ml-1">
                                                     {sortBy === 'nominal' ? (
                                                         sortDirection === 'asc' ? <ArrowUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ArrowDown size={14} className="text-indigo-600 dark:text-indigo-400" />
                                                     ) : (
                                                         <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     )}
-                                                </div>
-                                            </div>
+                                                </span>
+                                            </button>
                                         </th>
                                         {isAdmin() && <th className="px-4 py-3 border-b border-l border-gray-300 dark:border-gray-600 font-medium text-center">Aksi</th>}
                                     </tr>

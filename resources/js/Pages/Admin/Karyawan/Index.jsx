@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ActionButton, { ActionGroup } from '@/Components/ActionButton';
@@ -12,6 +12,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import FieldTooltipError from '@/Components/FieldTooltipError';
 import * as XLSX from 'xlsx';
 import { exportToExcel } from '@/Utils/exportToExcel';
+import { useResizableTable } from '@/hooks/useResizableTable';
 
 export default function Index({ auth, karyawans = {}, units = [], filters = {}, statusPegawaiOptions = [] }) {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
@@ -24,6 +25,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
     const [isSearching, setIsSearching] = useState(false);
 
     const { isAdmin } = usePermission();
+    const { tableRef } = useResizableTable('admin_karyawan');
 
     const applyFilters = (newSearch, newUnit, newStatusPegawai, newStatusAktif, newPerPage, newSortBy = sortBy, newSortDirection = sortDirection) => {
         setIsSearching(true);
@@ -723,7 +725,7 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
             <Head title="Data SDM / Karyawan" />
 
             <div className="py-8">
-                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 space-y-6">
+                <div className="w-full max-w-none px-2 sm:px-6 lg:px-8 space-y-6">
 
                     {/* Header Judul & Tombol Aksi */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -846,32 +848,30 @@ export default function Index({ auth, karyawans = {}, units = [], filters = {}, 
                     {/* Table Card */}
                     <div className="bg-white dark:bg-gray-800 shadow-sm rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
                         <div className="overflow-x-auto">
-                            <table className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
+                            <table ref={tableRef} className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
                                 <thead className="bg-gray-50/80 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-b border-gray-100 dark:border-gray-700 font-semibold">
                                     <tr>
                                         <th className="w-12 px-4 py-3.5 text-center">No</th>
-                                        <th
-                                            className="px-4 py-3.5 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition select-none"
-                                            onClick={() => handleSort('nama')}
-                                        >
-                                            <div className="flex items-center gap-1">
-                                                <span>Nama Lengkap & NIK</span>
-                                                {sortBy === 'nama' && (
+                                        <th className="px-4 py-3.5">
+                                            <button type="button" onClick={() => handleSort('nama')} className="inline-flex items-center gap-1 select-none group w-full">
+                                                <span>Nama Lengkap &amp; NIK</span>
+                                                {sortBy === 'nama' ? (
                                                     sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600" /> : <ArrowDown size={14} className="text-teal-600" />
+                                                ) : (
+                                                    <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 )}
-                                            </div>
+                                            </button>
                                         </th>
                                         <th className="px-4 py-3.5">Unit Kerja</th>
-                                        <th
-                                            className="px-4 py-3.5 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition select-none"
-                                            onClick={() => handleSort('jabatan')}
-                                        >
-                                            <div className="flex items-center gap-1">
+                                        <th className="px-4 py-3.5">
+                                            <button type="button" onClick={() => handleSort('jabatan')} className="inline-flex items-center gap-1 select-none group w-full">
                                                 <span>Jabatan / Posisi</span>
-                                                {sortBy === 'jabatan' && (
+                                                {sortBy === 'jabatan' ? (
                                                     sortDirection === 'asc' ? <ArrowUp size={14} className="text-teal-600" /> : <ArrowDown size={14} className="text-teal-600" />
+                                                ) : (
+                                                    <ArrowUpDown size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 )}
-                                            </div>
+                                            </button>
                                         </th>
                                         <th className="px-4 py-3.5">Status Pegawai</th>
                                         <th className="px-4 py-3.5 text-center">Status</th>
