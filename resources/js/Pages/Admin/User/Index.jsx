@@ -70,7 +70,7 @@ export default function Index({ users, filters = {}, units = [] }) {
             <Head title="Pengaturan Akun" />
 
             <div className="py-8">
-                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+                <div className="w-full max-w-none px-2 sm:px-6 lg:px-8">
                     
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
                         Pengaturan Akun Pengguna

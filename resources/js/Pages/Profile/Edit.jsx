@@ -16,8 +16,8 @@ export default function Edit({ mustVerifyEmail, status }) {
             <Head title="Profil" />
 
             <div className="py-12">
-                {/* PERUBAHAN: Mengganti max-w-7xl menjadi max-w-4xl (atau max-w-3xl jika ingin lebih compact) */}
-                <div className="mx-auto max-w-4xl space-y-6 px-2 sm:px-6 lg:px-8"> 
+                {/* Gunakan lebar halaman yang tersedia dengan padding responsif. */}
+                <div className="w-full max-w-none space-y-6 px-2 sm:px-6 lg:px-8">
                     
                     {/* HANYA PERLU SATU CARD UNTUK SEMUA */}
                     <div className="bg-white p-4 shadow rounded-lg sm:p-8 dark:bg-gray-800">

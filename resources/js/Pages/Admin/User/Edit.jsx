@@ -154,7 +154,7 @@ export default function Edit({ auth, user, units = [] }) {
             <Head title={`Edit User - ${user.nama_lengkap}`} />
 
             <div className="py-6 pb-40">
-                <div className="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
+                <div className="w-full max-w-none sm:px-6 lg:px-8 space-y-6">
                     
                     {/* --- FORM 1: DATA PROFIL --- */}
                     <form onSubmit={submitProfile} className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border-l-4 border-blue-500">

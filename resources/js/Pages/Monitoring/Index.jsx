@@ -101,7 +101,7 @@ export default function Index({
         >
             <Head title="Monitoring RKAT" />
 
-            <div className="py-6 max-w-7xl mx-auto space-y-6">
+            <div className="py-6 w-full max-w-none space-y-6 px-2 sm:px-6 lg:px-8">
                 {/* TABS */}
                 <div className="flex space-x-1 p-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl max-w-md mx-auto border border-gray-200 dark:border-gray-700">
                     <Link

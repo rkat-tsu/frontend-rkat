@@ -37,8 +37,10 @@ export default function Show({ auth, pencairan, flash = {}, canApprove = false }
                     setIsSubmitting(true);
                     const toastId = toast.loading('Sedang mengirim pengajuan...');
                     router.post(route('pencairan.submit', pencairan.uuid || pencairan.id_pencairan), {}, {
-                        onSuccess: () => {
-                            toast.success("Berhasil", { id: toastId, description: "Pengajuan pencairan berhasil dikirim." });
+                        onSuccess: (page) => {
+                            const error = page.props?.flash?.error;
+                            if (error) toast.error("Gagal Mengajukan", { id: toastId, description: error });
+                            else toast.success(page.props?.flash?.success || "Berhasil", { id: toastId, description: "Pengajuan pencairan berhasil dikirim." });
                         },
                         onError: (err) => {
                             toast.error("Gagal Mengajukan", { id: toastId, description: err?.message || "Terjadi kesalahan saat mengirim pengajuan." });
@@ -61,7 +63,7 @@ export default function Show({ auth, pencairan, flash = {}, canApprove = false }
             <Head title={`Detail Pencairan - ${rkat?.nomor_dokumen || ''}`} />
 
             <div className="py-6">
-                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 space-y-6">
+                <div className="w-full max-w-none px-2 sm:px-6 lg:px-8 space-y-6">
 
                     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg">
                         <div className="p-6 border-b border-gray-200 dark:border-gray-700">

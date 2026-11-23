@@ -278,7 +278,7 @@ export default function Index({
             <Head title={`Master IKU & IKK - Tahun ${selectedTahun}`} />
 
             <div className="py-6 pb-24">
-                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 space-y-6">
+                <div className="w-full max-w-none px-2 sm:px-6 lg:px-8 space-y-6">
 
                     {/* --- HEADER CONTROLS CARD (RESPONSIVE FOR MOBILE & DESKTOP) --- */}
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 space-y-5">

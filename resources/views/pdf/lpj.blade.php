@@ -78,6 +78,10 @@
             font-size: 7.5pt;
         }
 
+        .data-table td {
+            word-wrap: break-word;
+        }
+
         .text-center {
             text-align: center;
         }
@@ -104,23 +108,6 @@
 
         .clear {
             clear: both;
-        }
-
-        .signature-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 30px;
-        }
-
-        .signature-table td {
-            border: none;
-            text-align: center;
-            vertical-align: top;
-            width: 50%;
-        }
-
-        .signature-space {
-            height: 60px;
         }
 
         .badge-status {
@@ -180,6 +167,11 @@
             <td class="info-colon">:</td>
             <td><strong>{{ strtoupper($lpj->status_lpj) }}</strong></td>
         </tr>
+        <tr>
+            <td class="info-label">Lokasi Kegiatan</td>
+            <td class="info-colon">:</td>
+            <td colspan="4">{{ $lpj->lokasi_kegiatan ?: '-' }}</td>
+        </tr>
     </table>
 
     <h3 style="margin-bottom: 5px; font-size: 9pt; text-transform: uppercase;">A. Rincian Realisasi Pengeluaran</h3>
@@ -214,7 +206,7 @@
                     <td>
                         <strong>{{ $item->pencairanItem->rkatRabItem->deskripsi_item ?? 'Item' }}</strong>
                         @if($item->nomor_kwitansi)
-                            <br><small style="color: #444;">Keterangan: {{ $item->nomor_kwitansi }}</small>
+                            <br><small style="color: #444;">No. Kwitansi: {{ $item->nomor_kwitansi }}</small>
                         @endif
                         @if($item->keterangan)
                             <br><small style="color: #666;">Catatan: {{ $item->keterangan }}</small>
@@ -277,28 +269,11 @@
         </p>
     @endif
 
-    <table class="signature-table">
-        <tr>
-            <td>
-                Yang Mengajukan LPJ,
-                <br><br>
-                <strong>{{ $lpj->rkatHeader->unit->nama_unit ?? $lpj->pencairanDana->rkatHeader->unit->nama_unit ?? 'Unit Kerja' }}</strong>
-                <div class="signature-space"></div>
-                <strong><u>{{ $lpj->pengaju->name ?? 'Pengaju' }}</u></strong><br>
-                NIP/NIK: {{ $lpj->pengaju->nip ?? '-' }}
-            </td>
-            <td>
-                Mengetahui & Menyetujui,
-                <br><br>
-                <strong>Pejabat Berwenang / Keuangan</strong>
-                <div class="signature-space"></div>
-                <strong><u>{{ $lpj->approver->name ?? '(..........................................)' }}</u></strong><br>
-                @if($lpj->tanggal_persetujuan)
-                    Tanggal: {{ \Carbon\Carbon::parse($lpj->tanggal_persetujuan)->translatedFormat('d F Y') }}
-                @endif
-            </td>
-        </tr>
-    </table>
+    @if($lpj->catatan)
+        <h3 style="margin-bottom: 5px; margin-top: 10px; font-size: 9pt; text-transform: uppercase;">D. Catatan Approver</h3>
+        <p style="border: 1px solid #fbbf24; padding: 8px; background-color: #fffbeb; margin: 0 0 10px 0;">{{ $lpj->catatan }}</p>
+    @endif
+
 </body>
 
 </html>

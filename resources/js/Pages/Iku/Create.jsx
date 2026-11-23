@@ -108,7 +108,7 @@ export default function Create({ auth, ikus }) {
             <AuthenticatedLayout user={auth.user} header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Akses Ditolak</h2>}>
                 <Head title="Akses Ditolak" />
                 <div className="py-12">
-                    <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+                    <div className="w-full max-w-none px-2 sm:px-6 lg:px-8">
                         <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg p-6 text-center text-red-500 font-medium">
                             Anda tidak memiliki izin untuk mengakses halaman ini.
                         </div>
@@ -126,7 +126,7 @@ export default function Create({ auth, ikus }) {
             <Head title="Input IKU & IKK" />
 
             <div className="py-6 pb-24">
-                <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                <div className="w-full max-w-none sm:px-6 lg:px-8">
                     <form onSubmit={submit} className="space-y-6">
                         
                         {/* --- KONTAINER 1: PILIH IKU --- */}

@@ -13,25 +13,29 @@
             font-family: 'Helvetica', 'Arial', sans-serif;
             font-size: 8pt;
             line-height: 1.15;
-            color: #000;
+            color: #1f2937;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #1e3a5f;
         }
 
         .header img {
-            width: 120px;
-            margin-bottom: 8px;
+            width: 105px;
+            max-height: 52px;
+            margin-bottom: 6px;
         }
 
         .header h1 {
             margin: 0;
-            font-size: 10pt;
+            color: #1e3a5f;
+            font-size: 11pt;
             text-transform: uppercase;
             font-weight: bold;
-            text-decoration: underline;
+            letter-spacing: 0.3px;
         }
 
         table {
@@ -42,7 +46,7 @@
 
         th,
         td {
-            border: 1px solid #000;
+            border: 1px solid #64748b;
             padding: 4px 6px;
             vertical-align: top;
         }
@@ -55,6 +59,7 @@
         .label-col {
             width: 140px;
             font-weight: bold;
+            background-color: #f1f5f9;
         }
 
         .bg-gray {
@@ -90,74 +95,15 @@
             font-size: 7pt;
         }
 
-        .signature-table {
-            width: 100%;
-            margin-top: 15px;
-            border-collapse: collapse;
-            page-break-inside: avoid;
+        .item-table {
+            table-layout: fixed;
+            font-size: 7pt;
         }
 
-        .signature-table td {
-            border: 1px solid #000;
-            width: 20%;
-            padding: 8px;
-            height: 110px;
-            position: relative;
-            vertical-align: top;
-            text-align: center;
-        }
-
-        .watermark-tsu {
-            position: absolute;
-            top: 40px;
-            left: 0;
-            right: 0;
-            margin-left: auto;
-            margin-right: auto;
-            height: 60px;
-            opacity: 0.15;
-            z-index: -1;
-        }
-
-        .sig-title {
-            font-weight: bold;
-            font-size: 8.5pt;
-            margin-bottom: 4px;
-        }
-
-        .sig-role {
-            font-size: 8pt;
-            color: #333;
-            margin-bottom: 40px;
-        }
-
-        .sig-name {
-            font-weight: bold;
-            font-size: 8.5pt;
-            margin-top: 30px;
-            text-decoration: underline;
-        }
-
-        .sig-date {
-            font-size: 7.5pt;
-            margin-top: 2px;
-        }
-
-        .sig-status {
-            position: absolute;
-            top: 30%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #2dd4bf;
-            font-size: 16pt;
-            font-weight: bold;
-            opacity: 0.15;
-            border: 2px solid #2dd4bf;
-            padding: 1px 6px;
-            border-radius: 6px;
-            text-transform: uppercase;
-            z-index: 0;
-            pointer-events: none;
+        .item-table th,
+        .item-table td {
+            word-wrap: break-word;
+            padding: 4px;
         }
 
         /* Specific layout for Program/Kegiatan rows */
@@ -176,41 +122,7 @@
         $year = $rkat->tahun_anggaran;
         $logoPath = public_path('img/logo-full-tsu.svg');
 
-        if (!function_exists('getSignatureImage')) {
-            function getSignatureImage($user) {
-                if ($user && $user->signature_path) {
-                    $path = public_path('storage/' . $user->signature_path);
-                    if (file_exists($path)) {
-                        $type = pathinfo($path, PATHINFO_EXTENSION);
-                        $data = file_get_contents($path);
-                        return 'data:image/' . $type . ';base64,' . base64_encode($data);
-                    }
-                }
-                return null;
-            }
-        }
-
-        if (!function_exists('getApprovalDate')) {
-            function getApprovalDate($dates, $keyword) {
-                if (!$dates || !is_array($dates)) return null;
-                foreach ($dates as $key => $date) {
-                    if (stripos($key, $keyword) !== false) {
-                        return $date;
-                    }
-                }
-                return null;
-            }
-        }
-
-        $userBaak = \App\Models\User::where('nama_lengkap', 'Wahyu Catur Hastuti, S.Kom')->first();
-        
-        // Fetch parent unit and its head for the unit signature
-        $unit = $rkat->unit;
-        $parentUnit = $unit ? $unit->parent : null;
-        $userUnit = $parentUnit ? $parentUnit->kepala : null;
-
-        $userBauk = \App\Models\User::where('nama_lengkap', 'Tri Irawati, S.E, M.Si')->first();
-        $userWr2 = \App\Models\User::where('nama_lengkap', 'Drs. Santoso Tri Hananto, M.Acc, Ak')->first();
+        $totalCair = $pencairan->items->sum('sub_total_pencairan');
     @endphp
 
     <div class="header">
@@ -218,7 +130,14 @@
             <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents($logoPath)) }}" alt="Logo">
         @endif
         <h1>PENGAJUAN PENCAIRAN ANGGARAN TAHUN {{ $year }}</h1>
+        <div style="font-size: 8pt; margin-top: 4px;">{{ $pencairan->rkatHeader->nomor_dokumen }} | {{ $pencairan->nama_pencairan ?: 'Pencairan Dana' }} | Status: {{ $pencairan->status_pencairan }}</div>
     </div>
+
+    @if ($pencairan->catatan)
+        <div style="border: 1px solid #fbbf24; background-color: #fffbeb; padding: 6px 8px; margin-bottom: 8px;">
+            <strong>Catatan Revisi / Penolakan:</strong> {{ $pencairan->catatan }}
+        </div>
+    @endif
 
     <table>
         <tr>
@@ -288,8 +207,7 @@
         <tr>
             <td class="no-col">12</td>
             <td class="label-col">Anggaran Dicairkan</td>
-            @php $totalCair = $pencairan->items->sum('sub_total_pencairan'); @endphp
-            <td colspan="2" class="font-bold text-teal-600" style="font-size: 9pt;">
+            <td colspan="2" class="font-bold" style="font-size: 9pt; color: #0f766e;">
                 Rp {{ number_format($totalCair, 0, ',', '.') }}
                 @if($pencairan->nama_pencairan)
                    <br><span style="font-size: 8pt; color: #666; font-weight: normal;">(Keterangan: {{ $pencairan->nama_pencairan }})</span>
@@ -300,7 +218,7 @@
             <td class="no-col">13</td>
             <td class="label-col">Rincian Item Pencairan</td>
             <td colspan="2">
-                <table style="width: 100%; border: 1px solid #ccc; border-collapse: collapse; margin-top: 5px;">
+                <table class="item-table" style="width: 100%; border: 1px solid #ccc; border-collapse: collapse; margin-top: 5px;">
                     <thead>
                         <tr style="background-color: #f9fafb;">
                             <th style="border: 1px solid #ccc; padding: 4px; font-size: 8pt; text-align: left;">Deskripsi</th>
@@ -337,109 +255,6 @@
                 <div class="checkbox-group" style="margin-top: 3px;">
                     <div class="checkbox">{{ $detail->jenis_pencairan == 'Tunai' ? 'v' : '' }}</div> Tunai
                 </div>
-            </td>
-        </tr>
-    </table>
-
-    <!-- SIGNATURE SECTION -->
-    <table class="signature-table">
-        <tr>
-            <td>
-                <div class="sig-title">Diajukan Oleh</div>
-                <div class="sig-role">Pengaju / Penanggung Jawab</div>
-                
-                @if (file_exists(public_path('img/logo-tsu.svg')))
-                    <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/logo-tsu.svg'))) }}" class="watermark-tsu">
-                @endif
-                @php $sigPengaju = getSignatureImage($pencairan->pengaju); @endphp
-                @if($sigPengaju)
-                    <img src="{{ $sigPengaju }}" style="max-height: 70px; margin-top: 5px; position: relative; z-index: 1;">
-                @elseif($pencairan->tanggal_pengajuan)
-                    <div class="sig-status">SUBMITTED</div>
-                @endif
-                
-                <div class="sig-name">{{ $pencairan->pengaju->nama_lengkap ?? '........................' }}</div>
-                <div class="sig-date">Tgl: {{ $pencairan->tanggal_pengajuan ? \Carbon\Carbon::parse($pencairan->tanggal_pengajuan)->translatedFormat('d F Y') : '........................' }}</div>
-            </td>
-            <td>
-                <div class="sig-title">Mengetahui</div>
-                <div class="sig-role">Kepala {{ $parentUnit ? $parentUnit->nama_unit : 'Unit Menaungi' }}</div>
-                
-                @php 
-                    $sigUnit = getSignatureImage($userUnit); 
-                    $tglUnit = getApprovalDate($pencairan->approval_dates, 'Unit') ?? getApprovalDate($pencairan->approval_dates, 'Mengetahui') ?? null;
-                @endphp
-                @if (file_exists(public_path('img/logo-tsu.svg')))
-                    <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/logo-tsu.svg'))) }}" class="watermark-tsu">
-                @endif
-                @if($tglUnit && $sigUnit)
-                    <img src="{{ $sigUnit }}" style="max-height: 70px; margin-top: 5px; position: relative; z-index: 1;">
-                @elseif($tglUnit)
-                    <div class="sig-status">ACKNOWLEDGED</div>
-                @endif
-                
-                <div class="sig-name">{{ $userUnit ? $userUnit->nama_lengkap : '........................' }}</div>
-                <div class="sig-date">Tgl: {{ $tglUnit ? \Carbon\Carbon::parse($tglUnit)->translatedFormat('d F Y') : '........................' }}</div>
-            </td>
-            <td>
-                <div class="sig-title">Verifikasi BAAK</div>
-                <div class="sig-role">Ka. BAAK</div>
-                
-                @php 
-                    $sigBaak = getSignatureImage($userBaak); 
-                    $tglBaak = getApprovalDate($pencairan->approval_dates, 'BAAK') ?? null;
-                @endphp
-                @if (file_exists(public_path('img/logo-tsu.svg')))
-                    <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/logo-tsu.svg'))) }}" class="watermark-tsu">
-                @endif
-                @if($tglBaak && $sigBaak)
-                    <img src="{{ $sigBaak }}" style="max-height: 70px; margin-top: 5px; position: relative; z-index: 1;">
-                @elseif($tglBaak)
-                    <div class="sig-status">VERIFIED</div>
-                @endif
-                
-                <div class="sig-name">{{ $userBaak ? $userBaak->nama_lengkap : '........................' }}</div>
-                <div class="sig-date">Tgl: {{ $tglBaak ? \Carbon\Carbon::parse($tglBaak)->translatedFormat('d F Y') : '........................' }}</div>
-            </td>
-            <td>
-                <div class="sig-title">Verifikasi BAUK</div>
-                <div class="sig-role">Ka. BAUK</div>
-                
-                @php 
-                    $sigBauk = getSignatureImage($userBauk); 
-                    $tglBauk = getApprovalDate($pencairan->approval_dates, 'BAUK') ?? null;
-                @endphp
-                @if (file_exists(public_path('img/logo-tsu.svg')))
-                    <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/logo-tsu.svg'))) }}" class="watermark-tsu">
-                @endif
-                @if($tglBauk && $sigBauk)
-                    <img src="{{ $sigBauk }}" style="max-height: 70px; margin-top: 5px; position: relative; z-index: 1;">
-                @elseif($tglBauk)
-                    <div class="sig-status">VERIFIED</div>
-                @endif
-                
-                <div class="sig-name">{{ $userBauk ? $userBauk->nama_lengkap : '........................' }}</div>
-                <div class="sig-date">Tgl: {{ $tglBauk ? \Carbon\Carbon::parse($tglBauk)->translatedFormat('d F Y') : '........................' }}</div>
-            </td>
-            <td>
-                <div class="sig-title">Disetujui Oleh</div>
-                <div class="sig-role">Wakil Rektor Bidang SDK</div>
-                
-                @php 
-                    $sigWr2 = getSignatureImage($userWr2); 
-                    $tglWr2 = getApprovalDate($pencairan->approval_dates, 'WR2') ?? getApprovalDate($pencairan->approval_dates, 'Final') ?? null;
-                @endphp
-                @if (file_exists(public_path('img/logo-tsu.svg')))
-                    <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/logo-tsu.svg'))) }}" class="watermark-tsu">
-                @endif
-                @if($tglWr2 && $sigWr2)
-                    <img src="{{ $sigWr2 }}" style="max-height: 70px; margin-top: 5px; position: relative; z-index: 1;">
-                @elseif($tglWr2)
-                    <div class="sig-status">APPROVED</div>
-                @endif
-                
-                <div class="sig-name">{{ $userWr2 ? $userWr2->nama_lengkap : 'Drs. Santoso Tri Hananto, M.Acc, Ak' }}</div>
-                <div class="sig-date">Tgl: {{ $tglWr2 ? \Carbon\Carbon::parse($tglWr2)->translatedFormat('d F Y') : '........................' }}</div>
             </td>
         </tr>
     </table>

@@ -179,8 +179,10 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                     setSubmittingId(item.uuid);
                     const toastId = toast.loading("Sedang mengirim pengajuan...");
                     router.post(route('daftar-ajuan.submit', item.uuid), {}, {
-                        onSuccess: () => {
-                            toast.success("Berhasil", { id: toastId, description: "Pengajuan RKAT berhasil dikirim." });
+                        onSuccess: (page) => {
+                            const error = page.props?.flash?.error;
+                            if (error) toast.error("Gagal Mengajukan", { id: toastId, description: error });
+                            else toast.success(page.props?.flash?.success || "Berhasil", { id: toastId, description: "Pengajuan RKAT berhasil dikirim." });
                         },
                         onError: (err) => {
                             toast.error("Gagal Mengajukan", { id: toastId, description: err?.message || "Terjadi kesalahan saat mengirim pengajuan." });
@@ -242,7 +244,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
             <Head title="Daftar Ajuan" />
 
             <div className="py-6">
-                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+                <div className="w-full max-w-none px-2 sm:px-6 lg:px-8">
 
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
                         Daftar Ajuan
@@ -383,7 +385,7 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                     </div>
                     {/* Tabel Data */}
                     <div className="overflow-x-auto rounded-lg border border-gray-300 dark:border-gray-700">
-                        <table ref={tableRef} className="min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
+                        <table ref={tableRef} className="w-full min-w-full text-sm text-left text-gray-600 dark:text-gray-400 border-collapse">
                             <thead className="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                 <tr>
                                     <th className="px-4 py-3 border-b border-gray-300 dark:border-gray-600 font-medium text-center">No</th>
@@ -522,12 +524,11 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                             </td>
                                             <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-center">{formatDate(item.tanggal_pengajuan)}</td>
                                             <td className="px-6 py-4 border-b border-l border-gray-300 dark:border-gray-700 text-center">
-                                                <ActionGroup vertical>
+                                                <ActionGroup>
                                                     {/* --- DETAIL --- */}
                                                     <ActionButton
                                                         variant="detail"
                                                         tooltip="Detail RKAT"
-                                                        tooltipSide="left"
                                                         href={route('daftar-ajuan.show', item.uuid)}
                                                     />
 
@@ -535,7 +536,6 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                                     <ActionButton
                                                         variant="export"
                                                         tooltip="Export PDF"
-                                                        tooltipSide="left"
                                                         href={route('daftar-ajuan.export', item.uuid)}
                                                         target="_blank"
                                                     />
@@ -545,7 +545,6 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                                         <ActionButton
                                                             variant="edit"
                                                             tooltip="Edit RKAT"
-                                                            tooltipSide="left"
                                                             href={route('daftar-ajuan.edit', item.uuid)}
                                                         />
                                                     )}
@@ -554,7 +553,6 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                                         <ActionButton
                                                             variant="delete"
                                                             tooltip="Hapus Draft RKAT"
-                                                            tooltipSide="left"
                                                             onClick={() => handleDeleteDraft(item)}
                                                         />
                                                     )}
@@ -564,7 +562,6 @@ export default function Index({ auth, rkats, filters, tahunAnggarans, units = []
                                                         <ActionButton
                                                             variant="submit"
                                                             tooltip="Ajukan RKAT"
-                                                            tooltipSide="left"
                                                             disabled={submittingId === item.uuid || isLocked}
                                                             onClick={() => handleAjukan(item)}
                                                         />

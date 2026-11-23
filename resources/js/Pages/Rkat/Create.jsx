@@ -632,7 +632,7 @@ export default function Create({ auth, tahunAnggarans, units, akunAnggarans, iku
             <Head title="Input RKAT" />
 
             <div className="py-6">
-                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+                <div className="w-full max-w-none px-2 sm:px-6 lg:px-8">
                     <form onSubmit={submit} className="space-y-6">
 
                         {/* --- 1. DATA DASAR --- */}

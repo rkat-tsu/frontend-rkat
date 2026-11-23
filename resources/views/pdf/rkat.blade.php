@@ -6,45 +6,50 @@
     <title>TOR - {{ $rkat->nomor_dokumen }}</title>
     <style>
         @page {
-            margin: 0.8cm;
+            margin: 0.9cm;
         }
 
         body {
             font-family: 'Helvetica', 'Arial', sans-serif;
-            font-size: 8pt;
-            line-height: 1.15;
-            color: #000;
+            font-size: 8.5pt;
+            line-height: 1.25;
+            color: #1f2937;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #1e3a5f;
         }
 
         .header img {
-            width: 120px;
-            margin-bottom: 8px;
+            width: 105px;
+            max-height: 52px;
+            margin-bottom: 6px;
         }
 
         .header h1 {
             margin: 0;
-            font-size: 10pt;
+            color: #1e3a5f;
+            font-size: 11pt;
             text-transform: uppercase;
             font-weight: bold;
-            text-decoration: underline;
+            letter-spacing: 0.4px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 5px;
+            margin-bottom: 7px;
         }
 
         th,
         td {
-            border: 1px solid #000;
-            padding: 3px 5px;
+            border: 1px solid #64748b;
+            padding: 4px 6px;
             vertical-align: top;
+            word-wrap: break-word;
         }
 
         .no-col {
@@ -53,12 +58,13 @@
         }
 
         .label-col {
-            width: 140px;
+            width: 130px;
             font-weight: bold;
+            background-color: #f1f5f9;
         }
 
         .bg-gray {
-            background-color: #f2f2f2;
+            background-color: #e2e8f0;
         }
 
         .text-center {
@@ -90,56 +96,28 @@
             font-size: 7pt;
         }
 
-        .signature-section {
-            margin-top: 15px;
-            width: 100%;
-        }
-
-        .sig-box {
-            width: 48%;
-            display: inline-block;
-            vertical-align: top;
-            min-height: 80px;
-        }
-
-        .sig-space {
-            height: 45px;
-            position: relative;
-            text-align: center;
-        }
-
-        .watermark-tsu {
-            position: absolute;
-            top: -5px;
-            left: 0;
-            right: 0;
-            margin-left: auto;
-            margin-right: auto;
-            height: 55px;
-            opacity: 0.15;
-            z-index: -1;
-        }
-
-        .sig-status {
-            position: absolute;
-            top: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #ddd;
-            font-size: 18pt;
-            font-weight: bold;
-            opacity: 0.4;
-            border: 2px solid #ddd;
-            padding: 2px 10px;
-            border-radius: 8px;
-            z-index: 0;
-            text-transform: uppercase;
-        }
-
         .indicator-table th {
             font-size: 7pt;
             text-align: center;
-            background-color: #fff;
+            background-color: #f1f5f9;
+        }
+
+        .indicator-table {
+            width: 100%;
+            table-layout: fixed;
+            font-size: 6.5pt;
+        }
+
+        .indicator-table th,
+        .indicator-table td {
+            padding: 3px;
+            word-wrap: break-word;
+        }
+
+        .section-title {
+            color: #1e3a5f;
+            border-bottom: 1px solid #64748b;
+            padding-bottom: 3px;
         }
 
         .revision-note {
@@ -182,53 +160,19 @@
         $logoPath = public_path('img/logo-full-tsu.svg');
 
         // Labels
-        $labels = $rkat->tahun_obj->indikator_labels ?? ['past' => '2025', 'current' => 'Tahun 2026', 'future' => 'Akhir 2029'];
-        $labelPrevYear = $labels['past'] ?? '2025';
-        $labelCurrYear = $labels['current'] ?? 'Tahun 2026';
-        $labelFutureYear = $labels['future'] ?? 'Akhir 2029';
-
-        // Approval logic
-        $isRenbangAcc = $rkat->logPersetujuans
-            ->where('level_persetujuan', 'Tim_Renbang')
-            ->where('aksi', 'Setuju')
-            ->last();
-            
-        // Get any unit head level approval
-        $isUnitAcc = $rkat->logPersetujuans
-            ->whereNotIn('level_persetujuan', ['Admin', 'Tim_Renbang', 'WR_1', 'WR_2', 'WR_3', 'Rektor'])
-            ->where('aksi', 'Setuju')
-            ->last();
-
-        // Get any WR approval
-        $isWRAcc = $rkat->logPersetujuans
-            ->filter(function ($log) {
-                return str_starts_with($log->level_persetujuan, 'WR_');
-            })
-            ->where('aksi', 'Setuju')
-            ->last();
-
-        $renbangApprover = $isRenbangAcc ? $isRenbangAcc->approver : null;
-        $unitApprover = $isUnitAcc ? $isUnitAcc->approver : null;
-        $wrApprover = $isWRAcc ? $isWRAcc->approver : null;
+        $yearNumber = (int) $rkat->tahun_anggaran;
+        $labels = $rkat->tahun_obj->indikator_labels ?? [];
+        $labelCondition = $labels['col_kondisi'] ?? 'Kondisi Tahun ' . ($yearNumber - 1);
+        $labelRenstra = $labels['col_renstra'] ?? 'RENSTRA Tahun ' . $yearNumber;
+        $labelAccreditation = $labels['col_akreditasi'] ?? 'Kontribusi Akreditasi';
+        $labelGap = $labels['col_gap'] ?? 'Kontribusi GAP';
+        $labelKpi = $labels['col_kpi'] ?? 'Kontribusi KPI';
 
         $revisions = $rkat->logPersetujuans->where('aksi', 'Revisi');
 
-        if (!function_exists('getSignatureImage')) {
-            function getSignatureImage($user) {
-                if ($user && $user->signature_path) {
-                    $path = public_path('storage/' . $user->signature_path);
-                    if (file_exists($path)) {
-                        $type = pathinfo($path, PATHINFO_EXTENSION);
-                        $data = file_get_contents($path);
-                        return 'data:image/' . $type . ';base64,' . base64_encode($data);
-                    }
-                }
-                return null;
-            }
-        }
-
         // Calculate real RAB total
         $rabTotal = $detail ? $detail->rabItems->sum('sub_total') : 0;
+        $nonSboIndex = 0;
     @endphp
 
     <div class="header">
@@ -298,34 +242,40 @@
             <td class="label-col">Target Capaian</td>
             <td colspan="2" style="padding: 0;">
                 <table class="indicator-table" style="border: none; margin: 0;">
+                    <colgroup>
+                        <col style="width: 4%;">
+                        <col style="width: 15%;">
+                        <col style="width: 16.2%;">
+                        <col style="width: 16.2%;">
+                        <col style="width: 16.2%;">
+                        <col style="width: 16.2%;">
+                        <col style="width: 16.2%;">
+                    </colgroup>
                     <thead>
                         <tr>
-                            <th rowspan="2" style="border-top:none; border-left:none;">Indikator</th>
-                            <th style="width: 80px;">Kondisi {{ $labelPrevYear }}</th>
-                            <th colspan="2">Target {{ $labelCurrYear }}</th>
-                            <th colspan="2" style="border-right:none;">Target {{ $labelFutureYear }}</th>
-                        </tr>
-                        <tr>
-                            <th>Capaian</th>
-                            <th>Target</th>
-                            <th>Capaian</th>
-                            <th>Target</th>
-                            <th style="border-right:none;">Capaian</th>
+                            <th>No</th>
+                            <th>Indikator</th>
+                            <th>{{ $labelCondition }}</th>
+                            <th>{{ $labelRenstra }}</th>
+                            <th>{{ $labelAccreditation }}</th>
+                            <th>{{ $labelGap }}</th>
+                            <th>{{ $labelKpi }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($detail->indikators as $ind)
                             <tr>
-                                <td style="border-left:none;">{{ $ind->nama_indikator }}</td>
-                                <td class="text-center">{{ $ind->past_capaian ?? '-' }}</td>
-                                <td class="text-center">{{ $ind->current_target ?? '-' }}</td>
-                                <td class="text-center">{{ $ind->current_capaian ?? '-' }}</td>
-                                <td class="text-center">{{ $ind->future_target ?? '-' }}</td>
-                                <td class="text-center" style="border-right:none;">{{ $ind->future_capaian ?? '-' }}</td>
+                                <td class="text-center">{{ $loop->iteration }}</td>
+                                <td>{{ $ind->nama_indikator }}</td>
+                                <td>{{ $ind->past_capaian ?? '-' }}</td>
+                                <td>{{ $ind->current_target ?? '-' }}</td>
+                                <td>{{ $ind->current_capaian ?? '-' }}</td>
+                                <td>{{ $ind->future_target ?? '-' }}</td>
+                                <td>{{ $ind->future_capaian ?? '-' }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center" style="border-left:none; border-right:none;">
+                                <td colspan="7" class="text-center">
                                     Tidak ada indikator</td>
                             </tr>
                         @endforelse
@@ -345,7 +295,7 @@
         </tr>
     </table>
 
-    <div style="text-align: center; margin: 10px 0; font-weight: bold; text-decoration: underline; font-size: 9pt;">
+    <div class="section-title" style="text-align: center; margin: 10px 0 6px; font-weight: bold; font-size: 9pt;">
         RENCANA ANGGARAN</div>
 
     <table>
@@ -364,16 +314,17 @@
         <tr>
             <td class="label-col">Dokumen Pendukung</td>
             <td>
-                @php $docs = $detail->dokumen_pendukung ?? []; @endphp
+                @php
+                    $docs = $detail->dokumen_pendukung ?? [];
+                @endphp
                 @if (is_array($docs) && count($docs))
                     @foreach ($docs as $index => $doc)
-                        @php
-                            $docName = is_array($doc) ? ($doc['name'] ?? $doc['url'] ?? 'Dokumen') : $doc;
-                            $docUrl = is_array($doc) && ($doc['type'] ?? '') === 'link'
-                                ? ($doc['url'] ?? null)
-                                : (is_array($doc) && ($doc['type'] ?? '') === 'file' ? route('daftar-ajuan.dokumen', [$rkat->uuid, $index]) : null);
-                        @endphp
-                        <div style="margin-bottom: 3px; word-break: break-word;">{{ $docName }} @if ($docUrl) — {{ $docUrl }} @endif</div>
+                        <div style="margin-bottom: 3px; word-break: break-word;">
+                            {{ is_array($doc) ? ($doc['name'] ?? $doc['url'] ?? 'Dokumen') : $doc }}
+                            @if (is_array($doc) && (($doc['type'] ?? '') === 'link' || ($doc['type'] ?? '') === 'file'))
+                                — {{ ($doc['type'] ?? '') === 'link' ? ($doc['url'] ?? '') : route('daftar-ajuan.dokumen', [$rkat->uuid, $index]) }}
+                            @endif
+                        </div>
                     @endforeach
                 @else
                     -
@@ -441,7 +392,6 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php($nonSboIndex = 0)
                     @foreach ($detail->rabItems as $idx => $rab)
                         <tr>
                             <td class="text-center">{{ $idx + 1 }}</td>
@@ -492,84 +442,6 @@
         </div>
     @endif
 
-    <div class="signature-section">
-        <div style="width: 100%; margin-bottom: 20px;">
-            <div class="sig-box">
-                <p>Verifikasi</p>
-                <p>Tim Renbang</p>
-                <div class="sig-space">
-                    @if (file_exists(public_path('img/logo-tsu.svg')))
-                        <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/logo-tsu.svg'))) }}" class="watermark-tsu">
-                    @endif
-                    @php $sigRenbang = getSignatureImage($renbangApprover); @endphp
-                    @if ($sigRenbang)
-                        <img src="{{ $sigRenbang }}" style="max-height: 40px; margin-top: 5px; position: relative; z-index: 1;">
-                    @elseif ($isRenbangAcc)
-                        <div class="sig-status">ACC</div>
-                    @endif
-                </div>
-                <p class="font-bold">{{ optional($renbangApprover)->nama_lengkap ?: '............................' }}
-                </p>
-                <p>NIK. {{ optional($renbangApprover)->nik ?: '............................' }}</p>
-            </div>
-            <div class="sig-box text-right" style="float: right;">
-                <p>Surakarta, {{ \Carbon\Carbon::now()->isoFormat('D MMMM YYYY') }}</p>
-                <p>PIC Kegiatan / Pembina UKM</p>
-                <div class="sig-space">
-                    @if (file_exists(public_path('img/logo-tsu.svg')))
-                        <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/logo-tsu.svg'))) }}" class="watermark-tsu">
-                    @endif
-                    @php $sigPengaju = getSignatureImage($rkat->user); @endphp
-                    @if ($sigPengaju)
-                        <img src="{{ $sigPengaju }}" style="max-height: 40px; margin-top: 5px; position: relative; z-index: 1;">
-                    @else
-                        <div class="sig-status" style="border: none; opacity: 0.1; color: #eee;">DRAFT</div>
-                    @endif
-                </div>
-                <p class="font-bold">{{ optional($rkat->user)->nama_lengkap ?? '............................' }}</p>
-                <p>NIK. {{ optional($rkat->user)->nik ?: '............................' }}</p>
-            </div>
-            <div style="clear: both;"></div>
-        </div>
-
-        <div style="width: 100%;">
-            <div class="sig-box">
-                <p>Mengetahui,</p>
-                <p>Kepala Kantor Kemahasiswaan</p>
-                <div class="sig-space">
-                    @if (file_exists(public_path('img/logo-tsu.svg')))
-                        <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/logo-tsu.svg'))) }}" class="watermark-tsu">
-                    @endif
-                    @php $sigUnit = getSignatureImage($unitApprover); @endphp
-                    @if ($sigUnit)
-                        <img src="{{ $sigUnit }}" style="max-height: 40px; margin-top: 5px; position: relative; z-index: 1;">
-                    @elseif ($isUnitAcc)
-                        <div class="sig-status">ACC</div>
-                    @endif
-                </div>
-                <p class="font-bold">{{ optional($unitApprover)->nama_lengkap ?: '............................' }}</p>
-                <p>NIK. {{ optional($unitApprover)->nik ?: '............................' }}</p>
-            </div>
-            <div class="sig-box text-right" style="float: right;">
-                <p>Menyetujui,</p>
-                <p>Wakil Rektor</p>
-                <div class="sig-space">
-                    @if (file_exists(public_path('img/logo-tsu.svg')))
-                        <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/logo-tsu.svg'))) }}" class="watermark-tsu">
-                    @endif
-                    @php $sigWR = getSignatureImage($wrApprover); @endphp
-                    @if ($sigWR)
-                        <img src="{{ $sigWR }}" style="max-height: 40px; margin-top: 5px; position: relative; z-index: 1;">
-                    @elseif ($isWRAcc)
-                        <div class="sig-status">ACC</div>
-                    @endif
-                </div>
-                <p class="font-bold">{{ optional($wrApprover)->nama_lengkap ?: '............................' }}</p>
-                <p>NIK. {{ optional($wrApprover)->nik ?: '............................' }}</p>
-            </div>
-            <div style="clear: both;"></div>
-        </div>
-    </div>
 </body>
 
 </html>

@@ -89,7 +89,7 @@ export default function Approval({ auth, pencairans, filters }) {
             <Head title="Persetujuan Pencairan Dana" />
 
             <div className="py-8">
-                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+                <div className="w-full max-w-none px-2 sm:px-6 lg:px-8">
                     
                     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
                         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">

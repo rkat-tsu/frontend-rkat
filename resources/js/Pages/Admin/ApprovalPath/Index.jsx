@@ -170,7 +170,7 @@ export default function Index({ auth, paths, units, lpjApprovalPathId }) {
             <Head title="Alur Persetujuan" />
 
             <div className="py-8">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+                <div className="w-full max-w-none px-4 sm:px-6 lg:px-8 space-y-6">
 
                     {/* Header Banner Toolbar */}
                     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-l-4 border-l-teal-600">

@@ -32,7 +32,7 @@ function Index() {
     return (
         <>
             <Head title="Notifikasi" />
-            <div className="mx-auto max-w-5xl space-y-6 py-6">
+            <div className="w-full max-w-none space-y-6 py-6 px-2 sm:px-6 lg:px-8">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notifikasi Dokumen</h1>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Tugas persetujuan dan progress dokumen terbaru Anda.</p>

@@ -811,9 +811,13 @@ class RkatController extends Controller
 
     public function exportPdf(RkatHeader $rkatHeader)
     {
+        $stage = 'initialize';
+        $reference = (string) \Illuminate\Support\Str::uuid();
+
         try {
             ini_set('memory_limit', '512M');
 
+            $stage = 'load_data';
             $rkatHeader->load([
                 'unit',
                 'user',
@@ -824,15 +828,27 @@ class RkatController extends Controller
                 'logPersetujuans.approver',
             ]);
 
+            $stage = 'render_pdf';
             $pdf = Pdf::loadView('pdf.rkat', ['rkat' => $rkatHeader]);
             $pdf->setPaper('a4', 'portrait');
 
+            $stage = 'download_pdf';
             return $pdf->download('RKAT_' . str_replace(['/', '\\'], '-', $rkatHeader->nomor_dokumen) . '.pdf');
-        } catch (\Exception $e) {
-            $databaseMessage = DatabaseErrorMessage::explain($e);
-            return response()->json([
-                'error' => 'Export Failed',
-                'message' => $databaseMessage ?? 'Gagal membuat PDF RKAT. Silakan coba lagi atau hubungi administrator.',
+        } catch (\Throwable $e) {
+            Log::error('[RKAT PDF Export] Export failed', [
+                'reference' => $reference,
+                'stage' => $stage,
+                'rkat_uuid' => $rkatHeader->uuid,
+                'rkat_id' => $rkatHeader->id_header,
+                'user_id' => Auth::id(),
+                'exception' => $e,
+            ]);
+
+            return response()->view('pdf.export-error', [
+                'documentType' => 'RKAT',
+                'stage' => $stage,
+                'stageLabel' => ['load_data' => 'Memuat data dokumen', 'render_pdf' => 'Menyusun PDF', 'download_pdf' => 'Mengirim file PDF'][$stage] ?? 'Memproses export',
+                'reference' => $reference,
             ], 500);
         }
     }

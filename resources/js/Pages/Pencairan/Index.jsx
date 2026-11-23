@@ -395,8 +395,10 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
                     setSubmittingId(itemId);
                     const toastId = toast.loading("Sedang mengirim pengajuan...");
                     router.post(route('pencairan.submit', itemId), {}, {
-                        onSuccess: () => {
-                            toast.success("Berhasil", { id: toastId, description: "Pengajuan pencairan berhasil dikirim." });
+                        onSuccess: (page) => {
+                            const error = page.props?.flash?.error;
+                            if (error) toast.error("Gagal Mengajukan", { id: toastId, description: error });
+                            else toast.success(page.props?.flash?.success || "Berhasil", { id: toastId, description: "Pengajuan pencairan berhasil dikirim." });
                         },
                         onError: (err) => {
                             toast.error("Gagal Mengajukan", { id: toastId, description: err?.message || "Terjadi kesalahan saat mengirim pengajuan." });
@@ -454,7 +456,7 @@ function IndexContent({ auth, pencairans, filters, tahunAnggarans, units = [], f
             <Head title="Daftar Pencairan Dana" />
 
             <div className="py-6">
-                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+                <div className="w-full max-w-none px-2 sm:px-6 lg:px-8">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
                         Pencairan Dana
                     </h1>

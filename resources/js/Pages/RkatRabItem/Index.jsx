@@ -144,7 +144,7 @@ export default function Index({ auth, rkats = { data: [] }, filters = {}, tahunA
             <Head title="RKAT" />
 
             <div className="py-8 pb-24">
-                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+                <div className="w-full max-w-none px-2 sm:px-6 lg:px-8">
 
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
                         <Package className="w-8 h-8 text-indigo-500" />

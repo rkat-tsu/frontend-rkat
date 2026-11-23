@@ -60,6 +60,10 @@ export function useResizableTable(storageKey, options = {}) {
         const table = tableRef.current;
         if (!table) return;
 
+        // Keep resizable tables responsive to the available page width even
+        // when the stored column widths add up to less than the container.
+        table.style.width = '100%';
+
         const headerRow = table.querySelector('thead tr');
         if (!headerRow) return;
 

@@ -100,7 +100,7 @@ export default function Edit({ auth, unit, users, units, approvalPaths, tipeOpti
             <Head title={`Edit ${data.nama_unit}`} />
 
             <div className="py-6 pb-24">
-                <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                <div className="w-full max-w-none sm:px-6 lg:px-8">
                     
                     <form onSubmit={submit} className="space-y-6">
                         

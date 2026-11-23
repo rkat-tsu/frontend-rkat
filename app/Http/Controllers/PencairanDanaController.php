@@ -13,6 +13,7 @@ use App\Models\PencairanDanaItem;
 use App\Http\Controllers\Concerns\PreservesPagination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -725,6 +726,9 @@ class PencairanDanaController extends Controller
 
     public function exportPdf(PencairanDana $pencairan)
     {
+        $stage = 'load_data';
+        $reference = (string) \Illuminate\Support\Str::uuid();
+
         try {
             ini_set('memory_limit', '512M');
 
@@ -736,12 +740,28 @@ class PencairanDanaController extends Controller
                 'pengaju'
             ]);
 
+            $stage = 'render_pdf';
             $pdf = Pdf::loadView('pdf.pencairan', ['pencairan' => $pencairan]);
             $pdf->setPaper('a4', 'portrait');
 
+            $stage = 'download_pdf';
             return $pdf->download('Pencairan_Dana_' . $pencairan->rkatHeader->nomor_dokumen . '.pdf');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal export PDF: ' . DatabaseErrorMessage::forUser($e, 'Terjadi kesalahan. Silakan coba lagi atau hubungi administrator.'));
+        } catch (\Throwable $e) {
+            Log::error('[Pencairan PDF Export] Export failed', [
+                'reference' => $reference,
+                'stage' => $stage,
+                'pencairan_uuid' => $pencairan->uuid,
+                'pencairan_id' => $pencairan->id_pencairan,
+                'user_id' => Auth::id(),
+                'exception' => $e,
+            ]);
+
+            return response()->view('pdf.export-error', [
+                'documentType' => 'Pencairan Dana',
+                'stage' => $stage,
+                'stageLabel' => ['load_data' => 'Memuat data dokumen', 'render_pdf' => 'Menyusun PDF', 'download_pdf' => 'Mengirim file PDF'][$stage] ?? 'Memproses export',
+                'reference' => $reference,
+            ], 500);
         }
     }
 }

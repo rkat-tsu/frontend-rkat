@@ -154,8 +154,10 @@ export default function Show({ auth, rkat = {}, history = [], initialTotalAnggar
                     setIsSubmitting(true);
                     const toastId = toast.loading("Sedang mengirim pengajuan...");
                     router.post(route('daftar-ajuan.submit', item.uuid || item.id_header), {}, {
-                        onSuccess: () => {
-                            toast.success("Berhasil", { id: toastId, description: "Pengajuan RKAT berhasil dikirim." });
+                        onSuccess: (page) => {
+                            const error = page.props?.flash?.error;
+                            if (error) toast.error("Gagal Mengajukan", { id: toastId, description: error });
+                            else toast.success(page.props?.flash?.success || "Berhasil", { id: toastId, description: "Pengajuan RKAT berhasil dikirim." });
                         },
                         onError: (err) => {
                             toast.error("Gagal Mengajukan", { id: toastId, description: err?.message || "Terjadi kesalahan saat mengirim pengajuan." });
@@ -183,7 +185,7 @@ export default function Show({ auth, rkat = {}, history = [], initialTotalAnggar
             <Head title={`Detail RKAT - ${dataRkat?.nomor_dokumen || 'Baru'}`} />
 
             <div className="py-6">
-                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 space-y-6">
+                <div className="w-full max-w-none px-2 sm:px-6 lg:px-8 space-y-6">
 
                     {/* Banner Catatan Revisi / Tolak Terakhir (Jika Ada) */}
                     {notes.length > 0 && (

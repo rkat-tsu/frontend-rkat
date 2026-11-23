@@ -47,7 +47,7 @@ export default function ActionButton({
     size = 'md', // 'sm' | 'md' | 'lg'
     className = '',
     disabled = false,
-    tooltipSide = 'top',
+    tooltipSide = 'left',
     children,
     ...props
 }) {
@@ -109,9 +109,9 @@ export default function ActionButton({
     );
 }
 
-export function ActionGroup({ children, className = '', vertical = false }) {
+export function ActionGroup({ children, className = '' }) {
     return (
-        <div className={`flex ${vertical ? 'flex-col' : 'items-center'} items-center justify-center gap-1.5 ${className}`}>
+        <div className={`flex items-center justify-center gap-1.5 ${className}`} style={{ flexDirection: 'column' }}>
             {children}
         </div>
     );

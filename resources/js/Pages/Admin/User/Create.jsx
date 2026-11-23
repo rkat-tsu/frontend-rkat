@@ -137,7 +137,7 @@ export default function Create({ auth, units = [], karyawans = [] }) {
             <Head title="Tambah User Baru" />
 
             <div className="py-6 pb-40">
-                <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                <div className="w-full max-w-none sm:px-6 lg:px-8">
                     
                     <form onSubmit={submit} className="space-y-6">
                         

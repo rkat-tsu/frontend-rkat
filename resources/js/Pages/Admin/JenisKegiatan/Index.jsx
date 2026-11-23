@@ -27,6 +27,12 @@ export default function Index({ auth, options = [], groups = [] }) {
         return groups;
     }, {});
 
+    const resetCreateForm = () => {
+        createForm.reset();
+        createForm.clearErrors();
+        setSelectedGroup('');
+    };
+
     const addOption = (e) => {
         e.preventDefault();
         if (!createForm.data.kode_grup) {
@@ -39,8 +45,7 @@ export default function Index({ auth, options = [], groups = [] }) {
                 label: 'Ya, Tambahkan',
                     onClick: () => createForm.post(route('pengaturan-opsi-form.store'), {
                     onSuccess: () => {
-                        createForm.reset();
-                        setSelectedGroup('');
+                        resetCreateForm();
                         toast.success('Opsi berhasil ditambahkan.');
                     },
                     onError: (errors) => toast.error(errors.kode_grup || errors.grup || errors.nama || 'Opsi gagal ditambahkan.'),
@@ -116,31 +121,31 @@ export default function Index({ auth, options = [], groups = [] }) {
     return (
         <AuthenticatedLayout user={auth.user} header={<h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Pengaturan Opsi Form</h2>}>
             <Head title="Pengaturan Opsi Form" />
-            <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8">
+            <div className="w-full max-w-none space-y-6 p-4 sm:p-6 lg:p-8">
                 <section className="rounded-xl bg-white p-6 shadow dark:bg-gray-800">
                     <h3 className="mb-1 text-lg font-bold text-gray-900 dark:text-white">Tambah opsi</h3>
                     <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">Pilih grup yang tersedia. Setiap grup memiliki kode tetap yang digunakan aplikasi untuk mengambil opsi pada form terkait.</p>
-                    <form onSubmit={addOption} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:items-end">
+                    <form onSubmit={addOption} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(260px,0.9fr)_minmax(360px,1.4fr)_minmax(240px,0.8fr)] sm:items-end">
                         <div>
                             <InputLabel value="Grup / Menu" required />
                             <CustomSelect value={selectedGroup} onChange={(e) => {
                                 const group = groupOptions.find(option => option.value === e.target.value);
                                 setSelectedGroup(e.target.value);
                                 createForm.setData(data => ({ ...data, grup: group?.grup || '', kode_grup: group?.kode_grup || '' }));
-                            }} options={groupOptions} placeholder="Pilih grup / menu" className="mt-1" />
+                            }} options={groupOptions} placeholder="Pilih grup / menu" className="mt-1 h-11" />
                             <FieldTooltipError message={createForm.errors.kode_grup || createForm.errors.grup} />
                         </div>
                         <div className="w-full flex-1">
                             <InputLabel htmlFor="nama-jenis-kegiatan" value="Nama opsi" required />
-                            <TextInput id="nama-jenis-kegiatan" value={createForm.data.nama} onChange={(e) => createForm.setData('nama', e.target.value)} className="mt-1 w-full" placeholder="Contoh: Pengembangan" />
+                            <TextInput id="nama-jenis-kegiatan" value={createForm.data.nama} onChange={(e) => createForm.setData('nama', e.target.value)} className="mt-1 h-11 w-full" placeholder="Contoh: Pengembangan" />
                             <FieldTooltipError message={createForm.errors.nama} />
                         </div>
-                        <div className="flex shrink-0 items-center justify-end gap-2 sm:pb-0.5">
-                            <button type="submit" disabled={createForm.processing} className="inline-flex h-9 min-w-[88px] items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 text-xs font-bold tracking-wide text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
-                                <Plus size={15} /> TAMBAH
+                        <div className="flex w-full items-center gap-2 sm:col-span-2 lg:col-span-1 sm:pb-0.5">
+                            <button type="submit" disabled={createForm.processing} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-gray-900 px-5 text-sm font-bold tracking-wide text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                                <Plus size={17} /> TAMBAH OPSI
                             </button>
-                            <button type="button" onClick={() => createForm.reset()} disabled={createForm.processing} aria-label="Batal menambah opsi" title="Batal" className="inline-flex h-9 w-12 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 transition hover:bg-gray-50 disabled:opacity-60 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
-                                <X size={16} />
+                            <button type="button" onClick={resetCreateForm} disabled={createForm.processing} aria-label="Batal menambah opsi" title="Batal" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-400 transition hover:bg-gray-50 hover:text-gray-700 disabled:opacity-60 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
+                                <X size={18} />
                             </button>
                         </div>
                     </form>

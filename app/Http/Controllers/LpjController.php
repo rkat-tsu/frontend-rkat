@@ -11,6 +11,7 @@ use App\Models\TahunAnggaran;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str;
@@ -550,6 +551,9 @@ class LpjController extends Controller
      */
     public function exportPdf(Lpj $lpj)
     {
+        $stage = 'load_data';
+        $reference = (string) Str::uuid();
+
         try {
             ini_set('memory_limit', '512M');
 
@@ -561,13 +565,29 @@ class LpjController extends Controller
                 'items.pencairanItem.rkatRabItem'
             ]);
 
+            $stage = 'render_pdf';
             $pdf = Pdf::loadView('pdf.lpj', ['lpj' => $lpj]);
             $pdf->setPaper('a4', 'portrait');
 
             $filename = 'LPJ_' . str_replace('/', '_', $lpj->nomor_lpj) . '.pdf';
+            $stage = 'download_pdf';
             return $pdf->download($filename);
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal membuat dokumen PDF LPJ: ' . DatabaseErrorMessage::forUser($e, 'Terjadi kesalahan. Silakan coba lagi atau hubungi administrator.'));
+        } catch (\Throwable $e) {
+            Log::error('[LPJ PDF Export] Export failed', [
+                'reference' => $reference,
+                'stage' => $stage,
+                'lpj_uuid' => $lpj->uuid,
+                'lpj_id' => $lpj->id_lpj,
+                'user_id' => Auth::id(),
+                'exception' => $e,
+            ]);
+
+            return response()->view('pdf.export-error', [
+                'documentType' => 'LPJ',
+                'stage' => $stage,
+                'stageLabel' => ['load_data' => 'Memuat data dokumen', 'render_pdf' => 'Menyusun PDF', 'download_pdf' => 'Mengirim file PDF'][$stage] ?? 'Memproses export',
+                'reference' => $reference,
+            ], 500);
         }
     }
 

@@ -108,7 +108,7 @@ export default function Dashboard({
             <Head title={`Dashboard TA ${tahunAnggaran}`} />
 
             <div className="py-8">
-                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 space-y-8">
+                <div className="w-full max-w-none px-2 sm:px-6 lg:px-8 space-y-8">
 
                     {/* --- KONTROL HEADER & FILTER TAHUN ANGGARAN --- */}
                     <div className="bg-white dark:bg-gray-800 p-5 md:p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all">

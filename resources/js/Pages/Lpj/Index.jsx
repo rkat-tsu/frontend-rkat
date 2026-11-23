@@ -381,8 +381,10 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                     setSubmittingLpjId(lpjId);
                     const toastId = toast.loading('Sedang mengajukan LPJ...');
                     router.post(route('lpj.submit', lpjId), {}, {
-                        onSuccess: () => {
-                            toast.success('LPJ berhasil diajukan untuk persetujuan.', { id: toastId });
+                        onSuccess: (page) => {
+                            const error = page.props?.flash?.error;
+                            if (error) toast.error('Gagal mengajukan LPJ.', { id: toastId, description: error });
+                            else toast.success(page.props?.flash?.success || 'LPJ berhasil diajukan untuk persetujuan.', { id: toastId });
                         },
                         onError: () => {
                             toast.error('Gagal mengajukan LPJ.', { id: toastId });
@@ -830,7 +832,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
             </div>
 
             {/* --- MODAL CREATE / EDIT LPJ --- */}
-            <Modal show={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} maxWidth="4xl">
+            <Modal show={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} maxWidth="7xl" maxHeight="95vh">
                 <form onSubmit={handleSubmitLpjForm} noValidate className="p-6 space-y-6">
                     <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-4">
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -993,7 +995,7 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                             <th className="py-3 px-3 text-right bg-teal-50/50 dark:bg-teal-950/30 w-36">Harga Realisasi</th>
                                             <th className="py-3 px-3 text-right bg-teal-50/50 dark:bg-teal-950/30">Total Realisasi</th>
                                             <th className="py-3 px-3 text-right">Selisih</th>
-                                            <th className="py-3 px-3 w-48">Keterangan</th>
+                                            <th className="py-3 px-3 min-w-[220px]">Keterangan</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-900">
@@ -1042,13 +1044,13 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                                     <td className={`py-2.5 px-3 text-right font-semibold ${selisih < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
                                                         {formatCurrency(selisih)}
                                                     </td>
-                                                    <td className="py-2.5 px-3">
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Keterangan / Catatan..."
-                                                            value={item.nomor_kwitansi}
-                                                            onChange={(e) => handleItemChange(idx, 'nomor_kwitansi', e.target.value)}
-                                                            className="w-full py-1 px-2 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-teal-500"
+                                                    <td className="min-w-[220px] py-2.5 px-3">
+                                                        <textarea
+                                                            rows={2}
+                                                            placeholder="Tulis keterangan atau catatan..."
+                                                            value={item.keterangan}
+                                                            onChange={(e) => handleItemChange(idx, 'keterangan', e.target.value)}
+                                                            className="min-h-[64px] w-full resize-y rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm leading-relaxed text-gray-900 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                                                         />
                                                     </td>
                                                 </tr>
@@ -1248,7 +1250,13 @@ function IndexContent({ auth, lpjs, stats, availablePencairans = [], filters = {
                                                 <td className="p-2.5 text-right text-gray-700 dark:text-gray-200">{item.volume_realisasi}</td>
                                                 <td className="p-2.5 text-right text-gray-700 dark:text-gray-200">{formatCurrency(item.harga_satuan_realisasi)}</td>
                                                 <td className="p-2.5 text-right font-bold text-gray-800 dark:text-gray-100">{formatCurrency(item.sub_total_realisasi)}</td>
-                                                <td className="p-2.5 text-gray-500 dark:text-gray-400">{item.nomor_kwitansi || '-'}</td>
+                                                <td className="p-2.5 text-gray-500 dark:text-gray-400">
+                                                    <div className="space-y-1">
+                                                        {item.nomor_kwitansi && <div><span className="font-medium">No. Kwitansi:</span> {item.nomor_kwitansi}</div>}
+                                                        {item.keterangan && <div className="whitespace-pre-wrap"><span className="font-medium">Catatan:</span> {item.keterangan}</div>}
+                                                        {!item.nomor_kwitansi && !item.keterangan && '-'}
+                                                    </div>
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
